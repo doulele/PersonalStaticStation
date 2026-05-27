@@ -7,6 +7,7 @@
           输入6位基金代码，多个用逗号、空格或换行分隔；
           <span class="tip">（实时估值来自天天基金，非交易时段可能无数据）</span>
         </p>
+
         <div class="common-codes">
           <span class="label">常用基金代码：</span>
           <el-tooltip
@@ -53,7 +54,6 @@
       </div>
     </el-card>
 
-    <!-- 桌面端：表格布局 -->
     <el-card v-if="fundList.length" shadow="hover" class="table-card desktop-only">
       <el-table
         :data="fundList"
@@ -110,7 +110,6 @@
       </el-table>
     </el-card>
 
-    <!-- 移动端：卡片布局 -->
     <div v-if="fundList.length" class="card-list mobile-only">
       <el-card
         v-for="fund in fundList"
@@ -213,290 +212,192 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import {formatDate} from '@/utils/common/date'
 
-
+/** 状态：查询结果列表 */
 const fundList = ref([]);
+/** 状态：查询失败列表 */
 const errors = ref([]);
+/** 状态：加载中标志 */
 const loading = ref(false);
+/** 状态：加载提示文本 */
 const statusText = ref('');
 
-
+/** 常用基金代码 → 名称映射表 */
 const FUND_NAME_MAP = {
-  '008186': '淳厚信睿混合A',
-  '012454': '淳厚鑫悦混合A',
-  '017498': '淳厚添益债券A',
-  '011370': '华商均衡成长混合C',
-  '690002': '民生增强收益债券A',
-  '006030': '南方昌元可转债债券A',
-  '110020': '易方达沪深300ETF联接A',
-  '022453': '嘉实中证A500ETF联接A',
-  '005763': '中欧电子信息产业沪港深股票C',
-  '720001': '财通价值动量混合A',
-  '013402': '华夏恒生科技ETF发起式联接(QDII)A',
-  '040046': '华安纳斯达克100ETF联接(QDII)A',
-  '050025': '博时标普500ETF联接A',
-  '100032': '富国中证红利指数增强A',
-  '006327': '易方达中证海外互联网50ETF联接(QDII)A',
-  '003624': '创金合信资源股票发起式A',
-  '160213': '国泰纳斯达克100指数(QDII)',
-  '161005': '富国天惠成长混合(LOF)A',
+  '008186': '淳厚信睿混合A', '012454': '淳厚鑫悦混合A', '017498': '淳厚添益债券A',
+  '011370': '华商均衡成长混合C', '690002': '民生增强收益债券A', '006030': '南方昌元可转债债券A',
+  '110020': '易方达沪深300ETF联接A', '022453': '嘉实中证A500ETF联接A',
+  '005763': '中欧电子信息产业沪港深股票C', '720001': '财通价值动量混合A',
+  '013402': '华夏恒生科技ETF发起式联接(QDII)A', '040046': '华安纳斯达克100ETF联接(QDII)A',
+  '050025': '博时标普500ETF联接A', '100032': '富国中证红利指数增强A',
+  '006327': '易方达中证海外互联网50ETF联接(QDII)A', '003624': '创金合信资源股票发起式A',
+  '160213': '国泰纳斯达克100指数(QDII)', '161005': '富国天惠成长混合(LOF)A',
   '164906': '交银中证海外中国互联网指数(LOF)A'
 };
-let fundCodeList = Object.keys(FUND_NAME_MAP).map(key => key);
+let fundCodeList = Object.keys(FUND_NAME_MAP);
 const commonCodes = fundCodeList;
 const inputCodes = ref(fundCodeList.join(','));
-const formatDate = (ts) => {
-  const d = new Date(ts);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-};
 
-// 计算最近 N 年内的最大回撤（返回百分比数字字符串，如 "-15.23"）
+/** 峰值-谷值法计算最近N年内最大回撤 */
 const calcMaxDrawdown = (trends, years) => {
   if (!trends || trends.length < 2) return '—';
   const now = new Date();
   const cutoff = new Date(now.getFullYear() - years, now.getMonth(), now.getDate()).getTime();
   const filtered = trends.filter(item => item.x >= cutoff);
   if (filtered.length < 2) return '—';
-
-  let maxDD = 0;
-  let peak = filtered[0].y;
-
+  let maxDD = 0, peak = filtered[0].y;
   for (let i = 1; i < filtered.length; i++) {
     const val = filtered[i].y;
-    if (val > peak) {
-      peak = val;
-    } else {
-      const dd = (val - peak) / peak;
-      if (dd < maxDD) maxDD = dd;
-    }
+    if (val > peak) { peak = val; }
+    else { const dd = (val - peak) / peak; if (dd < maxDD) maxDD = dd; }
   }
-
   return (maxDD * 100).toFixed(2);
 };
 
+/** 涨跌幅颜色类名：正数→up(红) 负数→down(绿) */
 const getChangeClass = (value) => {
   const num = parseFloat(value);
   if (isNaN(num)) return '';
   return num < 0 ? 'down' : num > 0 ? 'up' : '';
 };
 
-const getFundName = (code) => {
-  return FUND_NAME_MAP[code] || '暂无名称信息';
-};
+/** 根据代码查基金名称 */
+const getFundName = (code) => FUND_NAME_MAP[code] || '暂无名称信息';
 
+/** 拆分估值时间：将"YYYY-MM-DD HH:mm"拆为{date, time} */
 const splitGztime = (gztime) => {
   if (!gztime || gztime === '—') return { date: '—', time: '' };
   const idx = gztime.lastIndexOf(' ');
   if (idx === -1) return { date: gztime, time: '' };
-  return {
-    date: gztime.substring(0, idx),
-    time: gztime.substring(idx + 1)
-  };
+  return { date: gztime.substring(0, idx), time: gztime.substring(idx + 1) };
 };
 
+/** 判断代码是否在输入框已选中 */
 const isCodeSelected = (code) => {
   const codes = inputCodes.value.split(/[，,\s]+/).filter(c => /^\d{6}$/.test(c));
   return codes.includes(code);
 };
 
+/** 切换代码选中状态 */
 const toggleCode = (code) => {
   const raw = inputCodes.value.trim();
   let codes = raw ? raw.split(/[，,\s]+/).filter(c => /^\d{6}$/.test(c)) : [];
   if (codes.includes(code)) {
     codes = codes.filter(c => c !== code);
-    inputCodes.value = codes.join(',');
   } else {
     codes.push(code);
-    inputCodes.value = codes.join(',');
   }
+  inputCodes.value = codes.join(',');
 };
 
-// ----- 数据加载逻辑（不变） -----
+/** JSONP方式加载基金历史净值数据（东方财富接口） */
 const loadHistoryData = (code) => {
   return new Promise((resolve, reject) => {
     const script = document.createElement('script');
     script.src = `https://fund.eastmoney.com/pingzhongdata/${code}.js`;
-    const timeout = setTimeout(() => {
-      cleanup();
-      reject(new Error('历史数据请求超时'));
-    }, 8000);
-
+    const timeout = setTimeout(() => { cleanup(); reject(new Error('历史数据请求超时')); }, 8000);
     const cleanup = () => {
       if (timeout) clearTimeout(timeout);
       if (script.parentNode) script.parentNode.removeChild(script);
       window.fS_name = undefined;
       window.Data_netWorthTrend = undefined;
     };
-
     script.onload = () => {
       clearTimeout(timeout);
       try {
         const name = window.fS_name;
         const trends = window.Data_netWorthTrend;
-        if (!name || !trends || !Array.isArray(trends) || trends.length === 0) {
-          throw new Error('历史净值数据缺失');
-        }
+        if (!name || !trends || !Array.isArray(trends) || trends.length === 0) throw new Error('历史净值数据缺失');
         let maxItem = trends[0];
-        for (const item of trends) {
-          if (item.y > maxItem.y) maxItem = item;
-        }
+        for (const item of trends) { if (item.y > maxItem.y) maxItem = item; }
         const currentItem = trends[trends.length - 1];
-
         const result = {
-          name,
-          maxDate: formatDate(maxItem.x),
-          maxValue: maxItem.y,
-          curDate: formatDate(currentItem.x),
-          curValue: currentItem.y,
+          name, maxDate: formatDate(maxItem.x), maxValue: maxItem.y,
+          curDate: formatDate(currentItem.x), curValue: currentItem.y,
           drawdown: ((currentItem.y - maxItem.y) / maxItem.y * 100).toFixed(2),
           drawdown3y: calcMaxDrawdown(trends, 3),
           drawdown2y: calcMaxDrawdown(trends, 2),
           drawdown1y: calcMaxDrawdown(trends, 1),
         };
-        cleanup();
-        resolve(result);
-      } catch (e) {
-        cleanup();
-        reject(e);
-      }
+        cleanup(); resolve(result);
+      } catch (e) { cleanup(); reject(e); }
     };
-
-    script.onerror = () => {
-      cleanup();
-      reject(new Error('加载历史脚本失败（代码可能不存在）'));
-    };
-
+    script.onerror = () => { cleanup(); reject(new Error('加载历史脚本失败（代码可能不存在）')); };
     document.head.appendChild(script);
   });
 };
 
+/** JSONP方式加载基金实时估值数据（天天基金接口） */
 const loadRealTimeData = (code) => {
   return new Promise((resolve, reject) => {
     const script = document.createElement('script');
     script.src = `https://fundgz.1234567.com.cn/js/${code}.js?callback=jsonpgz`;
-    const timeout = setTimeout(() => {
-      cleanup();
-      reject(new Error('实时估值请求超时'));
-    }, 6000);
-
+    const timeout = setTimeout(() => { cleanup(); reject(new Error('实时估值请求超时')); }, 6000);
     window.jsonpgz = (data) => {
-      clearTimeout(timeout);
-      cleanup();
+      clearTimeout(timeout); cleanup();
       if (data && data.dwjz && data.gsz && parseFloat(data.gsz) > 0 && data.gztime) {
-        resolve({
-          dwjz: parseFloat(data.dwjz),
-          gsz: parseFloat(data.gsz),
-          gszzl: data.gszzl,
-          gztime: data.gztime,
-          name: data.name || '',
-        });
-      } else {
-        reject(new Error('暂无实时估值'));
-      }
+        resolve({ dwjz: parseFloat(data.dwjz), gsz: parseFloat(data.gsz), gszzl: data.gszzl, gztime: data.gztime, name: data.name || '' });
+      } else { reject(new Error('暂无实时估值')); }
     };
-
     const cleanup = () => {
       if (timeout) clearTimeout(timeout);
       if (script.parentNode) script.parentNode.removeChild(script);
       window.jsonpgz = undefined;
     };
-
-    script.onerror = () => {
-      cleanup();
-      reject(new Error('实时估值脚本加载失败'));
-    };
-
+    script.onerror = () => { cleanup(); reject(new Error('实时估值脚本加载失败')); };
     document.head.appendChild(script);
   });
 };
 
+/** 并发加载单只基金的完整数据（历史+实时），历史数据失败则整体失败 */
 const loadFundFull = async (code) => {
   const [historyResult, realtimeResult] = await Promise.allSettled([
-    loadHistoryData(code),
-    loadRealTimeData(code),
+    loadHistoryData(code), loadRealTimeData(code),
   ]);
-
   const data = {
-    code,
-    name: '—',
-    maxDate: '—',
-    maxValue: '—',
-    curDate: '—',
-    curValue: '—',
-    drawdown: '—',
-    drawdown3y: '—',
-    drawdown2y: '—',
-    drawdown1y: '—',
-    gsz: '—',
-    gztime: '—',
-    dwjz: '—',
-    todayChange: '—',
+    code, name: '—', maxDate: '—', maxValue: '—', curDate: '—', curValue: '—',
+    drawdown: '—', drawdown3y: '—', drawdown2y: '—', drawdown1y: '—',
+    gsz: '—', gztime: '—', dwjz: '—', todayChange: '—',
   };
-
   if (historyResult.status === 'fulfilled') {
     Object.assign(data, historyResult.value);
-  } else {
-    throw new Error(historyResult.reason.message);
-  }
-
+  } else { throw new Error(historyResult.reason.message); }
   if (realtimeResult.status === 'fulfilled') {
     const r = realtimeResult.value;
-    data.gsz = r.gsz;
-    data.gztime = r.gztime;
-    data.dwjz = r.dwjz;
-    if (r.gszzl && !isNaN(parseFloat(r.gszzl))) {
-      data.todayChange = r.gszzl + '%';
-    } else {
-      const change = ((r.gsz - r.dwjz) / r.dwjz * 100).toFixed(2);
-      data.todayChange = change + '%';
-    }
+    data.gsz = r.gsz; data.gztime = r.gztime; data.dwjz = r.dwjz;
+    if (r.gszzl && !isNaN(parseFloat(r.gszzl))) { data.todayChange = r.gszzl + '%'; }
+    else { data.todayChange = ((r.gsz - r.dwjz) / r.dwjz * 100).toFixed(2) + '%'; }
   }
-
   return data;
 };
 
+/** 解析输入框基金代码，串行加载并展示结果 */
 const handleQuery = async () => {
   const raw = inputCodes.value.trim();
   if (!raw) return;
-
   const codes = raw.split(/[，,\s]+/).filter((c) => /^\d{6}$/.test(c));
   if (codes.length === 0) return;
-
   loading.value = true;
   statusText.value = '开始加载...';
   fundList.value = [];
   errors.value = [];
-
-  const results = [];
-  const errs = [];
-
+  const results = [], errs = [];
   for (let i = 0; i < codes.length; i++) {
     const code = codes[i];
     statusText.value = `正在加载 ${i + 1}/${codes.length} : ${code} ...`;
-    try {
-      const data = await loadFundFull(code);
-      results.push(data);
-    } catch (err) {
-      errs.push({ code, message: err.message });
-    }
+    try { const data = await loadFundFull(code); results.push(data); }
+    catch (err) { errs.push({ code, message: err.message }); }
   }
-
   fundList.value = results;
   errors.value = errs;
-  statusText.value =
-    errs.length > 0
-      ? `完成（成功 ${results.length} 只，失败 ${errs.length} 只）`
-      : `✅ 全部加载完成，共 ${results.length} 只基金`;
-
+  statusText.value = errs.length > 0
+    ? `完成（成功 ${results.length} 只，失败 ${errs.length} 只）`
+    : `✅ 全部加载完成，共 ${results.length} 只基金`;
   loading.value = false;
 };
 
-onMounted(() => {
-  handleQuery();
-});
+onMounted(handleQuery);
 </script>
 
 <style lang="scss" scoped>
