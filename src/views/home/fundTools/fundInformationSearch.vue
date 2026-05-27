@@ -73,9 +73,32 @@
             <span :class="getChangeClass(row.drawdown)">{{ row.drawdown }}%</span>
           </template>
         </el-table-column>
-        <el-table-column prop="gsz" label="实时估值" width="110" />
-        <el-table-column prop="gztime" label="估值时间" width="110" />
+        <el-table-column prop="drawdown3y" label="近三年回撤" width="140">
+          <template #default="{ row }">
+            <span :class="getChangeClass(row.drawdown3y)">{{ row.drawdown3y }}%</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="drawdown2y" label="近二年回撤" width="140">
+          <template #default="{ row }">
+            <span :class="getChangeClass(row.drawdown2y)">{{ row.drawdown2y }}%</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="drawdown1y" label="近一年回撤" width="140">
+          <template #default="{ row }">
+            <span :class="getChangeClass(row.drawdown1y)">{{ row.drawdown1y }}%</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="dwjz" label="昨日净值" width="110" />
+        <el-table-column prop="gsz" label="实时估值" width="110" />
+        <el-table-column label="估值时间" width="110">
+          <template #default="{ row }">
+            <span v-if="row.gztime !== '—'" class="gztime-split">
+              <span>{{ splitGztime(row.gztime).date }}</span>
+              <span>{{ splitGztime(row.gztime).time }}</span>
+            </span>
+            <span v-else>—</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="todayChange" label="今日涨跌幅" width="130">
           <template #default="{ row }">
             <span v-if="row.todayChange !== '—'" :class="getChangeClass(row.todayChange)">
@@ -96,7 +119,7 @@
         class="fund-card"
       >
         <div class="card-header">
-          <el-tag type="primary" size="large" class="card-code">{{ fund.code }}</el-tag>
+          <el-tag effect="plain" type="info" size="large" class="card-code">{{ fund.code }}</el-tag>
           <span class="card-name">{{ fund.name }}</span>
         </div>
 
@@ -121,16 +144,22 @@
 
           <div class="data-row three-col">
             <div class="data-item">
-              <div class="data-label">实时估值</div>
-              <div class="data-value">{{ fund.gsz }}</div>
+              <div class="data-label">近三年回撤</div>
+              <div class="data-value">
+                <span :class="getChangeClass(fund.drawdown3y)">{{ fund.drawdown3y }}%</span>
+              </div>
             </div>
             <div class="data-item">
-              <div class="data-label">昨日净值</div>
-              <div class="data-value">{{ fund.dwjz }}</div>
+              <div class="data-label">近二年回撤</div>
+              <div class="data-value">
+                <span :class="getChangeClass(fund.drawdown2y)">{{ fund.drawdown2y }}%</span>
+              </div>
             </div>
             <div class="data-item">
-              <div class="data-label">估值时间</div>
-              <div class="data-value">{{ fund.gztime }}</div>
+              <div class="data-label">近一年回撤</div>
+              <div class="data-value">
+                <span :class="getChangeClass(fund.drawdown1y)">{{ fund.drawdown1y }}%</span>
+              </div>
             </div>
           </div>
 
@@ -153,6 +182,27 @@
             <div class="data-item">
               <div class="data-label">最高净值</div>
               <div class="data-value">{{ fund.maxValue }}</div>
+            </div>
+          </div>
+
+          <div class="data-row three-col">
+            <div class="data-item">
+              <div class="data-label">昨日净值</div>
+              <div class="data-value">{{ fund.dwjz }}</div>
+            </div>
+            <div class="data-item">
+              <div class="data-label">实时估值</div>
+              <div class="data-value">{{ fund.gsz }}</div>
+            </div>
+            <div class="data-item">
+              <div class="data-label">估值时间</div>
+              <div class="data-value">
+                <span v-if="fund.gztime !== '—'" class="gztime-split">
+                  <span>{{ splitGztime(fund.gztime).date }}</span>
+                  <span>{{ splitGztime(fund.gztime).time }}</span>
+                </span>
+                <span v-else>—</span>
+              </div>
             </div>
           </div>
         </div>
@@ -203,6 +253,30 @@ const formatDate = (ts) => {
   return `${y}-${m}-${day}`;
 };
 
+// 计算最近 N 年内的最大回撤（返回百分比数字字符串，如 "-15.23"）
+const calcMaxDrawdown = (trends, years) => {
+  if (!trends || trends.length < 2) return '—';
+  const now = new Date();
+  const cutoff = new Date(now.getFullYear() - years, now.getMonth(), now.getDate()).getTime();
+  const filtered = trends.filter(item => item.x >= cutoff);
+  if (filtered.length < 2) return '—';
+
+  let maxDD = 0;
+  let peak = filtered[0].y;
+
+  for (let i = 1; i < filtered.length; i++) {
+    const val = filtered[i].y;
+    if (val > peak) {
+      peak = val;
+    } else {
+      const dd = (val - peak) / peak;
+      if (dd < maxDD) maxDD = dd;
+    }
+  }
+
+  return (maxDD * 100).toFixed(2);
+};
+
 const getChangeClass = (value) => {
   const num = parseFloat(value);
   if (isNaN(num)) return '';
@@ -211,6 +285,16 @@ const getChangeClass = (value) => {
 
 const getFundName = (code) => {
   return FUND_NAME_MAP[code] || '暂无名称信息';
+};
+
+const splitGztime = (gztime) => {
+  if (!gztime || gztime === '—') return { date: '—', time: '' };
+  const idx = gztime.lastIndexOf(' ');
+  if (idx === -1) return { date: gztime, time: '' };
+  return {
+    date: gztime.substring(0, idx),
+    time: gztime.substring(idx + 1)
+  };
 };
 
 const isCodeSelected = (code) => {
@@ -268,6 +352,9 @@ const loadHistoryData = (code) => {
           curDate: formatDate(currentItem.x),
           curValue: currentItem.y,
           drawdown: ((currentItem.y - maxItem.y) / maxItem.y * 100).toFixed(2),
+          drawdown3y: calcMaxDrawdown(trends, 3),
+          drawdown2y: calcMaxDrawdown(trends, 2),
+          drawdown1y: calcMaxDrawdown(trends, 1),
         };
         cleanup();
         resolve(result);
@@ -340,6 +427,9 @@ const loadFundFull = async (code) => {
     curDate: '—',
     curValue: '—',
     drawdown: '—',
+    drawdown3y: '—',
+    drawdown2y: '—',
+    drawdown1y: '—',
     gsz: '—',
     gztime: '—',
     dwjz: '—',
@@ -507,6 +597,14 @@ onMounted(() => {
   color: #c0c4cc;
 }
 
+.gztime-split {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.5;
+  font-size: inherit;
+}
+
 /* ========== 移动端卡片布局样式 ========== */
 .card-list {
   display: flex;
@@ -517,19 +615,25 @@ onMounted(() => {
 .fund-card {
   border-radius: 10px;
   overflow: hidden;
+  background: #f5f8ff;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
 .fund-card :deep(.el-card__body) {
   padding: 14px 16px;
+  background: #f5f8ff;
 }
 
 .card-header {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 14px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #ebeef5;
+  margin: -14px -16px 14px -16px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #4a90d9 0%, #3b7cc3 100%);
+  border-radius: 0;
+  color: #fff;
 }
 
 .card-code {
@@ -541,7 +645,7 @@ onMounted(() => {
 .card-name {
   font-size: 15px;
   font-weight: 600;
-  color: #303133;
+  color: #fff;
   line-height: 1.4;
   word-break: break-all;
 }
@@ -568,16 +672,17 @@ onMounted(() => {
 }
 
 .data-item {
-  background: #f8f9fc;
+  background: #fff;
   border-radius: 8px;
-  padding: 10px 12px;
+  padding: 10px 8px;
   text-align: center;
   min-width: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .data-item.highlight {
-  background: linear-gradient(135deg, #f0f4ff 0%, #fafbff 100%);
-  border: 1px solid #e8edf5;
+  background: #fff;
+  border: 1px solid #d0ddf5;
 }
 
 .data-label {
@@ -639,6 +744,23 @@ onMounted(() => {
   .action-bar {
     gap: 10px;
   }
+
+  /* 三列行允许文本换行，避免被截断 */
+  .data-row.three-col .data-label,
+  .data-row.three-col .data-value {
+    white-space: normal;
+    word-break: break-all;
+  }
+/* 
+  .data-row.three-col .data-label {
+    font-size: 11px;
+  } */
+
+  /* .data-row.three-col .data-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: #303133;
+  } */
 }
 
 /* 桌面端恢复表格 */
