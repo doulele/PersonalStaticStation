@@ -500,5 +500,5 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@import './style/fundInformationSearch.scss';
+@import url('./style/fundInformationSearch.scss');
 </style>
