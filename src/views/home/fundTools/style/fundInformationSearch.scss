@@ -1,0 +1,278 @@
+// ========== 颜色变量 ==========
+$color-primary-dark: #1f2f3d;
+$color-text: #303133;
+$color-text-secondary: #606266;
+$color-text-placeholder: #909399;
+$color-text-disabled: #c0c4cc;
+$color-up: #e83929;
+$color-down: #16a951;
+$color-bg-card: #f5f8ff;
+$color-header-start: #4a90d9;
+$color-header-end: #3b7cc3;
+
+.fund-drawdown {
+  max-width: 1600px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.query-card {
+  margin-bottom: 20px;
+  border-radius: 8px;
+}
+
+.header {
+  h2 {
+    margin: 0 0 8px 0;
+    font-size: 20px;
+    color: $color-primary-dark;
+  }
+}
+
+.description {
+  font-size: 13px;
+  color: $color-text-secondary;
+  margin: 0 0 12px 0;
+  line-height: 1.6;
+
+  .tip {
+    color: $color-text-placeholder;
+  }
+}
+
+.common-codes {
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  .label {
+    font-weight: 600;
+    color: $color-text;
+    margin-right: 12px;
+  }
+}
+
+.code-tag {
+  margin-right: 8px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  user-select: none;
+  padding: 6px 12px;
+  font-size: 14px;
+  border-radius: 6px;
+}
+
+.code-input {
+  margin-bottom: 16px;
+}
+
+.action-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.status-text {
+  color: $color-text-placeholder;
+  font-size: 14px;
+}
+
+.error-area {
+  margin-top: 16px;
+
+  ul {
+    margin: 4px 0 0 20px;
+    padding: 0;
+  }
+}
+
+.table-card {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.up {
+  color: $color-up;
+  font-weight: 500;
+}
+
+.down {
+  color: $color-down;
+  font-weight: 500;
+}
+
+.no-data {
+  color: $color-text-disabled;
+}
+
+.gztime-split {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.5;
+  font-size: inherit;
+}
+
+// ========== 移动端卡片布局样式 ==========
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.fund-card {
+  border-radius: 10px;
+  overflow: hidden;
+  background: $color-bg-card;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+
+  :deep(.el-card__body) {
+    padding: 14px 16px;
+    background: $color-bg-card;
+  }
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: -14px -16px 14px -16px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, $color-header-start 0%, $color-header-end 100%);
+  border-radius: 0;
+  color: #fff;
+}
+
+.card-code {
+  flex-shrink: 0;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.card-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.4;
+  word-break: break-all;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.data-row {
+  display: flex;
+  gap: 8px;
+
+  &.three-col {
+    .data-item {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  > .data-item {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.data-item {
+  background: #fff;
+  border-radius: 8px;
+  padding: 10px 8px;
+  text-align: center;
+  min-width: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+
+  &.highlight {
+    background: #fff;
+    border: 1px solid #d0ddf5;
+
+    .data-value {
+      font-size: 18px;
+    }
+  }
+}
+
+.data-label {
+  font-size: 12px;
+  color: $color-text-placeholder;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.data-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: $color-text;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// ========== 响应式显示控制 ==========
+.desktop-only {
+  display: block;
+}
+
+.mobile-only {
+  display: none;
+}
+
+// 小于 900px 切换为移动端卡片布局
+@media (max-width: 899px) {
+  .desktop-only {
+    display: none !important;
+  }
+
+  .mobile-only {
+    display: flex;
+  }
+
+  .fund-drawdown {
+    padding: 10px;
+  }
+
+  .header h2 {
+    font-size: 18px;
+  }
+
+  .code-tag {
+    padding: 6px 10px;
+    font-size: 13px;
+    margin-right: 6px;
+    margin-bottom: 6px;
+  }
+
+  .action-bar {
+    gap: 10px;
+  }
+
+  // 三列行允许文本换行，避免被截断
+  .data-row.three-col {
+    .data-label,
+    .data-value {
+      white-space: normal;
+      word-break: break-all;
+    }
+  }
+}
+
+// 桌面端恢复表格
+@media (min-width: 900px) {
+  .table-card {
+    border-radius: 8px;
+    overflow: hidden;
+  }
+}
