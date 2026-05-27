@@ -239,20 +239,43 @@ let fundCodeList = Object.keys(FUND_NAME_MAP);
 const commonCodes = fundCodeList;
 const inputCodes = ref(fundCodeList.join(','));
 
-/** 峰值-谷值法计算最近N年内最大回撤 */
+/** 峰值-谷值法计算最大回撤，years为null时计算全历史最大回撤 */
 const calcMaxDrawdown = (trends, years) => {
+  const label = years == null ? '全历史' : `近${years}年`;
   if (!trends || trends.length < 2) return '—';
-  const now = new Date();
-  const cutoff = new Date(now.getFullYear() - years, now.getMonth(), now.getDate()).getTime();
-  const filtered = trends.filter(item => item.x >= cutoff);
+  let filtered = trends;
+  if (years != null) {
+    const now = new Date();
+    const cutoff = new Date(now.getFullYear() - years, now.getMonth(), now.getDate()).getTime();
+    filtered = trends.filter(item => item.x >= cutoff);
+  }
   if (filtered.length < 2) return '—';
-  let maxDD = 0, peak = filtered[0].y;
+  let maxDD = 0, peakIdx = 0;
+  let ddPeak = filtered[0].y, ddPeakIdx = 0, ddValleyIdx = 0;
   for (let i = 1; i < filtered.length; i++) {
     const val = filtered[i].y;
-    if (val > peak) { peak = val; }
-    else { const dd = (val - peak) / peak; if (dd < maxDD) maxDD = dd; }
+    if (val > ddPeak) { ddPeak = val; ddPeakIdx = i; }
+    else {
+      const dd = (val - ddPeak) / ddPeak;
+      if (dd < maxDD) { maxDD = dd; peakIdx = ddPeakIdx; ddValleyIdx = i; }
+    }
   }
-  return (maxDD * 100).toFixed(2);
+  const result = (maxDD * 100).toFixed(2);
+  // 调试输出：峰→谷明细
+  // const peakItem = filtered[peakIdx];
+  // const valleyItem = filtered[ddValleyIdx];
+  // const fmt = (ts) => {
+  //   const d = new Date(ts);
+  //   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  // };
+  // console.log(
+  //   `[${label}回撤] 数据${filtered.length}天 | ` +
+  //   `峰值 ${fmt(peakItem.x)} ${peakItem.y.toFixed(4)} → ` +
+  //   `谷值 ${fmt(valleyItem.x)} ${valleyItem.y.toFixed(4)} | ` +
+  //   `回撤 ${result}%`
+  // );
+  // 防御：回撤超过99%视为数据异常
+  return parseFloat(result) < -99 ? '—' : result;
 };
 
 /** 涨跌幅颜色类名：正数→up(红) 负数→down(绿) */
@@ -291,7 +314,7 @@ const toggleCode = (code) => {
   inputCodes.value = codes.join(',');
 };
 
-/** JSONP方式加载基金历史净值数据（东方财富接口） */
+/** JSONP方式加载基金历史累计净值数据（东方财富接口） */
 const loadHistoryData = (code) => {
   return new Promise((resolve, reject) => {
     const script = document.createElement('script');
@@ -301,21 +324,27 @@ const loadHistoryData = (code) => {
       if (timeout) clearTimeout(timeout);
       if (script.parentNode) script.parentNode.removeChild(script);
       window.fS_name = undefined;
-      window.Data_netWorthTrend = undefined;
+      window.Data_ACWorthTrend = undefined;
     };
     script.onload = () => {
       clearTimeout(timeout);
       try {
         const name = window.fS_name;
-        const trends = window.Data_netWorthTrend;
-        if (!name || !trends || !Array.isArray(trends) || trends.length === 0) throw new Error('历史净值数据缺失');
+        const rawTrends = window.Data_ACWorthTrend;
+        if (!name || !rawTrends || !Array.isArray(rawTrends) || rawTrends.length === 0) throw new Error('历史净值数据缺失');
+        // Data_ACWorthTrend格式为[日期字符串, 净值]的二维数组，统一转为{x: 时间戳, y: 净值}
+        const trends = rawTrends.map(item => ({
+          x: Array.isArray(item) ? new Date(item[0]).getTime() : item.x,
+          y: Array.isArray(item) ? parseFloat(item[1]) : parseFloat(item.y),
+        })).filter(item => !isNaN(item.x) && Number.isFinite(item.y) && item.y > 0);
+        if (trends.length === 0) throw new Error('累计净值数据异常（过滤后无有效数据），请检查基金代码');
         let maxItem = trends[0];
         for (const item of trends) { if (item.y > maxItem.y) maxItem = item; }
         const currentItem = trends[trends.length - 1];
         const result = {
           name, maxDate: formatDate(maxItem.x), maxValue: maxItem.y,
           curDate: formatDate(currentItem.x), curValue: currentItem.y,
-          drawdown: ((currentItem.y - maxItem.y) / maxItem.y * 100).toFixed(2),
+          drawdown: calcMaxDrawdown(trends, null),
           drawdown3y: calcMaxDrawdown(trends, 3),
           drawdown2y: calcMaxDrawdown(trends, 2),
           drawdown1y: calcMaxDrawdown(trends, 1),
