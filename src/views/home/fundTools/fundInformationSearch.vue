@@ -39,10 +39,24 @@
       />
 
       <div class="action-bar">
+        <div class="action-bar-left">
+          <span class="drawdown-date-label">区间回撤起点：</span>
+          <el-date-picker
+            v-model="drawdownDate"
+            type="date"
+            placeholder="选择区间回撤起点"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+            size="large"
+            class="drawdown-date-picker"
+          />
+        </div>
         <el-button type="primary" size="large" :loading="loading" @click="handleQuery">
           开始查询
         </el-button>
-        <span v-if="statusText" class="status-text">{{ statusText }}</span>
+      </div>
+      <div v-if="statusText" class="status-bar">
+        <span class="status-text">{{ statusText }}</span>
       </div>
 
       <div v-if="errors.length" class="error-area">
@@ -68,24 +82,25 @@
         <el-table-column prop="maxValue" label="最高净值" width="110" />
         <el-table-column prop="curDate" label="最新日期" width="120" />
         <el-table-column prop="curValue" label="最新净值" width="110" />
-        <el-table-column prop="drawdown" label="历史回撤" width="120">
+        <el-table-column prop="drawdown" label="历史最大回撤" width="120">
           <template #default="{ row }">
             <span :class="getChangeClass(row.drawdown)">{{ row.drawdown }}%</span>
           </template>
         </el-table-column>
-        <el-table-column prop="drawdown3y" label="近三年回撤" width="140">
+        <el-table-column prop="curDrawdown" label="区间当前回撤" width="130">
           <template #default="{ row }">
-            <span :class="getChangeClass(row.drawdown3y)">{{ row.drawdown3y }}%</span>
+            <span v-if="row.curDrawdown !== '—'" :class="getChangeClass(row.curDrawdown)">
+              {{ row.curDrawdown }}%
+            </span>
+            <span v-else class="no-data">—</span>
           </template>
         </el-table-column>
-        <el-table-column prop="drawdown2y" label="近二年回撤" width="140">
+        <el-table-column prop="rangeMaxDrawdown" label="区间最大回撤" width="140">
           <template #default="{ row }">
-            <span :class="getChangeClass(row.drawdown2y)">{{ row.drawdown2y }}%</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="drawdown1y" label="近一年回撤" width="140">
-          <template #default="{ row }">
-            <span :class="getChangeClass(row.drawdown1y)">{{ row.drawdown1y }}%</span>
+            <span v-if="row.rangeMaxDrawdown !== '—'" :class="getChangeClass(row.rangeMaxDrawdown)">
+              {{ row.rangeMaxDrawdown }}%
+            </span>
+            <span v-else class="no-data">—</span>
           </template>
         </el-table-column>
         <el-table-column prop="dwjz" label="昨日净值" width="110" />
@@ -134,30 +149,30 @@
               </div>
             </div>
             <div class="data-item highlight">
-              <div class="data-label">历史回撤</div>
+              <div class="data-label">历史最大回撤</div>
               <div class="data-value">
                 <span :class="getChangeClass(fund.drawdown)">{{ fund.drawdown }}%</span>
               </div>
             </div>
           </div>
 
-          <div class="data-row three-col">
-            <div class="data-item">
-              <div class="data-label">近三年回撤</div>
+          <div class="data-row">
+            <div class="data-item highlight">
+              <div class="data-label">区间当前回撤</div>
               <div class="data-value">
-                <span :class="getChangeClass(fund.drawdown3y)">{{ fund.drawdown3y }}%</span>
+                <span v-if="fund.curDrawdown !== '—'" :class="getChangeClass(fund.curDrawdown)">
+                  {{ fund.curDrawdown }}%
+                </span>
+                <span v-else class="no-data">—</span>
               </div>
             </div>
-            <div class="data-item">
-              <div class="data-label">近二年回撤</div>
+            <div class="data-item highlight">
+              <div class="data-label">区间最大回撤</div>
               <div class="data-value">
-                <span :class="getChangeClass(fund.drawdown2y)">{{ fund.drawdown2y }}%</span>
-              </div>
-            </div>
-            <div class="data-item">
-              <div class="data-label">近一年回撤</div>
-              <div class="data-value">
-                <span :class="getChangeClass(fund.drawdown1y)">{{ fund.drawdown1y }}%</span>
+                <span v-if="fund.rangeMaxDrawdown !== '—'" :class="getChangeClass(fund.rangeMaxDrawdown)">
+                  {{ fund.rangeMaxDrawdown }}%
+                </span>
+                <span v-else class="no-data">—</span>
               </div>
             </div>
           </div>
@@ -222,6 +237,8 @@ const errors = ref([]);
 const loading = ref(false);
 /** 状态：加载提示文本 */
 const statusText = ref('');
+/** 状态：区间当前回撤筛选起始日期，默认2024-01-01 */
+const drawdownDate = ref('2024-01-01');
 
 /** 常用基金代码 → 名称映射表 */
 const FUND_NAME_MAP = {
@@ -239,43 +256,43 @@ let fundCodeList = Object.keys(FUND_NAME_MAP);
 const commonCodes = fundCodeList;
 const inputCodes = ref(fundCodeList.join(','));
 
-/** 峰值-谷值法计算最大回撤，years为null时计算全历史最大回撤 */
-const calcMaxDrawdown = (trends, years) => {
-  const label = years == null ? '全历史' : `近${years}年`;
+/** 峰值-谷值法计算最大回撤，传入fromDate则只计算该日期至今的区间最大回撤 */
+const calcMaxDrawdown = (trends, fromDate) => {
   if (!trends || trends.length < 2) return '—';
-  let filtered = trends;
-  if (years != null) {
-    const now = new Date();
-    const cutoff = new Date(now.getFullYear() - years, now.getMonth(), now.getDate()).getTime();
-    filtered = trends.filter(item => item.x >= cutoff);
+  let data = trends;
+  if (fromDate) {
+    const cutoff = new Date(fromDate).getTime();
+    data = trends.filter(item => item.x >= cutoff);
+    if (data.length < 2) return '—';
   }
-  if (filtered.length < 2) return '—';
-  let maxDD = 0, peakIdx = 0;
-  let ddPeak = filtered[0].y, ddPeakIdx = 0, ddValleyIdx = 0;
-  for (let i = 1; i < filtered.length; i++) {
-    const val = filtered[i].y;
-    if (val > ddPeak) { ddPeak = val; ddPeakIdx = i; }
+  let maxDD = 0;
+  let ddPeak = data[0].y;
+  for (let i = 1; i < data.length; i++) {
+    const val = data[i].y;
+    if (val > ddPeak) { ddPeak = val; }
     else {
       const dd = (val - ddPeak) / ddPeak;
-      if (dd < maxDD) { maxDD = dd; peakIdx = ddPeakIdx; ddValleyIdx = i; }
+      if (dd < maxDD) maxDD = dd;
     }
   }
   const result = (maxDD * 100).toFixed(2);
-  // 调试输出：峰→谷明细
-  // const peakItem = filtered[peakIdx];
-  // const valleyItem = filtered[ddValleyIdx];
-  // const fmt = (ts) => {
-  //   const d = new Date(ts);
-  //   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  // };
-  // console.log(
-  //   `[${label}回撤] 数据${filtered.length}天 | ` +
-  //   `峰值 ${fmt(peakItem.x)} ${peakItem.y.toFixed(4)} → ` +
-  //   `谷值 ${fmt(valleyItem.x)} ${valleyItem.y.toFixed(4)} | ` +
-  //   `回撤 ${result}%`
-  // );
   // 防御：回撤超过99%视为数据异常
   return parseFloat(result) < -99 ? '—' : result;
+};
+
+/** 计算区间当前回撤：从指定日期至今，(最新净值 - 该时间段内最高净值) / 最高净值 */
+const calcCurDrawdown = (trends, fromDate) => {
+  if (!trends || trends.length < 2) return '—';
+  const cutoff = new Date(fromDate).getTime();
+  const filtered = trends.filter(item => item.x >= cutoff);
+  if (filtered.length < 2) return '—';
+  let peak = filtered[0].y;
+  for (let i = 1; i < filtered.length; i++) {
+    if (filtered[i].y > peak) peak = filtered[i].y;
+  }
+  const cur = filtered[filtered.length - 1].y;
+  const dd = ((cur - peak) / peak * 100).toFixed(2);
+  return parseFloat(dd) < -99 ? '—' : dd;
 };
 
 /** 涨跌幅颜色类名：正数→up(红) 负数→down(绿) */
@@ -344,10 +361,9 @@ const loadHistoryData = (code) => {
         const result = {
           name, maxDate: formatDate(maxItem.x), maxValue: maxItem.y,
           curDate: formatDate(currentItem.x), curValue: currentItem.y,
-          drawdown: calcMaxDrawdown(trends, null),
-          drawdown3y: calcMaxDrawdown(trends, 3),
-          drawdown2y: calcMaxDrawdown(trends, 2),
-          drawdown1y: calcMaxDrawdown(trends, 1),
+          drawdown: calcMaxDrawdown(trends),
+          curDrawdown: calcCurDrawdown(trends, drawdownDate.value),
+          rangeMaxDrawdown: calcMaxDrawdown(trends, drawdownDate.value),
         };
         cleanup(); resolve(result);
       } catch (e) { cleanup(); reject(e); }
@@ -386,7 +402,7 @@ const loadFundFull = async (code) => {
   ]);
   const data = {
     code, name: '—', maxDate: '—', maxValue: '—', curDate: '—', curValue: '—',
-    drawdown: '—', drawdown3y: '—', drawdown2y: '—', drawdown1y: '—',
+    drawdown: '—', curDrawdown: '—', rangeMaxDrawdown: '—',
     gsz: '—', gztime: '—', dwjz: '—', todayChange: '—',
   };
   if (historyResult.status === 'fulfilled') {

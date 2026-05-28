@@ -72,13 +72,35 @@ $color-header-end: #3b7cc3;
 .action-bar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
 }
 
+.action-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+}
+
+.drawdown-date-picker {
+  width: 200px;
+}
+
+.status-bar {
+  margin-top: 10px;
+}
+
 .status-text {
   color: $color-text-placeholder;
+  font-size: 13px;
+}
+
+.drawdown-date-label {
   font-size: 14px;
+  color: $color-text-secondary;
+  font-weight: 500;
 }
 
 .error-area {
@@ -257,6 +279,27 @@ $color-header-end: #3b7cc3;
 
   .action-bar {
     gap: 10px;
+    justify-content: flex-start;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .action-bar-left {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+
+  .drawdown-date-label {
+    font-size: 13px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .drawdown-date-picker {
+    flex: 1;
+    min-width: 0;
   }
 
   // 三列行允许文本换行，避免被截断
