@@ -304,10 +304,24 @@ $color-header-end: #3b7cc3;
 
   // 三列行允许文本换行，避免被截断
   .data-row.three-col {
+    .data-item{
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .data-label{
+      line-height: 18px;
+    }
     .data-label,
     .data-value {
       white-space: normal;
       word-break: break-all;
+      flex-basis: 100%;
+    }
+    .data-value{
+      font-size: 14px;
+      font-weight: normal;
+      color: #666;
     }
   }
 }
