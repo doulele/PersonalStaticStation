@@ -70,15 +70,16 @@
 
     <el-card v-if="fundList.length" shadow="hover" class="table-card desktop-only">
       <el-table
-        :data="fundList"
+        :data="sortedFundList"
         border
         stripe
         :header-cell-style="{ background: '#f5f7fa', color: '#303133', fontWeight: 600 }"
         style="width: 100%"
+        @sort-change="onTableSortChange"
       >
         <el-table-column prop="code" label="基金代码" width="100" />
         <el-table-column prop="name" label="基金名称" min-width="160" />
-        <el-table-column prop="todayChange" label="今日涨跌幅" width="130">
+        <el-table-column prop="todayChange" label="今日涨跌幅" width="130" sortable="custom">
           <template #default="{ row }">
             <span v-if="row.todayChange !== '—'" :class="getChangeClass(row.todayChange)">
               {{ row.todayChange }}
@@ -86,16 +87,16 @@
             <span v-else class="no-data">—</span>
           </template>
         </el-table-column>
-        <el-table-column prop="maxValue" label="最高净值" width="110" />
+        <el-table-column prop="maxValue" label="最高净值" width="110" sortable="custom" />
         <el-table-column prop="maxDate" label="最高净值日期" width="120" />
-        <el-table-column prop="curValue" label="最新净值" width="110" />
+        <el-table-column prop="curValue" label="最新净值" width="110" sortable="custom" />
         <el-table-column prop="curDate" label="最新日期" width="120" />
-        <el-table-column prop="drawdown" label="历史最大回撤" width="120">
+        <el-table-column prop="drawdown" label="历史最大回撤" width="120" sortable="custom">
           <template #default="{ row }">
             <span :class="getChangeClass(row.drawdown)">{{ row.drawdown }}%</span>
           </template>
         </el-table-column>
-        <el-table-column prop="rangeMaxDrawdown" label="区间最大回撤" width="140">
+        <el-table-column prop="rangeMaxDrawdown" label="区间最大回撤" width="140" sortable="custom">
           <template #default="{ row }">
             <span v-if="row.rangeMaxDrawdown !== '—'" :class="getChangeClass(row.rangeMaxDrawdown)">
               {{ row.rangeMaxDrawdown }}%
@@ -103,7 +104,7 @@
             <span v-else class="no-data">—</span>
           </template>
         </el-table-column>
-        <el-table-column prop="curDrawdown" label="区间当前回撤" width="130">
+        <el-table-column prop="curDrawdown" label="区间当前回撤" width="130" sortable="custom">
           <template #default="{ row }">
             <span v-if="row.curDrawdown !== '—'" :class="getChangeClass(row.curDrawdown)">
               {{ row.curDrawdown }}%
@@ -111,23 +112,41 @@
             <span v-else class="no-data">—</span>
           </template>
         </el-table-column>
-        <el-table-column prop="dwjz" label="昨日净值" width="110" />
-        <el-table-column prop="gsz" label="实时估值" width="110" />
-        <el-table-column label="估值时间" width="110">
-          <template #default="{ row }">
-            <span v-if="row.gztime !== '—'" class="gztime-split">
-              <span>{{ splitGztime(row.gztime).date }}</span>
-              <span>{{ splitGztime(row.gztime).time }}</span>
-            </span>
-            <span v-else>—</span>
-          </template>
-        </el-table-column>
+        <el-table-column prop="dwjz" label="昨日净值" width="110" sortable="custom" />
+        <el-table-column prop="gsz" label="实时估值" width="110" sortable="custom" />
+        <el-table-column prop="gztime" label="估值时间" width="110" />
       </el-table>
     </el-card>
     <!-- 移动端数据展示卡片 -->
     <div v-if="fundList.length" class="card-list mobile-only">
+      <div class="sort-dropdown-bar">
+        <span class="sort-bar-label">排序</span>
+        <el-select
+          v-model="sortField"
+          placeholder="默认顺序"
+          clearable
+          size="large"
+          class="sort-select"
+          @change="onMobileSortChange"
+        >
+          <el-option
+            v-for="opt in sortOptions"
+            :key="opt.key"
+            :label="opt.label"
+            :value="opt.key"
+          />
+        </el-select>
+        <el-button
+          v-if="sortField"
+          :icon="sortOrder === 'asc' ? 'Top' : 'Bottom'"
+          circle
+          size="large"
+          class="sort-order-btn"
+          @click="toggleSortOrder"
+        />
+      </div>
       <el-card
-        v-for="fund in fundList"
+        v-for="fund in sortedFundList"
         :key="fund.code"
         shadow="hover"
         class="fund-card"
@@ -226,7 +245,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import {formatDate} from '@/utils/common/date'
 
 /** 状态：查询结果列表 */
@@ -239,6 +258,86 @@ const loading = ref(false);
 const statusText = ref('');
 /** 状态：区间当前回撤筛选起始日期，默认2024-01-01 */
 const drawdownDate = ref('2024-01-01');
+
+// ========== 排序相关 ==========
+const sortField = ref('');
+const sortOrder = ref('desc'); // desc | asc
+
+/** 排序选项配置 */
+const sortOptions = [
+  { key: 'todayChange', label: '今日涨跌幅' },
+  { key: 'drawdown', label: '历史最大回撤' },
+  { key: 'curDrawdown', label: '区间当前回撤' },
+  { key: 'rangeMaxDrawdown', label: '区间最大回撤' },
+  { key: 'curValue', label: '最新净值' },
+  { key: 'maxValue', label: '最高净值' },
+  { key: 'dwjz', label: '昨日净值' },
+  { key: 'gsz', label: '实时估值' },
+];
+
+/** 提取排序用的数值：-100 视为最差（回撤为负），'—' 排最后 */
+const getSortValue = (row, key) => {
+  const val = row[key];
+  if (val === '—' || val === undefined || val === null) return -Infinity;
+  const str = String(val).replace('%', '');
+  const num = parseFloat(str);
+  return isNaN(num) ? -Infinity : num;
+};
+
+/** 排序后的基金列表（桌面端表格+移动端卡片共用） */
+const sortedFundList = computed(() => {
+  if (!sortField.value) return fundList.value;
+  const arr = [...fundList.value];
+  arr.sort((a, b) => {
+    const va = getSortValue(a, sortField.value);
+    const vb = getSortValue(b, sortField.value);
+    if (va === -Infinity && vb === -Infinity) return 0;
+    if (va === -Infinity) return 1;
+    if (vb === -Infinity) return -1;
+    return sortOrder.value === 'asc' ? va - vb : vb - va;
+  });
+  return arr;
+});
+
+/** 切换排序：同一字段点击切换升降序，不同字段默认降序 */
+const toggleSort = (key) => {
+  if (sortField.value === key) {
+    sortOrder.value = sortOrder.value === 'desc' ? 'asc' : 'desc';
+  } else {
+    sortField.value = key;
+    sortOrder.value = 'desc';
+  }
+};
+
+/** 重置排序 */
+const resetSort = () => {
+  sortField.value = '';
+  sortOrder.value = 'desc';
+};
+
+/** 移动端下拉框切换排序字段 */
+const onMobileSortChange = (key) => {
+  if (!key) {
+    resetSort();
+  } else {
+    sortOrder.value = 'desc'; // 切换字段默认降序
+  }
+};
+
+/** 移动端切换升降序 */
+const toggleSortOrder = () => {
+  sortOrder.value = sortOrder.value === 'desc' ? 'asc' : 'desc';
+};
+
+/** el-table 表头排序事件，同步到自定义排序状态 */
+const onTableSortChange = ({ prop, order }) => {
+  if (!order) {
+    resetSort();
+  } else {
+    sortField.value = prop;
+    sortOrder.value = order === 'ascending' ? 'asc' : 'desc';
+  }
+};
 
 /** 常用基金代码 → 名称映射表 */
 const FUND_NAME_MAP = {
