@@ -11,7 +11,7 @@ $color-header-start: #4a90d9;
 $color-header-end: #3b7cc3;
 
 .fund-drawdown {
-  max-width: 1600px;
+  max-width: 1800px;
   width: 100%;
   margin: 0 auto;
   padding: 16px;
@@ -115,6 +115,20 @@ $color-header-end: #3b7cc3;
 .table-card {
   border-radius: 8px;
   overflow: hidden;
+
+  :deep(.el-table) {
+    th,
+    td {
+      text-align: center;
+    }
+
+    .cell {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 0;
+    }
+  }
 }
 
 .up {

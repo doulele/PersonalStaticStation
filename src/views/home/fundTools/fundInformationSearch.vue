@@ -78,27 +78,35 @@
       >
         <el-table-column prop="code" label="基金代码" width="100" />
         <el-table-column prop="name" label="基金名称" min-width="160" />
-        <el-table-column prop="maxDate" label="最高净值日期" width="120" />
+        <el-table-column prop="todayChange" label="今日涨跌幅" width="130">
+          <template #default="{ row }">
+            <span v-if="row.todayChange !== '—'" :class="getChangeClass(row.todayChange)">
+              {{ row.todayChange }}
+            </span>
+            <span v-else class="no-data">—</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="maxValue" label="最高净值" width="110" />
-        <el-table-column prop="curDate" label="最新日期" width="120" />
+        <el-table-column prop="maxDate" label="最高净值日期" width="120" />
         <el-table-column prop="curValue" label="最新净值" width="110" />
+        <el-table-column prop="curDate" label="最新日期" width="120" />
         <el-table-column prop="drawdown" label="历史最大回撤" width="120">
           <template #default="{ row }">
             <span :class="getChangeClass(row.drawdown)">{{ row.drawdown }}%</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="curDrawdown" label="区间当前回撤" width="130">
-          <template #default="{ row }">
-            <span v-if="row.curDrawdown !== '—'" :class="getChangeClass(row.curDrawdown)">
-              {{ row.curDrawdown }}%
-            </span>
-            <span v-else class="no-data">—</span>
           </template>
         </el-table-column>
         <el-table-column prop="rangeMaxDrawdown" label="区间最大回撤" width="140">
           <template #default="{ row }">
             <span v-if="row.rangeMaxDrawdown !== '—'" :class="getChangeClass(row.rangeMaxDrawdown)">
               {{ row.rangeMaxDrawdown }}%
+            </span>
+            <span v-else class="no-data">—</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="curDrawdown" label="区间当前回撤" width="130">
+          <template #default="{ row }">
+            <span v-if="row.curDrawdown !== '—'" :class="getChangeClass(row.curDrawdown)">
+              {{ row.curDrawdown }}%
             </span>
             <span v-else class="no-data">—</span>
           </template>
@@ -114,17 +122,9 @@
             <span v-else>—</span>
           </template>
         </el-table-column>
-        <el-table-column prop="todayChange" label="今日涨跌幅" width="130">
-          <template #default="{ row }">
-            <span v-if="row.todayChange !== '—'" :class="getChangeClass(row.todayChange)">
-              {{ row.todayChange }}
-            </span>
-            <span v-else class="no-data">—</span>
-          </template>
-        </el-table-column>
       </el-table>
     </el-card>
-
+    <!-- 移动端数据展示卡片 -->
     <div v-if="fundList.length" class="card-list mobile-only">
       <el-card
         v-for="fund in fundList"
@@ -179,23 +179,23 @@
 
           <div class="data-row">
             <div class="data-item">
-              <div class="data-label">最新日期</div>
-              <div class="data-value">{{ fund.curDate }}</div>
-            </div>
-            <div class="data-item">
               <div class="data-label">最新净值</div>
               <div class="data-value">{{ fund.curValue }}</div>
+            </div>
+            <div class="data-item">
+              <div class="data-label">最新日期</div>
+              <div class="data-value">{{ fund.curDate }}</div>
             </div>
           </div>
 
           <div class="data-row">
             <div class="data-item">
-              <div class="data-label">最高净值日期</div>
-              <div class="data-value">{{ fund.maxDate }}</div>
-            </div>
-            <div class="data-item">
               <div class="data-label">最高净值</div>
               <div class="data-value">{{ fund.maxValue }}</div>
+            </div>
+            <div class="data-item">
+              <div class="data-label">最高净值日期</div>
+              <div class="data-value">{{ fund.maxDate }}</div>
             </div>
           </div>
 
