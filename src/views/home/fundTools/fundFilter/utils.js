@@ -211,7 +211,7 @@ export async function fetchHistory(code, signal = null) {
 
       const script = document.createElement('script')
       // 用相对协议避免 https/http 混用问题
-      script.src = `//fund.eastmoney.com/pingzhongdata/${code}.js`
+      script.src = `/api-fund-jsonp/${code}.js`
       let resolved = false
 
       const onAbort = () => {
@@ -397,7 +397,7 @@ export async function fetchFundEstimate(code, signal = null) {
       }
 
       const script = document.createElement('script')
-      script.src = `//fundgz.1234567.com.cn/js/${code}.js`
+      script.src = `/api-estimate/${code}.js`
       let resolved = false
 
       const onAbort = () => {
