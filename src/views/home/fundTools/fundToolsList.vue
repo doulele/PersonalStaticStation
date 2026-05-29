@@ -19,6 +19,19 @@
         </div>
       </router-link>
 
+      <router-link to="/home/fund/fund-filter" class="tool-card">
+        <div class="tool-card-inner">
+          <div class="tool-icon purple">
+            <el-icon :size="32"><Filter /></el-icon>
+          </div>
+          <div class="tool-info">
+            <h3 class="tool-name">基金筛选</h3>
+            <p class="tool-desc">根据业绩、规模、费率等条件筛选基金</p>
+          </div>
+          <el-icon class="tool-arrow"><ArrowRight /></el-icon>
+        </div>
+      </router-link>
+
       <router-link to="/home/fund/stock-search" class="tool-card">
         <div class="tool-card-inner">
           <div class="tool-icon blue">
@@ -40,19 +53,6 @@
           <div class="tool-info">
             <h3 class="tool-name">基金对比</h3>
             <p class="tool-desc">对比多只基金的历史收益、风险指标</p>
-          </div>
-          <el-icon class="tool-arrow"><ArrowRight /></el-icon>
-        </div>
-      </router-link>
-
-      <router-link to="/home/fund/fund-screening" class="tool-card">
-        <div class="tool-card-inner">
-          <div class="tool-icon purple">
-            <el-icon :size="32"><Filter /></el-icon>
-          </div>
-          <div class="tool-info">
-            <h3 class="tool-name">基金筛选</h3>
-            <p class="tool-desc">根据业绩、规模、费率等条件筛选基金</p>
           </div>
           <el-icon class="tool-arrow"><ArrowRight /></el-icon>
         </div>

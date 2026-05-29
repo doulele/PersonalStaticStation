@@ -12,6 +12,13 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    open: false
+    open: false,
+    proxy: {
+      '/api-fund': {
+        target: 'http://fund.eastmoney.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api-fund/, '')
+      }
+    }
   }
-})
+})  

@@ -23,6 +23,11 @@ const routes = [
         path: 'fund/fund-search',
         component: () => import('@/views/home/fundTools/fundInformationSearch.vue'),
         meta: { title: '基金信息查询', icon: 'DataLine' }
+      },
+      {
+        path: 'fund/fund-filter',
+        component: () => import('@/views/home/fundTools/fundFilter/index.vue'),
+        meta: { title: '基金筛选', icon: 'DataLine' }
       }
     ]
   },
