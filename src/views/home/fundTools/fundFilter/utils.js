@@ -268,11 +268,12 @@ export async function fetchHistory(code, signal = null) {
           }
           const history = trends.map(item => {
             const date = typeof item.x === 'number' ? new Date(item.x).toISOString().slice(0, 10) : item.x
+            const er = item.equityReturn
             return {
               date,
               netValue: parseFloat(item.y),
               accNetValue: acMap.get(date) || parseFloat(item.y), // 累计净值，没有则降级为单位净值
-              dailyReturn: item.equityReturn ? parseFloat(item.equityReturn) : 0
+              dailyReturn: (er != null && !isNaN(er)) ? parseFloat(er) : 0  // 债基日回报可能为0，不能丢失
             }
           })
 
@@ -363,6 +364,33 @@ export async function fetchRankData(signal = null) {
       console.log('[fetchRankData] 请求已取消')
     } else {
       console.error('[fetchRankData] 请求失败:', e)
+    }
+    return []
+  }
+}
+
+// 获取排名数据 (债基专用 - 按近3年收益排，取top 300，并限定债券型)
+// ft=zq 代表债券型基金
+export async function fetchRankDataBond(signal = null) {
+  try {
+    const end = new Date()
+    const start = new Date()
+    start.setFullYear(start.getFullYear() - 3)
+    const format = d => d.toISOString().slice(0, 10)
+    const url = `${API_PROXY}/data/rankhandler.aspx?op=ph&dt=kf&ft=zq&gs=0&sc=3yzf&st=desc&sd=${format(start)}&ed=${format(end)}&pi=1&pn=300`
+    console.log('[fetchRankDataBond] 请求 URL:', url)
+    const res = await fetch(url, { signal })
+    console.log('[fetchRankDataBond] 响应状态:', res.status)
+    const text = await res.text()
+    console.log('[fetchRankDataBond] 响应文本长度:', text.length)
+    const result = parseRankData(text)
+    console.log('[fetchRankDataBond] 解析结果数量:', result.length)
+    return result
+  } catch (e) {
+    if (isAbortError(e)) {
+      console.log('[fetchRankDataBond] 请求已取消')
+    } else {
+      console.error('[fetchRankDataBond] 请求失败:', e)
     }
     return []
   }
