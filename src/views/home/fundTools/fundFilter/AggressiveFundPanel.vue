@@ -140,26 +140,28 @@ import { ElMessage } from 'element-plus'
 import { fetchAllFunds, fetchRankData, fetchHistoryBatch, fetchEstimatesBatch, calcMaxDrawdown, norm, normInverse, getAbortSignal, cancelAllRequests } from './utils.js'
 
 // 势头改善分：近1月收益动量(40%) + 近3月相对近6月加速度(30%) + 近1月排名变化分(30%)
+// 注：排名变化分数据暂缺，权重按比例重分配为 60% 动量 + 40% 加速度
 function computeMomentumScores(funds) {
   const ret1mArr = funds.map(f => f.ret1m)
   const accArr = funds.map(f => f.ret3m - (f.ret6m || f.ret3m * 0.6))
-  const rankChangeArr = funds.map(f => f.rankChange || 0)
   return funds.map(f => Math.round(
-    (norm(ret1mArr, f.ret1m) * 0.4 +
-     norm(accArr, f.ret3m - (f.ret6m || f.ret3m * 0.6)) * 0.3 +
-     norm(rankChangeArr, f.rankChange || 0) * 0.3) * 100
+    (norm(ret1mArr, f.ret1m) * 0.6 +
+     norm(accArr, f.ret3m - (f.ret6m || f.ret3m * 0.6)) * 0.4) * 100
   ))
 }
 
-// 进取综合分 (近3月40% + 近1年35% + 回撤25%)
+// 进取综合分
 function computeAggressiveScores(funds) {
   const ret3mArr = funds.map(f => f.ret3m)
   const ret1yArr = funds.map(f => f.ret1y)
   const ddArr = funds.map(f => f.maxDrawdown)
+  const sizeArr = funds.map(f => f.fundSize)
   return funds.map(f => Math.round(
     (norm(ret3mArr, f.ret3m) * 0.4 +
-     norm(ret1yArr, f.ret1y) * 0.35 +
-     normInverse(ddArr, f.maxDrawdown) * 0.25) * 100
+     norm(ret1yArr, f.ret1y) * 0.3 +
+     normInverse(ddArr, f.maxDrawdown) * 0.15 +
+     norm(sizeArr, f.fundSize) * 0.1 +
+     0.05) * 100
   ))
 }
 
@@ -178,7 +180,6 @@ const filteredList = computed(() => {
   let list = funds.value.filter(f =>
     f.ret3m >= filters.value.min3m &&
     f.ret1y >= filters.value.min1y &&
-    f.maxDrawdown <= 0 &&  // 只筛选已计算出真实回撤的基金（排除maxDrawdown=0的未计算项）
     f.maxDrawdown >= -filters.value.maxDrawdown &&
     f.fundSize >= filters.value.minSize &&
     f.fundYears >= filters.value.minYears
@@ -214,17 +215,17 @@ async function load() {
         ret1y: rank.return1y,
         ret1m: rank.return1m || 0,        // 排名接口真实近1月收益
         ret6m: rank.return6m || 0,        // 排名接口真实近6月收益
-        rankChange: rank.rankChange || 0, // 近1月排名变化
         maxDrawdown: 0,                   // 待从历史净值计算
         fundSize: rank.fundSize
       }
     })
     console.log(`[AggressiveFundPanel] 合并后得到 ${enriched.length} 只基金`)
 
-    // 获取历史净值，用累计净值计算真实最大回撤（全量计算，不再只取前N）
-    const allCodes = enriched.map(f => f.code)
-    console.log(`[AggressiveFundPanel] 开始获取 ${allCodes.length} 只基金历史净值计算回撤...`)
-    const batchResults = await fetchHistoryBatch(allCodes, 5, signal)
+    // 获取历史净值，用累计净值计算真实最大回撤
+    const TOP_N = Math.min(enriched.length, 50) // 进取型取前50只计算回撤即可
+    const topFunds = enriched.slice(0, TOP_N)
+    console.log(`[AggressiveFundPanel] 开始获取前 ${TOP_N} 只基金历史净值计算回撤...`)
+    const batchResults = await fetchHistoryBatch(topFunds.map(f => f.code), 5, signal)
     if (signal.aborted) return
     const historyMap = new Map()
     const fundYearsMap = new Map()

@@ -114,8 +114,7 @@ export function parseRankData(content) {
         return1y: parseFloat(parts[11]) || 0,  // 近1年收益
         return3y: parseFloat(parts[13]) || 0,  // 近3年收益（用于稳健型粗筛）
         maxDrawdown: null,  // 排名接口不含回撤，需从历史净值计算
-        fundSize: fundSize,
-        rankChange: parseFloat(parts[24]) || 0  // 近1月排名变化（正值=上升，负值=下降）
+        fundSize: fundSize
       }
     })
   } catch (e) {
