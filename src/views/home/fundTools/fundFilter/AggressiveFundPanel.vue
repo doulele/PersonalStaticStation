@@ -22,6 +22,9 @@
           <el-form-item label="规模 ≥ (亿元)">
             <el-input-number v-model="filters.minSize" :min="0" :max="200" :step="1" size="small" controls-position="right" />
           </el-form-item>
+          <el-form-item label="成立年限 ≥ (年)">
+            <el-input-number v-model="filters.minYears" :min="0" :max="30" :step="1" size="small" controls-position="right" />
+          </el-form-item>
           <el-form-item label="排序依据">
             <el-select v-model="filters.sortBy" size="small" style="width:130px">
               <el-option label="势头改善分 ↓" value="momentumScore" />
@@ -72,6 +75,9 @@
         <template #default="{ row }"><span :style="{ color: (row.maxDrawdown || 0) >= 0 ? '#f56c6c' : '#67c23a' }">{{ (row.maxDrawdown || 0).toFixed(1) }}%</span></template>
       </el-table-column>
       <el-table-column prop="fundSize" label="规模(亿)" width="90" sortable />
+      <el-table-column prop="fundYears" label="成立年限" sortable width="100">
+        <template #default="{ row }"><span :style="{ color: row.fundYears < 3 ? '#27ae60' : '#e74c3c' }">{{ row.fundYears.toFixed(1) }}年</span></template>
+      </el-table-column>
       <el-table-column prop="momentumScore" label="势头改善分" sortable width="100">
         <template #default="{ row }"><el-tag :type="row.momentumScore >= 0 ? 'danger' : 'success'" size="small">{{ row.momentumScore }}</el-tag></template>
       </el-table-column>
@@ -114,6 +120,7 @@
           <div class="card-row meta-row">
             <div class="card-item"><span class="card-label">回撤</span><span class="card-value" :style="{ color: (row.maxDrawdown || 0) >= 0 ? '#f56c6c' : '#67c23a' }">{{ (row.maxDrawdown || 0).toFixed(1) }}%</span></div>
             <div class="card-item"><span class="card-label">规模</span><span class="card-value">{{ row.fundSize.toFixed(1) }}亿</span></div>
+            <div class="card-item"><span class="card-label">年限</span><span class="card-value" :style="{ color: row.fundYears < 3 ? '#27ae60' : '#e74c3c' }">{{ row.fundYears.toFixed(1) }}年</span></div>
             <div class="card-item">
               <el-tag :type="row.momentumScore >= 0 ? 'danger' : 'success'" size="small">势头 {{ row.momentumScore }}</el-tag>
             </div>
@@ -165,6 +172,7 @@ const filters = ref({
   min1y: 30,
   maxDrawdown: 55,
   minSize: 1,
+  minYears: 1,
   sortBy: 'momentumScore'
 })
 
@@ -173,7 +181,8 @@ const filteredList = computed(() => {
     f.ret3m >= filters.value.min3m &&
     f.ret1y >= filters.value.min1y &&
     f.maxDrawdown >= -filters.value.maxDrawdown &&
-    f.fundSize >= filters.value.minSize
+    f.fundSize >= filters.value.minSize &&
+    f.fundYears >= filters.value.minYears
   )
   const sortKey = filters.value.sortBy
   if (sortKey === 'momentumScore') list.sort((a, b) => b.momentumScore - a.momentumScore)
@@ -219,6 +228,7 @@ async function load() {
     const batchResults = await fetchHistoryBatch(topFunds.map(f => f.code), 5, signal)
     if (signal.aborted) return
     const historyMap = new Map()
+    const fundYearsMap = new Map()
     for (const result of batchResults) {
       if (result.history && result.history.length >= 50) {
         const accValues = result.history.map(h => h.accNetValue).filter(v => !isNaN(v) && v > 0)
@@ -226,14 +236,27 @@ async function load() {
           historyMap.set(result.code, calcMaxDrawdown(accValues))
         }
       }
+      // 计算成立年限
+      let years = 0
+      if (result.establishedDate) {
+        const est = new Date(result.establishedDate)
+        const now = new Date()
+        years = (now - est) / (365.25 * 24 * 60 * 60 * 1000)
+      } else if (result.history && result.history.length > 0) {
+        const firstDate = new Date(result.history[0].date)
+        const now = new Date()
+        years = (now - firstDate) / (365.25 * 24 * 60 * 60 * 1000)
+      }
+      fundYearsMap.set(result.code, years)
     }
-    // 回填真实回撤
+    // 回填真实回撤和成立年限
     for (const fund of enriched) {
       if (historyMap.has(fund.code)) {
         fund.maxDrawdown = historyMap.get(fund.code)
       }
+      fund.fundYears = fundYearsMap.get(fund.code) || 0
     }
-    console.log(`[AggressiveFundPanel] 已计算 ${historyMap.size} 只基金真实回撤`)
+    console.log(`[AggressiveFundPanel] 已计算 ${historyMap.size} 只基金真实回撤和成立年限`)
 
     // 批量获取实时估值
     const codes = enriched.map(f => f.code)
@@ -265,7 +288,7 @@ async function load() {
 }
 
 function reset() {
-  filters.value = { min3m: 10, min1y: 30, maxDrawdown: 55, minSize: 1, sortBy: 'momentumScore' }
+  filters.value = { min3m: 10, min1y: 30, maxDrawdown: 55, minSize: 1, minYears: 1, sortBy: 'momentumScore' }
 }
 
 defineExpose({ load })

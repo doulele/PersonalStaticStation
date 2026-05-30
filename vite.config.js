@@ -15,19 +15,9 @@ export default defineConfig({
     open: false,
     proxy: {
       '/api-fund': {
-        target: 'http://fund.eastmoney.com',
+        target: 'https://fund.eastmoney.com',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api-fund/, '')
-      },
-      '/api-fund-jsonp': {
-        target: 'http://fund.eastmoney.com',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api-fund-jsonp/, '/pingzhongdata')
-      },
-      '/api-estimate': {
-        target: 'http://fundgz.1234567.com.cn',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api-estimate/, '/js')
       }
     }
   }

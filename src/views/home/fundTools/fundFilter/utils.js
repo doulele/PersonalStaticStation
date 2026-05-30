@@ -198,7 +198,7 @@ export async function fetchAllFunds(signal = null) {
 }
 
 // 获取基金历史净值 + 经理/规模信息 - JSONP 方式
-// 返回 { history: [...], managerYears: number, fundSize: number }
+// 返回 { history: [...], managerYears: number, fundSize: number, establishedDate: string|null }
 // signal: AbortSignal，用于取消请求
 export async function fetchHistory(code, signal = null) {
   try {
@@ -210,8 +210,7 @@ export async function fetchHistory(code, signal = null) {
       }
 
       const script = document.createElement('script')
-      // 用相对协议避免 https/http 混用问题
-      script.src = `/api-fund-jsonp/${code}.js`
+      script.src = `https://fund.eastmoney.com/pingzhongdata/${code}.js`
       let resolved = false
 
       const onAbort = () => {
@@ -306,8 +305,19 @@ export async function fetchHistory(code, signal = null) {
             }
           } catch (e) { /* 忽略规模数据解析错误 */ }
 
+          // 提取基金成立日期（从第一条净值数据推算）
+          let establishedDate = null
+          try {
+            if (trends && trends.length > 0) {
+              const firstDate = typeof trends[0].x === 'number'
+                ? new Date(trends[0].x).toISOString().slice(0, 10)
+                : trends[0].x
+              establishedDate = firstDate
+            }
+          } catch (e) { /* 忽略日期解析错误 */ }
+
           cleanup()
-          resolve({ history, managerYears, fundSize })
+          resolve({ history, managerYears, fundSize, establishedDate })
         } catch (e) {
           cleanup()
           reject(e)
@@ -319,15 +329,15 @@ export async function fetchHistory(code, signal = null) {
       }
       document.head.appendChild(script)
     })
-    console.log(`[fetchHistory] ${code} JSONP 获取到 ${result.history.length} 条净值, 经理${result.managerYears.toFixed(1)}年, 规模${result.fundSize.toFixed(1)}亿`)
+    console.log(`[fetchHistory] ${code} JSONP 获取到 ${result.history.length} 条净值, 经理${result.managerYears.toFixed(1)}年, 规模${result.fundSize.toFixed(1)}亿, 成立${result.establishedDate || '未知'}`)
     return result
   } catch (e) {
     if (isAbortError(e)) {
       console.log(`[fetchHistory] ${code} 请求已取消`)
-      return { history: [], managerYears: 0, fundSize: 0 }
+      return { history: [], managerYears: 0, fundSize: 0, establishedDate: null }
     }
     console.warn(`[fetchHistory] ${code} 失败(可能是后端收费/无净值数据):`, e.message)
-    return { history: [], managerYears: 0, fundSize: 0 }
+    return { history: [], managerYears: 0, fundSize: 0, establishedDate: null }
   }
 }
 
@@ -397,7 +407,7 @@ export async function fetchFundEstimate(code, signal = null) {
       }
 
       const script = document.createElement('script')
-      script.src = `/api-estimate/${code}.js`
+      script.src = `https://fundgz.1234567.com.cn/js/${code}.js`
       let resolved = false
 
       const onAbort = () => {
@@ -484,7 +494,7 @@ export async function fetchEstimatesBatch(codes, concurrency = 10, signal = null
 }
 
 // 并行批量获取历史数据（每批 CONCURRENCY 个）
-// 返回 [{ code, history, managerYears, fundSize }, ...]
+// 返回 [{ code, history, managerYears, fundSize, establishedDate }, ...]
 // signal: AbortSignal，用于取消请求
 export async function fetchHistoryBatch(codes, concurrency = 5, signal = null) {
   const results = []
@@ -505,14 +515,16 @@ export async function fetchHistoryBatch(codes, concurrency = 5, signal = null) {
           code: batch[j],
           history: r.value.history || [],
           managerYears: r.value.managerYears || 0,
-          fundSize: r.value.fundSize || 0
+          fundSize: r.value.fundSize || 0,
+          establishedDate: r.value.establishedDate || null
         })
       } else {
         results.push({
           code: batch[j],
           history: [],
           managerYears: 0,
-          fundSize: 0
+          fundSize: 0,
+          establishedDate: null
         })
       }
     }
