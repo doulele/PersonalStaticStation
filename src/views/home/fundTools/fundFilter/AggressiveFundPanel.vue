@@ -94,6 +94,7 @@
             <span class="card-code">{{ row.code }}</span>
             <span class="card-name">{{ row.name }}</span>
             <el-tag size="small" type="info" effect="plain">{{ row.theme }}</el-tag>
+            <el-tag :type="row.momentumScore >= 0 ? 'danger' : 'success'" size="small" effect="dark" class="score-tag">势头 {{ row.momentumScore }}</el-tag>
           </div>
         </div>
         <div class="card-body">
@@ -122,10 +123,7 @@
             <div class="card-item"><span class="card-label">规模</span><span class="card-value">{{ row.fundSize.toFixed(1) }}亿</span></div>
             <div class="card-item"><span class="card-label">年限</span><span class="card-value" :style="{ color: row.fundYears < 3 ? '#27ae60' : '#e74c3c' }">{{ row.fundYears.toFixed(1) }}年</span></div>
             <div class="card-item">
-              <el-tag :type="row.momentumScore >= 0 ? 'danger' : 'success'" size="small">势头 {{ row.momentumScore }}</el-tag>
-            </div>
-            <div class="card-item">
-              <el-tag :type="row.aggScore >= 0 ? 'danger' : 'success'" size="small">综合 {{ row.aggScore }}</el-tag>
+              <el-tag :type="row.aggScore >= 0 ? 'danger' : 'success'" size="small" effect="dark">综合 {{ row.aggScore }}</el-tag>
             </div>
           </div>
         </div>
@@ -314,38 +312,38 @@ onUnmounted(() => {
   overflow: hidden;
 }
 .filter-card :deep(.el-card__header) {
-  padding: 12px 16px;
+  padding: 10px 14px;
   border-bottom: 1px solid #f0f2f5;
   background: #fafbfc;
 }
-.filter-card :deep(.el-card__body) { padding: 12px 16px; }
+.filter-card :deep(.el-card__body) { padding: 10px 14px; }
 
 .filter-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   color: #1e2a3a;
 }
 
 .filter-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 4px 12px;
+  gap: 2px 10px;
 }
-.filter-grid :deep(.el-form-item) { margin-bottom: 8px; }
+.filter-grid :deep(.el-form-item) { margin-bottom: 6px; }
 .filter-grid :deep(.el-form-item__label) {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.3px;
   color: #4a627a;
   width: auto !important;
   justify-content: flex-start;
-  padding-right: 4px;
+  padding-right: 2px;
 }
-.filter-grid :deep(.el-input-number) { width: 110px; }
+.filter-grid :deep(.el-input-number) { width: 100px; }
 .filter-grid :deep(.el-input-number .el-input__wrapper) {
   border-radius: 20px;
   box-shadow: 0 0 0 1px #dce5ec;
@@ -361,12 +359,13 @@ onUnmounted(() => {
   gap: 10px;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
 }
 .filter-actions :deep(.el-button) {
   border-radius: 30px;
   font-weight: 600;
-  font-size: 0.78rem;
-  padding: 7px 20px;
+  font-size: 0.75rem;
+  padding: 6px 16px;
 }
 .filter-actions :deep(.el-button--primary) {
   background: #ff4757;
@@ -432,14 +431,14 @@ onUnmounted(() => {
 .mobile-card-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 @media (min-width: 768px) {
   .mobile-card-list { display: none; }
 }
 
 .fund-card {
-  border-radius: 16px;
+  border-radius: 14px;
   border: 1px solid #eef2f7;
   box-shadow: 0 2px 10px rgba(0,0,0,0.04);
   transition: all 0.2s ease;
@@ -448,21 +447,21 @@ onUnmounted(() => {
   box-shadow: 0 4px 16px rgba(0,0,0,0.08);
   transform: translateY(-1px);
 }
-.fund-card :deep(.el-card__body) { padding: 14px 16px; }
+.fund-card :deep(.el-card__body) { padding: 12px 14px; }
 
 .card-title-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 .card-code {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   color: #94a3b8;
   font-family: 'SF Mono', 'Fira Code', monospace;
 }
 .card-name {
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: #1e293b;
   flex: 1;
@@ -471,34 +470,38 @@ onUnmounted(() => {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.card-body { margin-top: 10px; }
+.score-tag {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.card-body { margin-top: 8px; }
 .card-row {
   display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 6px;
+  margin-bottom: 6px;
   flex-wrap: wrap;
 }
 .card-row:last-child { margin-bottom: 0; }
 .card-item {
   display: flex;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
 }
 .card-label {
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   color: #94a3b8;
   font-weight: 500;
 }
 .card-value {
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: #1e293b;
 }
 .quote-row {
-  padding-bottom: 8px;
+  padding-bottom: 6px;
   border-bottom: 1px dashed #e8edf2;
 }
-.quote-row .card-item { flex: 1; min-width: 70px; }
-.return-row .card-item { min-width: 60px; }
-.meta-row .card-item { min-width: 55px; }
+.quote-row .card-item { flex: 1; min-width: 60px; }
+.return-row .card-item { min-width: 50px; }
+.meta-row .card-item { min-width: 50px; }
 </style>

@@ -80,7 +80,7 @@
 
 <style scoped>
 .fund-selector {
-  padding: 12px;
+  padding: 8px;
   max-width: 1500px;
   margin: 0 auto;
   min-height: 100vh;
@@ -90,9 +90,9 @@
 /* ========== Hero 头部 ========== */
 .hero {
   background: linear-gradient(135deg, #141b2b 0%, #1f2a3e 100%);
-  border-radius: 24px;
-  padding: 22px 24px;
-  margin-bottom: 20px;
+  border-radius: 20px;
+  padding: 18px 16px;
+  margin-bottom: 14px;
   color: #fff;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
   transition: background 0.3s ease;
@@ -102,15 +102,15 @@
 }
 
 .hero-top {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .hero-title {
-  font-size: 1.3rem;
+  font-size: 1.1rem;
   font-weight: 700;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
   margin: 0;
   line-height: 1.4;
@@ -118,9 +118,9 @@
 
 .hero-badge {
   background: #ff4757;
-  padding: 4px 14px;
+  padding: 3px 10px;
   border-radius: 30px;
-  font-size: 0.72rem;
+  font-size: 0.65rem;
   font-weight: 600;
   white-space: nowrap;
   letter-spacing: 0.3px;
@@ -133,18 +133,18 @@
 }
 
 .hero-title small {
-  font-size: 0.68rem;
+  font-size: 0.6rem;
   background: rgba(255, 255, 255, 0.12);
-  padding: 4px 12px;
+  padding: 3px 10px;
   border-radius: 30px;
   white-space: nowrap;
 }
 
 .hero-desc {
-  margin-top: 12px;
+  margin-top: 10px;
   opacity: 0.85;
-  font-size: 0.8rem;
-  line-height: 1.65;
+  font-size: 0.7rem;
+  line-height: 1.6;
 }
 .hero-desc strong {
   color: #fff;
@@ -152,12 +152,12 @@
 }
 
 .hero-insight {
-  margin-top: 12px;
+  margin-top: 10px;
   background: rgba(255, 71, 87, 0.15);
-  padding: 10px 16px;
-  border-radius: 20px;
-  font-size: 0.72rem;
-  line-height: 1.6;
+  padding: 8px 12px;
+  border-radius: 16px;
+  font-size: 0.65rem;
+  line-height: 1.5;
   display: inline-block;
   backdrop-filter: blur(4px);
 }
@@ -172,20 +172,23 @@
 .model-tabs {
   margin-top: 18px;
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
+  gap: 8px;
+  flex-wrap: nowrap;
 }
 .model-tab {
   border: 1px solid rgba(255, 255, 255, 0.2);
   background: rgba(255, 255, 255, 0.08);
   color: rgba(255, 255, 255, 0.8);
-  padding: 8px 18px;
+  padding: 7px 12px;
   border-radius: 30px;
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.25s ease;
   outline: none;
+  flex: 1;
+  text-align: center;
+  white-space: nowrap;
 }
 .model-tab:hover {
   background: rgba(255, 255, 255, 0.15);
@@ -207,13 +210,13 @@
 
 /* ========== Footer ========== */
 .footer-note {
-  margin-top: 28px;
+  margin-top: 20px;
   text-align: center;
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   color: #6b7f93;
   background: #fff;
-  padding: 14px 20px;
-  border-radius: 40px;
+  padding: 12px 16px;
+  border-radius: 30px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
@@ -230,7 +233,7 @@
   .hero-title small { font-size: 0.72rem; padding: 5px 14px; }
   .hero-desc { font-size: 0.88rem; }
   .hero-insight { font-size: 0.74rem; padding: 10px 18px; }
-  .model-tab { padding: 9px 22px; font-size: 0.84rem; }
+  .model-tab { padding: 9px 22px; font-size: 0.84rem; flex: none; max-width: 200px; }
   .footer-note { margin-top: 36px; font-size: 0.72rem; padding: 16px 24px; }
 }
 </style>
