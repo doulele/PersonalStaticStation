@@ -16,18 +16,29 @@ const routes = [
       },
       {
         path: 'fund',
-        component: () => import('@/views/home/fundTools/fundToolsList.vue'),
+        component: () => import('@/views/home/fundStockTools/fundStockToolsList.vue'),
         meta: { title: '基金/股票', icon: 'DataLine' }
       },
       {
         path: 'fund/fund-search',
-        component: () => import('@/views/home/fundTools/fundInformationSearch.vue'),
+        component: () => import('@/views/home/fundStockTools/fundInformationSearch.vue'),
         meta: { title: '基金信息查询', icon: 'DataLine' }
       },
       {
         path: 'fund/fund-filter',
-        component: () => import('@/views/home/fundTools/fundFilter/index.vue'),
+        component: () => import('@/views/home/fundStockTools/fundFilter/index.vue'),
         meta: { title: '基金筛选', icon: 'DataLine' }
+      },
+      // stock-search 路由已移除（对应文件已删除）
+      {
+        path: 'fund/stock-filter',
+        component: () => import('@/views/home/fundStockTools/stockFilter/index.vue'),
+        meta: { title: '妖股筛选', icon: 'DataLine' }
+      },
+      {
+        path: 'fund/stock-detail',
+        component: () => import('@/views/home/fundStockTools/stockFilter/stockDetail.vue'),
+        meta: { title: '妖股详情', icon: 'DataLine' }
       }
     ]
   },

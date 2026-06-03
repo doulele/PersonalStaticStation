@@ -11,12 +11,14 @@
         </router-view>
       </main>
     </div>
+    <app-footer />
   </div>
 </template>
 
 <script setup>
 import AppHeader from './AppHeader.vue'
 import AppBreadcrumb from './AppBreadcrumb.vue'
+import AppFooter from './AppFooter.vue'
 </script>
 
 <style lang="scss" scoped>
