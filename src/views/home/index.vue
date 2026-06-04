@@ -7,28 +7,28 @@
         <div class="hero-particles"></div>
       </div>
       <div class="hero-content">
-        <span class="hero-badge">Free Tools for Everyone</span>
+        <span class="hero-badge">免费工具 · 人人可用</span>
         <h1 class="hero-title">
-          <span class="title-line">Powerful Tools.</span>
-          <span class="title-line accent">Limitless Possibilities.</span>
+          <span class="title-line">强大的在线工具集</span>
+          <span class="title-line accent">无限可能等你探索</span>
         </h1>
         <p class="hero-subtitle">
-          A curated collection of premium tools designed to streamline your workflow
+          精心挑选的优质工具合集，助你提升工作效率，一站式解决日常开发与办公需求
         </p>
         <div class="hero-stats">
           <div class="stat-item">
             <span class="stat-value">50+</span>
-            <span class="stat-label">Tools</span>
+            <span class="stat-label">实用工具</span>
           </div>
           <div class="stat-divider"></div>
           <div class="stat-item">
             <span class="stat-value">10K+</span>
-            <span class="stat-label">Users</span>
+            <span class="stat-label">累计用户</span>
           </div>
           <div class="stat-divider"></div>
           <div class="stat-item">
             <span class="stat-value">99.9%</span>
-            <span class="stat-label">Uptime</span>
+            <span class="stat-label">服务可用</span>
           </div>
         </div>
       </div>
@@ -37,8 +37,8 @@
     <!-- Tools Grid -->
     <section class="tools-section">
       <div class="section-header">
-        <h2 class="section-title">Popular Tools</h2>
-        <p class="section-desc">Essential utilities for developers and professionals</p>
+        <h2 class="section-title">热门工具</h2>
+        <p class="section-desc">为开发者和职场人士打造的高效工具集合</p>
       </div>
       
       <div class="tools-grid">
@@ -49,7 +49,20 @@
             </div>
             <div class="tool-info">
               <h3 class="tool-name">基金/股票</h3>
-              <p class="tool-desc">Fund & Stock Information Search</p>
+              <p class="tool-desc">基金筛选、股票信息查询与分析</p>
+            </div>
+            <el-icon class="tool-arrow"><ArrowRight /></el-icon>
+          </div>
+        </router-link>
+
+        <router-link to="/home/lottery" class="tool-card">
+          <div class="tool-card-inner">
+            <div class="tool-icon yellow">
+              <el-icon :size="28"><Present /></el-icon>
+            </div>
+            <div class="tool-info">
+              <h3 class="tool-name">双色球预测</h3>
+              <p class="tool-desc">AI 智能双色球/大乐透号码分析预测</p>
             </div>
             <el-icon class="tool-arrow"><ArrowRight /></el-icon>
           </div>
@@ -61,8 +74,8 @@
               <el-icon :size="28"><Document /></el-icon>
             </div>
             <div class="tool-info">
-              <h3 class="tool-name">JSON Formatter</h3>
-              <p class="tool-desc">Format and validate JSON data</p>
+              <h3 class="tool-name">JSON 格式化</h3>
+              <p class="tool-desc">在线 JSON 格式化与数据校验</p>
             </div>
             <el-icon class="tool-arrow"><ArrowRight /></el-icon>
           </div>
@@ -74,8 +87,8 @@
               <el-icon :size="28"><Picture /></el-icon>
             </div>
             <div class="tool-info">
-              <h3 class="tool-name">Image Compressor</h3>
-              <p class="tool-desc">Optimize images for web</p>
+              <h3 class="tool-name">图片压缩</h3>
+              <p class="tool-desc">在线图片压缩优化，适配网页</p>
             </div>
             <el-icon class="tool-arrow"><ArrowRight /></el-icon>
           </div>
@@ -87,8 +100,8 @@
               <el-icon :size="28"><Lock /></el-icon>
             </div>
             <div class="tool-info">
-              <h3 class="tool-name">Password Generator</h3>
-              <p class="tool-desc">Create secure passwords</p>
+              <h3 class="tool-name">密码生成器</h3>
+              <p class="tool-desc">生成高强度安全密码</p>
             </div>
             <el-icon class="tool-arrow"><ArrowRight /></el-icon>
           </div>
@@ -100,8 +113,8 @@
               <el-icon :size="28"><Connection /></el-icon>
             </div>
             <div class="tool-info">
-              <h3 class="tool-name">API Tester</h3>
-              <p class="tool-desc">Test REST APIs easily</p>
+              <h3 class="tool-name">API 测试</h3>
+              <p class="tool-desc">快速测试 REST API 接口</p>
             </div>
             <el-icon class="tool-arrow"><ArrowRight /></el-icon>
           </div>
@@ -113,8 +126,8 @@
               <el-icon :size="28"><Timer /></el-icon>
             </div>
             <div class="tool-info">
-              <h3 class="tool-name">Time Converter</h3>
-              <p class="tool-desc">Convert time zones instantly</p>
+              <h3 class="tool-name">时区转换</h3>
+              <p class="tool-desc">全球时区时间即时转换</p>
             </div>
             <el-icon class="tool-arrow"><ArrowRight /></el-icon>
           </div>
@@ -125,10 +138,10 @@
     <!-- CTA Section -->
     <section class="cta-section">
       <div class="cta-content">
-        <h2 class="cta-title">Ready to boost your productivity?</h2>
-        <p class="cta-desc">Start using our tools today, no signup required</p>
+        <h2 class="cta-title">准备好提升效率了吗？</h2>
+        <p class="cta-desc">无需注册，立即开始使用我们的免费工具</p>
         <el-button type="primary" size="large" class="cta-btn">
-          Get Started Free
+          免费开始使用
         </el-button>
       </div>
     </section>
@@ -136,6 +149,7 @@
 </template>
 
 <script setup>
+import { ArrowRight, DataLine, Present, Document, Picture, Lock, Connection, Timer } from '@element-plus/icons-vue'
 </script>
 
 <style lang="scss" scoped>
@@ -184,6 +198,7 @@
   text-align: center;
   padding: 60px 24px;
   max-width: 900px;
+  width: 100%;
 }
 
 .hero-badge {
@@ -192,19 +207,18 @@
   background: rgba(99, 102, 241, 0.15);
   border: 1px solid rgba(99, 102, 241, 0.3);
   border-radius: 20px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   color: #818cf8;
   letter-spacing: 0.5px;
-  text-transform: uppercase;
   margin-bottom: 24px;
 }
 
 .hero-title {
-  font-size: clamp(36px, 6vw, 64px);
+  font-size: clamp(28px, 5vw, 64px);
   font-weight: 800;
-  line-height: 1.1;
-  margin-bottom: 24px;
+  line-height: 1.2;
+  margin-bottom: 20px;
   letter-spacing: -0.02em;
 }
 
@@ -221,10 +235,10 @@
 }
 
 .hero-subtitle {
-  font-size: 18px;
+  font-size: 16px;
   color: rgba(255, 255, 255, 0.6);
   max-width: 500px;
-  margin: 0 auto 40px;
+  margin: 0 auto 36px;
   line-height: 1.7;
 }
 
@@ -233,6 +247,7 @@
   align-items: center;
   justify-content: center;
   gap: 32px;
+  flex-wrap: wrap;
 }
 
 .stat-item {
@@ -249,7 +264,6 @@
 .stat-label {
   font-size: 13px;
   color: rgba(255, 255, 255, 0.5);
-  text-transform: uppercase;
   letter-spacing: 1px;
 }
 
@@ -285,8 +299,8 @@
 
 .tools-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
   max-width: 1400px;
   margin: 0 auto;
 }
@@ -299,8 +313,8 @@
 .tool-card-inner {
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 24px;
+  gap: 16px;
+  padding: 20px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 16px;
@@ -338,9 +352,9 @@
 }
 
 .tool-icon {
-  width: 56px;
-  height: 56px;
-  min-width: 56px;
+  width: 50px;
+  height: 50px;
+  min-width: 50px;
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -367,6 +381,10 @@
   &.red {
     background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
   }
+
+  &.yellow {
+    background: linear-gradient(135deg, #f59e0b 0%, #eab308 100%);
+  }
 }
 
 .tool-info {
@@ -375,15 +393,16 @@
 }
 
 .tool-name {
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 600;
   color: #0f172a;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .tool-desc {
   font-size: 13px;
   color: #64748b;
+  line-height: 1.4;
 }
 
 .tool-arrow {
@@ -435,12 +454,142 @@
 // Responsive
 @media (max-width: 768px) {
   .hero {
-    min-height: 400px;
+    min-height: 380px;
+  }
+
+  .hero-content {
+    padding: 48px 20px;
+  }
+
+  .hero-badge {
+    font-size: 11px;
+    padding: 5px 12px;
+    margin-bottom: 18px;
+  }
+
+  .hero-title {
+    font-size: clamp(22px, 6vw, 36px);
+    margin-bottom: 14px;
+  }
+
+  .hero-subtitle {
+    font-size: 14px;
+    max-width: 360px;
+    margin-bottom: 28px;
   }
 
   .hero-stats {
-    flex-wrap: wrap;
-    gap: 24px;
+    gap: 20px;
+  }
+
+  .stat-value {
+    font-size: 22px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+  }
+
+  .stat-divider {
+    height: 30px;
+  }
+
+  .section-title {
+    font-size: 24px;
+  }
+
+  .section-desc {
+    font-size: 14px;
+  }
+
+  .tools-section {
+    padding: 48px 16px;
+  }
+
+  .section-header {
+    margin-bottom: 32px;
+  }
+
+  .tools-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .tool-card-inner {
+    padding: 16px;
+    gap: 14px;
+  }
+
+  .tool-icon {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    border-radius: 10px;
+  }
+
+  .tool-name {
+    font-size: 15px;
+  }
+
+  .tool-desc {
+    font-size: 12px;
+  }
+
+  .cta-section {
+    padding: 48px 16px;
+  }
+
+  .cta-title {
+    font-size: 24px;
+  }
+
+  .cta-desc {
+    font-size: 14px;
+  }
+
+  .cta-btn {
+    padding: 12px 32px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero {
+    min-height: 340px;
+  }
+
+  .hero-content {
+    padding: 40px 16px;
+  }
+
+  .hero-badge {
+    font-size: 10px;
+    padding: 4px 10px;
+    margin-bottom: 14px;
+  }
+
+  .hero-title {
+    font-size: clamp(20px, 5vw, 28px);
+    margin-bottom: 10px;
+  }
+
+  .hero-subtitle {
+    font-size: 13px;
+    max-width: 300px;
+    margin-bottom: 22px;
+    line-height: 1.6;
+  }
+
+  .hero-stats {
+    gap: 14px;
+  }
+
+  .stat-value {
+    font-size: 20px;
+  }
+
+  .stat-label {
+    font-size: 10px;
   }
 
   .stat-divider {
@@ -448,15 +597,60 @@
   }
 
   .tools-section {
-    padding: 48px 16px;
+    padding: 36px 12px;
   }
 
-  .tools-grid {
-    grid-template-columns: 1fr;
+  .section-title {
+    font-size: 22px;
+  }
+
+  .section-desc {
+    font-size: 13px;
+  }
+
+  .tool-card-inner {
+    padding: 14px;
+    gap: 12px;
+    border-radius: 12px;
+  }
+
+  .tool-icon {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 8px;
+    :deep(.el-icon) {
+      font-size: 20px !important;
+    }
+  }
+
+  .tool-name {
+    font-size: 14px;
+  }
+
+  .tool-desc {
+    font-size: 11px;
+  }
+
+  .tool-arrow {
+    font-size: 18px;
   }
 
   .cta-section {
-    padding: 48px 16px;
+    padding: 40px 16px;
+  }
+
+  .cta-title {
+    font-size: 20px;
+  }
+
+  .cta-desc {
+    font-size: 13px;
+  }
+
+  .cta-btn {
+    padding: 10px 28px;
+    font-size: 13px;
   }
 }
 </style>

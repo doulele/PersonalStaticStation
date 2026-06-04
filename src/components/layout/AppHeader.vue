@@ -43,8 +43,8 @@ import {
 const route = useRoute()
 
 const navList = [
-  { path: '/home', title: 'Home', icon: 'HomeFilled' },
-  { path: '/other', title: 'Other', icon: 'Grid' }
+  { path: '/home', title: '首页', icon: 'HomeFilled' },
+  { path: '/other', title: '其他', icon: 'Grid' }
 ]
 
 const isActive = (path) => {
@@ -111,6 +111,7 @@ const isActive = (path) => {
   color: #64748b;
   text-decoration: none;
   transition: all 0.2s ease;
+  white-space: nowrap;
   
   &:hover {
     color: #0f172a;
@@ -120,6 +121,59 @@ const isActive = (path) => {
   &.active {
     color: #6366f1;
     background: rgba(99, 102, 241, 0.1);
+  }
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .header-container {
+    height: 56px;
+    padding: 0 16px;
+  }
+
+  .logo .logo-text {
+    font-size: 17px;
+  }
+
+  .nav-menu {
+    margin-left: 12px;
+    gap: 2px;
+  }
+
+  .nav-item {
+    padding: 6px 10px;
+    font-size: 13px;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-container {
+    height: 52px;
+    padding: 0 12px;
+  }
+
+  .logo {
+    gap: 6px;
+    .logo-text {
+      font-size: 15px;
+    }
+    .logo-icon {
+      width: 26px;
+      height: 26px;
+    }
+  }
+
+  .nav-menu {
+    margin-left: 8px;
+    gap: 0;
+  }
+
+  .nav-item {
+    padding: 6px 8px;
+    font-size: 12px;
+    gap: 3px;
+    border-radius: 6px;
   }
 }
 </style>
