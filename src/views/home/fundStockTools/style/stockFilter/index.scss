@@ -499,6 +499,8 @@
   .filter-card {
     border-radius: 12px;
     margin-bottom: 12px;
+
+    :deep(.el-card__body) { padding: 14px; }
   }
 
   .filter-row {
@@ -518,16 +520,20 @@
   }
 
   .quick-stocks {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    margin-top: 12px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    padding-bottom: 4px;
   }
 
-  .quick-label { font-size: 0.75rem; }
+  .quick-label { font-size: 0.72rem; white-space: nowrap; }
   .board-info {
+    white-space: nowrap;
     margin-left: 0;
-    font-size: 0.72rem;
+    font-size: 0.68rem;
   }
 
   .table-card { border-radius: 12px; }
@@ -593,7 +599,11 @@
 
   .eval-input :deep(.el-input__inner) { font-size: 0.8rem; }
 
-  .filter-card { border-radius: 10px; }
+  .filter-card {
+    border-radius: 10px;
+
+    :deep(.el-card__body) { padding: 10px; }
+  }
   .filter-item label { font-size: 0.65rem; }
 
   .table-card { border-radius: 10px; }
