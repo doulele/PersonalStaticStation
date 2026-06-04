@@ -278,7 +278,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
@@ -312,6 +312,7 @@ const currentPage = ref(1)
 const pageSize = ref(20)
 const sortProp = ref('score')
 const sortOrder = ref('descending')
+let abortController = null
 
 // ==================== 个股妖性测评快捷入口 ====================
 const evalCode = ref('')
@@ -331,9 +332,10 @@ function goEval() {
 async function fetchBoardSnapshot(board) {
   const fs = BOARD_FS[board]
   const PAGE_SIZE = 2000
+  const signal = abortController?.signal
   // 先获取第一页，确定总数
   const url1 = `/api-push2/api/qt/clist/get?pn=1&pz=${PAGE_SIZE}&po=1&np=1&fltt=2&invt=2&fid=f3&fs=${fs}&fields=f2,f3,f5,f6,f7,f8,f10,f12,f14,f20,f21`
-  const response = await fetch(url1)
+  const response = await fetch(url1, { signal })
   if (!response.ok) throw new Error(`板块行情请求失败 HTTP ${response.status}`)
   const json = await response.json()
   if (!json?.data?.diff?.length) throw new Error('板块无数据')
@@ -347,12 +349,13 @@ async function fetchBoardSnapshot(board) {
     for (let pn = 2; pn <= totalPages; pn++) {
       const url = `/api-push2/api/qt/clist/get?pn=${pn}&pz=${PAGE_SIZE}&po=1&np=1&fltt=2&invt=2&fid=f3&fs=${fs}&fields=f2,f3,f5,f6,f7,f8,f10,f12,f14,f20,f21`
       try {
-        const res = await fetch(url)
+        const res = await fetch(url, { signal })
         const j = await res.json()
         if (j?.data?.diff?.length) {
           allDiff = allDiff.concat(j.data.diff)
         }
       } catch (e) {
+        if (e.name === 'AbortError') throw e
         console.warn(`拉取第${pn}页失败:`, e.message)
       }
     }
@@ -412,7 +415,7 @@ async function fetchKline(codeRaw, days = 100) {
     market = 'sz'
   }
   const url = `/api-ifzq/appstock/app/fqkline/get?param=${market}${code},day,,,${days},qfq`
-  const response = await fetch(url)
+  const response = await fetch(url, { signal: abortController?.signal })
   if (!response.ok) throw new Error(`K线请求失败 HTTP ${response.status}`)
   const json = await response.json()
   const dataKey = `${market}${code}`
@@ -732,6 +735,11 @@ function buildResultRow(snapshot, klines) {
 
 // ==================== 批量筛选 ====================
 async function refreshAll() {
+  // 取消上一次未完成的请求
+  if (abortController) {
+    abortController.abort()
+  }
+  abortController = new AbortController()
   loading.value = true
   allData.value = []
   currentPage.value = 1
@@ -838,13 +846,17 @@ async function refreshAll() {
     loading.value = false
     ElMessage.success(`筛选完成，共 ${allData.value.length} 只股票`)
   } catch (e) {
+    if (e.name === 'AbortError') {
+      console.log('请求已取消')
+      return
+    }
     console.error('筛选失败:', e)
     loading.value = false
     ElMessage.error(`筛选失败：${e.message}`)
   }
 }
 
-// 前端过滤
+// 前端过滤（粗筛阶段已过滤数值条件，这里只做模式/评分二次过滤）
 const filteredData = computed(() => {
   let data = [...allData.value]
 
@@ -853,14 +865,6 @@ const filteredData = computed(() => {
   else if (filterMode.value === 'mid') data = data.filter(d => d.stageType === 'mid')
   else if (filterMode.value === 'pre') data = data.filter(d => d.stageType === 'pre')
   else if (filterMode.value === 'high_score') data = data.filter(d => d.score >= 80)
-
-  // 数值筛选
-  data = data.filter(d =>
-    d.turnover >= filterTurnoverMin.value &&
-    d.volumeRatio >= filterVolRatioMin.value &&
-    d.marketCap <= filterCapMax.value &&
-    d.gain5d >= filterGainMin.value
-  )
 
   // 排序
   if (sortProp.value) {
@@ -892,6 +896,7 @@ function resetFilters() {
   filterCapMax.value = 150
   filterGainMin.value = 2
   currentPage.value = 1
+  refreshAll()
 }
 
 function switchBoard() {
@@ -940,6 +945,13 @@ function getScoreClass(score) {
 
 onMounted(() => {
   refreshAll()
+})
+
+onBeforeUnmount(() => {
+  if (abortController) {
+    abortController.abort()
+    abortController = null
+  }
 })
 </script>
 

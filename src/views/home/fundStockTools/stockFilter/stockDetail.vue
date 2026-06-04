@@ -386,7 +386,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import {
   ArrowLeft, Clock, DataAnalysis, DataLine, TrendCharts, Histogram,
@@ -400,6 +400,7 @@ const stockName = ref('')
 const loading = ref(false)
 const errorMsg = ref('')
 const result = ref(null)
+let abortController = null
 
 // ==================== 数据获取（复用主页面逻辑） ====================
 async function fetchRealTime(codeRaw) {
@@ -408,7 +409,7 @@ async function fetchRealTime(codeRaw) {
     code = /^6/.test(code) ? 'sh' + code : 'sz' + code
   }
   const url = `/api-qt/q=${code}`
-  const response = await fetch(url)
+  const response = await fetch(url, { signal: abortController?.signal })
   const buffer = await response.arrayBuffer()
   const text = new TextDecoder('gbk').decode(buffer)
   const match = text.match(/="(.+)"/)
@@ -459,7 +460,7 @@ async function fetchKline(codeRaw, days = 100) {
     market = 'sz'
   }
   const url = `/api-ifzq/appstock/app/fqkline/get?param=${market}${code},day,,,${days},qfq`
-  const response = await fetch(url)
+  const response = await fetch(url, { signal: abortController?.signal })
   if (!response.ok) throw new Error(`K线请求失败 HTTP ${response.status}`)
   const json = await response.json()
   const dataKey = `${market}${code}`
@@ -885,6 +886,11 @@ function getStrategyText(stageType) {
 
 // ==================== 主控 ====================
 async function loadDetail() {
+  // 取消上一次未完成的请求
+  if (abortController) {
+    abortController.abort()
+  }
+  abortController = new AbortController()
   stockCode.value = route.query.code || ''
   stockName.value = route.query.name || ''
   if (!stockCode.value) {
@@ -973,6 +979,10 @@ async function loadDetail() {
       capDesc, volDesc, turnDesc, ampDesc, gainDesc, gain10dDesc, themeDesc
     }
   } catch (err) {
+    if (err.name === 'AbortError') {
+      console.log('请求已取消')
+      return
+    }
     errorMsg.value = err.message || '获取数据失败'
   } finally {
     loading.value = false
@@ -997,6 +1007,13 @@ onMounted(() => {
     stockCode.value = codeFromQuery
     stockName.value = route.query.name || ''
     loadDetail()
+  }
+})
+
+onBeforeUnmount(() => {
+  if (abortController) {
+    abortController.abort()
+    abortController = null
   }
 })
 </script>
