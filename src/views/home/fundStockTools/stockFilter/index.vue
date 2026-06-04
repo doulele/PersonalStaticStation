@@ -1,10 +1,10 @@
 <template>
-  <div class="stock-filter-page">
+  <div class="stock-filter-page fade-in">
     <!-- 头部 -->
     <div class="hero">
       <div class="hero-content">
         <h1>
-          <el-icon :size="28"><TrendCharts /></el-icon>
+          <span class="hero-icon"><el-icon :size="26"><TrendCharts /></el-icon></span>
           妖股潜力筛选
           <span class="badge">多因子量化模型</span>
         </h1>
@@ -95,15 +95,38 @@
     <el-card class="table-card" shadow="never">
       <template #header>
         <div class="table-header">
-          <span><el-icon><DataLine /></el-icon> 筛选结果（共 {{ filteredData.length }} 只）</span>
-          <el-tag type="warning" size="small" effect="plain">实时行情数据</el-tag>
+          <span class="table-title"><el-icon><DataLine /></el-icon> 筛选结果（共 {{ filteredData.length }} 只）</span>
+          <div class="table-header-right">
+            <el-tag type="warning" size="small" effect="plain">实时行情数据</el-tag>
+          </div>
         </div>
       </template>
 
+      <!-- 空数据状态 -->
+      <div v-if="!loading && allData.length === 0" class="empty-state">
+        <el-empty description="暂无筛选结果" :image-size="100">
+          <template #description>
+            <p class="empty-desc">当前筛选条件下没有匹配的股票</p>
+            <p class="empty-hint">请尝试放宽筛选条件或切换板块</p>
+          </template>
+          <el-button type="primary" @click="resetFilters">重置条件</el-button>
+        </el-empty>
+      </div>
+      <div v-else-if="!loading && filteredData.length === 0 && allData.length > 0" class="empty-state">
+        <el-empty description="前端过滤无结果" :image-size="80">
+          <template #description>
+            <p class="empty-hint">原始数据中有 {{ allData.length }} 只股票，但当前过滤模式下无匹配项</p>
+          </template>
+          <el-button @click="resetFilters">重置过滤</el-button>
+        </el-empty>
+      </div>
+
       <el-table
+        v-else
         :data="pagedData"
         v-loading="loading"
         element-loading-text="正在获取实时行情..."
+        element-loading-background="rgba(255,255,255,0.7)"
         stripe
         class="pc-table"
         :default-sort="{ prop: 'score', order: 'descending' }"
@@ -186,7 +209,7 @@
       </el-table>
 
       <!-- 手机端豆腐块卡片 -->
-      <div v-loading="loading" element-loading-text="正在获取实时行情..." class="mobile-card-list">
+      <div v-show="!loading && filteredData.length > 0" v-loading="loading" element-loading-text="正在获取实时行情..." element-loading-background="rgba(255,255,255,0.7)" class="mobile-card-list">
         <el-card v-for="row in pagedData" :key="row.code" class="stock-card" shadow="hover" @click="goDetail(row)">
           <div class="card-top">
             <div class="card-code-name">
@@ -412,7 +435,7 @@ async function fetchKline(codeRaw, days = 100) {
       high: parseFloat(item[3]),
       low: parseFloat(item[4]),
       volume: parseInt(item[5]) || 0,
-      amount: parseFloat(item[5]) || 0,
+      amount: parseFloat(item[6]) || 0,
       changePct: +changePct.toFixed(2)
     }
   })
@@ -428,7 +451,8 @@ function extractFactors(realtime, klines) {
   if (!turnover && marketCapRaw > 0 && amountWan > 0) {
     turnover = (amountWan * 10000) / (marketCapRaw * 1e8) * 100
   }
-  turnover = Math.min(turnover || 0, 50)
+  // 换手率上限：次新股/极端活跃可能超50%，clamp到60防止极端值
+  turnover = Math.min(turnover || 0, 60)
 
   // 5日涨幅：取最近5个交易日的累计涨跌幅
   let gain5d = changePct
@@ -436,10 +460,10 @@ function extractFactors(realtime, klines) {
     const recent5 = klines.slice(-5)
     let cumGain = 0
     for (let i = 1; i < recent5.length; i++) cumGain += recent5[i].changePct || 0
-    if (Math.abs(cumGain) < 0.05) {
+    if (Math.abs(cumGain) < 0.05 && recent5[0].close > 0) {
       cumGain = (recent5[recent5.length - 1].close - recent5[0].close) / recent5[0].close * 100
     }
-    gain5d = cumGain
+    gain5d = isFinite(cumGain) ? cumGain : changePct
   }
 
   // 题材热度：名称关键词 + 涨幅动态调整
@@ -494,8 +518,8 @@ function extractFactors(realtime, klines) {
     turnover, volumeRatio: volumeRatio || 1,
     gain5d: +gain5d.toFixed(2),
     themeHeat: Math.round(themeHeat),
-    moneyFlow: +moneyFlow.toFixed(1),
-    price, changePct, volatility20d: +volatility20d.toFixed(1),
+    moneyFlow: isFinite(moneyFlow) ? +moneyFlow.toFixed(1) : 0,
+    price, changePct, volatility20d: isFinite(volatility20d) ? +volatility20d.toFixed(1) : 0,
     consecutiveUpDays,
     amplitude: amplitude || 0
   }
@@ -522,6 +546,8 @@ function computeScores(factors) {
   else if (turnover >= 5 && turnover < 8) turnoverScore = 72
   else if (turnover > 25 && turnover <= 35) turnoverScore = 55
   else if (turnover > 35 && turnover <= 45) turnoverScore = 30
+  else if (turnover > 45 && turnover <= 55) turnoverScore = 18
+  else if (turnover > 55) turnoverScore = 10
   else if (turnover < 3) turnoverScore = 10
   else if (turnover < 5) turnoverScore = 25
   else turnoverScore = 12
@@ -734,6 +760,12 @@ async function refreshAll() {
       console.warn('[诊断] 600172 不在板块原始数据中！总数:', snapshotData.diff.length)
     }
 
+    // 诊断：打印前5条原始数据
+    console.log('[诊断] 原始数据总数:', snapshotData.diff.length, '前5条:')
+    snapshotData.diff.slice(0, 5).forEach(r => {
+      console.log(`  ${r.f12} ${r.f14} | 换手率=${r.f8} | 量比=${r.f10} | 涨幅=${r.f3} | 振幅=${r.f7} | 流通市值(亿)=${((r.f21||0)/1e8).toFixed(1)}`)
+    })
+
     // 第二步：用筛选条件粗筛（传递模式以实现智能预筛）
     const opts = {
       capMax: filterCapMax.value,
@@ -742,7 +774,9 @@ async function refreshAll() {
       gainMin: filterGainMin.value,
       mode: filterMode.value !== 'all' && filterMode.value !== 'high_score' ? filterMode.value : null
     }
+    console.log('[诊断] 粗筛条件:', opts)
     const passed = snapshotData.diff.filter(row => quickFilter(row, opts))
+    console.log('[诊断] 粗筛通过数量:', passed.length)
 
     // 诊断：检查600172是否在粗筛通过列表中
     const debugPassed = passed.find(r => r.f12 === '600172')
@@ -909,478 +943,6 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.stock-filter-page {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-/* 头部 */
-.hero {
-  background: linear-gradient(135deg, #0a0f1f 0%, #121826 100%);
-  border-radius: 20px;
-  padding: 24px 28px;
-  margin-bottom: 20px;
-  color: #fff;
-}
-.hero-content h1 {
-  font-size: 1.6rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.hero-content h1 .el-icon { color: #f97316; }
-.badge {
-  background: #f97316;
-  color: #0a0f1f;
-  padding: 2px 12px;
-  border-radius: 40px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-.hero-content p {
-  margin-top: 10px;
-  opacity: 0.8;
-  font-size: 0.85rem;
-  line-height: 1.5;
-}
-.disclaimer {
-  background: rgba(249, 115, 22, 0.15);
-  border-radius: 30px;
-  padding: 5px 14px;
-  font-size: 0.7rem;
-  margin-top: 12px;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-
-/* 个股妖性测评快捷条 */
-.quick-eval-bar {
-  margin-bottom: 16px;
-}
-.quick-eval-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #fff;
-  border-radius: 16px;
-  padding: 14px 20px;
-  border: 1px solid #e2e8f0;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-.quick-eval-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #f97316;
-  flex-shrink: 0;
-}
-.quick-eval-title {
-  font-weight: 700;
-  font-size: 0.95rem;
-  color: #0f172a;
-}
-.quick-eval-desc {
-  font-size: 0.78rem;
-  color: #94a3b8;
-}
-.quick-eval-right {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex: 1;
-  max-width: 400px;
-  min-width: 240px;
-}
-.eval-input {
-  flex: 1;
-}
-
-/* 筛选卡片 */
-.filter-card {
-  margin-bottom: 16px;
-  border-radius: 16px;
-}
-.filter-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: flex-end;
-}
-.filter-item {
-  flex: 1;
-  min-width: 130px;
-}
-.filter-item label {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: #475569;
-  display: block;
-  margin-bottom: 4px;
-}
-.filter-actions {
-  flex: none;
-  display: flex;
-  gap: 8px;
-  align-items: flex-end;
-  padding-bottom: 0;
-}
-.quick-stocks {
-  margin-top: 14px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.quick-label {
-  font-size: 0.8rem;
-  color: #64748b;
-  white-space: nowrap;
-}
-.board-info {
-  font-size: 0.78rem;
-  color: #94a3b8;
-  margin-left: auto;
-}
-.board-info strong {
-  color: #f97316;
-}
-
-/* 表格卡片 */
-.table-card {
-  border-radius: 16px;
-}
-.table-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.table-header span {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 600;
-}
-.text-up { color: #f56c6c; font-weight: 600; }
-.text-down { color: #52c41a; font-weight: 600; }
-.text-warn { color: #e6a23c; font-weight: 600; }
-.score-cell {
-  font-weight: 800;
-  font-size: 1.1rem;
-}
-.score-high { color: #f97316; }
-.score-mid { color: #eab308; }
-.score-low { color: #6c7a91; }
-.pagination-wrap {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 16px;
-}
-
-/* ========== 手机端豆腐块卡片 ========== */
-.mobile-card-list {
-  display: none;
-}
-/* PC端显示表格 */
-.pc-table { display: block; }
-
-.stock-card {
-  border-radius: 14px;
-  border: 1px solid #eef2f7;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
-.stock-card:hover {
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-  transform: translateY(-1px);
-}
-.stock-card :deep(.el-card__body) { padding: 12px 14px; }
-
-.card-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-.card-code-name {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  flex: 1;
-}
-.card-code {
-  font-size: 0.68rem;
-  color: #94a3b8;
-  font-family: 'SF Mono', 'Fira Code', monospace;
-  flex-shrink: 0;
-}
-.card-name {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: #1e293b;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.card-price-row {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  margin-bottom: 10px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #f1f5f9;
-}
-.card-price {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: #0f172a;
-}
-.card-change {
-  font-size: 0.9rem;
-  font-weight: 700;
-}
-.card-score {
-  margin-left: auto;
-  font-size: 1rem;
-  font-weight: 800;
-}
-
-.card-metrics {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px 12px;
-  margin-bottom: 8px;
-}
-.card-metric {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.metric-label {
-  font-size: 0.7rem;
-  color: #94a3b8;
-}
-.metric-value {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: #334155;
-}
-
-.card-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 8px;
-  border-top: 1px solid #f1f5f9;
-}
-.card-cap {
-  font-size: 0.7rem;
-  color: #94a3b8;
-}
-.card-rec {
-  font-size: 0.75rem;
-  font-weight: 700;
-}
-
-/* 底部 */
-.footer-note {
-  text-align: center;
-  font-size: 0.7rem;
-  color: #6c7a91;
-  margin-top: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-}
-
-@media (max-width: 768px) {
-  .stock-filter-page { padding: 10px; }
-
-  /* 头部 */
-  .hero {
-    padding: 18px 16px;
-    border-radius: 14px;
-    margin-bottom: 14px;
-  }
-  .hero-content h1 {
-    font-size: 1.25rem;
-    gap: 6px;
-  }
-  .hero-content h1 .el-icon { font-size: 20px; }
-  .badge {
-    font-size: 0.65rem;
-    padding: 2px 8px;
-  }
-  .hero-content p {
-    font-size: 0.75rem;
-    margin-top: 8px;
-  }
-  .disclaimer {
-    font-size: 0.65rem;
-    padding: 4px 10px;
-    margin-top: 10px;
-  }
-
-  /* 快捷测评条 */
-  .quick-eval-inner {
-    flex-direction: column;
-    align-items: stretch;
-    padding: 12px 14px;
-    gap: 10px;
-    border-radius: 12px;
-  }
-  .quick-eval-left {
-    justify-content: center;
-    gap: 6px;
-  }
-  .quick-eval-title {
-    font-size: 0.85rem;
-  }
-  .quick-eval-desc {
-    display: none;
-  }
-  .quick-eval-right {
-    max-width: 100%;
-    min-width: unset;
-    flex: none;
-  }
-
-  /* 筛选卡片 */
-  .filter-card {
-    border-radius: 12px;
-    margin-bottom: 12px;
-  }
-  .filter-row {
-    flex-direction: column;
-    gap: 10px;
-  }
-  .filter-item {
-    min-width: 100%;
-  }
-  .filter-item label {
-    font-size: 0.7rem;
-  }
-  .filter-actions {
-    flex-direction: row;
-    width: 100%;
-  }
-  .filter-actions .el-button {
-    flex: 1;
-  }
-
-  /* 板块选择 */
-  .quick-stocks {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    margin-top: 12px;
-  }
-  .quick-label {
-    font-size: 0.75rem;
-  }
-  .board-info {
-    margin-left: 0;
-    font-size: 0.72rem;
-  }
-
-  /* 表格卡片 */
-  .table-card {
-    border-radius: 12px;
-  }
-  .table-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
-  }
-  .table-header span {
-    font-size: 0.88rem;
-  }
-
-  /* PC表格隐藏，手机卡片显示 */
-  .pc-table { display: none !important; }
-  .mobile-card-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  /* 分页 */
-  .pagination-wrap {
-    justify-content: center;
-  }
-  .pagination-wrap :deep(.el-pagination) {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 4px;
-  }
-  .pagination-wrap :deep(.el-pagination__sizes) {
-    display: none;
-  }
-  .pagination-wrap :deep(.el-pagination__jump) {
-    margin-left: 0;
-  }
-
-  .footer-note {
-    font-size: 0.65rem;
-    margin-top: 12px;
-  }
-}
-
-@media (max-width: 480px) {
-  .stock-filter-page { padding: 6px; }
-
-  .hero {
-    padding: 14px 12px;
-    border-radius: 10px;
-  }
-  .hero-content h1 {
-    font-size: 1.1rem;
-  }
-  .hero-content p {
-    font-size: 0.7rem;
-  }
-
-  .quick-eval-inner {
-    padding: 10px 12px;
-    border-radius: 10px;
-  }
-  .quick-eval-title {
-    font-size: 0.8rem;
-  }
-  .eval-input :deep(.el-input__inner) {
-    font-size: 0.8rem;
-  }
-
-  .filter-card {
-    border-radius: 10px;
-  }
-  .filter-item label {
-    font-size: 0.65rem;
-  }
-
-  .table-card {
-    border-radius: 10px;
-  }
-  .table-header span {
-    font-size: 0.8rem;
-  }
-
-  /* 卡片微调 */
-  .stock-card :deep(.el-card__body) { padding: 10px 12px; }
-  .card-price { font-size: 1.05rem; }
-  .card-change { font-size: 0.82rem; }
-  .card-score { font-size: 0.9rem; }
-  .card-name { font-size: 0.78rem; }
-  .metric-label { font-size: 0.65rem; }
-  .metric-value { font-size: 0.72rem; }
-}
+<style lang="scss" scoped>
+  @import url('../style/stockFilter/index.scss');
 </style>

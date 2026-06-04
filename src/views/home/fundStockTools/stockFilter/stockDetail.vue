@@ -1,41 +1,10 @@
 <template>
-  <div class="stock-detail-page">
+  <div class="stock-detail-page fade-in">
     <!-- 返回按钮 -->
     <div class="back-bar">
-      <el-button text @click="$router.back()">
-        <el-icon><ArrowLeft /></el-icon> 返回
+      <el-button text @click="$router.back()" class="back-btn">
+        <el-icon><ArrowLeft /></el-icon> 返回列表
       </el-button>
-    </div>
-
-    <!-- 股票代码搜索框（独立查询模式） -->
-    <div class="search-bar" v-if="!result && !loading">
-      <div class="search-card">
-        <div class="search-title">
-          <el-icon :size="24"><DataAnalysis /></el-icon>
-          <h2>个股妖性测评</h2>
-        </div>
-        <p class="search-desc">输入A股股票代码，一键评估妖性特征与操盘策略</p>
-        <div class="search-input-row">
-          <el-input
-            v-model="searchCode"
-            placeholder="输入股票代码，如 000001、600519"
-            size="large"
-            clearable
-            @keyup.enter="handleSearch"
-            class="search-input"
-          >
-            <template #prefix>
-              <el-icon><Search /></el-icon>
-            </template>
-          </el-input>
-          <el-button type="primary" size="large" @click="handleSearch" :loading="loading">
-            <el-icon><TrendCharts /></el-icon> 开始测评
-          </el-button>
-        </div>
-        <div class="search-tips">
-          <span>支持格式：纯数字（000001）、带前缀（sh600519 / sz000001）</span>
-        </div>
-      </div>
     </div>
 
     <!-- 头部概要 -->
@@ -98,12 +67,28 @@
       </div>
     </div>
 
-    <div v-loading="loading" element-loading-text="正在获取实时数据..." v-if="!result && !errorMsg">
-      <el-empty description="正在加载..." :image-size="60" />
+    <!-- 加载骨架 -->
+    <div v-if="loading && !result" class="loading-skeleton">
+      <div class="skeleton-hero"></div>
+      <div class="skeleton-metrics">
+        <div class="skeleton-card" v-for="i in 6" :key="i"></div>
+      </div>
     </div>
     <div v-else-if="errorMsg" class="error-block">
       <el-empty description="获取数据失败" :image-size="80">
+        <template #description>
+          <p class="error-desc">数据获取过程中出现问题</p>
+        </template>
         <el-alert type="error" :title="errorMsg" :closable="false" show-icon />
+        <el-button type="primary" style="margin-top: 16px" @click="loadDetail">重新加载</el-button>
+      </el-empty>
+    </div>
+    <div v-else-if="!loading && !result && !errorMsg" class="empty-state">
+      <el-empty description="未提供股票代码" :image-size="80">
+        <template #description>
+          <p class="error-desc">请从股票筛选列表中选择一只股票查看详情</p>
+        </template>
+        <el-button type="primary" @click="$router.back()">返回列表</el-button>
       </el-empty>
     </div>
 
@@ -263,6 +248,35 @@
               </div>
             </div>
             <el-divider />
+            <!-- 建议介入 & 止损止盈 -->
+            <div class="entry-stop-section" v-if="result.entryStop">
+              <div class="entry-stop-title">📊 建议介入与止损止盈</div>
+              <div class="entry-stop-grid">
+                <div class="es-item es-entry">
+                  <span class="es-label">建议介入价</span>
+                  <span class="es-value" :class="{ 'es-inactive': !result.entryStop.entryPrice }">{{ result.entryStop.entryLabel }}</span>
+                </div>
+                <div class="es-item es-stop">
+                  <span class="es-label">建议止损价</span>
+                  <span class="es-value" :class="{ 'es-inactive': !result.entryStop.stopLoss }">{{ result.entryStop.stopLabel }}</span>
+                </div>
+                <div class="es-item es-tp1">
+                  <span class="es-label">止盈目标一</span>
+                  <span class="es-value" :class="{ 'es-inactive': !result.entryStop.takeProfit1 }">{{ result.entryStop.tp1Label }}</span>
+                </div>
+                <div class="es-item es-tp2">
+                  <span class="es-label">止盈目标二</span>
+                  <span class="es-value" :class="{ 'es-inactive': !result.entryStop.takeProfit2 }">{{ result.entryStop.tp2Label }}</span>
+                </div>
+              </div>
+              <div v-if="result.entryStop.riskRewardRatio !== null" class="es-rr">
+                盈亏比 <strong :class="result.entryStop.riskRewardRatio >= 2 ? 'text-up' : 'text-warn'">{{ result.entryStop.riskRewardRatio }}:1</strong>
+                <span v-if="result.entryStop.riskRewardRatio >= 3" class="es-rr-tip">（优秀）</span>
+                <span v-else-if="result.entryStop.riskRewardRatio >= 2" class="es-rr-tip">（良好）</span>
+                <span v-else class="es-rr-tip">（偏低）</span>
+              </div>
+            </div>
+            <el-divider />
             <div class="launch-info">
               <el-icon><Clock /></el-icon> {{ result.launchText }}
             </div>
@@ -285,8 +299,9 @@
             <li><el-icon class="icon-warn"><DataLine /></el-icon> 短期动能(5日)：{{ result.gainDesc }}</li>
             <li v-if="result.gain10dDesc"><el-icon class="icon-warn"><DataLine /></el-icon> 中期动能(10日)：{{ result.gain10dDesc }}</li>
             <li><el-icon class="icon-warn"><Promotion /></el-icon> 题材强度：{{ result.themeDesc }}</li>
-            <li v-if="result.volatility20d"><el-icon class="icon-warn"><TrendCharts /></el-icon> 20日波动率：{{ result.volatility20d }}%（{{ result.volatility20d > 60 ? '高波动妖股基因' : result.volatility20d > 35 ? '中等波动' : '波动偏低' }}）</li>
+            <li v-if="result.volatility20d && isFinite(result.volatility20d)"><el-icon class="icon-warn"><TrendCharts /></el-icon> 20日波动率：{{ result.volatility20d }}%（{{ result.volatility20d > 60 ? '高波动妖股基因' : result.volatility20d > 35 ? '中等波动' : '波动偏低' }}）</li>
             <li v-if="result.consecutiveUpDays > 1"><el-icon class="icon-ok"><CircleCheckFilled /></el-icon> 连涨天数：{{ result.consecutiveUpDays }}天</li>
+            <li v-if="result.ma20 && result.price"><el-icon class="icon-warn"><DataLine /></el-icon> 20日均线偏离：{{ ((result.price - result.ma20) / result.ma20 * 100).toFixed(1) }}%（{{ result.price > result.ma20 ? '站上均线' : '跌破均线' }}）</li>
           </ul>
         </el-card>
 
@@ -316,7 +331,7 @@
             </div>
             <div class="aux-item">
               <span class="aux-label">20日波动率</span>
-              <span class="aux-value">{{ result.volatility20d }}%</span>
+              <span class="aux-value">{{ isFinite(result.volatility20d) ? result.volatility20d + '%' : '—' }}</span>
             </div>
             <div class="aux-item">
               <span class="aux-label">连涨天数</span>
@@ -325,6 +340,12 @@
             <div class="aux-item">
               <span class="aux-label">20日均价</span>
               <span class="aux-value">{{ result.ma20?.toFixed(2) }}元</span>
+            </div>
+            <div class="aux-item">
+              <span class="aux-label">均线偏离</span>
+              <span :class="result.price > result.ma20 ? 'text-up' : 'text-down'" class="aux-value">
+                {{ result.ma20 && result.price ? ((result.price - result.ma20) / result.ma20 * 100).toFixed(1) + '%' : '—' }}
+              </span>
             </div>
             <div class="aux-item">
               <span class="aux-label">综合评分</span>
@@ -351,7 +372,7 @@
           </el-alert>
           <div class="risk-reminder">
             <el-icon><WarningFilled /></el-icon>
-            <span>妖股波动巨大，单日振幅可达±10%~±20%。以上策略仅为模型推演，请结合自身风险承受能力决策。</span>
+            <span>妖股波动巨大，单日振幅可达±10%~±20%。以上策略仅为模型推演，请结合自身风险承受能力决策。止损纪律是妖股交易的生命线，切勿扛单。</span>
           </div>
         </div>
       </el-card>
@@ -370,30 +391,15 @@ import { useRoute } from 'vue-router'
 import {
   ArrowLeft, Clock, DataAnalysis, DataLine, TrendCharts, Histogram,
   CircleCheckFilled, Odometer, Promotion, Opportunity, WarningFilled,
-  InfoFilled, Setting, Search
+  InfoFilled, Setting
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const stockCode = ref('')
 const stockName = ref('')
-const searchCode = ref('')
 const loading = ref(false)
 const errorMsg = ref('')
 const result = ref(null)
-
-// 搜索处理
-function handleSearch() {
-  const code = searchCode.value.trim()
-  if (!code) {
-    errorMsg.value = '请输入股票代码'
-    return
-  }
-  stockCode.value = code
-  stockName.value = ''
-  errorMsg.value = ''
-  result.value = null
-  loadDetail()
-}
 
 // ==================== 数据获取（复用主页面逻辑） ====================
 async function fetchRealTime(codeRaw) {
@@ -466,6 +472,7 @@ async function fetchKline(codeRaw, days = 100) {
       const prevClose = parseFloat(arr[idx - 1][2])
       if (prevClose > 0) changePct = (close - prevClose) / prevClose * 100
     }
+    // K线数据格式：[日期, 开盘, 收盘, 最高, 最低, 成交量, 成交额]
     return {
       date: item[0],
       open: parseFloat(item[1]),
@@ -473,7 +480,7 @@ async function fetchKline(codeRaw, days = 100) {
       high: parseFloat(item[3]),
       low: parseFloat(item[4]),
       volume: parseInt(item[5]) || 0,
-      amount: parseFloat(item[5]) || 0,
+      amount: parseFloat(item[6]) || 0,
       changePct: +changePct.toFixed(2)
     }
   })
@@ -487,18 +494,19 @@ function extractFactors(realtime, klines) {
   if (!turnover && marketCapRaw > 0 && amountWan > 0) {
     turnover = (amountWan * 10000) / (marketCapRaw * 1e8) * 100
   }
-  turnover = Math.min(turnover || 0, 50)
+  // 换手率上限：次新股/极端活跃可能超50%，clamp到60防止极端值
+  turnover = Math.min(turnover || 0, 60)
 
-  // 5日涨幅
+  // 5日涨幅（优先用逐日涨跌幅累加，退化为首尾价差）
   let gain5d = changePct
   if (klines?.length >= 5) {
     const recent5 = klines.slice(-5)
     let cumGain = 0
     for (let i = 1; i < recent5.length; i++) cumGain += recent5[i].changePct || 0
-    if (Math.abs(cumGain) < 0.05) {
+    if (Math.abs(cumGain) < 0.05 && recent5[0].close > 0) {
       cumGain = (recent5[recent5.length - 1].close - recent5[0].close) / recent5[0].close * 100
     }
-    gain5d = cumGain
+    gain5d = isFinite(cumGain) ? cumGain : changePct
   }
 
   // 10日涨幅
@@ -507,10 +515,10 @@ function extractFactors(realtime, klines) {
     const recent10 = klines.slice(-10)
     let cumGain = 0
     for (let i = 1; i < recent10.length; i++) cumGain += recent10[i].changePct || 0
-    if (Math.abs(cumGain) < 0.05) {
+    if (Math.abs(cumGain) < 0.05 && recent10[0].close > 0) {
       cumGain = (recent10[recent10.length - 1].close - recent10[0].close) / recent10[0].close * 100
     }
-    gain10d = cumGain
+    gain10d = isFinite(cumGain) ? cumGain : changePct
   }
 
   // 20日均价
@@ -569,8 +577,8 @@ function extractFactors(realtime, klines) {
     marketCap: marketCapRaw || 50, turnover, volumeRatio: volumeRatio || 1,
     gain5d: +gain5d.toFixed(2), gain10d: +gain10d.toFixed(2),
     themeHeat: Math.round(themeHeat),
-    moneyFlow: +moneyFlow.toFixed(1), price, changePct,
-    volatility20d: +volatility20d.toFixed(1), consecutiveUpDays,
+    moneyFlow: isFinite(moneyFlow) ? +moneyFlow.toFixed(1) : 0, price, changePct,
+    volatility20d: isFinite(volatility20d) ? +volatility20d.toFixed(1) : 0, consecutiveUpDays,
     amplitude: amplitude || 0, ma20: +ma20.toFixed(2)
   }
 }
@@ -595,6 +603,8 @@ function computeScores(factors) {
   else if (turnover >= 5 && turnover < 8) turnoverScore = 72
   else if (turnover > 25 && turnover <= 35) turnoverScore = 55
   else if (turnover > 35 && turnover <= 45) turnoverScore = 30
+  else if (turnover > 45 && turnover <= 55) turnoverScore = 18
+  else if (turnover > 55) turnoverScore = 10
   else if (turnover < 3) turnoverScore = 10
   else if (turnover < 5) turnoverScore = 25
   else turnoverScore = 12
@@ -680,6 +690,169 @@ function getTargetPrice(price, stageType, score, gain5d) {
   }
 }
 
+/**
+ * 计算建议介入价、止损价、止盈价
+ *
+ * 核心逻辑：
+ * - 介入价 = 当前价 × (1 - 回调比例)，回调比例受阶段、评分、涨幅、振幅、市值综合影响
+ * - 止损价 = 介入价 × (1 - 止损比例)，止损比例以介入价为基准（而非当前价），更合理
+ * - 止盈价 = 介入价 × (1 + 止盈比例)，止盈比例基于阶段+评分+振幅动态调节
+ * - 盈亏比 = (目标二 - 介入价) : (介入价 - 止损价)，采用目标二作为潜在收益（保守取目标一也可）
+ *
+ * 关键改进：
+ * 1. 介入价和止损价独立调整，不再共用同一个 multiplier
+ * 2. 止损以介入价为锚点，而非当前价
+ * 3. 止盈考虑振幅补偿——高振幅股票止盈目标应更高
+ * 4. 评分对介入/止损/止盈的影响方向不同
+ * 5. 增加均线参考（后续可扩展）
+ */
+function getEntryStopPrice(price, stageType, score, gain5d, amplitude, marketCap, turnover, ma20) {
+  // 不可介入阶段
+  if (stageType === 'risk' || stageType === 'cold') {
+    return {
+      entryPrice: null, stopLoss: null, takeProfit1: null, takeProfit2: null,
+      entryLabel: '暂不建议介入', stopLabel: '—', tp1Label: '—', tp2Label: '—',
+      riskRewardRatio: null
+    }
+  }
+
+  // ========== 1. 基础参数（按阶段设定） ==========
+  let basePullback, baseStopLoss, baseTP1, baseTP2
+
+  switch (stageType) {
+    case 'pre':
+      // 蓄力突破：回调3%左右介入，止损5%，止盈目标适中
+      basePullback = 0.030
+      baseStopLoss = 0.050   // 相对于介入价的止损比例
+      baseTP1 = 0.15
+      baseTP2 = 0.25
+      break
+    case 'early':
+      // 启动初期：小幅回调即可介入（2%），紧止损（4%），高止盈预期
+      basePullback = 0.020
+      baseStopLoss = 0.040
+      baseTP1 = 0.18
+      baseTP2 = 0.30
+      break
+    case 'mid':
+      // 主升浪中：需要更大回调才安全（5%），宽止损防洗盘（7%），降低止盈预期
+      basePullback = 0.050
+      baseStopLoss = 0.070
+      baseTP1 = 0.12
+      baseTP2 = 0.20
+      break
+    default:
+      basePullback = 0.040
+      baseStopLoss = 0.060
+      baseTP1 = 0.12
+      baseTP2 = 0.22
+  }
+
+  // ========== 2. 动态调节系数 ==========
+
+  // 2a. 评分因子（0.7~1.3）
+  // 评分越高 → 回调介入可以更积极（少等回调），止损可略微放宽
+  const scoreFactor = 0.7 + (score / 100) * 0.6
+  // 介入价回调比例：评分高 → 少回调（积极介入），评分低 → 多回调（保守等待）
+  const pullbackScoreAdj = 1.5 - (score / 100) * 0.8  // 范围：0.7~1.4
+  // 止损比例：评分高 → 止损略宽（信任评分），评分低 → 止损紧（严格风控）
+  const stopScoreAdj = 0.7 + (score / 100) * 0.6  // 范围：0.7~1.3
+
+  // 2b. 涨幅因子——已涨越多，回调需求越大
+  // 5日涨幅超过15%：需要更深的回调才安全
+  let gainPullbackAdj = 1.0
+  if (gain5d > 35) gainPullbackAdj = 1.8
+  else if (gain5d > 25) gainPullbackAdj = 1.5
+  else if (gain5d > 15) gainPullbackAdj = 1.25
+  else if (gain5d > 8) gainPullbackAdj = 1.1
+  else if (gain5d < 0) gainPullbackAdj = 0.85  // 已回调过，可稍积极
+
+  // 涨幅对止损的影响：涨幅大 → 止损需放宽以防震出
+  let gainStopAdj = 1.0
+  if (gain5d > 30) gainStopAdj = 1.35
+  else if (gain5d > 20) gainStopAdj = 1.2
+  else if (gain5d > 10) gainStopAdj = 1.08
+  else if (gain5d < -3) gainStopAdj = 0.9  // 已跌较多，止损收窄
+
+  // 2c. 振幅因子——高振幅股票需要更宽的止损和更高的止盈目标
+  let ampStopAdj = 1.0
+  let ampTPAdj = 1.0
+  if (amplitude > 12) { ampStopAdj = 1.4; ampTPAdj = 1.25 }
+  else if (amplitude > 8) { ampStopAdj = 1.2; ampTPAdj = 1.12 }
+  else if (amplitude > 5) { ampStopAdj = 1.08; ampTPAdj = 1.05 }
+  else if (amplitude < 3) { ampStopAdj = 0.9; ampTPAdj = 0.9 }
+
+  // 2d. 市值因子——小市值波动大
+  let capStopAdj = 1.0
+  if (marketCap < 15) capStopAdj = 1.2
+  else if (marketCap < 30) capStopAdj = 1.1
+  else if (marketCap < 50) capStopAdj = 1.05
+  else if (marketCap > 150) capStopAdj = 0.9
+
+  // 2e. 换手率因子——高换手意味着活跃度高，止损可略紧（流动性好）
+  let turnoverAdj = 1.0
+  if (turnover > 30) turnoverAdj = 0.9
+  else if (turnover > 20) turnoverAdj = 0.95
+  else if (turnover < 5) turnoverAdj = 1.1  // 低换手，流动性差，止损宽一点
+
+  // ========== 3. 综合计算 ==========
+
+  // 介入价回调比例（综合所有因子）
+  const adjustedPullback = Math.min(
+    basePullback * pullbackScoreAdj * gainPullbackAdj,
+    0.12  // 回调上限12%
+  )
+  const adjustedPullbackClamped = Math.max(adjustedPullback, 0.01)  // 回调下限1%
+
+  // 止损比例（以介入价为基准）
+  const adjustedStopRatio = Math.min(
+    baseStopLoss * stopScoreAdj * gainStopAdj * ampStopAdj * capStopAdj * turnoverAdj,
+    0.12  // 止损上限12%
+  )
+  const adjustedStopRatioClamped = Math.max(adjustedStopRatio, 0.025)  // 止损下限2.5%
+
+  // 止盈比例（以介入价为基准）
+  const tp1Ratio = Math.min(baseTP1 * scoreFactor * ampTPAdj, 0.35)
+  const tp2Ratio = Math.min(baseTP2 * scoreFactor * ampTPAdj, 0.55)
+
+  // 计算具体价格
+  let entryPrice = +(price * (1 - adjustedPullbackClamped)).toFixed(2)
+
+  // 均线支撑参考：如果回调后的介入价低于MA20，取MA20作为介入价底线
+  // MA20通常为中期支撑位，不应轻易跌破
+  if (ma20 && ma20 > 0 && entryPrice < ma20 && ma20 < price) {
+    entryPrice = +ma20.toFixed(2)
+  }
+
+  const stopLoss = +(entryPrice * (1 - adjustedStopRatioClamped)).toFixed(2)
+  const takeProfit1 = +(entryPrice * (1 + tp1Ratio)).toFixed(2)
+  const takeProfit2 = +(entryPrice * (1 + tp2Ratio)).toFixed(2)
+
+  // ========== 4. 盈亏比 ==========
+  // 使用目标二作为潜在收益，更体现妖股的爆发潜力
+  const riskPerShare = entryPrice - stopLoss
+  const rewardPerShare = takeProfit2 - entryPrice
+  const riskRewardRatio = riskPerShare > 0 ? +(rewardPerShare / riskPerShare).toFixed(1) : null
+
+  // 标签文案
+  const entryPct = ((price - entryPrice) / price * 100).toFixed(1)
+  const stopPct = ((entryPrice - stopLoss) / entryPrice * 100).toFixed(1)
+  const tp1Pct = ((takeProfit1 - entryPrice) / entryPrice * 100).toFixed(1)
+  const tp2Pct = ((takeProfit2 - entryPrice) / entryPrice * 100).toFixed(1)
+
+  return {
+    entryPrice,
+    stopLoss,
+    takeProfit1,
+    takeProfit2,
+    entryLabel: `¥${entryPrice}（回调 ${entryPct}%）`,
+    stopLabel: `¥${stopLoss}（-${stopPct}%）`,
+    tp1Label: `¥${takeProfit1}（+${tp1Pct}%）`,
+    tp2Label: `¥${takeProfit2}（+${tp2Pct}%）`,
+    riskRewardRatio
+  }
+}
+
 function getRecommendation(score, stageType) {
   if (stageType === 'risk') return { level: '回避', color: '#b91c1c', text: '高风险，不建议追涨', emoji: '⛔' }
   if (score >= 85) return { level: '强烈推荐', color: '#f97316', text: '妖性突出，量价配合极佳', emoji: '🔥🔥' }
@@ -693,7 +866,8 @@ function getLaunchTimeText(stageType) {
     pre: '📅 预计未来3-7个交易日内出现异动拉升，密切关注量能突变信号。',
     early: '⏰ 已进入启动窗口期，短期（1-3日）有望加速上行，建议设好移动止盈。',
     mid: '⌛ 处于主升中段，惯性冲高概率较大，警惕高位分歧板出现。',
-    risk: '⚠️ 风险已显著加剧，不适合新开仓位，密切观察高位出货迹象。'
+    risk: '⚠️ 风险已显著加剧，不适合新开仓位，密切观察高位出货迹象。',
+    cold: '❄️ 当前处于冷门低迷期，缺乏资金关注，短期内启动概率较低。需等待题材催化或资金入场信号。'
   }
   return map[stageType] || '⏳ 震荡整固中，启动时间需等待放量确认信号。'
 }
@@ -703,7 +877,8 @@ function getStrategyText(stageType) {
     pre: '逢低潜伏，分批建仓介入，设置-5%止损线。等待放量突破确认后加仓，切忌追高。',
     early: '突破确认后可适当加仓，紧守5日均线作为止盈参考。目标上看第一目标位，到达后可部分止盈。',
     mid: '持仓者继续持有，移动止盈位逐步上移。新开仓需严格控制仓位（不超过总仓位10%），紧盯分时承接。',
-    risk: '建议逐步止盈或回避，高位巨量阴线为明确离场信号。宁可错过，不可做错。'
+    risk: '建议逐步止盈或回避，高位巨量阴线为明确离场信号。宁可错过，不可做错。',
+    cold: '不建议参与，流动性差且缺乏催化。可加入自选股观察，等待放量异动后再考虑入场。'
   }
   return map[stageType] || '保持观望，等待更明确的入场信号。'
 }
@@ -730,6 +905,7 @@ async function loadDetail() {
     const rec = getRecommendation(score, stageObj.type)
     const launchText = getLaunchTimeText(stageObj.type)
     const strategyText = getStrategyText(stageObj.type)
+    const entryStop = getEntryStopPrice(factors.price, stageObj.type, score, factors.gain5d, factors.amplitude, factors.marketCap, factors.turnover, factors.ma20)
 
     // 描述文案
     const capDesc = factors.marketCap < 15 ? '极小盘，极易被游资撬动' : factors.marketCap < 30 ? '超小盘，弹性极强' : factors.marketCap < 60 ? '小盘优势明显，弹性极佳' : '中大盘股，妖性相对减弱'
@@ -741,8 +917,12 @@ async function loadDetail() {
     const themeDesc = factors.themeHeat > 75 ? '核心热点共振，极易爆发' : factors.themeHeat > 55 ? '题材有一定热度，需催化剂' : '题材关注度一般'
 
     // 涨跌停价（根据板块判断涨停幅度）
-    const isKcbOrCyb = stockCode.value.startsWith('sh68') || stockCode.value.startsWith('sz30')
-    const limitRate = isKcbOrCyb ? 0.20 : 0.10
+    // 科创板(sh68)、创业板(sz30) ±20%；北交所(bj8) ±30%；主板 ±10%
+    const rawCode = stockCode.value.replace(/^(sh|sz|bj)/, '')
+    const isKcb = stockCode.value.startsWith('sh68')
+    const isCyb = stockCode.value.startsWith('sz30')
+    const isBjs = stockCode.value.startsWith('bj8') || /^[48]/.test(rawCode)
+    const limitRate = isKcb || isCyb ? 0.20 : isBjs ? 0.30 : 0.10
     const limitUp = factors.price * (1 + limitRate)
     const limitDown = factors.price * (1 - limitRate)
     const limitUpDist = ((limitUp - factors.price) / factors.price * 100)
@@ -769,7 +949,7 @@ async function loadDetail() {
       ma20: factors.ma20,
       themeHeat: factors.themeHeat,
       moneyFlow: factors.moneyFlow,
-      moneyFlowAbs: Math.abs(factors.moneyFlow).toFixed(1),
+      moneyFlowAbs: (Math.abs(factors.moneyFlow) || 0).toFixed(1),
       moneyFlowPrefix: factors.moneyFlow > 0 ? '+' : factors.moneyFlow < 0 ? '-' : '',
       volatility20d: factors.volatility20d,
       consecutiveUpDays: factors.consecutiveUpDays,
@@ -789,6 +969,7 @@ async function loadDetail() {
       recommendText: rec.text,
       launchText,
       strategyText,
+      entryStop,
       capDesc, volDesc, turnDesc, ampDesc, gainDesc, gain10dDesc, themeDesc
     }
   } catch (err) {
@@ -820,371 +1001,6 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.stock-detail-page {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-.back-bar {
-  margin-bottom: 16px;
-}
-
-/* 搜索卡片 */
-.search-bar {
-  display: flex;
-  justify-content: center;
-  padding: 40px 0;
-}
-.search-card {
-  background: #fff;
-  border-radius: 20px;
-  padding: 40px;
-  max-width: 600px;
-  width: 100%;
-  border: 1px solid #e2e8f0;
-  text-align: center;
-}
-.search-title {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  color: #f97316;
-  margin-bottom: 8px;
-}
-.search-title h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #0f172a;
-}
-.search-desc {
-  font-size: 0.9rem;
-  color: #64748b;
-  margin-bottom: 24px;
-}
-.search-input-row {
-  display: flex;
-  gap: 10px;
-}
-.search-input {
-  flex: 1;
-}
-.search-tips {
-  margin-top: 12px;
-  font-size: 0.72rem;
-  color: #94a3b8;
-}
-
-/* 头部 */
-.detail-hero {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  border-radius: 20px;
-  padding: 28px 32px;
-  color: #fff;
-  margin-bottom: 20px;
-}
-.hero-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 20px;
-}
-.hero-left h2 {
-  font-size: 1.5rem;
-  margin: 8px 0;
-}
-.code-text { font-size: 0.9rem; color: #94a3b8; font-weight: 400; }
-.price-line {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.current-price {
-  font-size: 2rem;
-  font-weight: 800;
-  color: #fff;
-}
-.change-badge {
-  font-size: 1.1rem;
-  font-weight: 700;
-  padding: 2px 10px;
-  border-radius: 8px;
-  background: rgba(255,255,255,0.1);
-}
-.text-up { color: #f87171; }
-.text-down { color: #4ade80; }
-.text-warn { color: #facc15; }
-
-/* 快速概览条 */
-.hero-quick-stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid rgba(255,255,255,0.1);
-}
-.quick-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: rgba(255,255,255,0.06);
-  border-radius: 10px;
-  padding: 6px 14px;
-  min-width: 70px;
-}
-.qs-label {
-  font-size: 0.65rem;
-  color: #94a3b8;
-  margin-bottom: 2px;
-}
-.qs-value {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #e2e8f0;
-}
-
-.hero-right {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
-.score-card {
-  text-align: center;
-}
-.score-num {
-  font-size: 3rem;
-  font-weight: 900;
-  color: #f97316;
-  line-height: 1;
-}
-.score-label {
-  font-size: 0.75rem;
-  color: #94a3b8;
-  margin: 4px 0;
-}
-.score-bar-bg {
-  width: 120px;
-  height: 6px;
-  background: #334155;
-  border-radius: 10px;
-  overflow: hidden;
-}
-.score-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #f97316, #eab308);
-  border-radius: 10px;
-  transition: width 0.5s;
-}
-.rec-badge {
-  font-size: 1.1rem;
-  font-weight: 800;
-  padding: 4px 16px;
-  border: 2px solid;
-  border-radius: 40px;
-}
-
-.stage-tag {
-  display: inline-block;
-  padding: 4px 14px;
-  border-radius: 20px;
-  font-weight: 700;
-  font-size: 0.8rem;
-}
-.tag-pre { background: #fef3c7; color: #92400e; }
-.tag-early { background: #dbeafe; color: #1e40af; }
-.tag-mid { background: #fef9c3; color: #a16207; }
-.tag-risk { background: #fee2e2; color: #b91c1c; }
-
-.error-block { margin: 40px 0; }
-
-/* 指标卡片行 */
-.metrics-row {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 14px;
-  margin-bottom: 20px;
-}
-.metric-card {
-  background: #fff;
-  border-radius: 16px;
-  padding: 16px;
-  border: 1px solid #e2e8f0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.metric-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.metric-value {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: #0f172a;
-}
-.metric-label {
-  font-size: 0.7rem;
-  color: #64748b;
-}
-.metric-desc {
-  width: 100%;
-  font-size: 0.72rem;
-  color: #64748b;
-  margin-top: 4px;
-}
-
-/* 详情网格 */
-.detail-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-.detail-panel {
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-}
-
-/* 因子评分 */
-.factor-list { display: flex; flex-direction: column; gap: 14px; }
-.factor-head {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.85rem;
-  margin-bottom: 4px;
-}
-.factor-score {
-  font-weight: 700;
-  color: #f97316;
-}
-.bonus-row {
-  padding-left: 12px;
-  border-left: 2px solid #e2e8f0;
-}
-.bonus-row .factor-head span:first-child {
-  font-size: 0.78rem;
-  color: #64748b;
-}
-
-/* 阶段详情 */
-.stage-header { margin-bottom: 10px; }
-.stage-desc {
-  font-size: 0.9rem;
-  color: #475569;
-  line-height: 1.6;
-}
-.target-section { text-align: center; }
-.target-label {
-  font-size: 0.85rem;
-  color: #64748b;
-  margin-bottom: 8px;
-}
-.target-range {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: #f97316;
-  margin: 6px 0;
-}
-.target-sep { color: #94a3b8; margin: 0 8px; }
-.target-unit { font-size: 0.9rem; color: #64748b; }
-.target-note { font-size: 0.8rem; color: #64748b; margin-top: 4px; }
-.launch-info {
-  font-size: 0.85rem;
-  color: #475569;
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  line-height: 1.5;
-}
-
-/* 特征列表 */
-.feature-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-.feature-list li {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 0;
-  font-size: 0.88rem;
-  color: #334155;
-  border-bottom: 1px solid #f1f5f9;
-}
-.feature-list li:last-child { border-bottom: none; }
-.icon-ok { color: #f97316; }
-.icon-warn { color: #ea580c; }
-
-/* 辅助指标 */
-.aux-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-.aux-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid #f1f5f9;
-}
-.aux-label { font-size: 0.82rem; color: #64748b; }
-.aux-value { font-size: 0.9rem; font-weight: 600; color: #0f172a; }
-.score-highlight { color: #f97316 !important; font-size: 1.1rem !important; }
-
-/* 策略面板 */
-.strategy-panel {
-  border-radius: 16px;
-  margin-bottom: 16px;
-}
-.strategy-content {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.risk-reminder {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  font-size: 0.75rem;
-  color: #94a3b8;
-  line-height: 1.5;
-}
-
-/* 底部 */
-.footer-note {
-  text-align: center;
-  font-size: 0.7rem;
-  color: #6c7a91;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-}
-
-@media (max-width: 768px) {
-  .metrics-row { grid-template-columns: repeat(2, 1fr); }
-  .detail-grid { grid-template-columns: 1fr; }
-  .aux-grid { grid-template-columns: 1fr; }
-  .hero-top { flex-direction: column; align-items: flex-start; }
-  .hero-right { flex-direction: row; gap: 20px; }
-  .hero-quick-stats { justify-content: flex-start; }
-}
-@media (max-width: 480px) {
-  .metrics-row { grid-template-columns: 1fr; }
-  .hero-quick-stats .quick-stat { min-width: 55px; padding: 4px 8px; }
-}
+<style lang="scss" scoped>
+  @import url('../style/stockFilter/stockDetail.scss');
 </style>
