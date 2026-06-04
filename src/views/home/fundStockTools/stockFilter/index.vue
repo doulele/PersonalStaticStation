@@ -77,7 +77,7 @@
         </div>
       </div>
       <div class="quick-stocks">
-        <span class="quick-label">选择板块：</span>
+        <!-- <span class="quick-label">选择板块：</span> -->
         <el-radio-group v-model="selectedBoard" size="small" @change="switchBoard">
           <el-radio-button value="all">全A股</el-radio-button>
           <el-radio-button value="sh">上证主板</el-radio-button>

@@ -95,7 +95,7 @@
     <!-- 评估报告主体 -->
     <div v-if="result" class="report-body">
       <!-- 第一行：关键指标卡片（6个核心指标） -->
-      <div class="metrics-row">
+      <div class="metrics-row section-order-2">
         <div class="metric-card">
           <div class="metric-icon" style="background: #fef3c7;"><el-icon :size="20"><Odometer /></el-icon></div>
           <div class="metric-info">
@@ -151,9 +151,9 @@
       </div>
 
       <!-- 第二行：评分雷达 + 阶段详情 -->
-      <div class="detail-grid">
+      <div class="detail-grid section-order-1">
         <!-- 因子评分详情 -->
-        <el-card class="detail-panel" shadow="hover">
+        <el-card class="detail-panel panel-order-2" shadow="hover">
           <template #header>
             <span><el-icon><DataAnalysis /></el-icon> 因子评分明细</span>
           </template>
@@ -222,7 +222,7 @@
         </el-card>
 
         <!-- 阶段与目标 -->
-        <el-card class="detail-panel" shadow="hover">
+        <el-card class="detail-panel panel-order-1" shadow="hover">
           <template #header>
             <span><el-icon><Promotion /></el-icon> 阶段研判 & 目标价位</span>
           </template>
@@ -285,7 +285,7 @@
       </div>
 
       <!-- 第三行：妖股特征 + 辅助指标 -->
-      <div class="detail-grid">
+      <div class="detail-grid section-order-3">
         <!-- 妖股特征量化 -->
         <el-card class="detail-panel" shadow="hover">
           <template #header>
@@ -356,11 +356,12 @@
       </div>
 
       <!-- 第四行：操盘策略 -->
-      <el-card class="strategy-panel" shadow="hover">
+      <el-card class="strategy-panel section-order-4" shadow="hover">
         <template #header>
           <span><el-icon><Opportunity /></el-icon> 操盘策略参考</span>
         </template>
         <div class="strategy-content">
+          <!-- 策略概述 -->
           <el-alert
             :type="result.stageType === 'risk' ? 'error' : result.stageType === 'early' ? 'success' : 'warning'"
             :closable="false"
@@ -370,6 +371,57 @@
               <strong>{{ result.strategyText }}</strong>
             </template>
           </el-alert>
+
+          <!-- 策略要点卡片 -->
+          <div class="strategy-cards">
+            <div class="strategy-card">
+              <div class="sc-icon sc-icon-position">
+                <el-icon><Odometer /></el-icon>
+              </div>
+              <div class="sc-body">
+                <span class="sc-label">建议仓位</span>
+                <span class="sc-value">{{ result.strategyTips?.position || '观望' }}</span>
+              </div>
+            </div>
+            <div class="strategy-card">
+              <div class="sc-icon sc-icon-cycle">
+                <el-icon><Clock /></el-icon>
+              </div>
+              <div class="sc-body">
+                <span class="sc-label">持仓周期</span>
+                <span class="sc-value">{{ result.strategyTips?.cycle || '待定' }}</span>
+              </div>
+            </div>
+            <div class="strategy-card">
+              <div class="sc-icon sc-icon-rule">
+                <el-icon><DataLine /></el-icon>
+              </div>
+              <div class="sc-body">
+                <span class="sc-label">核心纪律</span>
+                <span class="sc-value">{{ result.strategyTips?.rule || '严格止损' }}</span>
+              </div>
+            </div>
+            <div class="strategy-card">
+              <div class="sc-icon sc-icon-focus">
+                <el-icon><TrendCharts /></el-icon>
+              </div>
+              <div class="sc-body">
+                <span class="sc-label">盯盘重点</span>
+                <span class="sc-value">{{ result.strategyTips?.focus || '量价配合' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 操作要点 -->
+          <div class="strategy-checklist">
+            <div class="checklist-title">📋 操作要点</div>
+            <div class="checklist-item" v-for="(tip, idx) in (result.strategyTips?.checklist || [])" :key="idx">
+              <el-icon class="check-icon"><CircleCheckFilled /></el-icon>
+              <span>{{ tip }}</span>
+            </div>
+          </div>
+
+          <!-- 风险提示 -->
           <div class="risk-reminder">
             <el-icon><WarningFilled /></el-icon>
             <span>妖股波动巨大，单日振幅可达±10%~±20%。以上策略仅为模型推演，请结合自身风险承受能力决策。止损纪律是妖股交易的生命线，切勿扛单。</span>
@@ -884,6 +936,78 @@ function getStrategyText(stageType) {
   return map[stageType] || '保持观望，等待更明确的入场信号。'
 }
 
+function getStrategyTips(stageType) {
+  const map = {
+    pre: {
+      position: '1-2成试探仓',
+      cycle: '3-7个交易日',
+      rule: '-5%无条件止损',
+      focus: '量能突变+放量突破',
+      checklist: [
+        '分2-3批建仓，首次不超过1成仓位',
+        '放量突破关键阻力位方可加仓',
+        '收盘跌破5日线减半仓',
+        '单日跌幅超5%立即离场观望'
+      ]
+    },
+    early: {
+      position: '3-5成主攻仓',
+      cycle: '2-5个交易日',
+      rule: '以5日均线为止盈线',
+      focus: '分时承接+连板概率',
+      checklist: [
+        '可适度加仓，总仓位不超过5成',
+        '利润超10%后移动止损至成本价',
+        '到达第一目标位先止盈1/3',
+        '高位放量长上影为离场信号'
+      ]
+    },
+    mid: {
+      position: '持仓不动，新开≤1成',
+      cycle: '1-3个交易日',
+      rule: '移动止盈，回撤-7%离场',
+      focus: '高位分歧+出货迹象',
+      checklist: [
+        '已持仓者逐步上移止盈位',
+        '新开仓仅限超短，次日不涨停即走',
+        '关注龙虎榜游资动向',
+        '高位巨量长阴无条件清仓'
+      ]
+    },
+    risk: {
+      position: '不建议参与',
+      cycle: '——',
+      rule: '宁可错过，不可做错',
+      focus: '高位出货+资金撤离',
+      checklist: [
+        '坚决不开新仓，观望为主',
+        '持仓者逢反弹逐步减仓',
+        '高位巨量阴线为明确离场信号',
+        '等待回调企稳后再评估介入'
+      ]
+    },
+    cold: {
+      position: '不建议参与',
+      cycle: '——',
+      rule: '等待放量异动信号',
+      focus: '题材催化+资金入场',
+      checklist: [
+        '加入自选股观察，不急于入场',
+        '等待放量+涨幅双确认信号',
+        '关注是否有热点题材催化',
+        '若持续缩量阴跌则删除自选'
+      ]
+    }
+  }
+  return map[stageType] || {
+    position: '观望',
+    cycle: '待定',
+    rule: '严格止损',
+    focus: '量价配合',
+    checklist: ['等待更明确的入场信号', '严格控制仓位', '设置好止损位', '不追高、不扛单']
+  }
+}
+
 // ==================== 主控 ====================
 async function loadDetail() {
   // 取消上一次未完成的请求
@@ -911,6 +1035,7 @@ async function loadDetail() {
     const rec = getRecommendation(score, stageObj.type)
     const launchText = getLaunchTimeText(stageObj.type)
     const strategyText = getStrategyText(stageObj.type)
+    const strategyTips = getStrategyTips(stageObj.type)
     const entryStop = getEntryStopPrice(factors.price, stageObj.type, score, factors.gain5d, factors.amplitude, factors.marketCap, factors.turnover, factors.ma20)
 
     // 描述文案
@@ -975,6 +1100,7 @@ async function loadDetail() {
       recommendText: rec.text,
       launchText,
       strategyText,
+      strategyTips,
       entryStop,
       capDesc, volDesc, turnDesc, ampDesc, gainDesc, gain10dDesc, themeDesc
     }
@@ -1001,6 +1127,9 @@ const stageTagType = computed(() => {
 })
 
 onMounted(() => {
+  // 滚动到页面顶部（解决从筛选列表跳转时继承滚动位置的问题）
+  window.scrollTo({ top: 0, behavior: 'instant' })
+
   // 如果有路由参数（从筛选列表跳转），自动加载；否则显示搜索框等待用户输入
   const codeFromQuery = route.query.code
   if (codeFromQuery) {
