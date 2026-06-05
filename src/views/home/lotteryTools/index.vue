@@ -14,25 +14,25 @@
         <div class="hero-top">
           <div class="hero-tag" :class="{ 'tag-dlt': activeLottery === 'dlt' }">
             <span class="tag-dot"></span>
-            {{ activeLottery === 'ssq' ? '双色球' : '大乐透' }} · 智能预测引擎
+            {{ activeLottery === 'ssq' ? '双色球' : '大乐透' }} · 数据分析工具
           </div>
           <h1 class="hero-title">
             <template v-if="activeLottery === 'ssq'">
               <span class="title-icon">🔴</span>
-              双色球预测
+              双色球分析
               <span class="title-icon">🔵</span>
             </template>
             <template v-else>
               <span class="title-icon">🟡</span>
-              大乐透预测
+              大乐透分析
               <span class="title-icon">🟣</span>
             </template>
           </h1>
           <p class="hero-subtitle" v-if="activeLottery === 'ssq'">
-            多维度概率分析 + <strong>三大推荐引擎</strong>：整体频率 · 位置概率矩阵 · 时间衰减加权
+            多维度概率分析 + <strong>三大分析模型</strong>：整体频率 · 位置概率矩阵 · 时间衰减加权
           </p>
           <p class="hero-subtitle" v-else>
-            <strong>5+2</strong> 选号规则下的多模型预测：整体频率 · 位置概率矩阵 · 时间衰减加权
+            <strong>5+2</strong> 选号规则下的多模型分析：整体频率 · 位置概率矩阵 · 时间衰减加权
           </p>
         </div>
 

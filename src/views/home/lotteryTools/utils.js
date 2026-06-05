@@ -155,7 +155,7 @@ export function computeStatistics(filtered, options = {}) {
 
 /**
  * 生成模拟前区数据
- * @param {number} max - 最大号码
+ * @param {number} max - 最大数字
  * @param {number} pick - 选取个数
  */
 export function generateMockRedsForDLT(max = 35, pick = 5) {
@@ -176,7 +176,7 @@ export function generateMockRedsForDLT(max = 35, pick = 5) {
 
 /**
  * 生成模拟后区数据（不放回）
- * @param {number} max - 最大号码
+ * @param {number} max - 最大数字
  * @param {number} pick - 选取个数
  */
 export function generateMockBlues(max = 12, pick = 2) {

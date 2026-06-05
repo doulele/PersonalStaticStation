@@ -33,16 +33,16 @@
           </el-select>
         </div>
         <div class="form-item">
-          <label>每组推荐注数</label>
+          <label>每组方案数量</label>
           <el-input-number v-model="recCount" :min="1" :max="20" size="default" />
         </div>
         <div class="form-item decay-item" v-if="algoMode === 'weighted'">
           <label>衰减因子 λ: {{ decayLambda }}</label>
-          <el-slider v-model="decayLambda" :min="0.03" :max="0.15" :step="0.01" :show-tooltip="true" style="width: 160px" />
+          <el-slider class="decay-lambda" v-model="decayLambda" :min="0.03" :max="0.15" :step="0.01" :show-tooltip="true" />
         </div>
         <div class="form-item form-actions">
           <el-button type="danger" @click="refreshAll" :icon="RefreshRight">
-            开始预测/刷新
+            开始分析/刷新
           </el-button>
           <el-button type="primary" @click="fetchFromMultipleAPI" :icon="Upload">
             尝试API更新数据
@@ -141,22 +141,28 @@
       </div>
     </div>
 
-    <!-- 三组推荐 -->
+    <!-- 三组方案 -->
     <div class="card">
       <h3 class="card-header">
-        <span class="header-dot gold"></span> 专业推荐 (每组{{ recCount }}注)
+        <span class="header-dot gold"></span> 分析方案 (每组{{ recCount }}注)
       </h3>
 
       <div class="rec-section rec-comp">
         <div class="rec-section-header">
           <span class="rec-section-icon">✨</span>
           <div>
-            <h4 class="rec-label">综合推荐</h4>
+            <h4 class="rec-label">综合方案</h4>
             <p class="rec-desc">{{ algoMode === 'weighted' ? '加权概率' : '基础概率' }}模式 · 智能生成</p>
           </div>
         </div>
         <div class="rec-group">
-          <div v-for="(combo, i) in compRecs" :key="'c'+i" class="rec-card">
+          <div
+            v-for="(combo, i) in compRecs"
+            :key="'c'+i"
+            class="rec-card"
+            :class="{ 'rec-selected': selectedCombos.has('comp-'+i) }"
+            @click="toggleCombo('comp-'+i, combo)"
+          >
             <div class="rec-numbers">
               <span v-for="r in combo.reds" :key="r" class="rec-num red-num">{{ r }}</span>
               <span class="rec-num blue-num">{{ combo.blue }}</span>
@@ -169,12 +175,18 @@
         <div class="rec-section-header">
           <span class="rec-section-icon">📊</span>
           <div>
-            <h4 class="rec-label">整体概率推荐</h4>
+            <h4 class="rec-label">整体概率方案</h4>
             <p class="rec-desc">基于数字出现频率 · 全局统计</p>
           </div>
         </div>
         <div class="rec-group">
-          <div v-for="(combo, i) in globalRecs" :key="'g'+i" class="rec-card">
+          <div
+            v-for="(combo, i) in globalRecs"
+            :key="'g'+i"
+            class="rec-card"
+            :class="{ 'rec-selected': selectedCombos.has('global-'+i) }"
+            @click="toggleCombo('global-'+i, combo)"
+          >
             <div class="rec-numbers">
               <span v-for="r in combo.reds" :key="r" class="rec-num red-num">{{ r }}</span>
               <span class="rec-num blue-num">{{ combo.blue }}</span>
@@ -187,12 +199,18 @@
         <div class="rec-section-header">
           <span class="rec-section-icon">🎯</span>
           <div>
-            <h4 class="rec-label">位置概率推荐</h4>
+            <h4 class="rec-label">位置概率方案</h4>
             <p class="rec-desc">基于每个位置的历史概率 · 精准定位</p>
           </div>
         </div>
         <div class="rec-group">
-          <div v-for="(combo, i) in posRecs" :key="'p'+i" class="rec-card">
+          <div
+            v-for="(combo, i) in posRecs"
+            :key="'p'+i"
+            class="rec-card"
+            :class="{ 'rec-selected': selectedCombos.has('pos-'+i) }"
+            @click="toggleCombo('pos-'+i, combo)"
+          >
             <div class="rec-numbers">
               <span v-for="r in combo.reds" :key="r" class="rec-num red-num">{{ r }}</span>
               <span class="rec-num blue-num">{{ combo.blue }}</span>
@@ -205,7 +223,7 @@
     <!-- 用户评测 -->
     <div class="card">
       <h3 class="card-header">
-        <span class="header-dot green"></span> 用户号码评测系统
+        <span class="header-dot green"></span> 自定义数字评测系统
       </h3>
       <div class="control-row">
         <div class="form-item" style="flex:1">
@@ -232,7 +250,7 @@
       </h3>
       <div class="control-row">
         <div class="form-item" style="flex:1">
-          <label>固定用户号码 (可选, 留空则用综合推荐第一注)</label>
+          <label>固定数字组合 (可选, 留空则用综合方案第一注)</label>
           <el-input v-model="backtestReds" placeholder="红球, 如 1,2,3,4,5,6" />
         </div>
         <div class="form-item" style="max-width:120px">
@@ -245,11 +263,32 @@
       </div>
       <div v-if="backtestResult" class="eval-result">{{ backtestResult }}</div>
     </div>
+    <!-- 悬浮生成按钮 -->
+    <transition name="fab-fade">
+      <div v-if="selectedCombos.size > 0" class="fab-generate" @click="showTicketDialog = true">
+        <span class="fab-badge">{{ selectedCombos.size }}</span>
+        <span class="fab-text">生成球组</span>
+      </div>
+    </transition>
+
+    <!-- 彩票票面弹框 -->
+    <TicketDialog
+      type="ssq"
+      :visible="showTicketDialog"
+      :combos="ticketCombos"
+      :time="ticketTime"
+      :serial="ticketSerial"
+      :issue="ticketIssue"
+      :station="ticketStation"
+      :flow="ticketFlow"
+      :verify-code="verifyCode"
+      @close="showTicketDialog = false"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import {
   RefreshRight, Upload, DataLine, Calendar, Download,
   FolderOpened, TrendCharts, Timer
@@ -261,6 +300,7 @@ import {
   buildBuiltInDataset,
   computeStatistics,
 } from './utils.js'
+import TicketDialog from '@/components/lottery/TicketDialog.vue'
 
 // ==================== 双色球配置 ====================
 const RED_MAX = 33
@@ -286,6 +326,94 @@ const dataStatus = ref('加载内置数据中...')
 const globalRecs = ref([])
 const posRecs = ref([])
 const compRecs = ref([])
+
+// ==================== 球组选中 ====================
+const selectedCombos = ref(new Set())
+const showTicketDialog = ref(false)
+const ticketTime = ref('')
+const ticketSerial = ref('')
+const ticketIssue = ref('')
+const ticketStation = ref('')
+const ticketFlow = ref('')
+
+// 验票码（每次弹框打开时生成）
+const verifyCode = ref('')
+
+const ticketCombos = computed(() => {
+  const result = []
+  const allCombos = [
+    ...compRecs.value.map((c, i) => ({ id: 'comp-' + i, ...c })),
+    ...globalRecs.value.map((c, i) => ({ id: 'global-' + i, ...c })),
+    ...posRecs.value.map((c, i) => ({ id: 'pos-' + i, ...c })),
+  ]
+  for (const c of allCombos) {
+    if (selectedCombos.value.has(c.id)) {
+      result.push(c)
+    }
+  }
+  return result
+})
+
+function toggleCombo(id, combo) {
+  const s = new Set(selectedCombos.value)
+  if (s.has(id)) {
+    s.delete(id)
+  } else {
+    s.add(id)
+  }
+  selectedCombos.value = s
+}
+
+// 生成随机序列号
+function genSerial() {
+  const chars = '0123456789ABCDEF'
+  let s = ''
+  for (let i = 0; i < 20; i++) s += chars[Math.floor(Math.random() * 16)]
+  return s
+}
+
+// 生成随机流水号
+function genFlowNo() {
+  return String(Math.floor(Math.random() * 90000000) + 10000000)
+}
+
+// 生成随机站点号
+function genStationNo() {
+  const area = String(Math.floor(Math.random() * 900000) + 100000)
+  const shop = String(Math.floor(Math.random() * 9000) + 1000)
+  return area + shop
+}
+
+// 生成模拟期号
+function genIssue() {
+  const now = new Date()
+  const year = now.getFullYear()
+  // 大致估算：每周开3期(二四日)，一年约156期
+  const weekNum = Math.ceil(
+    (new Date(year, now.getMonth(), now.getDate()) - new Date(year, 0, 1)) / (7 * 86400000)
+  )
+  return `${year}${String(weekNum * 3).padStart(3, '0')}`
+}
+
+// 生成验票码
+function genVerifyCode() {
+  const chars = '0123456789ABCDEF'
+  let s = ''
+  for (let i = 0; i < 32; i++) s += chars[Math.floor(Math.random() * 16)]
+  return s
+}
+
+// 弹框打开时更新时间、生成验票码
+watch(showTicketDialog, (val) => {
+  if (val) {
+    ticketTime.value = new Date().toLocaleString('zh-CN')
+    ticketSerial.value = genSerial()
+    ticketIssue.value = genIssue()
+    ticketStation.value = genStationNo()
+    ticketFlow.value = genFlowNo()
+    verifyCode.value = genVerifyCode()
+  }
+})
 
 // ==================== 图表 ====================
 const chartRef = ref(null)
@@ -350,7 +478,7 @@ function doComputeStatistics() {
   dataStatus.value = `内置 ${rawHistory.value.length} 期`
 }
 
-// ==================== 推荐生成 ====================
+// ==================== 方案生成 ====================
 function generateGlobalProbRecs(num) {
   const redWeights = redProb.value.slice(1, RED_MAX + 1)
   const blueWeights = blueProb.value.slice(1, BLUE_MAX + 1)
@@ -492,7 +620,7 @@ function getMatrixCellClass(val) {
 
 // ==================== 用户评测 ====================
 function evaluateUserNumber(redsArr, blue) {
-  if (redsArr.length !== RED_PICK || blue < 1 || blue > BLUE_MAX) return { score: 0, detail: '号码格式错误' }
+  if (redsArr.length !== RED_PICK || blue < 1 || blue > BLUE_MAX) return { score: 0, detail: '格式错误' }
   if (new Set(redsArr).size !== RED_PICK) return { score: 0, detail: `${RED_LABEL}重复` }
 
   const freqMap = redProb.value
@@ -586,7 +714,7 @@ function runBacktest() {
     targetBlue = comp[0]?.blue || 0
   }
   if (targetReds.length !== RED_PICK) {
-    alert(`请输入${RED_PICK}个${RED_LABEL}`)
+    alert(`请输入${RED_PICK}个${RED_LABEL}数字`)
     return
   }
   let hit4 = 0, hitBlue = 0
@@ -910,44 +1038,54 @@ onUnmounted(() => {
   }
 }
 
-// 推荐区域
+// 方案区域
 .rec-section {
   margin-bottom: 24px;
-  padding: 24px;
-  border-radius: 16px;
-  border: 1px solid transparent;
+  padding: 28px;
+  border-radius: 20px;
+  border: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
   transition: all 0.3s ease;
   &:last-child { margin-bottom: 0; }
 }
-// 三种推荐模式整体区域区分
+// 三种方案模式整体区域区分
 .rec-comp {
   background: linear-gradient(135deg, #fefce8 0%, #fffbeb 100%);
-  border-color: #fde68a;
 }
 .rec-global {
   background: linear-gradient(135deg, #f5f3ff 0%, #eef2ff 100%);
-  border-color: #c7d2fe;
 }
 .rec-position {
   background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
-  border-color: #a7f3d0;
 }
 // 区域头部
 .rec-section-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 14px;
-  margin-bottom: 20px;
+  margin-bottom: 22px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.04);
 }
 .rec-section-icon {
-  font-size: 28px;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  font-size: 22px;
   flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
+.rec-comp .rec-section-icon { background: rgba(253, 230, 138, 0.35); }
+.rec-global .rec-section-icon { background: rgba(199, 210, 254, 0.4); }
+.rec-position .rec-section-icon { background: rgba(167, 243, 208, 0.4); }
 .rec-label {
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
-  margin: 0 0 4px 0;
+  margin: 0 0 2px 0;
   color: #1e293b;
 }
 .rec-desc {
@@ -963,31 +1101,37 @@ onUnmounted(() => {
 .rec-comp .rec-desc { color: #a16207; }
 .rec-global .rec-desc { color: #6366f1; }
 .rec-position .rec-desc { color: #10b981; }
-// 推荐卡片网格
+// 方案卡片网格
 .rec-group {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
 }
 .rec-card {
-  border-radius: 10px;
-  padding: 16px 18px;
-  transition: all 0.25s ease;
-  cursor: default;
-  border: 1px solid #e2e8f0;
-  background: rgba(255, 255, 255, 0.75);
+  border-radius: 12px;
+  padding: 14px 18px;
+  // background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(4px);
+  // border: 1px solid rgba(255, 255, 255, 0.8);
+  // box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.25s ease;
+  cursor: pointer;
+  user-select: none;
   &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-    background: rgba(255, 255, 255, 0.95);
+    transform: translateY(-2px);
+    // box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    // background: rgba(255, 255, 255, 0.9);
+  }
+  &:active {
+    transform: scale(0.98);
   }
 }
 .rec-numbers {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   position: relative;
   z-index: 1;
 }
@@ -995,22 +1139,92 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
   font-weight: 800;
-  font-size: 14px;
+  font-size: 13px;
   color: #ffffff;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255,255,255,0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255,255,255,0.25);
   position: relative;
   transition: transform 0.2s;
-  &:hover { transform: scale(1.1); }
+  flex-shrink: 0;
+  &:hover { transform: scale(1.15); }
   &.red-num {
-    background: linear-gradient(145deg, #f87171 0%, #ef4444 40%, #dc2626 100%);
+    background: radial-gradient(circle at 35% 35%, #fca5a5, #ef4444 50%, #b91c1c 100%);
   }
   &.blue-num {
-    background: linear-gradient(145deg, #60a5fa 0%, #3b82f6 40%, #2563eb 100%);
+    background: radial-gradient(circle at 35% 35%, #93c5fd, #3b82f6 50%, #1d4ed8 100%);
   }
+}
+
+// 球组选中状态 — 按模式区分背景色
+.rec-card.rec-selected {
+  border-color: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+.rec-comp .rec-card.rec-selected {
+  background: rgba(146, 64, 14, 0.12) !important;
+  border-left: 3px solid #92400e !important;
+}
+.rec-global .rec-card.rec-selected {
+  background: rgba(55, 48, 163, 0.1) !important;
+  border-left: 3px solid #3730a3 !important;
+}
+.rec-position .rec-card.rec-selected {
+  background: rgba(6, 95, 70, 0.1) !important;
+  border-left: 3px solid #065f46 !important;
+}
+
+// 悬浮生成按钮
+.fab-generate {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 24px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #fff;
+  border-radius: 50px;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4);
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 15px;
+  transition: all 0.25s ease;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(37, 99, 235, 0.5);
+  }
+  &:active {
+    transform: scale(0.96);
+  }
+  .fab-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.25);
+    font-size: 13px;
+    font-weight: 800;
+  }
+  .fab-text {
+    letter-spacing: 0.5px;
+  }
+}
+.fab-fade-enter-active,
+.fab-fade-leave-active {
+  transition: all 0.3s ease;
+}
+.fab-fade-enter-from,
+.fab-fade-leave-to {
+  opacity: 0;
+  transform: translateY(16px) scale(0.9);
 }
 
 // 评测结果
@@ -1029,6 +1243,15 @@ onUnmounted(() => {
 
 // 响应式
 @media (max-width: 768px) {
+  ::v-deep .el-input{
+    width: 100%;
+  }
+  .el-select{
+    width: 100%!important;
+  }
+  .el-input-number{
+    width: 100%!important;
+  }
   .control-panel { padding: 16px; }
   .control-row {
     display: grid;
@@ -1044,11 +1267,33 @@ onUnmounted(() => {
   .form-item.form-actions {
     grid-column: 1 / -1;
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    gap: 8px;
+    .el-button {
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      padding-left: 6px;
+      padding-right: 6px;
+      margin-left: 0;
+    }
   }
   .status-row {
-    gap: 8px;
+    width: 100%;
+    gap: 8px 10px;
     margin-top: 12px;
+    justify-content: space-between;
+    // 四个子元素：两个 el-tag + 导出按钮 + 导入 label，两两一行靠两边
+    > span,
+    .el-tag,
+    .el-button,
+    .import-label {
+      width: calc(50% - 5px);
+      justify-content: center;
+    }
+    .el-tag {
+      margin: 0;
+    }
   }
   // 导出按钮边框
   .export-btn {
@@ -1079,18 +1324,19 @@ onUnmounted(() => {
   // 图表按钮：SSQ是3个一行
   .chart-tabs {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap!important;
     gap: 6px;
-    .el-button { flex: 1 1 auto; min-width: calc(33.33% - 6px); font-size: 11px; padding: 6px 4px; }
+    .el-button { flex: 1 1 auto; min-width: 0px !important;margin-left: 0px; font-size: 11px; padding: 6px 4px; }
   }
   .rec-group { grid-template-columns: 1fr; }
-  .rec-card { padding: 12px 14px; border-radius: 8px; }
-  .rec-num { width: 32px; height: 32px; font-size: 13px; border-radius: 7px; }
-  .card { padding: 16px; border-radius: 14px; }
+  .rec-card { padding: 12px 16px; border-radius: 10px; }
+  .rec-num { width: 34px; height: 34px; font-size: 14px; border-radius: 50%; }
+  .rec-numbers { gap: 6px; }
+  .card { padding: 12px; border-radius: 14px; }
   .card-header { font-size: 15px; }
-  .rec-section { margin-bottom: 16px; padding: 16px; border-radius: 14px; }
-  .rec-section-header { gap: 10px; margin-bottom: 14px; }
-  .rec-section-icon { font-size: 24px; }
+  .rec-section { margin-bottom: 14px; padding: 14px 12px; border-radius: 16px; }
+  .rec-section-header { gap: 10px; margin-bottom: 14px; padding-bottom: 12px; }
+  .rec-section-icon { font-size: 24px; width: 38px; height: 38px; border-radius: 10px; }
   .rec-label { font-size: 15px; }
   .rec-desc { font-size: 11px; }
   // 矩阵卡片移动端适配
@@ -1115,10 +1361,14 @@ onUnmounted(() => {
     grid-column: 1 / -1;
   }
   .rec-group { grid-template-columns: 1fr; }
-  .rec-num { width: 28px; height: 28px; font-size: 12px; border-radius: 6px; }
+  .rec-num { width: 32px; height: 32px; font-size: 13px; border-radius: 50%; }
   .rec-numbers { gap: 5px; }
-  .rec-card { padding: 10px 12px; border-radius: 8px; }
-  .card { padding: 14px; }
+  .rec-card { padding: 10px 12px; border-radius: 10px; }
+  .card { padding: 10px; }
+  .rec-section { margin-bottom: 12px; padding: 12px; border-radius: 14px; }
+  .rec-section-header { gap: 8px; margin-bottom: 12px; padding-bottom: 10px; }
+  .rec-section-icon { font-size: 20px; width: 34px; height: 34px; border-radius: 8px; }
+  .rec-label { font-size: 14px; }
   .chart-box { height: 240px; }
   .chart-tabs {
     gap: 4px;
@@ -1126,10 +1376,6 @@ onUnmounted(() => {
   }
   .matrix-num { width: 30px; height: 30px; border-radius: 4px; em { font-size: 11px; } small { font-size: 7px; } }
   .matrix-card-numbers { gap: 4px; }
-  .rec-section { margin-bottom: 12px; padding: 12px; border-radius: 12px; }
-  .rec-section-header { gap: 8px; margin-bottom: 12px; }
-  .rec-section-icon { font-size: 22px; }
-  .rec-label { font-size: 14px; }
   .rec-desc { font-size: 10px; }
   .prob-table {
     grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));

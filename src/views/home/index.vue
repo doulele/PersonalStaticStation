@@ -61,8 +61,8 @@
               <el-icon :size="28"><Present /></el-icon>
             </div>
             <div class="tool-info">
-              <h3 class="tool-name">双色球预测</h3>
-              <p class="tool-desc">AI 智能双色球/大乐透号码分析预测</p>
+              <h3 class="tool-name">双色球 / 大乐透分析</h3>
+              <p class="tool-desc">双色球 / 大乐透历史数据统计分析</p>
             </div>
             <el-icon class="tool-arrow"><ArrowRight /></el-icon>
           </div>
