@@ -90,7 +90,7 @@
         <!-- 彩种切换 Tab -->
         <div class="hero-tabs">
           <button
-            class="hero-tab"
+            class="hero-tab tab-ssq"
             :class="{ active: activeLottery === 'ssq' }"
             @click="activeLottery = 'ssq'"
           >
@@ -100,7 +100,7 @@
             <span class="tab-badge">6+1</span>
           </button>
           <button
-            class="hero-tab dlt"
+            class="hero-tab tab-dlt"
             :class="{ active: activeLottery === 'dlt' }"
             @click="activeLottery = 'dlt'"
           >
@@ -109,6 +109,15 @@
             <span class="tab-text">大乐透</span>
             <span class="tab-badge">5+2</span>
           </button>
+          <button
+            class="hero-tab tab-query"
+            :class="{ active: activeLottery === 'query' }"
+            @click="activeLottery = 'query'"
+          >
+            <el-icon class="search-icon"><Search /></el-icon>
+            <span class="tab-text">中奖查询</span>
+            <span class="tab-badge">验奖</span>
+          </button>
         </div>
       </div>
     </div>
@@ -116,6 +125,7 @@
     <!-- 子面板 -->
     <SSQPanel v-if="activeLottery === 'ssq'" />
     <DLTPanel v-else-if="activeLottery === 'dlt'" />
+    <WinQueryPanel v-else-if="activeLottery === 'query'" />
 
     <!-- 底部提示 -->
     <div class="footer-note">
@@ -127,9 +137,10 @@
 
 <script setup>
 import { ref } from 'vue'
-import { InfoFilled, WarningFilled } from '@element-plus/icons-vue'
+import { InfoFilled, WarningFilled, Search } from '@element-plus/icons-vue'
 import SSQPanel from './SSQPanel.vue'
 import DLTPanel from './DLTPanel.vue'
+import WinQueryPanel from './WinQueryPanel.vue'
 
 const activeLottery = ref('ssq')
 </script>
@@ -368,7 +379,7 @@ $radius-lg: 28px;
 // 切换按钮
 .hero-tabs {
   display: flex;
-  gap: 10px;
+  gap: 6px;
 
   @media (min-width: 768px) {
     gap: 14px;
@@ -380,13 +391,13 @@ $radius-lg: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 12px 14px;
-  border: 1.5px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.65);
-  border-radius: 16px;
-  font-size: 13px;
+  gap: 4px;
+  padding: 10px 6px;
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.75);
+  border-radius: 14px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -398,40 +409,94 @@ $radius-lg: 28px;
   @media (min-width: 768px) {
     flex: none;
     min-width: 240px;
+    gap: 8px;
     padding: 14px 24px;
     font-size: 14px;
     border-radius: 18px;
   }
 
+  // 双色球 — 红色系
+  &.tab-ssq {
+    background: linear-gradient(135deg, rgba(220, 38, 38, 0.35), rgba(185, 28, 28, 0.3));
+    border-color: rgba(239, 68, 68, 0.25);
+    color: rgba(255, 255, 255, 0.85);
+    &:hover {
+      border-color: rgba(239, 68, 68, 0.55);
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.45), rgba(220, 38, 38, 0.4));
+      color: #fca5a5;
+    }
+    &.active {
+      background: linear-gradient(135deg, rgba(220, 38, 38, 0.9), rgba(185, 28, 28, 0.85));
+      border-color: #dc2626;
+      color: #fff;
+      box-shadow: 0 8px 30px rgba(220, 38, 38, 0.4);
+    }
+  }
+
+  // 大乐透 — 紫色系
+  &.tab-dlt {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(79, 70, 229, 0.28));
+    border-color: rgba(99, 102, 241, 0.3);
+    color: rgba(255, 255, 255, 0.85);
+    &:hover {
+      border-color: rgba(99, 102, 241, 0.55);
+      background: linear-gradient(135deg, rgba(129, 140, 248, 0.45), rgba(99, 102, 241, 0.4));
+      color: #a5b4fc;
+    }
+    &.active {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.9), rgba(79, 70, 229, 0.85));
+      border-color: #6366f1;
+      color: #fff;
+      box-shadow: 0 8px 30px rgba(99, 102, 241, 0.4);
+    }
+  }
+
+  // 中奖查询 — 绿色系
+  &.tab-query {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(5, 150, 105, 0.28));
+    border-color: rgba(16, 185, 129, 0.3);
+    color: rgba(255, 255, 255, 0.85);
+    &:hover {
+      border-color: rgba(16, 185, 129, 0.55);
+      background: linear-gradient(135deg, rgba(52, 211, 153, 0.45), rgba(16, 185, 129, 0.4));
+      color: #6ee7b7;
+    }
+    &.active {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.9), rgba(5, 150, 105, 0.85));
+      border-color: #10b981;
+      color: #fff;
+      box-shadow: 0 8px 30px rgba(16, 185, 129, 0.4);
+    }
+  }
+
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.25);
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
   }
 
   &.active {
-    background: rgba(220, 38, 38, 0.85);
-    border-color: #dc2626;
-    color: #fff;
-    box-shadow: 0 8px 30px rgba(220, 38, 38, 0.4);
     transform: translateY(-2px);
   }
 
-  &.dlt.active {
-    background: rgba(99, 102, 241, 0.85);
-    border-color: #6366f1;
-    box-shadow: 0 8px 30px rgba(99, 102, 241, 0.4);
+  .tab-ball {
+    display: none;
+    @media (min-width: 768px) {
+      display: inline-block;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      &.red { background: #ef4444; }
+      &.blue { background: #3b82f6; }
+      &.yellow { background: #f59e0b; }
+      &.purple { background: #8b5cf6; }
+    }
   }
 
-  .tab-ball {
-    width: 12px; height: 12px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    &.red { background: #ef4444; }
-    &.blue { background: #3b82f6; }
-    &.yellow { background: #f59e0b; }
-    &.purple { background: #8b5cf6; }
+  .search-icon {
+    display: none;
+    @media (min-width: 768px) {
+      display: inline-flex;
+    }
   }
 
   .tab-text {
@@ -439,16 +504,15 @@ $radius-lg: 28px;
   }
 
   .tab-badge {
-    font-size: 10px;
-    padding: 2px 8px;
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 100px;
-    font-weight: 500;
-    white-space: nowrap;
-
+    display: none;
     @media (min-width: 768px) {
+      display: inline-block;
       font-size: 11px;
       padding: 3px 10px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 100px;
+      font-weight: 500;
+      white-space: nowrap;
     }
   }
 }
