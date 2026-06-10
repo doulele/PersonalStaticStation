@@ -41,6 +41,11 @@ const routes = [
         meta: { title: '妖股详情', icon: 'DataLine' }
       },
       {
+        path: 'fund/dadao-detail',
+        component: () => import('@/views/home/fundStockTools/stockFilter/DaDaoQiXianDetail.vue'),
+        meta: { title: '大道七线股诊', icon: 'DataLine' }
+      },
+      {
         path: 'lottery',
         component: () => import('@/views/home/lotteryTools/index.vue'),
         meta: { title: '双色球/大乐透分析', icon: 'Present' }
