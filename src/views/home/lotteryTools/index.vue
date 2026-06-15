@@ -153,6 +153,9 @@
       </div>
     </div>
 
+    <!-- 可买入小提示 -->
+    <p class="purchase-tip" v-if="purchaseTip">{{ purchaseTip }}</p>
+
     <!-- 子面板 -->
     <SSQPanel v-if="activeLottery === 'ssq'" />
     <DLTPanel v-else-if="activeLottery === 'dlt'" />
@@ -296,7 +299,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { InfoFilled, WarningFilled, Search, Setting, Refresh } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
 import SSQPanel from './SSQPanel.vue'
@@ -306,6 +309,51 @@ import { useLotteryData } from '@/composables/useLotteryData'
 import { fetchStats, syncRecentData, syncFullData, verifyPassword } from '@/api/lottery'
 
 const activeLottery = ref('ssq')
+
+/**
+ * 根据当前日期+时间自动判断应跳入的彩种 Tab
+ * 双色球：开奖日 周二/周四/周日，截止 20:00
+ * 大乐透：开奖日 周一/周三/周六，截止 21:00
+ */
+function getAutoTab() {
+  const now = new Date()
+  const day = now.getDay()           // 0=周日 1=周一 ... 6=周六
+  const minutes = now.getHours() * 60 + now.getMinutes()
+
+  const ssqDays = [0, 2, 4]          // 日、二、四
+  const dltDays = [1, 3, 6]          // 一、三、六
+
+  if (ssqDays.includes(day) && minutes < 20 * 60) return 'ssq'
+  if (dltDays.includes(day) && minutes < 21 * 60) return 'dlt'
+
+  // 非买入窗口默认双色球
+  return 'ssq'
+}
+
+/** 当前选中彩种的买入小提示 */
+const purchaseTip = computed(() => {
+  const now = new Date()
+  const day = now.getDay()
+  const minutes = now.getHours() * 60 + now.getMinutes()
+  const dayNames = ['日', '一', '二', '三', '四', '五', '六']
+  const todayName = dayNames[day]
+
+  if (activeLottery.value === 'ssq') {
+    const isToday = [0, 2, 4].includes(day)
+    if (isToday && minutes < 20 * 60) return `今日周${todayName}，双色球 20:00 前可买入当前期`
+    const next = [0, 2, 4].find(d => d > day)
+    const nextDay = next !== undefined ? next : 0  // 周日兜底
+    return `双色球每二/四/日开奖，下次周${dayNames[nextDay]} 20:00 前可买入`
+  }
+  if (activeLottery.value === 'dlt') {
+    const isToday = [1, 3, 6].includes(day)
+    if (isToday && minutes < 21 * 60) return `今日周${todayName}，大乐透 21:00 前可买入当前期`
+    const next = [1, 3, 6].find(d => d > day)
+    const nextDay = next !== undefined ? next : 1  // 周一兜底
+    return `大乐透每一/三/六开奖，下次周${dayNames[nextDay]} 21:00 前可买入`
+  }
+  return null  // 中奖查询不展示
+})
 
 // ==================== 数据管理 ====================
 const { loadBaseData, stats: lotteryStats } = useLotteryData()
@@ -474,8 +522,9 @@ watch(mgmtDialogVisible, (val) => {
   }
 })
 
-// 页面加载时尝试加载基础数据
+// 页面加载时尝试加载基础数据，并自动跳转当天可买入彩种
 onMounted(() => {
+  activeLottery.value = getAutoTab()
   loadBaseData()
 })
 </script>
@@ -720,6 +769,25 @@ $radius-lg: 28px;
   &.tip-query {
     background: rgba(52, 211, 153, 0.12);
     border-color: rgba(52, 211, 153, 0.2);
+  }
+}
+
+// 可买入小提示
+.purchase-tip {
+  font-size: 12px;
+  color: #475569;
+  text-align: center;
+  margin: 8px auto 16px;
+  padding: 6px 16px;
+  background: #e2e8f0;
+  border-radius: 20px;
+  width: fit-content;
+  max-width: 92vw;
+  line-height: 1.5;
+
+  @media (min-width: 768px) {
+    font-size: 13px;
+    padding: 6px 20px;
   }
 }
 
