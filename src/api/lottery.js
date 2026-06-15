@@ -138,3 +138,85 @@ export async function fetchHistoryDraws(type, count = 50) {
     return []
   }
 }
+
+// ==================== 数据同步 API（新增） ====================
+
+/**
+ * 获取缓存的彩票基础数据
+ * @param {'ssq' | 'dlt'} type
+ * @returns {Promise<{code: number, msg: string, data: Array|null}>}
+ */
+export async function fetchBaseData(type) {
+  try {
+    const res = await fetch(`${API_BASE}/base-data/${type}`)
+    return await res.json()
+  } catch (e) {
+    console.warn('[fetchBaseData] 请求失败:', e.message)
+    return { code: -1, msg: e.message, data: null }
+  }
+}
+
+/**
+ * 获取缓存统计信息
+ */
+export async function fetchStats() {
+  try {
+    const res = await fetch(`${API_BASE}/stats`)
+    return await res.json()
+  } catch (e) {
+    return { code: -1, msg: e.message, data: null }
+  }
+}
+
+/**
+ * 从 RollToolsApi 同步近期数据
+ * @param {'ssq' | 'dlt'} type
+ * @param {number} count - 数量 (最多300)
+ */
+export async function syncRecentData(type, count = 200) {
+  try {
+    const res = await fetch(`${API_BASE}/sync-data`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, count })
+    })
+    return await res.json()
+  } catch (e) {
+    return { code: -1, msg: e.message, data: null }
+  }
+}
+
+/**
+ * 全量重新爬取（需密码）
+ * @param {'ssq' | 'dlt' | 'all'} type
+ * @param {string} password
+ */
+export async function syncFullData(type, password) {
+  try {
+    const res = await fetch(`${API_BASE}/sync-full`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, password })
+    })
+    return await res.json()
+  } catch (e) {
+    return { code: -1, msg: e.message, data: null }
+  }
+}
+
+/**
+ * 验证爬取密码
+ * @param {string} password
+ */
+export async function verifyPassword(password) {
+  try {
+    const res = await fetch(`${API_BASE}/verify-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    })
+    return await res.json()
+  } catch (e) {
+    return { code: -1, msg: e.message, data: { valid: false } }
+  }
+}

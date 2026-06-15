@@ -163,17 +163,321 @@
       <el-icon><WarningFilled /></el-icon>
       分析结果仅供娱乐参考，历史数据不代表未来开奖结果。请理性购彩，量力而行。
     </div>
+
+    <!-- 隐蔽数据管理入口 -->
+    <div class="data-mgmt-area" @mouseenter="showMgmtHint = true" @mouseleave="showMgmtHint = false">
+      <transition name="hint-fade">
+        <span v-if="showMgmtHint && !mgmtDialogVisible" class="mgmt-hint">数据管理</span>
+      </transition>
+      <button
+        class="data-mgmt-trigger"
+        :class="{ 'trigger-visible': mgmtDialogVisible }"
+        @click="openMgmtDialog"
+        title="数据管理"
+      >
+        <el-icon :size="14"><Setting /></el-icon>
+      </button>
+    </div>
+
+    <!-- 数据管理弹窗 -->
+    <el-dialog
+      v-model="mgmtDialogVisible"
+      title="数据管理"
+      width="520px"
+      destroy-on-close
+      class="mgmt-dialog"
+    >
+      <!-- 缓存状态 -->
+      <div class="mgmt-section">
+        <h4>📊 数据缓存状态</h4>
+        <div class="mgmt-stats" v-if="lotteryStats">
+          <div class="stat-row">
+            <span class="stat-label">双色球:</span>
+            <el-tag :type="lotteryStats.ssq?.count > 0 ? 'success' : 'info'" size="small">
+              {{ lotteryStats.ssq?.count > 0 ? `${lotteryStats.ssq.count} 期` : '无数据' }}
+            </el-tag>
+            <span class="stat-date" v-if="lotteryStats.ssq?.firstDate">
+              {{ lotteryStats.ssq.firstDate }} ~ {{ lotteryStats.ssq.lastDate }}
+            </span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">大乐透:</span>
+            <el-tag :type="lotteryStats.dlt?.count > 0 ? 'success' : 'info'" size="small">
+              {{ lotteryStats.dlt?.count > 0 ? `${lotteryStats.dlt.count} 期` : '无数据' }}
+            </el-tag>
+            <span class="stat-date" v-if="lotteryStats.dlt?.firstDate">
+              {{ lotteryStats.dlt.firstDate }} ~ {{ lotteryStats.dlt.lastDate }}
+            </span>
+          </div>
+        </div>
+        <el-button size="small" @click="refreshStats" :loading="statsLoading">
+          <el-icon><Refresh /></el-icon> 刷新状态
+        </el-button>
+      </div>
+
+      <el-divider />
+
+      <!-- 日常同步 -->
+      <div class="mgmt-section">
+        <h4>🔄 同步近期数据（RollToolsApi）</h4>
+        <p class="mgmt-desc">从第三方 API 获取最近开奖数据，合并到本地缓存。推荐定期同步。</p>
+        <div class="mgmt-actions">
+          <el-select v-model="syncType" size="small" style="width: 110px">
+            <el-option label="双色球" value="ssq" />
+            <el-option label="大乐透" value="dlt" />
+          </el-select>
+          <el-input-number v-model="syncCount" :min="50" :max="300" :step="50" size="small" style="width: 130px" />
+          <span class="count-unit">期</span>
+          <el-button type="primary" size="small" @click="doSyncData" :loading="syncing">
+            <el-icon><Refresh /></el-icon> 开始同步
+          </el-button>
+        </div>
+        <p class="mgmt-result" v-if="syncResult">{{ syncResult }}</p>
+      </div>
+
+      <el-divider />
+
+      <!-- 全量爬取（需密码） -->
+      <div class="mgmt-section mgmt-danger">
+        <h4>
+          ⚠️ 全量重新爬取（紧急恢复）
+          <span class="last-crawl-time" v-if="lastFullCrawlTime">
+            上次全量爬取：{{ lastFullCrawlTime }}
+          </span>
+        </h4>
+        <p class="mgmt-desc">
+          从公开数据源重新爬取全部历史数据。仅在数据丢失或损坏时使用。
+          <strong>需要密码 + 两次确认。爬取过程约需 30-60 秒，请耐心等待。</strong>
+        </p>
+
+        <!-- 密码输入 -->
+        <div class="mgmt-password" v-if="!passwordVerified">
+          <el-input
+            v-model="crawlPassword"
+            type="password"
+            placeholder="请输入数据管理密码"
+            size="small"
+            show-password
+            @keyup.enter="doVerifyPassword"
+          />
+          <el-button size="small" type="warning" @click="doVerifyPassword" :loading="verifyingPwd">
+            验证密码
+          </el-button>
+        </div>
+
+        <!-- 密码验证通过后显示操作区 -->
+        <div v-else class="mgmt-crawl">
+          <p class="verify-ok">✅ 密码验证通过</p>
+          <el-select v-model="fullCrawlType" size="small" style="width: 110px">
+            <el-option label="全部" value="all" />
+            <el-option label="双色球" value="ssq" />
+            <el-option label="大乐透" value="dlt" />
+          </el-select>
+          <el-button
+            size="small"
+            type="danger"
+            @click="doFullCrawl"
+            :loading="crawling"
+            :disabled="confirmCount >= 3"
+          >
+            {{ crawlBtnText }}
+          </el-button>
+          <p class="confirm-hint" v-if="confirmCount > 0">
+            已确认 {{ confirmCount }} / 3 次 (共需 3 次确认)
+          </p>
+        </div>
+
+        <p class="mgmt-result" :class="{ 'result-error': crawlError }" v-if="crawlResult">
+          {{ crawlResult }}
+        </p>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { InfoFilled, WarningFilled, Search } from '@element-plus/icons-vue'
+import { ref, onMounted } from 'vue'
+import { InfoFilled, WarningFilled, Search, Setting, Refresh } from '@element-plus/icons-vue'
+import { ElMessageBox } from 'element-plus'
 import SSQPanel from './SSQPanel.vue'
 import DLTPanel from './DLTPanel.vue'
 import WinQueryPanel from './WinQueryPanel.vue'
+import { useLotteryData } from '@/composables/useLotteryData'
+import { fetchStats, syncRecentData, syncFullData, verifyPassword } from '@/api/lottery'
 
 const activeLottery = ref('ssq')
+
+// ==================== 数据管理 ====================
+const { loadBaseData, stats: lotteryStats } = useLotteryData()
+
+const showMgmtHint = ref(false)
+const mgmtDialogVisible = ref(false)
+
+// 状态刷新
+const statsLoading = ref(false)
+
+// 日常同步
+const syncType = ref('ssq')
+const syncCount = ref(200)
+const syncing = ref(false)
+const syncResult = ref('')
+
+// 全量爬取
+const crawlPassword = ref('')
+const passwordVerified = ref(false)
+const verifyingPwd = ref(false)
+const fullCrawlType = ref('all')
+const crawling = ref(false)
+const crawlResult = ref('')
+const crawlError = ref(false)
+const confirmCount = ref(0)
+
+const crawlBtnText = ref('开始全量爬取')
+const lastFullCrawlTime = ref('')
+
+function openMgmtDialog() {
+  mgmtDialogVisible.value = true
+  refreshStats()
+
+  // 尝试从后端 stats 获取上次全量爬取时间
+  if (lotteryStats.value?.lastFullSync) {
+    lastFullCrawlTime.value = new Date(lotteryStats.value.lastFullSync).toLocaleString()
+  }
+
+  // 如果已有缓存数据，不需要密码就能看状态和同步
+  // 全量爬取才需要密码
+}
+
+async function refreshStats() {
+  statsLoading.value = true
+  await loadBaseData()
+  statsLoading.value = false
+}
+
+async function doSyncData() {
+  syncing.value = true
+  syncResult.value = ''
+  try {
+    const result = await syncRecentData(syncType.value, syncCount.value)
+    if (result?.code === 1) {
+      syncResult.value = `✅ ${result.msg}`
+      // 更新前端共享数据
+      await loadBaseData()
+    } else {
+      syncResult.value = `❌ 同步失败: ${result?.msg || '未知错误'}`
+    }
+  } catch (e) {
+    syncResult.value = `❌ 请求失败: ${e.message}`
+  } finally {
+    syncing.value = false
+  }
+}
+
+async function doVerifyPassword() {
+  if (!crawlPassword.value) {
+    syncResult.value = '❌ 请输入密码'
+    return
+  }
+  verifyingPwd.value = true
+  try {
+    const result = await verifyPassword(crawlPassword.value)
+    if (result?.data?.valid) {
+      passwordVerified.value = true
+      syncResult.value = ''
+    } else {
+      syncResult.value = '❌ 密码错误'
+    }
+  } catch (e) {
+    syncResult.value = `❌ 验证失败: ${e.message}`
+  } finally {
+    verifyingPwd.value = false
+  }
+}
+
+async function doFullCrawl() {
+  confirmCount.value++
+
+  if (confirmCount.value === 1) {
+    // 第一次：提示确认
+    crawlBtnText.value = '再次确认爬取'
+    try {
+      await ElMessageBox.confirm(
+        `确定要从公开数据源重新爬取 ${fullCrawlType.value === 'all' ? '全部' : fullCrawlType.value} 历史数据吗？\n\n此操作会覆盖现有缓存数据，需要约 30-60 秒。`,
+        '⚠️ 第一次确认',
+        { confirmButtonText: '我确定', cancelButtonText: '取消', type: 'warning' }
+      )
+    } catch {
+      confirmCount.value = 0
+      crawlBtnText.value = '开始全量爬取'
+      return
+    }
+  } else if (confirmCount.value === 2) {
+    // 第二次：再次确认
+    crawlBtnText.value = '最终确认 (不可撤销)'
+    try {
+      await ElMessageBox.confirm(
+        '二次确认：此操作将触发服务器端爬虫，可能会对目标网站造成请求压力。\n\n请三思后确认。',
+        '⚠️ 第二次确认',
+        { confirmButtonText: '我已三思', cancelButtonText: '取消', type: 'warning' }
+      )
+    } catch {
+      confirmCount.value = 0
+      crawlBtnText.value = '开始全量爬取'
+      return
+    }
+  } else if (confirmCount.value >= 3) {
+    // 第三次：执行
+    crawling.value = true
+    crawlBtnText.value = '爬取中...'
+    crawlResult.value = ''
+    crawlError.value = false
+
+    try {
+      const result = await syncFullData(fullCrawlType.value, crawlPassword.value)
+      if (result?.code === 1) {
+        const details = []
+        for (const [t, r] of Object.entries(result.data.results)) {
+          if (r.success) {
+            details.push(`${t}: ${r.count} 期`)
+          } else {
+            details.push(`${t}: 失败 - ${r.error}`)
+          }
+        }
+        crawlResult.value = `✅ 爬取完成！${details.join(' | ')}`
+        lastFullCrawlTime.value = new Date().toLocaleString()
+        await loadBaseData() // 刷新状态
+      } else {
+        crawlResult.value = `❌ 爬取失败: ${result?.msg || '未知错误'}`
+        crawlError.value = true
+      }
+    } catch (e) {
+      crawlResult.value = `❌ 请求失败: ${e.message}`
+      crawlError.value = true
+    } finally {
+      crawling.value = false
+      confirmCount.value = 0
+      crawlBtnText.value = '开始全量爬取'
+    }
+  }
+}
+
+// 关闭弹窗时重置状态
+import { watch } from 'vue'
+watch(mgmtDialogVisible, (val) => {
+  if (!val) {
+    passwordVerified.value = false
+    crawlPassword.value = ''
+    confirmCount.value = 0
+    crawlBtnText.value = '开始全量爬取'
+    syncResult.value = ''
+    crawlResult.value = ''
+  }
+})
+
+// 页面加载时尝试加载基础数据
+onMounted(() => {
+  loadBaseData()
+})
 </script>
 
 <style lang="scss" scoped>
@@ -581,6 +885,267 @@ $radius-lg: 28px;
     font-size: 12px;
     padding: 16px 28px;
     border-radius: 20px;
+  }
+}
+
+// ========== 隐蔽数据管理入口 ==========
+.data-mgmt-area {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mgmt-hint {
+  font-size: 11px;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 4px 10px;
+  border-radius: 12px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.hint-fade-enter-active,
+.hint-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.hint-fade-enter-from,
+.hint-fade-leave-to {
+  opacity: 0;
+}
+
+.data-mgmt-trigger {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.6);
+  color: #cbd5e1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(6px);
+
+  &:hover,
+  &.trigger-visible {
+    color: #64748b;
+    background: rgba(255, 255, 255, 0.95);
+    border-color: #e2e8f0;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  }
+}
+
+// ========== 数据管理弹窗 ==========
+.mgmt-dialog {
+  :deep(.el-dialog__header) {
+    padding: 20px 24px 12px;
+  }
+  :deep(.el-dialog__body) {
+    padding: 8px 24px 24px;
+  }
+}
+
+.mgmt-section {
+  h4 {
+    margin: 0 0 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+  }
+}
+
+.mgmt-desc {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0 0 12px;
+  line-height: 1.6;
+
+  strong {
+    color: #dc2626;
+  }
+}
+
+.mgmt-stats {
+  margin-bottom: 12px;
+  .stat-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 13px;
+  }
+  .stat-label {
+    min-width: 60px;
+    color: #475569;
+    font-weight: 500;
+  }
+  .stat-date {
+    font-size: 11px;
+    color: #94a3b8;
+  }
+}
+
+.mgmt-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  .count-unit {
+    font-size: 12px;
+    color: #64748b;
+  }
+}
+
+.mgmt-result {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: #16a34a;
+  &.result-error {
+    color: #dc2626;
+  }
+}
+
+.mgmt-danger {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 8px;
+}
+
+.last-crawl-time {
+  font-size: 12px;
+  font-weight: 400;
+  color: #6b7280;
+  margin-left: 12px;
+  white-space: nowrap;
+}
+
+.mgmt-password {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  .el-input {
+    flex: 1;
+  }
+}
+
+.mgmt-crawl {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.verify-ok {
+  font-size: 12px;
+  color: #16a34a;
+  margin: 0;
+  font-weight: 500;
+}
+
+.confirm-hint {
+  font-size: 11px;
+  color: #f59e0b;
+  margin: 4px 0 0;
+  width: 100%;
+}
+
+// ========== 移动端适配 ==========
+// 注意：el-dialog 通过 teleport 渲染到 body，必须用 :global() 才能命中
+@media (max-width: 768px) {
+  :global(.mgmt-dialog.el-dialog) {
+    width: 92vw !important;
+    max-width: 92vw !important;
+    margin-top: 10vh !important;
+  }
+  :global(.mgmt-dialog .el-dialog__header) {
+    padding: 16px 16px 10px;
+  }
+  :global(.mgmt-dialog .el-dialog__body) {
+    padding: 6px 16px 16px;
+  }
+
+  .mgmt-section h4 {
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+
+  .mgmt-desc {
+    font-size: 11px;
+  }
+
+  .mgmt-stats .stat-row {
+    flex-wrap: wrap;
+    font-size: 12px;
+  }
+
+  .mgmt-stats .stat-label {
+    min-width: 50px;
+  }
+
+  .mgmt-stats .stat-date {
+    width: 100%;
+    margin-top: 2px;
+  }
+
+  .mgmt-actions {
+    gap: 6px;
+  }
+
+  .last-crawl-time {
+    display: block;
+    margin-left: 0;
+    margin-top: 4px;
+    font-size: 11px;
+  }
+
+  .mgmt-password {
+    flex-direction: column;
+    gap: 6px;
+    .el-input {
+      width: 100%;
+    }
+  }
+
+  .mgmt-crawl {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .mgmt-danger {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  :global(.mgmt-dialog.el-dialog) {
+    width: 96vw !important;
+    max-width: 96vw !important;
+    margin-top: 4vh !important;
+  }
+  :global(.mgmt-dialog .el-dialog__header) {
+    padding: 12px 12px 8px;
+  }
+  :global(.mgmt-dialog .el-dialog__body) {
+    padding: 4px 12px 12px;
+  }
+
+  .mgmt-section h4 {
+    font-size: 12px;
+  }
+
+  .mgmt-danger {
+    padding: 10px;
+    border-radius: 8px;
   }
 }
 </style>

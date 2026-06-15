@@ -1,5 +1,47 @@
 // ==================== 共享工具函数 ====================
 
+// ==================== 票据工具函数 ====================
+
+/**
+ * 生成随机16进制序列号 (20位)
+ */
+export function genSerial() {
+  const chars = '0123456789ABCDEF'
+  let s = ''
+  for (let i = 0; i < 20; i++) s += chars[Math.floor(Math.random() * 16)]
+  return s
+}
+
+/**
+ * 生成随机流水号 (8位)
+ */
+export function genFlowNo() {
+  return String(Math.floor(Math.random() * 90000000) + 10000000)
+}
+
+/**
+ * 生成随机站点号 (10位)
+ */
+export function genStationNo() {
+  const area = String(Math.floor(Math.random() * 900000) + 100000)
+  const shop = String(Math.floor(Math.random() * 9000) + 1000)
+  return area + shop
+}
+
+/**
+ * 生成模拟期号
+ */
+export function genIssue() {
+  const now = new Date()
+  const year = now.getFullYear()
+  const weekNum = Math.ceil(
+    (new Date(year, now.getMonth(), now.getDate()) - new Date(year, 0, 1)) / (7 * 86400000)
+  )
+  return `${year}${String(weekNum * 3).padStart(3, '0')}`
+}
+
+// ==================== 核心算法 ====================
+
 /**
  * 加权不放回抽样
  * @param {number[]} weights - 权重数组（索引0对应数字1）
@@ -92,6 +134,76 @@ export function buildBuiltInDataset(options = {}) {
   return data
 }
 
+// ==================== 组合过滤工具 ====================
+
+/**
+ * 检查组合是否满足奇偶比约束
+ * @param {number[]} reds - 红球/前区数组（已排序）
+ * @param {number} minOdd - 最小奇数个数
+ * @param {number} maxOdd - 最大奇数个数
+ */
+export function checkOddEven(reds, minOdd, maxOdd) {
+  const oddCount = reds.filter(n => n % 2 === 1).length
+  return oddCount >= minOdd && oddCount <= maxOdd
+}
+
+/**
+ * 检查组合是否满足和值范围
+ */
+export function checkSum(reds, minSum, maxSum) {
+  const sum = reds.reduce((a, b) => a + b, 0)
+  return sum >= minSum && sum <= maxSum
+}
+
+/**
+ * 检查组合是否包含连号
+ */
+export function hasConsecutive(reds) {
+  for (let i = 1; i < reds.length; i++) {
+    if (reds[i] - reds[i - 1] === 1) return true
+  }
+  return false
+}
+
+/**
+ * 检查组合是否包含与历史最新一期重复的数字
+ * @param {number[]} reds - 待检查的组合
+ * @param {number[]} lastReds - 最新一期的红球
+ * @param {number} maxRepeat - 最大允许重号个数
+ */
+export function checkRepeat(reds, lastReds, maxRepeat) {
+  if (!lastReds || lastReds.length === 0) return true
+  const overlap = reds.filter(n => lastReds.includes(n)).length
+  return overlap <= maxRepeat
+}
+
+/**
+ * 获取热号列表（概率高于阈值）
+ * @param {number[]} probArr - 概率数组 (1-based, 索引1对应数字1)
+ * @param {number} threshold - 热号阈值百分比
+ * @returns {Set<number>} 热号数字集合
+ */
+export function getHotNumbers(probArr, threshold) {
+  const hot = new Set()
+  const avg = probArr.slice(1).reduce((a, b) => a + b, 0) / (probArr.length - 1) || 0
+  for (let i = 1; i < probArr.length; i++) {
+    if (probArr[i] >= avg * threshold) hot.add(i)
+  }
+  return hot
+}
+
+/**
+ * 检查组合是否满足热号比例约束
+ * @param {number[]} reds - 组合
+ * @param {Set<number>} hotSet - 热号集合
+ * @param {number} minHot - 最少热号个数
+ * @param {number} maxHot - 最多热号个数
+ */
+export function checkHotRatio(reds, hotSet, minHot, maxHot) {
+  const hotCount = reds.filter(n => hotSet.has(n)).length
+  return hotCount >= minHot && hotCount <= maxHot
+}
+
 /**
  * 核心统计计算（适用于双色球和大乐透）
  * @param {Array} filtered - 过滤后的历史数据
@@ -151,6 +263,155 @@ export function computeStatistics(filtered, options = {}) {
     posProb[`pos${p}`] = arr
   }
   return { redProb, blueProb, posProb, periodCount: filtered.length }
+}
+
+// ==================== 012路分布方案 ====================
+
+/** 按 mod 3 分组 */
+function groupByRoad(maxNum) {
+  const g = { 0: [], 1: [], 2: [] }
+  for (let i = 1; i <= maxNum; i++) g[i % 3].push(i)
+  return g
+}
+
+/** 常见012路分布（按历史频率排序） */
+function commonRoadDists(pick) {
+  if (pick === 6) return [[2,2,2],[3,2,1],[3,1,2],[2,3,1],[2,1,3],[1,3,2],[1,2,3],[4,1,1],[3,3,0]]
+  if (pick === 5) return [[2,2,1],[2,1,2],[1,2,2],[3,1,1],[1,3,1],[1,1,3],[3,2,0],[2,3,0],[4,1,0]]
+  return [[1,1,1]]
+}
+
+/** 从分组数组中不放回采样 */
+function sampleFromGroup(nums, weights, n) {
+  const items = nums.map(x => ({ num: x, w: Math.max(weights[x - 1], 0.001) }))
+  const res = []
+  let pool = [...items]
+  for (let i = 0; i < n && pool.length > 0; i++) {
+    const total = pool.reduce((s, it) => s + it.w, 0)
+    let rand = Math.random() * total, acc = 0
+    for (let j = 0; j < pool.length; j++) {
+      acc += pool[j].w
+      if (rand <= acc) { res.push(pool[j].num); pool.splice(j, 1); break }
+    }
+  }
+  return res
+}
+
+/**
+ * 012路分布采样
+ */
+export function road012Sample(weights, maxNum, pickCount) {
+  const groups = groupByRoad(maxNum)
+  const dists = commonRoadDists(pickCount)
+  for (let a = 0; a < 80; a++) {
+    const [n0, n1, n2] = dists[Math.floor(Math.random() * dists.length)]
+    if (n0 > groups[0].length || n1 > groups[1].length || n2 > groups[2].length) continue
+    const result = [
+      ...sampleFromGroup(groups[0], weights, n0),
+      ...sampleFromGroup(groups[1], weights, n1),
+      ...sampleFromGroup(groups[2], weights, n2),
+    ]
+    if (new Set(result).size === pickCount) { result.sort((a, b) => a - b); return result }
+  }
+  return weightedSampleWithoutReplace([...weights], maxNum, pickCount).sort((a, b) => a - b)
+}
+
+// ==================== 龙头凤尾方案 ====================
+
+/**
+ * 分析历史数据的龙头/凤尾分布概率
+ * @returns {{ headProb: number[], tailProb: number[] }} — 归一化后的概率数组(0-based索引)
+ */
+export function analyzeHeadAndTail(history, maxNum) {
+  const headCount = new Array(maxNum).fill(0)
+  const tailCount = new Array(maxNum).fill(0)
+  let total = 0
+  for (const item of history) {
+    const reds = item.reds || item.fronts
+    if (!reds || reds.length < 2) continue
+    headCount[reds[0] - 1]++
+    tailCount[reds[reds.length - 1] - 1]++
+    total++
+  }
+  return {
+    headProb: headCount.map(v => (total ? v / total : 0)),
+    tailProb: tailCount.map(v => (total ? v / total : 0)),
+  }
+}
+
+/**
+ * 龙头凤尾采样：先定头尾，中间用加权填充
+ */
+export function headTailSample(weights, maxNum, pickCount, headProb, tailProb) {
+  for (let a = 0; a < 80; a++) {
+    const head = weightedSampleOne(headProb, maxNum) + 1
+    const tail = weightedSampleOne(tailProb, maxNum) + 1
+    if (head >= tail) continue
+    const midCount = pickCount - 2
+    if (midCount === 0) return [head, tail]
+    const available = []
+    for (let n = head + 1; n < tail; n++) available.push(n)
+    if (available.length < midCount) continue
+    const mw = available.map(n => Math.max(weights[n - 1], 0.001))
+    const ids = weightedSampleWithoutReplace(mw, mw.length, midCount)
+    const mids = ids.map(i => available[i - 1])
+    const result = [head, ...mids, tail].sort((a, b) => a - b)
+    if (new Set(result).size === pickCount) return result
+  }
+  return weightedSampleWithoutReplace([...weights], maxNum, pickCount).sort((a, b) => a - b)
+}
+
+// ==================== 跨度+和值约束方案 ====================
+
+/**
+ * 分析历史跨度与和值的中心80%区间
+ */
+export function analyzeSpanAndSum(history) {
+  const spans = [], sums = []
+  for (const item of history) {
+    const reds = item.reds || item.fronts
+    if (!reds || reds.length < 2) continue
+    spans.push(reds[reds.length - 1] - reds[0])
+    sums.push(reds.reduce((a, b) => a + b, 0))
+  }
+  spans.sort((a, b) => a - b); sums.sort((a, b) => a - b)
+  const n = history.length
+  if (n < 5) return { minSpan: 0, maxSpan: 99, minSum: 0, maxSum: 999 }
+  const p10 = Math.floor(n * 0.1)
+  const p90 = Math.floor(n * 0.9)
+  return { minSpan: spans[p10], maxSpan: spans[p90], minSum: sums[p10], maxSum: sums[p90] }
+}
+
+/**
+ * 跨度+和值约束采样
+ */
+export function spanSumSample(weights, maxNum, pickCount, minSpan, maxSpan, minSum, maxSum) {
+  for (let a = 0; a < 100; a++) {
+    const reds = weightedSampleWithoutReplace([...weights], maxNum, pickCount)
+    reds.sort((a, b) => a - b)
+    const span = reds[reds.length - 1] - reds[0]
+    const sum = reds.reduce((a, b) => a + b, 0)
+    if (span >= minSpan && span <= maxSpan && sum >= minSum && sum <= maxSum) return reds
+  }
+  return weightedSampleWithoutReplace([...weights], maxNum, pickCount).sort((a, b) => a - b)
+}
+
+// ==================== 遗漏追冷方案 ====================
+
+/**
+ * 计算每个数字的遗漏值（距今多少期未出）
+ * @returns {number[]} 0-based 权重数组，遗漏值越大权重越高
+ */
+export function calcMissingWeights(history, maxNum) {
+  const lastSeen = new Array(maxNum).fill(history.length)
+  for (let idx = history.length - 1; idx >= 0; idx--) {
+    const reds = history[idx].reds || history[idx].fronts
+    if (!reds) continue
+    for (const r of reds) {
+      if (lastSeen[r - 1] === history.length) lastSeen[r - 1] = history.length - 1 - idx
+    }
+  }
+  return lastSeen.map(v => v + 1) // +1 避免零权重
 }
 
 /**
