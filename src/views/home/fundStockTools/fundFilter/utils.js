@@ -1,7 +1,7 @@
 // ==================== 配置 ====================
-// 使用代理前缀，开发环境代理配置见 vite.config.js 或 vue.config.js
-// fund.eastmoney.com → /api-fund
-export const API_PROXY = '/api-fund'
+// 使用后端代理前缀
+// fund.eastmoney.com → /staticTool/api/fund
+export const API_PROXY = '/staticTool/api/fund'
 
 // AbortController 管理：用于在组件卸载时取消所有进行中的请求
 let abortController = null
@@ -197,148 +197,86 @@ export async function fetchAllFunds(signal = null) {
   }
 }
 
-// 获取基金历史净值 + 经理/规模信息 - JSONP 方式
+// 获取基金历史净值 + 经理/规模信息
 // 返回 { history: [...], managerYears: number, fundSize: number, establishedDate: string|null }
 // signal: AbortSignal，用于取消请求
 export async function fetchHistory(code, signal = null) {
   try {
-    const result = await new Promise((resolve, reject) => {
-      // 检查是否已取消
-      if (signal && signal.aborted) {
-        reject(new DOMException('请求已取消', 'AbortError'))
-        return
+    const res = await fetch(`/staticTool/api/fund/history/${code}`, { signal })
+    if (!res.ok) throw new Error(`历史数据请求失败 HTTP ${res.status}`)
+    const json = await res.json()
+    const d = json.data || {}
+
+    const trends = d.netWorthTrend || []
+    const acTrends = d.acWorthTrend || []
+
+    // 构建累计净值映射：按日期对齐
+    const acMap = new Map()
+    if (acTrends && Array.isArray(acTrends)) {
+      acTrends.forEach(item => {
+        const date = typeof item.x === 'number' ? new Date(item.x).toISOString().slice(0, 10) : item.x
+        acMap.set(date, parseFloat(item.y))
+      })
+    }
+
+    const history = trends.map(item => {
+      const date = typeof item.x === 'number' ? new Date(item.x).toISOString().slice(0, 10) : item.x
+      const er = item.equityReturn
+      return {
+        date,
+        netValue: parseFloat(item.y),
+        accNetValue: acMap.get(date) || parseFloat(item.y),
+        dailyReturn: (er != null && !isNaN(er)) ? parseFloat(er) : 0
       }
-
-      const script = document.createElement('script')
-      script.src = `https://fund.eastmoney.com/pingzhongdata/${code}.js`
-      let resolved = false
-
-      const onAbort = () => {
-        if (!resolved) {
-          cleanup()
-          reject(new DOMException('请求已取消', 'AbortError'))
-        }
-      }
-
-      const timeout = setTimeout(() => {
-        if (!resolved) {
-          cleanup()
-          reject(new Error('请求超时'))
-        }
-      }, 8000)
-      const cleanup = () => {
-        resolved = true
-        clearTimeout(timeout)
-        if (signal) signal.removeEventListener('abort', onAbort)
-        if (script.parentNode) script.parentNode.removeChild(script)
-        // 清理全局变量
-        const keys = [
-          'Data_netWorthTrend', 'Data_ACWorthTrend',
-          'Data_currentFundManager', 'Data_assetAllocation',
-          'Data_fundSharesPositions', 'Data_holderStructure',
-          'Data_performanceEvaluation', 'Data_buySedemption',
-          'swithSameType', 'stockCodes', 'stockCodesNew',
-          'zqCodes', 'zqCodesNew', 'fS_name', 'fS_code',
-          'fund_sourceRate', 'fund_Rate', 'fund_minsg',
-          'syl_1n', 'syl_6y', 'syl_3y', 'syl_1y', 'ishb'
-        ]
-        keys.forEach(k => { window[k] = undefined })
-      }
-
-      if (signal) {
-        signal.addEventListener('abort', onAbort)
-      }
-
-      script.onload = () => {
-        if (resolved) return
-        clearTimeout(timeout)
-        try {
-          const trends = window.Data_netWorthTrend
-          const acTrends = window.Data_ACWorthTrend
-          if (!trends || !Array.isArray(trends) || trends.length === 0) {
-            throw new Error('无净值数据')
-          }
-          // 构建累计净值映射：按日期对齐
-          const acMap = new Map()
-          if (acTrends && Array.isArray(acTrends)) {
-            acTrends.forEach(item => {
-              const date = typeof item.x === 'number' ? new Date(item.x).toISOString().slice(0, 10) : item.x
-              acMap.set(date, parseFloat(item.y))
-            })
-          }
-          const history = trends.map(item => {
-            const date = typeof item.x === 'number' ? new Date(item.x).toISOString().slice(0, 10) : item.x
-            const er = item.equityReturn
-            return {
-              date,
-              netValue: parseFloat(item.y),
-              accNetValue: acMap.get(date) || parseFloat(item.y), // 累计净值，没有则降级为单位净值
-              dailyReturn: (er != null && !isNaN(er)) ? parseFloat(er) : 0  // 债基日回报可能为0，不能丢失
-            }
-          })
-
-          // 提取经理年限
-          let managerYears = 0
-          try {
-            const mgr = window.Data_currentFundManager
-            if (mgr && Array.isArray(mgr) && mgr.length > 0) {
-              const workTime = mgr[0].workTime || ''
-              // 解析 "1年又86天" 或 "2年又30天"
-              const yearMatch = workTime.match(/([\d.]+)\s*年/)
-              const dayMatch = workTime.match(/([\d.]+)\s*天/)
-              if (yearMatch) {
-                managerYears = parseFloat(yearMatch[1])
-                if (dayMatch) managerYears += parseFloat(dayMatch[1]) / 365
-              }
-            }
-          } catch (e) { /* 忽略经理数据解析错误 */ }
-
-          // 提取基金规模（最新季度净资产）
-          let fundSize = 0
-          try {
-            const alloc = window.Data_assetAllocation
-            if (alloc && alloc.series) {
-              const netAssetSeries = alloc.series.find(s => s.name === '净资产')
-              if (netAssetSeries && netAssetSeries.data && netAssetSeries.data.length > 0) {
-                const latest = parseFloat(netAssetSeries.data[netAssetSeries.data.length - 1])
-                if (!isNaN(latest) && latest > 0) fundSize = latest
-              }
-            }
-          } catch (e) { /* 忽略规模数据解析错误 */ }
-
-          // 提取基金成立日期（从第一条净值数据推算）
-          let establishedDate = null
-          try {
-            if (trends && trends.length > 0) {
-              const firstDate = typeof trends[0].x === 'number'
-                ? new Date(trends[0].x).toISOString().slice(0, 10)
-                : trends[0].x
-              establishedDate = firstDate
-            }
-          } catch (e) { /* 忽略日期解析错误 */ }
-
-          cleanup()
-          resolve({ history, managerYears, fundSize, establishedDate })
-        } catch (e) {
-          cleanup()
-          reject(e)
-        }
-      }
-      script.onerror = () => {
-        cleanup()
-        reject(new Error('脚本加载失败'))
-      }
-      document.head.appendChild(script)
     })
-    console.log(`[fetchHistory] ${code} JSONP 获取到 ${result.history.length} 条净值, 经理${result.managerYears.toFixed(1)}年, 规模${result.fundSize.toFixed(1)}亿, 成立${result.establishedDate || '未知'}`)
-    return result
+
+    // 提取经理年限
+    let managerYears = 0
+    try {
+      const mgr = d.currentFundManager
+      if (mgr && Array.isArray(mgr) && mgr.length > 0) {
+        const workTime = mgr[0].workTime || ''
+        const yearMatch = workTime.match(/([\d.]+)\s*年/)
+        const dayMatch = workTime.match(/([\d.]+)\s*天/)
+        if (yearMatch) {
+          managerYears = parseFloat(yearMatch[1])
+          if (dayMatch) managerYears += parseFloat(dayMatch[1]) / 365
+        }
+      }
+    } catch (e) { /* 忽略经理数据解析错误 */ }
+
+    // 提取基金规模
+    let fundSize = 0
+    try {
+      const alloc = d.assetAllocation
+      if (alloc && alloc.series) {
+        const netAssetSeries = alloc.series.find(s => s.name === '净资产')
+        if (netAssetSeries && netAssetSeries.data && netAssetSeries.data.length > 0) {
+          const latest = parseFloat(netAssetSeries.data[netAssetSeries.data.length - 1])
+          if (!isNaN(latest) && latest > 0) fundSize = latest
+        }
+      }
+    } catch (e) { /* 忽略规模数据解析错误 */ }
+
+    // 提取成立日期
+    let establishedDate = null
+    try {
+      if (trends && trends.length > 0) {
+        establishedDate = typeof trends[0].x === 'number'
+          ? new Date(trends[0].x).toISOString().slice(0, 10)
+          : trends[0].x
+      }
+    } catch (e) { /* 忽略日期解析错误 */ }
+
+    console.log(`[fetchHistory] ${code} 获取到 ${history.length} 条净值, 经理${managerYears.toFixed(1)}年, 规模${fundSize.toFixed(1)}亿, 成立${establishedDate || '未知'}`)
+    return { name: d.name || '', code: d.code || code, history, managerYears, fundSize, establishedDate }
   } catch (e) {
     if (isAbortError(e)) {
       console.log(`[fetchHistory] ${code} 请求已取消`)
-      return { history: [], managerYears: 0, fundSize: 0, establishedDate: null }
+    } else {
+      console.warn(`[fetchHistory] ${code} 失败:`, e.message)
     }
-    console.warn(`[fetchHistory] ${code} 失败(可能是后端收费/无净值数据):`, e.message)
-    return { history: [], managerYears: 0, fundSize: 0, establishedDate: null }
+    return { name: '', code: '', history: [], managerYears: 0, fundSize: 0, establishedDate: null }
   }
 }
 
@@ -422,62 +360,15 @@ export async function fetchRankDataStable(signal = null) {
   }
 }
 
-// 获取单个基金的实时估值 - JSONP 方式
+// 获取单个基金的实时估值
 // 返回 { fundcode, name, jzrq, dwjz, gsz, gszzl, gztime } 或 null
 // signal: AbortSignal，用于取消请求
 export async function fetchFundEstimate(code, signal = null) {
   try {
-    const result = await new Promise((resolve, reject) => {
-      // 检查是否已取消
-      if (signal && signal.aborted) {
-        reject(new DOMException('请求已取消', 'AbortError'))
-        return
-      }
-
-      const script = document.createElement('script')
-      script.src = `https://fundgz.1234567.com.cn/js/${code}.js`
-      let resolved = false
-
-      const onAbort = () => {
-        if (!resolved) {
-          cleanup()
-          reject(new DOMException('请求已取消', 'AbortError'))
-        }
-      }
-
-      const timeout = setTimeout(() => {
-        if (!resolved) {
-          cleanup()
-          reject(new Error('估值请求超时'))
-        }
-      }, 5000)
-      const callbackName = 'jsonpgz'
-      const origCallback = window[callbackName]
-      window[callbackName] = (data) => {
-        if (resolved) return
-        clearTimeout(timeout)
-        cleanup()
-        window[callbackName] = origCallback
-        resolve(data)
-      }
-      const cleanup = () => {
-        resolved = true
-        clearTimeout(timeout)
-        if (signal) signal.removeEventListener('abort', onAbort)
-        if (script.parentNode) script.parentNode.removeChild(script)
-      }
-
-      if (signal) {
-        signal.addEventListener('abort', onAbort)
-      }
-
-      script.onerror = () => {
-        cleanup()
-        reject(new Error('估值脚本加载失败'))
-      }
-      document.head.appendChild(script)
-    })
-    return result
+    const res = await fetch(`/staticTool/api/fund/estimate/${code}`, { signal })
+    if (!res.ok) throw new Error(`估值请求失败 HTTP ${res.status}`)
+    const json = await res.json()
+    return (json.code === 0 && json.data) ? json.data : null
   } catch (e) {
     if (isAbortError(e)) {
       console.log(`[fetchFundEstimate] ${code} 估值请求已取消`)
@@ -541,6 +432,7 @@ export async function fetchHistoryBatch(codes, concurrency = 5, signal = null) {
       if (r.status === 'fulfilled') {
         results.push({
           code: batch[j],
+          name: r.value.name || '',
           history: r.value.history || [],
           managerYears: r.value.managerYears || 0,
           fundSize: r.value.fundSize || 0,
@@ -549,6 +441,7 @@ export async function fetchHistoryBatch(codes, concurrency = 5, signal = null) {
       } else {
         results.push({
           code: batch[j],
+          name: '',
           history: [],
           managerYears: 0,
           fundSize: 0,

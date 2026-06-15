@@ -460,7 +460,7 @@ async function fetchRealTime(codeRaw) {
   if (!code.startsWith('sh') && !code.startsWith('sz')) {
     code = /^6/.test(code) ? 'sh' + code : 'sz' + code
   }
-  const url = `/api-qt/q=${code}`
+  const url = `/staticTool/api/qt/q=${code}`
   const response = await fetch(url, { signal: abortController?.signal })
   const buffer = await response.arrayBuffer()
   const text = new TextDecoder('gbk').decode(buffer)
@@ -511,7 +511,7 @@ async function fetchKline(codeRaw, days = 100) {
   } else {
     market = 'sz'
   }
-  const url = `/api-ifzq/appstock/app/fqkline/get?param=${market}${code},day,,,${days},qfq`
+  const url = `/staticTool/api/ifzq/appstock/app/fqkline/get?param=${market}${code},day,,,${days},qfq`
   const response = await fetch(url, { signal: abortController?.signal })
   if (!response.ok) throw new Error(`K线请求失败 HTTP ${response.status}`)
   const json = await response.json()

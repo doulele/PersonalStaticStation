@@ -1,200 +1,193 @@
 /**
- * 图片预处理工具 — 裁剪 + 增强，提升 tesseract.js OCR 识别率
- *
- * 核心流程：
- *   loadImage → cropCanvas → resizeCanvas → grayscale → sharpen → contrastEnhance → binarize → toBlob
- *
- * 优化策略（按可控程度排序）：
- *   1. 灰度化 — 去除彩色噪声，统一通道
- *   2. USM 锐化 — 增强文字/数字边缘，对抗手机拍照的模糊
- *   3. 对比度拉伸 — 让浅色文字更暗、背景更亮
- *   4. 二值化(OTSU) — 最终转换为纯黑白，tesseract 识别纯黑白远好于灰度
+ * 图片预处理工具 — 提升 OCR 识别准确率
+ * 针对彩票号码图片优化：灰度化 → 对比度增强 → 锐化 → 二值化
  */
-
-/** 加载图片（支持 dataURL / blobURL / File） */
-export function loadImage(src) {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.onload = () => resolve(img)
-    img.onerror = () => reject(new Error('图片加载失败'))
-    img.src = typeof src === 'string' ? src : URL.createObjectURL(src)
-  })
-}
 
 /**
- * 从原始图片 src 按 cropRect（0~1 比例坐标）裁剪并预处理
- * @param {string|File} src        - 图片源（dataURL / blob / File）
- * @param {{x:number,y:number,w:number,h:number}} cropRect - 裁剪区域（相对于原图 0~1）
- * @param {object} opts
- * @param {number} [opts.maxWidth=1200]   - 预处理后最大宽度（tesseract 推荐 ≤1500）
- * @param {boolean} [opts.grayscale=true] - 灰度化
- * @param {boolean} [opts.sharpen=true]   - USM 锐化（增强文字边缘）
- * @param {number} [opts.contrast=1.4]    - 对比度增强倍数（1=不变，1.2~1.8 是合适范围）
- * @param {number} [opts.brightness=0]    - 亮度偏移（-50~50）
- * @param {boolean} [opts.binarize=true]  - OTSU 二值化（纯黑白，tesseract 最优输入）
- * @returns {Promise<Blob>} PNG blob（二值化后 PNG 更优）
+ * 对图片进行 OCR 预处理，返回增强后的 base64
+ * @param {string} dataUrl - 原始图片 data URL
+ * @returns {Promise<string>} 增强后的 data URL
  */
-export async function cropAndPreprocess(src, cropRect, opts = {}) {
-  const {
-    maxWidth = 1200,
-    grayscale = true,     // 默认灰度化（去除拍照随机色彩噪声）
-    sharpen = false,      // 默认不锐化（可能放大噪声）
-    contrast = 1.0,       // 默认不调对比度（保留原始灰度层次）
-    brightness = 0,
-    binarize = false,     // 默认不二值化（OTSU 在复杂票面背景上容易过黑或过白）
-  } = opts
+export async function preprocessForOCR(dataUrl, options = {}) {
+  const { binarize = false } = options  // 二值化默认关闭，避免丢失号码对比度信息
+  const img = await loadImage(dataUrl)
 
-  const img = await loadImage(src)
   const iw = img.naturalWidth
   const ih = img.naturalHeight
 
-  // 将 0~1 比例映射到原始像素坐标
-  const sx = Math.round(cropRect.x * iw)
-  const sy = Math.round(cropRect.y * ih)
-  const sw = Math.round(cropRect.w * iw)
-  const sh = Math.round(cropRect.h * ih)
-
   const canvas = document.createElement('canvas')
+  canvas.width = iw
+  canvas.height = ih
   const ctx = canvas.getContext('2d')
 
-  // 输出尺寸：等比缩放到 maxWidth 以内
-  const scale = Math.min(1, maxWidth / sw)
-  const cw = Math.max(1, Math.round(sw * scale))
-  const ch = Math.max(1, Math.round(sh * scale))
-  canvas.width = cw
-  canvas.height = ch
+  // 绘制原图
+  ctx.drawImage(img, 0, 0, iw, ih)
+  let imageData = ctx.getImageData(0, 0, iw, ih)
 
-  // 高质量缩放
-  ctx.imageSmoothingEnabled = true
-  ctx.imageSmoothingQuality = 'high'
-  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, cw, ch)
+  // 1) 灰度化
+  toGrayscale(imageData)
 
-  // 获取像素
-  const imageData = ctx.getImageData(0, 0, cw, ch)
-  const pixels = imageData.data
+  // 2) 对比度拉伸（CLAHE 简化版：截断 + 拉伸）
+  contrastStretch(imageData, 2, 98)
 
-  // 1) 灰度化 — 所有后续步骤的基础
-  if (grayscale) {
-    for (let i = 0; i < pixels.length; i += 4) {
-      const gray = Math.round(0.299 * pixels[i] + 0.587 * pixels[i + 1] + 0.114 * pixels[i + 2])
-      pixels[i] = pixels[i + 1] = pixels[i + 2] = gray
-    }
-  }
+  // 3) 锐化（Unsharp Mask 简化版）
+  unsharpMask(imageData, iw, ih, 1.2, 1)
 
-  // 2) USM 锐化 — 增强文字边缘，对抗拍照模糊
-  //    核心：原图 + (原图 - 模糊图) * amount
-  if (sharpen) {
-    applySharpen(imageData, cw, ch, { amount: 1.2 }) // amount 1.0~1.5 安全范围
-  }
-
-  // 3) 对比度增强 + 亮度调整
-  //    简单线性公式：new = (old - 128) * contrast + 128 + brightness
-  if (contrast !== 1 || brightness !== 0) {
-    for (let i = 0; i < pixels.length; i += 4) {
-      for (let c = 0; c < 3; c++) {
-        pixels[i + c] = clamp((pixels[i + c] - 128) * contrast + 128 + brightness)
-      }
-    }
-  }
-
-  // 4) OTSU 二值化 — 纯黑白，tesseract 最高识别率
+  // 4) 自适应二值化 — 默认关闭，对彩票彩色号码反而降低识别率
   if (binarize) {
-    applyOtsu(imageData, cw, ch)
+    adaptiveThreshold(imageData, iw, ih)
   }
 
   ctx.putImageData(imageData, 0, 0)
 
-  // 二值化后用 PNG 输出（无损），非二值化用 JPEG 节省体积
-  const format = binarize ? 'image/png' : 'image/jpeg'
-  const quality = binarize ? 1 : 0.9
-  return new Promise(resolve => {
-    canvas.toBlob(blob => resolve(blob), format, quality)
+  // 返回 PNG 无损格式，避免 JPEG 压缩伪影干扰 OCR
+  return canvas.toDataURL('image/png')
+}
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => resolve(img)
+    img.onerror = () => reject(new Error('图片加载失败'))
+    img.src = src
   })
 }
 
-// ==================== 图像处理算法 ====================
+/**
+ * 灰度化：加权平均法
+ */
+function toGrayscale(imageData) {
+  const data = imageData.data
+  for (let i = 0; i < data.length; i += 4) {
+    const gray = Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2])
+    data[i] = gray
+    data[i + 1] = gray
+    data[i + 2] = gray
+    // alpha 保持不变
+  }
+}
 
 /**
- * USM (Unsharp Mask) 锐化
- * 公式：sharpened = original + (original - blurred) * amount
- * 使用最简单的 3×3 均值模糊作为低通滤波
+ * 对比度拉伸：将像素分布映射到 0-255
+ * @param {number} lowPct - 低百分位（低于此值的像素映射到0）
+ * @param {number} highPct - 高百分位（高于此值的像素映射到255）
  */
-function applySharpen(imageData, w, h, { amount = 1.0 } = {}) {
-  const src = new Uint8ClampedArray(imageData.data)
-  const pixels = imageData.data
+function contrastStretch(imageData, lowPct = 2, highPct = 98) {
+  const data = imageData.data
+  const len = data.length / 4
 
-  // 3×3 均值模糊核（近似 Gaussian）
-  for (let y = 1; y < h - 1; y++) {
-    for (let x = 1; x < w - 1; x++) {
+  // 构建亮度直方图
+  const hist = new Uint32Array(256)
+  for (let i = 0; i < data.length; i += 4) {
+    hist[data[i]]++
+  }
+
+  // 找到 lowPct 和 highPct 对应的灰度值
+  const total = len
+  let sum = 0
+  let lowVal = 0
+  let highVal = 255
+
+  for (let i = 0; i < 256; i++) {
+    sum += hist[i]
+    if (sum / total * 100 >= lowPct) {
+      lowVal = i
+      break
+    }
+  }
+
+  sum = 0
+  for (let i = 255; i >= 0; i--) {
+    sum += hist[i]
+    if (sum / total * 100 >= (100 - highPct)) {
+      highVal = i
+      break
+    }
+  }
+
+  // 如果对比度已经很好，跳过
+  if (highVal - lowVal < 30) return
+
+  // 线性拉伸
+  const range = highVal - lowVal
+  if (range <= 0) return
+
+  for (let i = 0; i < data.length; i += 4) {
+    const v = Math.round(((data[i] - lowVal) / range) * 255)
+    const clamped = Math.max(0, Math.min(255, v))
+    data[i] = data[i + 1] = data[i + 2] = clamped
+  }
+}
+
+/**
+ * 简化版 Unsharp Mask 锐化
+ * 通过拉普拉斯算子增强边缘
+ */
+function unsharpMask(imageData, w, h, amount = 1.0, radius = 1) {
+  const src = new Uint8ClampedArray(imageData.data)
+  const data = imageData.data
+
+  // 拉普拉斯核: [0,-1,0; -1,4,-1; 0,-1,0]
+  for (let y = radius; y < h - radius; y++) {
+    for (let x = radius; x < w - radius; x++) {
       const idx = (y * w + x) * 4
-      for (let c = 0; c < 3; c++) {
-        let sum = 0
-        for (let dy = -1; dy <= 1; dy++) {
-          for (let dx = -1; dx <= 1; dx++) {
-            sum += src[((y + dy) * w + (x + dx)) * 4 + c]
-          }
+
+      const center = src[idx]
+      const left = src[idx - 4]
+      const right = src[idx + 4]
+      const top = src[idx - w * 4]
+      const bottom = src[idx + w * 4]
+
+      // 拉普拉斯边缘检测
+      const laplacian = 4 * center - left - right - top - bottom
+
+      // 原始 + amount * 边缘
+      const sharpened = center + amount * laplacian
+
+      const clamped = Math.max(0, Math.min(255, Math.round(sharpened)))
+      data[idx] = data[idx + 1] = data[idx + 2] = clamped
+    }
+  }
+}
+
+/**
+ * 自适应二值化：基于局部均值的阈值处理
+ * 让文字区域更清晰地呈现黑白
+ */
+function adaptiveThreshold(imageData, w, h) {
+  const src = new Uint8ClampedArray(imageData.data)
+  const data = imageData.data
+  const blockSize = Math.max(8, Math.floor(Math.min(w, h) / 40)) // 自适应块大小
+  const C = 8 // 阈值偏移
+
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const idx = (y * w + x) * 4
+
+      // 计算局部均值
+      const x0 = Math.max(0, x - Math.floor(blockSize / 2))
+      const y0 = Math.max(0, y - Math.floor(blockSize / 2))
+      const x1 = Math.min(w - 1, x + Math.floor(blockSize / 2))
+      const y1 = Math.min(h - 1, y + Math.floor(blockSize / 2))
+
+      let sum = 0
+      let count = 0
+      for (let by = y0; by <= y1; by++) {
+        for (let bx = x0; bx <= x1; bx++) {
+          sum += src[(by * w + bx) * 4]
+          count++
         }
-        const blurred = sum / 9
-        const sharp = src[idx + c] + (src[idx + c] - blurred) * amount
-        pixels[idx + c] = clamp(sharp)
+      }
+      const mean = sum / count
+
+      const pixel = src[idx]
+      const threshold = mean - C
+
+      if (pixel > threshold) {
+        data[idx] = data[idx + 1] = data[idx + 2] = 255
+      } else {
+        data[idx] = data[idx + 1] = data[idx + 2] = 0
       }
     }
   }
-}
-
-/**
- * OTSU 全局阈值二值化
- * 自动计算最优阈值，将图像转为纯 0（黑）或 255（白）
- */
-function applyOtsu(imageData, w, h) {
-  const pixels = imageData.data
-  const gray = new Uint8Array(w * h)
-
-  // 提取灰度（取 R 通道，因已灰度化三者相同）
-  for (let i = 0; i < w * h; i++) {
-    gray[i] = pixels[i * 4]
-  }
-
-  // 计算直方图
-  const hist = new Uint32Array(256)
-  for (let i = 0; i < gray.length; i++) hist[gray[i]]++
-
-  // OTSU 算法
-  const total = gray.length
-  let sumB = 0, wB = 0
-  const sumTotal = hist.reduce((s, v, i) => s + v * i, 0)
-  let maxVariance = 0, threshold = 128
-
-  for (let t = 0; t < 256; t++) {
-    wB += hist[t]
-    if (wB === 0) continue
-    const wF = total - wB
-    if (wF === 0) break
-    sumB += t * hist[t]
-    const mB = sumB / wB
-    const mF = (sumTotal - sumB) / wF
-    const variance = wB * wF * (mB - mF) ** 2
-    if (variance > maxVariance) {
-      maxVariance = variance
-      threshold = t
-    }
-  }
-
-  // 应用阈值：≤threshold → 0（黑/文字），>threshold → 255（白/背景）
-  for (let i = 0; i < pixels.length; i += 4) {
-    const v = gray[i / 4] <= threshold ? 0 : 255
-    pixels[i] = pixels[i + 1] = pixels[i + 2] = v
-  }
-}
-
-/** 仅预处理（不裁剪），适用于整图 OCR */
-export async function preprocessFull(src, opts = {}) {
-  const img = await loadImage(src)
-  return cropAndPreprocess(src, {
-    x: 0, y: 0, w: 1, h: 1,
-  }, opts)
-}
-
-function clamp(v) {
-  return Math.max(0, Math.min(255, Math.round(v)))
 }

@@ -409,7 +409,7 @@ async function fetchBoardSnapshot(board) {
   const fs = BOARD_FS[board]
   const PAGE_SIZE = 2000
   const signal = abortController?.signal
-  const url1 = `/api-push2/api/qt/clist/get?pn=1&pz=${PAGE_SIZE}&po=1&np=1&fltt=2&invt=2&fid=f3&fs=${fs}&fields=f2,f3,f5,f6,f7,f8,f9,f10,f12,f14,f20,f21`
+  const url1 = `/staticTool/api/push2/api/qt/clist/get?pn=1&pz=${PAGE_SIZE}&po=1&np=1&fltt=2&invt=2&fid=f3&fs=${fs}&fields=f2,f3,f5,f6,f7,f8,f9,f10,f12,f14,f20,f21`
   const response = await fetch(url1, { signal })
   if (!response.ok) throw new Error(`板块行情请求失败 HTTP ${response.status}`)
   const json = await response.json()
@@ -421,7 +421,7 @@ async function fetchBoardSnapshot(board) {
   if (total > PAGE_SIZE) {
     const totalPages = Math.ceil(total / PAGE_SIZE)
     for (let pn = 2; pn <= totalPages; pn++) {
-      const url = `/api-push2/api/qt/clist/get?pn=${pn}&pz=${PAGE_SIZE}&po=1&np=1&fltt=2&invt=2&fid=f3&fs=${fs}&fields=f2,f3,f5,f6,f7,f8,f9,f10,f12,f14,f20,f21`
+      const url = `/staticTool/api/push2/api/qt/clist/get?pn=${pn}&pz=${PAGE_SIZE}&po=1&np=1&fltt=2&invt=2&fid=f3&fs=${fs}&fields=f2,f3,f5,f6,f7,f8,f9,f10,f12,f14,f20,f21`
       try {
         const res = await fetch(url, { signal })
         const j = await res.json()

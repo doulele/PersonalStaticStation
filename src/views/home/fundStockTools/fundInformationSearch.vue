@@ -430,68 +430,42 @@ const toggleCode = (code) => {
   inputCodes.value = codes.join(',');
 };
 
-/** JSONP方式加载基金历史累计净值数据（东方财富接口） */
-const loadHistoryData = (code) => {
-  return new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = `https://fund.eastmoney.com/pingzhongdata/${code}.js`;
-    const timeout = setTimeout(() => { cleanup(); reject(new Error('历史数据请求超时')); }, 8000);
-    const cleanup = () => {
-      if (timeout) clearTimeout(timeout);
-      if (script.parentNode) script.parentNode.removeChild(script);
-      window.fS_name = undefined;
-      window.Data_ACWorthTrend = undefined;
-    };
-    script.onload = () => {
-      clearTimeout(timeout);
-      try {
-        const name = window.fS_name;
-        const rawTrends = window.Data_ACWorthTrend;
-        if (!name || !rawTrends || !Array.isArray(rawTrends) || rawTrends.length === 0) throw new Error('历史净值数据缺失');
-        // Data_ACWorthTrend格式为[日期字符串, 净值]的二维数组，统一转为{x: 时间戳, y: 净值}
-        const trends = rawTrends.map(item => ({
-          x: Array.isArray(item) ? new Date(item[0]).getTime() : item.x,
-          y: Array.isArray(item) ? parseFloat(item[1]) : parseFloat(item.y),
-        })).filter(item => !isNaN(item.x) && Number.isFinite(item.y) && item.y > 0);
-        if (trends.length === 0) throw new Error('累计净值数据异常（过滤后无有效数据），请检查基金代码');
-        let maxItem = trends[0];
-        for (const item of trends) { if (item.y > maxItem.y) maxItem = item; }
-        const currentItem = trends[trends.length - 1];
-        const result = {
-          name, maxDate: formatDate(maxItem.x), maxValue: maxItem.y,
-          curDate: formatDate(currentItem.x), curValue: currentItem.y,
-          drawdown: calcMaxDrawdown(trends),
-          curDrawdown: calcCurDrawdown(trends, drawdownDate.value),
-          rangeMaxDrawdown: calcMaxDrawdown(trends, drawdownDate.value),
-        };
-        cleanup(); resolve(result);
-      } catch (e) { cleanup(); reject(e); }
-    };
-    script.onerror = () => { cleanup(); reject(new Error('加载历史脚本失败（代码可能不存在）')); };
-    document.head.appendChild(script);
-  });
+/** 加载基金历史累计净值数据（通过后端代理） */
+const loadHistoryData = async (code) => {
+  const res = await fetch(`/staticTool/api/fund/history/${code}`);
+  if (!res.ok) throw new Error(`历史数据请求失败 HTTP ${res.status}`);
+  const json = await res.json();
+  const d = json.data || {};
+  const name = d.name || '';
+  const rawTrends = d.acWorthTrend || [];
+  if (rawTrends.length === 0) throw new Error('历史净值数据缺失');
+  const trends = rawTrends.map(item => ({
+    x: Array.isArray(item) ? new Date(item[0]).getTime() : (typeof item.x === 'number' ? item.x : new Date(item.x).getTime()),
+    y: Array.isArray(item) ? parseFloat(item[1]) : parseFloat(item.y),
+  })).filter(item => !isNaN(item.x) && Number.isFinite(item.y) && item.y > 0);
+  if (trends.length === 0) throw new Error('累计净值数据异常（过滤后无有效数据），请检查基金代码');
+  let maxItem = trends[0];
+  for (const item of trends) { if (item.y > maxItem.y) maxItem = item; }
+  const currentItem = trends[trends.length - 1];
+  return {
+    name, maxDate: formatDate(maxItem.x), maxValue: maxItem.y,
+    curDate: formatDate(currentItem.x), curValue: currentItem.y,
+    drawdown: calcMaxDrawdown(trends),
+    curDrawdown: calcCurDrawdown(trends, drawdownDate.value),
+    rangeMaxDrawdown: calcMaxDrawdown(trends, drawdownDate.value),
+  };
 };
 
-/** JSONP方式加载基金实时估值数据（天天基金接口） */
-const loadRealTimeData = (code) => {
-  return new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = `https://fundgz.1234567.com.cn/js/${code}.js?callback=jsonpgz`;
-    const timeout = setTimeout(() => { cleanup(); reject(new Error('实时估值请求超时')); }, 6000);
-    window.jsonpgz = (data) => {
-      clearTimeout(timeout); cleanup();
-      if (data && data.dwjz && data.gsz && parseFloat(data.gsz) > 0 && data.gztime) {
-        resolve({ dwjz: parseFloat(data.dwjz), gsz: parseFloat(data.gsz), gszzl: data.gszzl, gztime: data.gztime, name: data.name || '' });
-      } else { reject(new Error('暂无实时估值')); }
-    };
-    const cleanup = () => {
-      if (timeout) clearTimeout(timeout);
-      if (script.parentNode) script.parentNode.removeChild(script);
-      window.jsonpgz = undefined;
-    };
-    script.onerror = () => { cleanup(); reject(new Error('实时估值脚本加载失败')); };
-    document.head.appendChild(script);
-  });
+/** 加载基金实时估值数据（通过后端代理） */
+const loadRealTimeData = async (code) => {
+  const res = await fetch(`/staticTool/api/fund/estimate/${code}`);
+  if (!res.ok) throw new Error(`实时估值请求失败 HTTP ${res.status}`);
+  const json = await res.json();
+  const data = json.data;
+  if (data && data.dwjz && data.gsz && parseFloat(data.gsz) > 0 && data.gztime) {
+    return { dwjz: parseFloat(data.dwjz), gsz: parseFloat(data.gsz), gszzl: data.gszzl, gztime: data.gztime, name: data.name || '' };
+  }
+  throw new Error('暂无实时估值');
 };
 
 /** 并发加载单只基金的完整数据（历史+实时），历史数据失败则整体失败 */

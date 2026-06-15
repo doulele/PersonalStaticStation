@@ -12,9 +12,10 @@
       <div class="hero-inner">
         <!-- 顶部标签 + 标题 -->
         <div class="hero-top">
-          <div class="hero-tag" :class="{ 'tag-dlt': activeLottery === 'dlt' }">
+          <div class="hero-tag" :class="{ 'tag-dlt': activeLottery === 'dlt', 'tag-query': activeLottery === 'query' }">
             <span class="tag-dot"></span>
-            {{ activeLottery === 'ssq' ? '双色球' : '大乐透' }} · 数据分析工具
+            <template v-if="activeLottery === 'query'">中奖查询 · 核验工具</template>
+            <template v-else>{{ activeLottery === 'ssq' ? '双色球' : '大乐透' }} · 数据分析工具</template>
           </div>
           <h1 class="hero-title">
             <template v-if="activeLottery === 'ssq'">
@@ -22,17 +23,25 @@
               双色球分析
               <span class="title-icon">🔵</span>
             </template>
-            <template v-else>
+            <template v-else-if="activeLottery === 'dlt'">
               <span class="title-icon">🟡</span>
               大乐透分析
               <span class="title-icon">🟣</span>
+            </template>
+            <template v-else>
+              <span class="title-icon">🎫</span>
+              中奖查询
+              <span class="title-icon">🏆</span>
             </template>
           </h1>
           <p class="hero-subtitle" v-if="activeLottery === 'ssq'">
             多维度概率分析 + <strong>三大分析模型</strong>：整体频率 · 位置概率矩阵 · 时间衰减加权
           </p>
-          <p class="hero-subtitle" v-else>
+          <p class="hero-subtitle" v-else-if="activeLottery === 'dlt'">
             <strong>5+2</strong> 选号规则下的多模型分析：整体频率 · 位置概率矩阵 · 时间衰减加权
+          </p>
+          <p class="hero-subtitle" v-else>
+            支持<strong>手动选号</strong>和<strong>拍照识别</strong>两种方式，快速核验双色球 / 大乐透中奖结果
           </p>
         </div>
 
@@ -58,7 +67,7 @@
             <span class="meta-label">算法模型</span>
           </div>
         </div>
-        <div class="hero-meta" v-else>
+        <div class="hero-meta" v-else-if="activeLottery === 'dlt'">
           <div class="meta-item">
             <span class="meta-value">5+2</span>
             <span class="meta-label">玩法</span>
@@ -79,12 +88,34 @@
             <span class="meta-label">算法模型</span>
           </div>
         </div>
+        <div class="hero-meta hero-meta-query" v-else>
+          <div class="meta-item">
+            <span class="meta-value">双色球</span>
+            <span class="meta-label">6+1</span>
+          </div>
+          <div class="meta-divider"></div>
+          <div class="meta-item">
+            <span class="meta-value">大乐透</span>
+            <span class="meta-label">5+2</span>
+          </div>
+          <div class="meta-divider"></div>
+          <div class="meta-item">
+            <span class="meta-value">📷</span>
+            <span class="meta-label">拍照识别</span>
+          </div>
+          <div class="meta-divider"></div>
+          <div class="meta-item">
+            <span class="meta-value">✋</span>
+            <span class="meta-label">手动选号</span>
+          </div>
+        </div>
 
         <!-- 提示条 -->
-        <div class="hero-tip" :class="{ 'tip-dlt': activeLottery === 'dlt' }">
+        <div class="hero-tip" :class="{ 'tip-dlt': activeLottery === 'dlt', 'tip-query': activeLottery === 'query' }">
           <el-icon><InfoFilled /></el-icon>
           <span v-if="activeLottery === 'ssq'">加权概率模式为近期开奖数据赋予更高权重，更准确地反映当前走势。</span>
-          <span v-else>核心算法框架与双色球共用，已完整适配 5+2 大乐透选号规则。</span>
+          <span v-else-if="activeLottery === 'dlt'">核心算法框架与双色球共用，已完整适配 5+2 大乐透选号规则。</span>
+          <span v-else>支持双色球和大乐透的中奖核验。可拍照上传彩票自动识别号码，也可手动选号逐一比对。</span>
         </div>
 
         <!-- 彩种切换 Tab -->
@@ -251,11 +282,18 @@ $radius-lg: 28px;
     color: #a5b4fc;
   }
 
+  &.tag-query {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: rgba(16, 185, 129, 0.35);
+    color: #6ee7b7;
+  }
+
   .tag-dot {
     width: 6px; height: 6px;
     border-radius: 50%;
     background: #ef4444;
-    &.tag-dlt & { background: #818cf8; }
+    .hero-tag.tag-dlt & { background: #818cf8; }
+    .hero-tag.tag-query & { background: #34d399; }
   }
 }
 
@@ -373,6 +411,11 @@ $radius-lg: 28px;
   &.tip-dlt {
     background: rgba(167, 139, 250, 0.12);
     border-color: rgba(167, 139, 250, 0.2);
+  }
+
+  &.tip-query {
+    background: rgba(52, 211, 153, 0.12);
+    border-color: rgba(52, 211, 153, 0.2);
   }
 }
 

@@ -389,7 +389,7 @@ export async function fetchKline(codeRaw, days = 800, signal) {
   else if (code.startsWith('sz')) { market = 'sz'; code = code.replace('sz', '') }
   else if (/^6/.test(code)) { market = 'sh' }
   else { market = 'sz' }
-  const url = `/api-ifzq/appstock/app/fqkline/get?param=${market}${code},day,,,${days},qfq`
+  const url = `/staticTool/api/ifzq/appstock/app/fqkline/get?param=${market}${code},day,,,${days},qfq`
   const response = await fetch(url, { signal })
   if (!response.ok) throw new Error(`K线请求失败 HTTP ${response.status}`)
   const json = await response.json()
@@ -424,7 +424,7 @@ export async function fetchStockSnapshot(codeRaw, signal) {
   if (!code.startsWith('sh') && !code.startsWith('sz')) {
     code = /^6/.test(code) ? 'sh' + code : 'sz' + code
   }
-  const url = `/api-qt/q=${code}`
+  const url = `/staticTool/api/qt/q=${code}`
   const response = await fetch(url, { signal })
   const buffer = await response.arrayBuffer()
   const text = new TextDecoder('gbk').decode(buffer)
