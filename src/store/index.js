@@ -1,4 +1,5 @@
 import { createStore } from 'vuex'
+import plan from './modules/plan'
 
 export default createStore({
   state: {
@@ -36,5 +37,7 @@ export default createStore({
       commit('SET_THEME', state.theme === 'light' ? 'dark' : 'light')
     }
   },
-  modules: {}
+  modules: {
+    plan
+  }
 })

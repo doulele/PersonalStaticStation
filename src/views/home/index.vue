@@ -68,27 +68,27 @@
           </div>
         </router-link>
 
-        <router-link to="/json-formatter" class="tool-card">
+        <router-link to="/home/audioVideoImagesTools" class="tool-card">
           <div class="tool-card-inner">
             <div class="tool-icon blue">
               <el-icon :size="28"><Document /></el-icon>
             </div>
             <div class="tool-info">
-              <h3 class="tool-name">JSON 格式化</h3>
-              <p class="tool-desc">在线 JSON 格式化与数据校验</p>
+              <h3 class="tool-name">影音图像</h3>
+              <p class="tool-desc">音频、视频、图片在线工具</p>
             </div>
             <el-icon class="tool-arrow"><ArrowRight /></el-icon>
           </div>
         </router-link>
 
-        <router-link to="/image-compress" class="tool-card">
+        <router-link to="/home/lifeServices" class="tool-card">
           <div class="tool-card-inner">
             <div class="tool-icon green">
-              <el-icon :size="28"><Picture /></el-icon>
+              <el-icon :size="28"><Service /></el-icon>
             </div>
             <div class="tool-info">
-              <h3 class="tool-name">图片压缩</h3>
-              <p class="tool-desc">在线图片压缩优化，适配网页</p>
+              <h3 class="tool-name">生活服务</h3>
+              <p class="tool-desc">旅游攻略、今日油价等生活工具</p>
             </div>
             <el-icon class="tool-arrow"><ArrowRight /></el-icon>
           </div>
@@ -149,7 +149,7 @@
 </template>
 
 <script setup>
-import { ArrowRight, DataLine, Present, Document, Picture, Lock, Connection, Timer } from '@element-plus/icons-vue'
+import { ArrowRight, DataLine, Present, Document, Service, Lock, Connection, Timer } from '@element-plus/icons-vue'
 </script>
 
 <style lang="scss" scoped>
