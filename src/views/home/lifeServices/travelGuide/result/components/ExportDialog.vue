@@ -34,31 +34,42 @@
     </el-dialog>
 
     <!-- 图片预览弹窗（微信中用于长按保存） -->
-    <el-dialog
-      v-model="showPreview"
-      :title="previewTitle"
-      width="90%"
-      top="5vh"
-      :close-on-click-modal="false"
-      class="preview-dialog"
-    >
-      <div class="preview-container">
-        <img v-if="previewImgSrc" :src="previewImgSrc" class="preview-img" alt="行程预览" />
-        <iframe v-else-if="previewPdfSrc" :src="previewPdfSrc" class="preview-pdf" />
-        <div v-else class="preview-loading">正在生成...</div>
+    <!-- 使用自定义 overlay 而非 el-dialog，避免 Element Plus 的 modal 遮罩层拦截微信长按手势 -->
+    <Teleport to="body">
+      <div v-if="showPreview" class="preview-overlay" @click.self="showPreview = false">
+        <div class="preview-panel">
+          <!-- 顶部栏 -->
+          <div class="preview-topbar">
+            <span class="preview-topbar-title">{{ previewTitle }}</span>
+            <button class="preview-close-btn" @click="showPreview = false">✕</button>
+          </div>
+          <!-- 内容区 -->
+          <div class="preview-container">
+            <img
+              v-if="previewImgSrc"
+              :src="previewImgSrc"
+              class="preview-img"
+              alt="行程预览"
+            />
+            <iframe v-else-if="previewPdfSrc" :src="previewPdfSrc" class="preview-pdf" />
+            <div v-else class="preview-loading">正在生成...</div>
+          </div>
+          <!-- 提示文字 -->
+          <div class="preview-tips" v-if="isWeChat && previewImgSrc">
+            👆 长按上方图片即可保存到相册或分享给朋友
+          </div>
+          <div class="preview-tips" v-else-if="isWeChat && previewPdfSrc">
+            💡 请使用其他浏览器打开此页面以保存PDF，或点击"生成图片"后长按保存
+          </div>
+          <!-- 底部按钮 -->
+          <div class="preview-actions">
+            <el-button v-if="previewImgSrc && !isWeChat" type="primary" @click="downloadPreviewImg">保存图片</el-button>
+            <el-button v-if="previewPdfSrc && !isWeChat" type="primary" @click="downloadPreviewPdf">下载PDF</el-button>
+            <el-button @click="showPreview = false">关闭</el-button>
+          </div>
+        </div>
       </div>
-      <div class="preview-tips" v-if="isWeChat && previewImgSrc">
-        👆 长按上方图片即可保存到相册
-      </div>
-      <div class="preview-tips" v-else-if="isWeChat && previewPdfSrc">
-        💡 请使用其他浏览器打开此页面以保存PDF，或点击"生成图片"后长按保存
-      </div>
-      <template #footer>
-        <el-button v-if="previewImgSrc && !isWeChat" type="primary" @click="downloadPreviewImg">保存图片</el-button>
-        <el-button v-if="previewPdfSrc && !isWeChat" type="primary" @click="downloadPreviewPdf">下载PDF</el-button>
-        <el-button @click="showPreview = false">关闭</el-button>
-      </template>
-    </el-dialog>
+    </Teleport>
   </div>
 </template>
 
@@ -459,32 +470,103 @@ function downloadPreviewPdf() {
   }
 }
 
-// ===== 预览弹窗 =====
+// ===== 预览自定义 Overlay（替代 el-dialog，避免微信长按被 modal 遮罩拦截） =====
+.preview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  touch-action: manipulation;
+}
+
+.preview-panel {
+  display: flex;
+  flex-direction: column;
+  width: 92vw;
+  max-width: 500px;
+  max-height: 92vh;
+  background: #fff;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.28);
+  pointer-events: auto;
+}
+
+.preview-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.preview-topbar-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  margin-right: 10px;
+}
+
+.preview-close-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #f1f5f9;
+  border-radius: 50%;
+  font-size: 16px;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+  line-height: 1;
+
+  &:hover { background: #e2e8f0; color: #334155; }
+  &:active { background: #cbd5e1; }
+}
+
 .preview-container {
   display: flex;
   justify-content: center;
-  max-height: 70vh;
+  align-items: flex-start;
+  flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  padding: 12px 16px;
+  pointer-events: auto;
 
   &::-webkit-scrollbar { width: 4px; }
   &::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
 }
 
 .preview-img {
+  display: block;
   max-width: 100%;
   height: auto;
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  /* 微信长按保存的关键：确保图片不被其他元素遮挡 */
-  -webkit-touch-callout: default;
-  user-select: auto;
-  -webkit-user-select: auto;
+  // === 微信长按保存的关键 CSS ===
+  -webkit-touch-callout: default !important;
+  user-select: auto !important;
+  -webkit-user-select: auto !important;
+  pointer-events: auto !important;
+  touch-action: manipulation;
+  -webkit-user-drag: auto;
 }
 
 .preview-pdf {
   width: 100%;
-  height: 65vh;
+  min-height: 60vh;
   border: none;
   border-radius: 8px;
 }
@@ -497,7 +579,7 @@ function downloadPreviewPdf() {
 }
 
 .preview-tips {
-  margin-top: 12px;
+  margin: 0 16px 8px;
   padding: 10px 14px;
   background: #eff6ff;
   border: 1px solid #bfdbfe;
@@ -506,20 +588,20 @@ function downloadPreviewPdf() {
   font-size: 13px;
   color: #1e40af;
   font-weight: 500;
+  flex-shrink: 0;
 }
 
-// 预览弹窗样式穿透
-:deep(.preview-dialog) {
-  .el-dialog__body {
-    padding: 12px 16px;
-  }
-  .el-dialog__header {
-    padding: 14px 16px 8px;
-  }
+.preview-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 16px 16px;
+  border-top: 1px solid #e2e8f0;
+  flex-shrink: 0;
 }
 
 // 导出弹窗在手机端不超宽
-:deep(.export-dialog) {
+::deep(.export-dialog) {
   .el-dialog {
     max-width: 100vw;
     margin: 0 auto;
@@ -542,8 +624,12 @@ function downloadPreviewPdf() {
   .option-title { font-size: 14px; }
   .option-desc { font-size: 11px; }
 
+  .preview-panel {
+    width: 96vw;
+    max-height: 88vh;
+  }
   .preview-container {
-    max-height: 55vh;
+    max-height: none;
   }
   .preview-pdf {
     height: 50vh;
