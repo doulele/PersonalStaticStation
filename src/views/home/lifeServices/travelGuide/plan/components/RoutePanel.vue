@@ -9,14 +9,55 @@
         <h3 class="panel-title">路线节点</h3>
         <span class="panel-badge">{{ selectedSpots.length }} 个已选</span>
       </div>
-      <span class="panel-hint">拖拽推荐卡片到上方已选区域，或拖拽排序</span>
+      <!-- <span class="panel-hint">拖拽推荐卡片到上方已选区域，或拖拽排序</span> -->
+    </div>
+
+    <!-- ===== 搜索添加景点（下拉建议） ===== -->
+    <div class="spot-search-section">
+      <el-autocomplete
+        v-model="searchKeyword"
+        :fetch-suggestions="fetchSpotSuggestions"
+        :trigger-on-focus="false"
+        :highlight-first-item="true"
+        placeholder="搜索当前景点周边的子景点..."
+        class="spot-search-input"
+        popper-class="spot-search-dropdown"
+        :debounce="400"
+        @select="onSearchSelect"
+        @keyup.enter.prevent="handleAddCustomName"
+      >
+        <template #prefix>
+          <el-icon :size="16"><Search /></el-icon>
+        </template>
+        <template #default="{ item }">
+          <div v-if="item.noResult" class="search-empty-tip">
+            😕 未找到"{{ item.value }}"的匹配结果，按回车直接添加
+          </div>
+          <div v-else class="search-suggestion-item">
+            <span class="sug-name">{{ item.value }}</span>
+            <span class="sug-type">{{ item.typeStr }}</span>
+            <span v-if="item.distance" class="sug-dist">{{ item.distance }}</span>
+          </div>
+        </template>
+      </el-autocomplete>
+      <el-button
+        class="search-add-btn"
+        type="primary"
+        :icon="Plus"
+        :disabled="!searchKeyword.trim()"
+        @click="handleAddCustomName"
+        title="直接添加输入的名称"
+      >添加</el-button>
     </div>
 
     <!-- ===== 已选路线（可拖拽排序 + 左滑删除） ===== -->
     <div class="selected-area">
       <div v-if="selectedSpots.length === 0" class="empty-drop-zone">
-        <el-icon :size="28"><Plus /></el-icon>
-        <span>从下方推荐拖拽路线节点到此处</span>
+        <div class="empty-icon-wrap">
+          <el-icon :size="32"><Plus /></el-icon>
+        </div>
+        <span class="empty-title">尚未选择路线节点</span>
+        <span class="empty-hint">拖拽或点击下方推荐节点添加到此处</span>
       </div>
 
       <draggable
@@ -56,33 +97,38 @@
               <div class="spot-info">
                 <div class="spot-name">
                   {{ element.name }}
-                  <span v-if="aiRecommended && aiSpotNotes[element.id]" class="ai-badge" :title="aiSpotNotes[element.id]">
-                    🤖 {{ aiSpotNotes[element.id] }}
+                  <span v-if="recommendActive && recommendSpotNotes[element.id]" class="ai-badge" :title="recommendSpotNotes[element.id]">
+                    💡 {{ recommendSpotNotes[element.id] }}
                   </span>
                 </div>
                 <div class="spot-highlight" v-if="element.highlight">✨ {{ element.highlight }}</div>
-                <div class="spot-meta">
-                  <el-icon :size="12"><Clock /></el-icon>
-                  {{ element.stay_duration }}分钟
-                  <template v-if="element.ticket_price"> · ¥{{ element.ticket_price }}</template>
+                <div v-if="element.ticket_price" class="spot-meta">
+                  ¥{{ element.ticket_price }}
                 </div>
               </div>
-              <el-button
-                class="spot-remove-btn"
-                :icon="Close"
-                circle
-                size="small"
-                text
-                @click.stop="handleRemove(element.id)"
-                title="移除"
-              />
+              <div class="spot-actions">
+                <el-button
+                  class="spot-edit-btn"
+                  :icon="Edit"
+                  size="small"
+                  round
+                  @click.stop="openEditDialog(element)"
+                >编辑</el-button>
+                <el-button
+                  class="spot-remove-btn"
+                  :icon="Close"
+                  size="small"
+                  round
+                  @click.stop="handleRemove(element.id)"
+                >删除</el-button>
+              </div>
             </div>
           </div>
         </template>
       </draggable>
     </div>
 
-    <!-- ===== 推荐路线（可拖拽到已选区域） ===== -->
+    <!-- ===== 推荐路线（可拖拽到已选区域，点击直接添加） ===== -->
     <div v-if="availableSpots.length > 0" class="recommend-section">
       <div class="recommend-header">
         <span class="recommend-label">推荐节点</span>
@@ -99,48 +145,56 @@
         class="recommend-draggable"
       >
         <template #item="{ element }">
-          <div class="recommend-card">
-            <div class="rec-drag-icon">
-              <el-icon :size="14"><Plus /></el-icon>
-            </div>
+          <div class="recommend-card" @click="handleAdd(element.id)">
             <div class="rec-info">
-              <div class="rec-name">{{ element.name }}</div>
-              <div class="rec-highlight" v-if="element.highlight">✨ {{ element.highlight }}</div>
-              <div class="rec-meta">
-                <el-icon :size="12"><Clock /></el-icon> {{ element.stay_duration }}分钟
-                <template v-if="element.ticket_price"> · ¥{{ element.ticket_price }}</template>
+              <div class="rec-name">
+                <span class="rec-name-text">{{ element.name }}</span>
+                <span v-if="element.ticket_price" class="rec-ticket">¥{{ element.ticket_price }}</span>
               </div>
+              <div class="rec-desc" v-if="element.desc || element.highlight">{{ element.desc || element.highlight }}</div>
             </div>
-            <el-button
-              :icon="Plus"
-              size="small"
-              circle
-              type="primary"
-              @click.stop="handleAdd(element.id)"
-              title="添加"
-            />
           </div>
         </template>
       </draggable>
     </div>
 
     <el-empty v-else description="暂无更多推荐节点" :image-size="40" />
+
+    <!-- ===== 编辑节点对话框 ===== -->
+    <el-dialog v-model="editDialogVisible" title="编辑路线节点" width="420px" :close-on-click-modal="false" destroy-on-close>
+      <el-form :model="editForm" label-position="top" size="small">
+        <el-form-item label="节点名称">
+          <el-input v-model="editForm.name" placeholder="请输入节点名称" />
+        </el-form-item>
+        <el-form-item label="简介 / 亮点">
+          <el-input v-model="editForm.highlight" type="textarea" :rows="2" placeholder="简介或亮点（选填）" />
+        </el-form-item>
+        <el-form-item label="票价 (¥)">
+          <el-input-number v-model="editForm.ticket_price" :min="0" :step="1" :precision="0" controls-position="right" style="width:100%" placeholder="票价（选填）" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="editDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveEdit">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, reactive } from 'vue'
 import { useStore } from 'vuex'
 import draggable from 'vuedraggable'
 import { useSwipeDelete } from '../../composables/useSwipeDelete.js'
+import { ElMessage } from 'element-plus'
 
 const store = useStore()
 
 // ===== 数据 =====
 const selectedSpots = computed(() => store.getters['plan/selectedSpots'])
 const availableSpots = computed(() => store.getters['plan/availableSpots'])
-const aiSpotNotes = computed(() => store.state.plan.aiSpotNotes || {})
-const aiRecommended = computed(() => store.state.plan.aiRecommended)
+const recommendSpotNotes = computed(() => store.state.plan.recommendSpotNotes || {})
+const recommendActive = computed(() => store.state.plan.recommendActive)
 
 const localSelected = ref([])
 const localRecommended = ref([])
@@ -156,6 +210,109 @@ const swipe = useSwipeDelete({
     store.commit('plan/REMOVE_SPOT', id)
   }
 })
+
+// ===== 搜索添加景点（下拉建议 + 直接添加） =====
+const searchKeyword = ref('')
+let searchTimer = null
+
+async function fetchSpotSuggestions(keyword, callback) {
+  if (!keyword || keyword.trim().length < 1) {
+    callback([])
+    return
+  }
+  const attraction = store.state.plan.currentAttraction
+  const city = attraction?.city || ''
+  const lng = attraction?.lng
+  const lat = attraction?.lat
+  try {
+    const res = await fetch(`${API_BASE}/spot-search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ keyword: keyword.trim(), city, lng, lat })
+    })
+    const json = await res.json()
+    if (json.success && json.data && json.data.length > 0) {
+      const suggestions = json.data.map(p => {
+        const distKm = p.distance >= 1000 ? `${(p.distance / 1000).toFixed(1)}km` : `${p.distance}m`
+        return {
+          value: p.name,
+          address: p.address || '',
+          typeStr: p.type?.split(';').pop() || '',
+          distance: distKm,
+          lat: p.lat,
+          lng: p.lng
+        }
+      })
+      callback(suggestions)
+    } else {
+      // 返回一个标记项以保持下拉框打开，显示空状态提示
+      callback([{ value: keyword.trim(), noResult: true }])
+    }
+  } catch {
+    callback([])
+  }
+}
+
+// 用户从下拉列表中选择
+function onSearchSelect(item) {
+  if (item.noResult) return  // 忽略空结果占位条目
+  const spot = {
+    id: `custom_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    name: item.value,
+    lat: item.lat || 0,
+    lng: item.lng || 0,
+    stay_duration: 30,
+    default_order: 999,
+    ticket_price: 0,
+    highlight: item.address || '',
+    desc: item.address || ''
+  }
+  store.commit('plan/ADD_CUSTOM_SPOT', spot)
+  searchKeyword.value = ''
+  ElMessage.success(`已添加"${item.value}"到路线`)
+}
+
+// 用户直接输入名称添加（不下拉选择）
+function handleAddCustomName() {
+  const name = searchKeyword.value.trim()
+  if (!name) return
+  store.dispatch('plan/geocodeCustomSpot', { name, address: '' })
+  searchKeyword.value = ''
+  ElMessage.success(`已添加"${name}"到路线`)
+}
+
+const API_BASE = '/staticTool/api/travel'
+
+// ===== 编辑节点 =====
+const editDialogVisible = ref(false)
+const editingSpotId = ref(null)
+const editForm = reactive({ name: '', highlight: '', ticket_price: 0 })
+
+function openEditDialog(spot) {
+  editingSpotId.value = spot.id
+  editForm.name = spot.name
+  editForm.highlight = spot.highlight || ''
+  editForm.ticket_price = spot.ticket_price || 0
+  editDialogVisible.value = true
+}
+
+function saveEdit() {
+  if (!editForm.name.trim()) {
+    ElMessage.warning('节点名称不能为空')
+    return
+  }
+  const spot = selectedSpots.value.find(s => s.id === editingSpotId.value)
+  if (spot) {
+    store.commit('plan/UPDATE_SPOT', {
+      id: editingSpotId.value,
+      name: editForm.name.trim(),
+      highlight: editForm.highlight.trim(),
+      ticket_price: editForm.ticket_price
+    })
+  }
+  editDialogVisible.value = false
+  ElMessage.success('保存成功')
+}
 
 // ===== 操作 =====
 function handleRemove(id) {
@@ -266,8 +423,8 @@ function onSelectedChange(evt) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 28px;
+  gap: 6px;
+  padding: 32px 28px;
   border: 2px dashed #e2e8f0;
   border-radius: 12px;
   color: #94a3b8;
@@ -278,6 +435,35 @@ function onSelectedChange(evt) {
     border-color: #6366f1;
     color: #6366f1;
     background: #f8faff;
+  }
+
+  .empty-icon-wrap {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    margin-bottom: 4px;
+    transition: all 0.2s;
+  }
+
+  &:hover .empty-icon-wrap {
+    background: #eef2ff;
+    color: #6366f1;
+  }
+
+  .empty-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #64748b;
+  }
+
+  .empty-hint {
+    font-size: 12px;
+    color: #94a3b8;
   }
 }
 
@@ -427,19 +613,67 @@ function onSelectedChange(evt) {
   color: #94a3b8;
 }
 
+.spot-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.spot-edit-btn {
+  flex-shrink: 0;
+  font-size: 12px;
+  height: 28px;
+  padding: 0 10px;
+  color: #6366f1;
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  transition: all 0.2s;
+
+  &:hover {
+    color: #fff;
+    background: #6366f1;
+    border-color: #6366f1;
+  }
+}
+
 .spot-remove-btn {
   flex-shrink: 0;
-  opacity: 0;
-  transition: opacity 0.2s;
+  font-size: 12px;
+  height: 28px;
+  padding: 0 10px;
+  color: #ef4444;
+  background: #fef2f2;
+  border-color: #fecaca;
+  transition: all 0.2s;
 
-  .spot-card:hover & {
-    opacity: 1;
+  &:hover {
+    color: #fff;
+    background: #ef4444;
+    border-color: #ef4444;
   }
+}
+
+// ===== 搜索添加景点（下拉建议） =====
+.spot-search-section {
+  display: flex;
+  gap: 10px;
+  padding: 14px 0;
+  border-top: 1px solid #f1f5f9;
+}
+
+.spot-search-input {
+  flex: 1;
+}
+
+.search-add-btn {
+  flex-shrink: 0;
+  height: auto; // 撑满容器高度与输入框一致
 }
 
 // ===== 推荐区域 =====
 .recommend-section {
-  padding-top: 20px;
+  padding-top: 16px;
   border-top: 1px solid #f1f5f9;
 }
 
@@ -447,7 +681,7 @@ function onSelectedChange(evt) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .recommend-label {
@@ -469,18 +703,31 @@ function onSelectedChange(evt) {
 .recommend-draggable {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 4px;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 2px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
 }
 
 .recommend-card {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
+  padding: 10px 14px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  cursor: grab;
+  border-radius: 10px;
+  cursor: pointer;
   transition: all 0.2s;
 
   &:hover {
@@ -491,7 +738,6 @@ function onSelectedChange(evt) {
   }
 
   &:active {
-    cursor: grabbing;
     transform: scale(0.98);
   }
 }
@@ -502,58 +748,142 @@ function onSelectedChange(evt) {
   border: 2px dashed #6366f1 !important;
 }
 
-.rec-drag-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: #eef2ff;
-  color: #6366f1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
 .rec-info {
   flex: 1;
   min-width: 0;
 }
 
 .rec-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.rec-highlight {
-  font-size: 12px;
-  color: #f59e0b;
-  margin: 2px 0;
+.rec-name-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rec-ticket {
+  font-size: 11px;
+  color: #ef4444;
+  font-weight: 600;
+  background: #fef2f2;
+  padding: 1px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.rec-desc {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .rec-meta {
-  font-size: 12px;
+  font-size: 11px;
   color: #94a3b8;
   display: flex;
   align-items: center;
   gap: 3px;
+  margin-top: 1px;
 }
 
 // 响应式
 @media (max-width: 768px) {
   .route-panel {
-    padding: 16px;
+    padding: 14px;
     border-radius: 12px;
   }
 
-  .spot-remove-btn {
-    opacity: 0.5;
+  .panel-header {
+    margin-bottom: 14px;
+  }
+
+  .panel-title {
+    font-size: 15px;
   }
 
   .panel-hint {
     margin-left: 0;
     display: block;
     margin-top: 4px;
+    font-size: 11px;
+  }
+
+  .spot-card {
+    padding: 12px 14px;
+  }
+
+  .spot-name {
+    font-size: 14px;
+  }
+
+  .spot-meta {
+    font-size: 11px;
+  }
+
+  .recommend-card {
+    padding: 8px 12px;
+  }
+
+  .rec-name-text {
+    font-size: 12px;
+  }
+
+  .rec-desc {
+    font-size: 10px;
+  }
+
+  .rec-meta {
+    font-size: 10px;
+  }
+}
+</style>
+
+<style lang="scss">
+// 搜索建议下拉（popper 渲染在 body 层，不能 scoped）
+.spot-search-dropdown {
+  .search-suggestion-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 0;
+    .sug-name {
+      font-weight: 600;
+      color: #0f172a;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .sug-type {
+      font-size: 11px;
+      color: #6366f1;
+      background: #eef2ff;
+      padding: 1px 6px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .sug-dist {
+      font-size: 11px;
+      color: #94a3b8;
+      flex-shrink: 0;
+    }
+  }
+
+  .search-empty-tip {
+    padding: 12px 16px;
+    text-align: center;
+    font-size: 13px;
+    color: #94a3b8;
   }
 }
 </style>

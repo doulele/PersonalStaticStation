@@ -43,8 +43,11 @@
             </button>
           </div>
           <div class="map-body">
-            <div ref="chartRef" class="echarts-map"></div>
             <div class="map-legend">
+              <button class="legend-item all-item" :class="{ active: activeRegion === '全部' }" @click="$emit('select-region', '全部')">
+                <span class="legend-dot all-dot"></span>
+                <span class="legend-text">全部</span>
+              </button>
               <button
                 v-for="r in legendItems" :key="r.name"
                 class="legend-item" :class="{ active: activeRegion === r.name }"
@@ -53,11 +56,8 @@
                 <span class="legend-dot" :style="{ background: r.color }"></span>
                 <span class="legend-text">{{ r.name }}</span>
               </button>
-              <button class="legend-item all-item" :class="{ active: activeRegion === '全部' }" @click="$emit('select-region', '全部')">
-                <span class="legend-dot all-dot"></span>
-                <span class="legend-text">全部</span>
-              </button>
             </div>
+            <div ref="chartRef" class="echarts-map"></div>
           </div>
         </div>
       </transition>
@@ -69,8 +69,11 @@
           <button class="action-btn" @click="mobileCollapsed = true" title="收起">▲</button>
         </div>
         <div class="map-body">
-          <div ref="chartRefMobile" class="echarts-map"></div>
           <div class="map-legend">
+            <button class="legend-item all-item" :class="{ active: activeRegion === '全部' }" @click="$emit('select-region', '全部')">
+              <span class="legend-dot all-dot"></span>
+              <span class="legend-text">全部</span>
+            </button>
             <button
               v-for="r in legendItems" :key="r.name"
               class="legend-item" :class="{ active: activeRegion === r.name }"
@@ -79,11 +82,8 @@
               <span class="legend-dot" :style="{ background: r.color }"></span>
               <span class="legend-text">{{ r.name }}</span>
             </button>
-            <button class="legend-item all-item" :class="{ active: activeRegion === '全部' }" @click="$emit('select-region', '全部')">
-              <span class="legend-dot all-dot"></span>
-              <span class="legend-text">全部</span>
-            </button>
           </div>
+          <div ref="chartRefMobile" class="echarts-map"></div>
         </div>
       </div>
     </div>
@@ -307,7 +307,7 @@ function getBaseOption(region, province) {
       roam: false,
       center: [104, 36],
       zoom: 1.25,
-      aspectScale: 0.85,
+      aspectScale: 1.0,
       label: {
         show: isAll,
         color: '#475569',
@@ -368,7 +368,7 @@ function updateRegion(region, province) {
       roam: false,
       center: [104, 36],
       zoom: 1.25,
-      aspectScale: 0.85,
+      aspectScale: 1.0,
       data,
       label: {
         show: isAll, color: '#475569',
@@ -641,7 +641,7 @@ onUnmounted(() => {
 }
 
 // ===== Map Body =====
-.map-body { padding: 10px 16px 12px; }
+.map-body { padding: 6px 10px 8px; }
 .echarts-map {
   width: 100%;
   height: 580px;
@@ -653,7 +653,7 @@ onUnmounted(() => {
 // ===== 图例 =====
 .map-legend {
   display: flex; flex-wrap: wrap; gap: 6px;
-  margin-top: 10px; padding-top: 10px; border-top: 1px solid #f1f5f9;
+  margin-bottom: 6px; padding-top: 8px; border-top: 1px solid #f1f5f9;
 }
 .legend-item {
   display: flex; align-items: center; gap: 5px;

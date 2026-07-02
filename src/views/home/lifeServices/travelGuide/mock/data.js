@@ -24,7 +24,9 @@ export const attractions = [
   { id: 17, name: '黄果树瀑布',         lat: 25.9922, lng: 105.6661, region: '西南', province: '贵州', category: '自然', emoji: '💦', desc: '亚洲最大瀑布群，水帘洞穿越体验，气势磅礴震撼人心', level: '5A', features: ['瀑布飞泉', '风景名胜'], cost: '¥160', rating: '4.5' },
   { id: 18, name: '长白山天池',         lat: 42.0060, lng: 128.0565, region: '东北', province: '吉林', category: '自然', emoji: '❄️', desc: '中国最深高山湖泊，十六峰环抱，神秘壮美的火山口湖', level: '5A', features: ['湖光山色', '地质奇观'], cost: '¥125', rating: '4.6' },
   { id: 19, name: '青海湖',             lat: 36.9359, lng: 100.2339, region: '西北', province: '青海', category: '自然', emoji: '💎', desc: '中国最大内陆咸水湖，油菜花海与碧湖蓝天交相辉映', level: '5A', features: ['湖光山色', '风景名胜'], cost: '¥100', rating: '4.5' },
-  { id: 20, name: '呼伦贝尔草原',       lat: 49.2116, lng: 119.7657, region: '华北', province: '内蒙古', category: '草原', emoji: '🌿', desc: '世界四大草原之一，风吹草低见牛羊，夏季绿浪无边无际', level: '4A', features: ['风景名胜'], cost: '免费', rating: '4.6' }
+  { id: 20, name: '呼伦贝尔草原',       lat: 49.2116, lng: 119.7657, region: '华北', province: '内蒙古', category: '草原', emoji: '🌿', desc: '世界四大草原之一，风吹草低见牛羊，夏季绿浪无边无际', level: '4A', features: ['风景名胜'], cost: '免费', rating: '4.6' },
+  { id: 21, name: '花果山',             lat: 34.5895, lng: 119.2945, region: '华东', province: '江苏', category: '自然', emoji: '🐒', desc: '孙悟空的老家，西游记发源地，江苏最高峰玉女峰所在地', level: '5A', features: ['风景名胜', '人文历史'], cost: '¥90', rating: '4.5' },
+  { id: 22, name: '连岛景区',           lat: 34.7600, lng: 119.4700, region: '华东', province: '江苏', category: '海岛', emoji: '🏝️', desc: '江苏最大海岛，金色沙滩与碧海蓝天，夏日避暑胜地', level: '4A', features: ['海滨风光', '风景名胜'], cost: '¥50', rating: '4.4' }
 ]
 
 // 地区色系映射
@@ -39,7 +41,7 @@ export const regionColors = {
 }
 
 // 快捷搜索关键词
-export const quickSearchTags = ['故宫', '迪士尼', '西湖', '九寨沟', '黄山', '丽江', '三亚', '兵马俑', '张家界', '长白山']
+export const quickSearchTags = ['故宫', '迪士尼', '西湖', '九寨沟', '黄山', '丽江', '三亚', '兵马俑', '张家界', '长白山', '花果山', '连岛']
 
 // ==================== 故宫 子路线 ====================
 const gugongSpots = [
@@ -97,10 +99,70 @@ const disneyHotels = [
   { id: 603, attraction_id: 2, name: '上海邻家美利亚酒店', price_range: '600-1200元/晚', lat: 31.1410, lng: 121.6580, highlight: '步行5分钟即可入园，性价比超高' }
 ]
 
+// ==================== 花果山 子路线 ====================
+const huaguoshanSpots = [
+  { id: 701, attraction_id: 21, name: '山门', lat: 34.5880, lng: 119.2920, stay_duration: 10, default_order: 1, ticket_price: 0, highlight: '花果山入口，西游记主题雕塑', desc: '花果山景区入口，西游记主题雕塑群，检票入园。' },
+  { id: 702, attraction_id: 21, name: '十八盘', lat: 34.5890, lng: 119.2935, stay_duration: 20, default_order: 2, ticket_price: 0, highlight: '蜿蜒登山古道，沿途风景秀丽', desc: '蜿蜒曲折的登山古道，沿途山林葱郁，是登山的必经之路。' },
+  { id: 703, attraction_id: 21, name: '九龙桥', lat: 34.5900, lng: 119.2940, stay_duration: 15, default_order: 3, ticket_price: 0, highlight: '九条山涧汇流，古桥流水', desc: '九条山涧在此汇聚，古桥横跨溪流，是拍照打卡的好去处。' },
+  { id: 704, attraction_id: 21, name: '水帘洞', lat: 34.5910, lng: 119.2950, stay_duration: 30, default_order: 4, ticket_price: 0, highlight: '孙悟空的老家！瀑布飞流直下', desc: '花果山的核心景点，瀑布从洞口飞流直下，洞内宽敞可容纳百人。' },
+  { id: 705, attraction_id: 21, name: '三元宫', lat: 34.5908, lng: 119.2955, stay_duration: 25, default_order: 5, ticket_price: 0, highlight: '千年道教古刹，香火旺盛', desc: '始建于唐代的道教宫观，供奉天、地、水三官，建筑古朴庄重。' },
+  { id: 706, attraction_id: 21, name: '七十二洞', lat: 34.5905, lng: 119.2960, stay_duration: 20, default_order: 6, ticket_price: 0, highlight: '怪石嶙峋，洞洞相连似迷宫', desc: '天然形成的奇石洞穴群，洞洞相连如同迷宫，充满探险趣味。' },
+  { id: 707, attraction_id: 21, name: '玉女峰', lat: 34.5920, lng: 119.2965, stay_duration: 40, default_order: 7, ticket_price: 0, highlight: '江苏最高峰！一览众山小', desc: '海拔624.4米的江苏省最高点，登顶可俯瞰连云港全景和东海碧波。' },
+  { id: 708, attraction_id: 21, name: '猴园', lat: 34.5895, lng: 119.2958, stay_duration: 25, default_order: 8, ticket_price: 0, highlight: '与猕猴亲密互动，投喂小猴子', desc: '散养猕猴的乐园，可以近距离观察猴群嬉戏，注意保管好随身物品！' },
+  // 前程景观车
+  { id: 709, attraction_id: 21, name: '前程景观车(山门→玉女峰)', lat: 34.5885, lng: 119.2930, stay_duration: 0, default_order: 0, ticket_price: 50, highlight: '景区观光车直达玉女峰，省时省力', desc: '从山门直达玉女峰的景区观光车，沿途欣赏花果山全貌。' }
+]
+
+// ==================== 花果山 美食 ====================
+const huaguoshanFoods = [
+  { id: 801, attraction_id: 21, name: '花果山素斋馆', recommend_dish: '素面套餐', lat: 34.5905, lng: 119.2952, price_per_person: 35, highlight: '三元宫旁的素斋，食材取自山中泉水' },
+  { id: 802, attraction_id: 21, name: '海鲜一条街·望海楼', recommend_dish: '清蒸梭子蟹', lat: 34.6000, lng: 119.2800, price_per_person: 120, highlight: '连云港本地海鲜，每日渔船直供' },
+  { id: 803, attraction_id: 21, name: '花果山农家乐', recommend_dish: '土鸡炖蘑菇', lat: 34.5875, lng: 119.2915, price_per_person: 60, highlight: '山脚下地道农家菜，散养土鸡一绝' },
+  { id: 804, attraction_id: 21, name: '小沙东海战纪念馆餐厅', recommend_dish: '海鲜大咖', lat: 34.5950, lng: 119.2850, price_per_person: 100, highlight: '海鲜大咖拼盘，视觉与味觉的双重震撼' },
+  { id: 805, attraction_id: 21, name: '老海边小吃', recommend_dish: '海蛎煎', lat: 34.5800, lng: 119.2780, price_per_person: 25, highlight: '本地人常去的平价小店，海蛎煎外酥里嫩' }
+]
+
+// ==================== 花果山 酒店 ====================
+const huaguoshanHotels = [
+  { id: 901, attraction_id: 21, name: '连云港花果山国际酒店', price_range: '400-800元/晚', lat: 34.5850, lng: 119.2880, highlight: '景区附近五星标准，登山接驳车直达' },
+  { id: 902, attraction_id: 21, name: '花果山禅意民宿', price_range: '200-400元/晚', lat: 34.5870, lng: 119.2900, highlight: '山脚禅意小院，清晨闻鸟鸣而起' },
+  { id: 903, attraction_id: 21, name: '连云港苏宁索菲特酒店', price_range: '500-900元/晚', lat: 34.5950, lng: 119.2100, highlight: '市中心法式奢华，距花果山20分钟车程' }
+]
+
+// ==================== 连岛 子路线 ====================
+const liandaoSpots = [
+  { id: 1001, attraction_id: 22, name: '连岛游客中心', lat: 34.7580, lng: 119.4680, stay_duration: 10, default_order: 1, ticket_price: 0, highlight: '购票入园，领取导览地图', desc: '连岛景区入口，购票后乘坐接驳车入岛。' },
+  { id: 1002, attraction_id: 22, name: '大沙湾海滨浴场', lat: 34.7610, lng: 119.4710, stay_duration: 90, default_order: 2, ticket_price: 0, highlight: '江苏最美沙滩，沙质细腻海水清澈', desc: '连岛最大的海滨浴场，金色沙滩绵延千米，海水浴、沙滩排球首选。' },
+  { id: 1003, attraction_id: 22, name: '苏马湾生态园', lat: 34.7630, lng: 119.4725, stay_duration: 60, default_order: 3, ticket_price: 0, highlight: '原始生态海湾，赶海拾贝好去处', desc: '保持原始生态的海湾，礁石间可赶海拾贝，退潮时收获满满。' },
+  { id: 1004, attraction_id: 22, name: '孔雀园', lat: 34.7620, lng: 119.4715, stay_duration: 30, default_order: 4, ticket_price: 0, highlight: '百只孔雀开屏争艳', desc: '栖息着上百只孔雀，运气好能看到集体开屏的壮观场面。' },
+  { id: 1005, attraction_id: 22, name: '海岛地质公园', lat: 34.7640, lng: 119.4730, stay_duration: 40, default_order: 5, ticket_price: 0, highlight: '海蚀地貌奇观，天然海蚀洞', desc: '亿万年海蚀形成的地质奇观，海蚀洞、海蚀柱形态各异。' },
+  { id: 1006, attraction_id: 22, name: '日落观景台', lat: 34.7635, lng: 119.4735, stay_duration: 30, default_order: 6, ticket_price: 0, highlight: '连岛最佳日落观赏点', desc: '面朝大海的观景平台，傍晚时分金色落日与海面相映成辉。' },
+  // 连岛观光车
+  { id: 1007, attraction_id: 22, name: '连岛观光车(环岛)', lat: 34.7590, lng: 119.4690, stay_duration: 0, default_order: 0, ticket_price: 20, highlight: '环岛观光车，轻松游览全岛', desc: '环岛观光车，覆盖大沙湾→苏马湾→地质公园全线，随上随下。' }
+]
+
+// ==================== 连岛 美食 ====================
+const liandaoFoods = [
+  { id: 1101, attraction_id: 22, name: '连岛海鲜大排档', recommend_dish: '蒜蓉生蚝', lat: 34.7600, lng: 119.4705, price_per_person: 80, highlight: '海边现捞现做，生蚝肥美多汁' },
+  { id: 1102, attraction_id: 22, name: '海景渔家乐', recommend_dish: '海鲜面', lat: 34.7615, lng: 119.4720, price_per_person: 50, highlight: '渔家自晒海鲜面，汤头鲜美无比' },
+  { id: 1103, attraction_id: 22, name: '沙滩BBQ', recommend_dish: '烤鱿鱼串', lat: 34.7610, lng: 119.4708, price_per_person: 60, highlight: '面朝大海撸串，夏日夜晚绝配' },
+  { id: 1104, attraction_id: 22, name: '连云港老街·海之味', recommend_dish: '葱油海螺片', lat: 34.7500, lng: 119.4600, price_per_person: 90, highlight: '百年老街里的口碑老店，海螺片脆嫩弹牙' },
+  { id: 1105, attraction_id: 22, name: '岛上咖啡屋', recommend_dish: '海盐拿铁', lat: 34.7625, lng: 119.4728, price_per_person: 35, highlight: '苏马湾旁悬崖咖啡，海风配咖啡超治愈' }
+]
+
+// ==================== 连岛 酒店 ====================
+const liandaoHotels = [
+  { id: 1201, attraction_id: 22, name: '连岛海景度假酒店', price_range: '500-1000元/晚', lat: 34.7605, lng: 119.4695, highlight: '推窗即海景，步行3分钟到沙滩' },
+  { id: 1202, attraction_id: 22, name: '苏马湾露营基地', price_range: '150-300元/晚', lat: 34.7630, lng: 119.4720, highlight: '海边帐篷露营，篝火+星空体验' },
+  { id: 1203, attraction_id: 22, name: '连云港金陵海州湾会议中心', price_range: '400-700元/晚', lat: 34.7550, lng: 119.4620, highlight: '四星级海景酒店，距连岛10分钟车程' }
+]
+
 // ==================== 获取全量规划数据 ====================
 const planData = {
   1: { attraction: attractions[0], spots: gugongSpots, foods: gugongFoods, hotels: gugongHotels },
-  2: { attraction: attractions[1], spots: disneySpots, foods: disneyFoods, hotels: disneyHotels }
+  2: { attraction: attractions[1], spots: disneySpots, foods: disneyFoods, hotels: disneyHotels },
+  21: { attraction: attractions[20], spots: huaguoshanSpots, foods: huaguoshanFoods, hotels: huaguoshanHotels },
+  22: { attraction: attractions[21], spots: liandaoSpots, foods: liandaoFoods, hotels: liandaoHotels }
 }
 
 /** 模拟搜索主景点 */
@@ -124,8 +186,15 @@ export function getAttractionPlan(id) {
   })
 }
 
+/** 解析门票价格字符串 → 数字（"¥90"→90, "¥475起"→475, "免费"→0） */
+function parseCostToNumber(costStr) {
+  if (!costStr || costStr === '免费') return 0
+  const match = String(costStr).match(/(\d+)/)
+  return match ? Number(match[1]) : 0
+}
+
 /** 模拟生成攻略 */
-export function generatePlan({ attractionId, selectedSpotIds, selectedFoodIds, hotelId, customHotelName }) {
+export function generatePlan({ attractionId, selectedSpotIds, selectedFoodIds, hotelId, customHotelName, transportMode = 'drive' }) {
   return new Promise((resolve) => {
     setTimeout(() => {
       const data = planData[attractionId]
@@ -139,19 +208,48 @@ export function generatePlan({ attractionId, selectedSpotIds, selectedFoodIds, h
         hotelName = hotel ? hotel.name : '未选择'
       }
 
-      const spotsBudget = orderedSpots.reduce((sum, s) => sum + (s.ticket_price || 0), 0)
+      // 🎫 主门票 + 子景点/观光车费用
+      const mainTicket = parseCostToNumber(data.attraction.cost)
+      const spotsBudget = orderedSpots.reduce((sum, s) => sum + (s.ticket_price || 0), 0) + mainTicket
       const foodBudget = selectedFoods.reduce((sum, f) => sum + (f.price_per_person || 0), 0)
+
+      // ===== Haversine 距离计算 =====
+      const haversineDist = (from, to) => {
+        if (!from?.lat || !from?.lng || !to?.lat || !to?.lng) return 0
+        const R = 6371000
+        const toRad = d => d * Math.PI / 180
+        const dLat = toRad(to.lat - from.lat), dLng = toRad(to.lng - from.lng)
+        const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(from.lat)) * Math.cos(toRad(to.lat)) * Math.sin(dLng / 2) ** 2
+        return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)))
+      }
+      // ===== 交通方式估算 =====
+      const estimateTransport = (from, to) => {
+        if (!from || !to) return { mode: 'walk', distance: 0, duration: 5 }
+        const dist = haversineDist(from, to)
+        if (transportMode === 'transit') {
+          if (dist < 1500) return { mode: 'walk', distance: dist, duration: Math.max(3, Math.round(dist / 80) + 3) }
+          return { mode: 'transit', distance: dist, duration: Math.max(15, Math.round(dist / 300) + 15) }
+        }
+        // 自驾模式（~48km/h）
+        if (dist < 1500) return { mode: 'walk', distance: dist, duration: Math.max(2, Math.round(dist / 80) + 2) }
+        return { mode: 'drive', distance: dist, duration: Math.max(5, Math.round(dist / 800) + 5) }
+      }
 
       const formatTime = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
       const timeline = []
       let t = 480
+      let prevNode = null
 
       if (orderedSpots.length) {
         const half = Math.ceil(orderedSpots.length / 2)
         timeline.push({ type: 'section', title: '🎯 上午行程' })
-        orderedSpots.slice(0, half).forEach(s => {
-          timeline.push({ type: 'spot', time: formatTime(t), data: { ...s } })
+        orderedSpots.slice(0, half).forEach((s, idx) => {
+          const transport = estimateTransport(prevNode, s)
+          t += transport.duration
+          // 上午第一个景点不展示通行时间
+          timeline.push({ type: 'spot', time: formatTime(t), data: { ...s }, transportFromPrev: idx === 0 ? null : transport })
           t += s.stay_duration
+          prevNode = s
         })
         t += 15
       }
@@ -160,13 +258,17 @@ export function generatePlan({ attractionId, selectedSpotIds, selectedFoodIds, h
         timeline.push({ type: 'section', title: '🍽️ 午餐推荐' })
         timeline.push({ type: 'food', time: formatTime(t), data: { ...selectedFoods[0] } })
         t += 60
+        prevNode = selectedFoods[0]
       }
       if (orderedSpots.length > 1) {
         const half = Math.ceil(orderedSpots.length / 2)
-        timeline.push({ type: 'section', title: '🚶 下午行程' })
+        timeline.push({ type: 'section', title: transportMode === 'drive' ? '🚗 下午行程' : '🚌 下午行程' })
         orderedSpots.slice(half).forEach(s => {
-          timeline.push({ type: 'spot', time: formatTime(t), data: { ...s } })
+          const transport = estimateTransport(prevNode, s)
+          t += transport.duration
+          timeline.push({ type: 'spot', time: formatTime(t), data: { ...s }, transportFromPrev: transport })
           t += s.stay_duration
+          prevNode = s
         })
         t += 15
       }
@@ -185,7 +287,10 @@ export function generatePlan({ attractionId, selectedSpotIds, selectedFoodIds, h
           spotsCount: orderedSpots.length,
           foodsCount: selectedFoods.length,
           hotelName: hotelName || '未选择',
-          totalBudget: spotsBudget + foodBudget
+          mainTicket,
+          totalBudget: spotsBudget + foodBudget,
+          lat: data.attraction.lat,
+          lng: data.attraction.lng
         }
       })
     }, 500)

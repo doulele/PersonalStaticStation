@@ -9,7 +9,44 @@
         <h3 class="panel-title">住宿安排</h3>
         <span class="panel-badge">{{ allHotels.length }} 家可选</span>
       </div>
-      <span class="panel-hint">单选住宿，从推荐拖拽或点击替换</span>
+    </div>
+
+    <!-- ===== 搜索添加酒店（下拉建议） ===== -->
+    <div class="hotel-search-section">
+      <el-autocomplete
+        v-model="searchKeyword"
+        :fetch-suggestions="fetchHotelSuggestions"
+        :trigger-on-focus="false"
+        :highlight-first-item="true"
+        placeholder="搜索附近酒店..."
+        class="hotel-search-input"
+        popper-class="hotel-search-dropdown"
+        :debounce="400"
+        @select="onSearchSelect"
+        @keyup.enter.prevent="handleAddCustomName"
+      >
+        <template #prefix>
+          <el-icon :size="16"><Search /></el-icon>
+        </template>
+        <template #default="{ item }">
+          <div v-if="item.noResult" class="search-empty-tip">
+            😕 未找到"{{ item.value }}"的匹配结果，按回车直接添加
+          </div>
+          <div v-else class="search-suggestion-item">
+            <span class="sug-name">{{ item.value }}</span>
+            <span class="sug-type">{{ item.typeStr }}</span>
+            <span v-if="item.distance" class="sug-dist">{{ item.distance }}</span>
+          </div>
+        </template>
+      </el-autocomplete>
+      <el-button
+        class="search-add-btn"
+        type="primary"
+        :icon="Plus"
+        :disabled="!searchKeyword.trim()"
+        @click="handleAddCustomName"
+        title="直接添加输入的名称"
+      >添加</el-button>
     </div>
 
     <!-- ===== 已选住宿（可左滑删除） ===== -->
@@ -39,8 +76,8 @@
             <div class="hotel-info">
               <div class="hotel-name">
                 {{ selectedHotel.name }}
-                <span v-if="aiRecommended && aiHotelNote" class="ai-badge" :title="aiHotelNote">
-                  🤖 {{ aiHotelNote }}
+                <span v-if="recommendActive && recommendHotelNote" class="ai-badge" :title="recommendHotelNote">
+                    💡 {{ recommendHotelNote }}
                 </span>
               </div>
               <div class="hotel-highlight" v-if="selectedHotel.highlight">✨ {{ selectedHotel.highlight }}</div>
@@ -49,15 +86,22 @@
                 <span v-if="selectedHotel.rating"> · ⭐ {{ selectedHotel.rating }}</span>
               </div>
             </div>
-            <el-button
-              class="hotel-remove-btn"
-              :icon="Close"
-              circle
-              size="small"
-              text
-              @click.stop="handleClear"
-              title="取消选择"
-            />
+            <div class="hotel-actions">
+              <el-button
+                class="hotel-edit-btn"
+                :icon="Edit"
+                size="small"
+                round
+                @click.stop="openEditDialog(selectedHotel)"
+              >编辑</el-button>
+              <el-button
+                class="hotel-remove-btn"
+                :icon="Close"
+                size="small"
+                round
+                @click.stop="handleClear"
+              >取消</el-button>
+            </div>
           </div>
         </div>
       </div>
@@ -87,34 +131,37 @@
             <div class="hotel-info">
               <div class="hotel-name custom-text">{{ customHotelName || '用户自定义' }}</div>
             </div>
-            <el-button
-              class="hotel-remove-btn"
-              :icon="Close"
-              circle
-              size="small"
-              text
-              @click.stop="handleClear"
-              title="取消选择"
-            />
+            <div class="hotel-actions">
+              <el-button
+                class="hotel-remove-btn"
+                :icon="Close"
+                size="small"
+                round
+                @click.stop="handleClear"
+              >取消</el-button>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- 未选择 -->
       <div v-else class="empty-drop-zone">
-        <el-icon :size="28"><Plus /></el-icon>
-        <span>从下方推荐拖拽或选择住宿</span>
+        <div class="empty-icon-wrap">
+          <el-icon :size="32"><Plus /></el-icon>
+        </div>
+        <span class="empty-title">尚未选择住宿</span>
+        <span class="empty-hint">搜索酒店或点击下方推荐酒店</span>
       </div>
     </div>
 
-    <!-- ===== 推荐住宿 ===== -->
-    <div class="recommend-section">
+    <!-- ===== 推荐住宿（点击直接选择） ===== -->
+    <div v-if="allHotels.length > 0" class="recommend-section">
       <div class="recommend-header">
         <span class="recommend-label">推荐住宿</span>
         <span class="recommend-count">{{ availableHotels.length }} 个可选</span>
       </div>
 
-      <div class="recommend-list">
+      <div v-if="availableHotels.length > 0" class="recommend-list">
         <div
           v-for="hotel in availableHotels"
           :key="hotel.id"
@@ -123,85 +170,74 @@
           @dragstart="onDragStart($event, hotel)"
           @click="handleSelect(hotel.id)"
         >
-          <div class="hotel-check">
-            <div class="check-dot"></div>
-          </div>
-          <div class="hotel-info">
-            <div class="hotel-name">{{ hotel.name }}</div>
-            <div class="hotel-highlight" v-if="hotel.highlight">✨ {{ hotel.highlight }}</div>
-            <div class="hotel-meta">
-              <span>{{ hotel.price_range }}</span>
-              <span v-if="hotel.rating"> · ⭐ {{ hotel.rating }}</span>
+          <div class="rec-info">
+            <div class="rec-name">
+              <span class="rec-name-text">{{ hotel.name }}</span>
+              <span v-if="hotel.rating" class="rec-rating">⭐ {{ hotel.rating }}</span>
+            </div>
+            <div class="rec-desc" v-if="hotel.highlight || hotel.desc">{{ hotel.highlight || hotel.desc }}</div>
+            <div class="rec-meta">
+              <span v-if="hotel.price_range" class="rec-price-range">{{ hotel.price_range }}</span>
             </div>
           </div>
-          <el-button
-            :icon="Plus"
-            size="small"
-            circle
-            type="primary"
-            @click.stop="handleSelect(hotel.id)"
-            title="选择"
-          />
         </div>
       </div>
 
-      <!-- 自定义选项 -->
-      <div class="custom-divider"><span>或</span></div>
-      <div
-        class="recommend-card custom-card"
-        :class="{ active: selectedHotelId === 'custom' }"
-        @click="handleSelect('custom')"
-      >
-        <div class="hotel-check">
-          <div class="check-dot" :class="{ checked: selectedHotelId === 'custom' }">
-            <el-icon v-if="selectedHotelId === 'custom'" :size="12"><Check /></el-icon>
-          </div>
-        </div>
-        <div class="hotel-info">
-          <div class="hotel-name custom-text">用户自定义</div>
-          <div class="hotel-meta">手动输入酒店名称</div>
-        </div>
-        <el-icon v-if="selectedHotelId === 'custom'" color="#6366f1" :size="18"><Check /></el-icon>
-        <el-icon v-else :size="18"><Plus /></el-icon>
+      <div v-else class="recommend-all-selected">
+        🎉 已选中！取消选择可重新挑选
       </div>
 
-      <transition name="el-fade-in">
-        <div v-if="selectedHotelId === 'custom'" class="custom-input-row">
-          <el-input
-            v-model="customName"
-            placeholder="输入酒店名称..."
-            size="default"
-            clearable
-            @input="handleCustomInput"
-          />
-        </div>
-      </transition>
+
     </div>
 
-    <el-empty v-if="allHotels.length === 0 && selectedHotelId !== 'custom'" description="暂无酒店推荐" :image-size="40" />
+    <el-empty v-else description="暂无酒店推荐" :image-size="40" />
+
+    <!-- ===== 编辑酒店对话框 ===== -->
+    <el-dialog v-model="editDialogVisible" title="编辑酒店" width="420px" :close-on-click-modal="false" destroy-on-close>
+      <el-form :model="editForm" label-position="top" size="small">
+        <el-form-item label="酒店名称">
+          <el-input v-model="editForm.name" placeholder="请输入酒店名称" />
+        </el-form-item>
+        <el-form-item label="价格范围">
+          <el-input v-model="editForm.price_range" placeholder="如：300-500元/晚" />
+        </el-form-item>
+        <el-form-item label="评分">
+          <el-input-number v-model="editForm.rating" :min="0" :max="5" :step="0.1" :precision="2" controls-position="right" style="width:100%" placeholder="评分（选填）" />
+        </el-form-item>
+        <el-form-item label="亮点">
+          <el-input v-model="editForm.highlight" type="textarea" :rows="2" placeholder="亮点描述（选填）" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="editDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveEdit">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, reactive } from 'vue'
 import { useStore } from 'vuex'
 import { useSwipeDelete } from '../../composables/useSwipeDelete.js'
+import { ElMessage } from 'element-plus'
+import { Search, Plus } from '@element-plus/icons-vue'
 
 const store = useStore()
+const API_BASE = '/staticTool/api/travel'
 
 const allHotels = computed(() => store.state.plan.allHotels)
 const selectedHotelId = computed(() => store.state.plan.selectedHotelId)
 const customHotelName = computed(() => store.state.plan.customHotelName)
 const selectedHotel = computed(() => store.getters['plan/selectedHotel'])
-const aiHotelNote = computed(() => store.state.plan.aiHotelNote || '')
-const aiRecommended = computed(() => store.state.plan.aiRecommended)
+const recommendHotelNote = computed(() => store.state.plan.recommendHotelNote || '')
+const recommendActive = computed(() => store.state.plan.recommendActive)
 
 const availableHotels = computed(() =>
   allHotels.value.filter(h => h.id !== selectedHotelId.value)
 )
 
-const customName = ref(store.state.plan.customHotelName || '')
-watch(() => store.state.plan.customHotelName, (val) => { customName.value = val || '' })
+
 
 // 左滑取消选择
 const swipe = useSwipeDelete({
@@ -212,6 +248,95 @@ const swipe = useSwipeDelete({
   }
 })
 
+// ===== 搜索添加酒店 =====
+const searchKeyword = ref('')
+
+async function fetchHotelSuggestions(keyword, callback) {
+  if (!keyword || keyword.trim().length < 1) {
+    callback([])
+    return
+  }
+  const attraction = store.state.plan.currentAttraction
+  const city = attraction?.city || ''
+  const lng = attraction?.lng
+  const lat = attraction?.lat
+  try {
+    const res = await fetch(`${API_BASE}/hotel-search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ keyword: keyword.trim(), city, lng, lat })
+    })
+    const json = await res.json()
+    if (json.success && json.data && json.data.length > 0) {
+      const suggestions = json.data.map(p => {
+        const distKm = p.distance >= 1000 ? `${(p.distance / 1000).toFixed(1)}km` : `${p.distance}m`
+        return {
+          value: p.name,
+          address: p.address || '',
+          typeStr: p.type?.split(';').pop() || '',
+          distance: distKm,
+          lat: p.lat,
+          lng: p.lng
+        }
+      })
+      callback(suggestions)
+    } else {
+      callback([{ value: keyword.trim(), noResult: true }])
+    }
+  } catch {
+    callback([])
+  }
+}
+
+function onSearchSelect(item) {
+  if (item.noResult) return
+  // 清除原有选择，设置为自定义酒店
+  store.commit('plan/SET_CUSTOM_HOTEL_NAME', item.value)
+  store.commit('plan/SELECT_HOTEL', 'custom')
+  searchKeyword.value = ''
+  ElMessage.success(`已选择"${item.value}"作为住宿`)
+}
+
+function handleAddCustomName() {
+  const name = searchKeyword.value.trim()
+  if (!name) return
+  store.commit('plan/SET_CUSTOM_HOTEL_NAME', name)
+  store.commit('plan/SELECT_HOTEL', 'custom')
+  searchKeyword.value = ''
+  ElMessage.success(`已选择"${name}"作为住宿`)
+}
+
+// ===== 编辑酒店 =====
+const editDialogVisible = ref(false)
+const editingHotelId = ref(null)
+const editForm = reactive({ name: '', price_range: '', rating: 0, highlight: '' })
+
+function openEditDialog(hotel) {
+  editingHotelId.value = hotel.id
+  editForm.name = hotel.name
+  editForm.price_range = hotel.price_range || ''
+  editForm.rating = parseFloat(hotel.rating) || 0
+  editForm.highlight = hotel.highlight || ''
+  editDialogVisible.value = true
+}
+
+function saveEdit() {
+  if (!editForm.name.trim()) {
+    ElMessage.warning('酒店名称不能为空')
+    return
+  }
+  store.commit('plan/UPDATE_HOTEL', {
+    id: editingHotelId.value,
+    name: editForm.name.trim(),
+    price_range: editForm.price_range.trim(),
+    rating: editForm.rating,
+    highlight: editForm.highlight.trim()
+  })
+  editDialogVisible.value = false
+  ElMessage.success('保存成功')
+}
+
+// ===== 操作 =====
 function handleSelect(id) {
   swipe.resetCard('selected')
   store.commit('plan/SELECT_HOTEL', id)
@@ -220,10 +345,6 @@ function handleSelect(id) {
 function handleClear() {
   swipe.resetCard('selected')
   store.commit('plan/SELECT_HOTEL', null)
-}
-
-function handleCustomInput(val) {
-  store.commit('plan/SET_CUSTOM_HOTEL_NAME', val)
 }
 
 // 拖拽到已选区域
@@ -249,7 +370,7 @@ function onDragStart(e, hotel) {
 
 // ===== 面板头部 =====
 .panel-header {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .panel-title-row {
@@ -289,10 +410,21 @@ function onDragStart(e, hotel) {
   border-radius: 20px;
 }
 
-.panel-hint {
-  font-size: 12px;
-  color: #94a3b8;
-  margin-left: 46px;
+// ===== 搜索添加酒店 =====
+.hotel-search-section {
+  display: flex;
+  gap: 10px;
+  padding: 14px 0;
+  border-top: 1px solid #f1f5f9;
+}
+
+.hotel-search-input {
+  flex: 1;
+}
+
+.search-add-btn {
+  flex-shrink: 0;
+  height: auto;
 }
 
 // ===== 已选区域 =====
@@ -310,8 +442,8 @@ function onDragStart(e, hotel) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 28px;
+  gap: 6px;
+  padding: 32px 28px;
   border: 2px dashed #e2e8f0;
   border-radius: 12px;
   color: #94a3b8;
@@ -322,6 +454,35 @@ function onDragStart(e, hotel) {
     border-color: #3b82f6;
     color: #3b82f6;
     background: #f8faff;
+  }
+
+  .empty-icon-wrap {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    margin-bottom: 4px;
+    transition: all 0.2s;
+  }
+
+  &:hover .empty-icon-wrap {
+    background: #eff6ff;
+    color: #3b82f6;
+  }
+
+  .empty-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #64748b;
+  }
+
+  .empty-hint {
+    font-size: 12px;
+    color: #94a3b8;
   }
 }
 
@@ -452,19 +613,50 @@ function onDragStart(e, hotel) {
   gap: 4px;
 }
 
+.hotel-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.hotel-edit-btn {
+  flex-shrink: 0;
+  font-size: 12px;
+  height: 28px;
+  padding: 0 10px;
+  color: #6366f1;
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  transition: all 0.2s;
+
+  &:hover {
+    color: #fff;
+    background: #6366f1;
+    border-color: #6366f1;
+  }
+}
+
 .hotel-remove-btn {
   flex-shrink: 0;
-  opacity: 0;
-  transition: opacity 0.2s;
+  font-size: 12px;
+  height: 28px;
+  padding: 0 10px;
+  color: #ef4444;
+  background: #fef2f2;
+  border-color: #fecaca;
+  transition: all 0.2s;
 
-  .hotel-card:hover & {
-    opacity: 1;
+  &:hover {
+    color: #fff;
+    background: #ef4444;
+    border-color: #ef4444;
   }
 }
 
 // ===== 推荐区域 =====
 .recommend-section {
-  padding-top: 20px;
+  padding-top: 16px;
   border-top: 1px solid #f1f5f9;
 }
 
@@ -472,7 +664,7 @@ function onDragStart(e, hotel) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .recommend-label {
@@ -494,17 +686,30 @@ function onDragStart(e, hotel) {
 .recommend-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 4px;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 2px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
 }
 
 .recommend-card {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
+  padding: 10px 14px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s;
 
@@ -519,51 +724,153 @@ function onDragStart(e, hotel) {
     transform: scale(0.98);
   }
 
-  &.custom-card {
-    border-style: dashed;
 
-    .hotel-name {
-      color: #6366f1;
-    }
-
-    &:hover {
-      background: #eef2ff;
-      border-color: #a5b4fc;
-    }
-  }
 }
 
-.custom-divider {
+.recommend-all-selected {
   text-align: center;
-  margin: 8px 0;
-
-  span {
-    font-size: 12px;
-    color: #94a3b8;
-    background: #fff;
-    padding: 0 12px;
-  }
+  font-size: 13px;
+  color: #94a3b8;
+  padding: 12px 0;
 }
 
-.custom-input-row {
-  margin-top: 12px;
+.rec-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.rec-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rec-name-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.rec-rating {
+  font-size: 11px;
+  color: #f59e0b;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.rec-desc {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rec-meta {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 1px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rec-price-range {
+  font-size: 11px;
+  color: #3b82f6;
+  font-weight: 500;
+  background: #eff6ff;
+  padding: 1px 6px;
+  border-radius: 4px;
 }
 
 // 响应式
 @media (max-width: 768px) {
   .hotel-panel {
-    padding: 16px;
+    padding: 14px;
     border-radius: 12px;
   }
 
-  .hotel-remove-btn {
-    opacity: 0.5;
+  .panel-header {
+    margin-bottom: 14px;
   }
 
-  .panel-hint {
-    margin-left: 0;
-    display: block;
-    margin-top: 4px;
+  .panel-title {
+    font-size: 15px;
+  }
+
+  .hotel-card {
+    padding: 14px;
+  }
+
+  .hotel-name {
+    font-size: 14px;
+  }
+
+  .hotel-meta {
+    font-size: 11px;
+  }
+
+  .recommend-card {
+    padding: 8px 12px;
+  }
+
+  .rec-name-text {
+    font-size: 12px;
+  }
+
+  .rec-desc {
+    font-size: 10px;
+  }
+
+  .rec-meta {
+    font-size: 10px;
+  }
+}
+</style>
+
+<style lang="scss">
+// 搜索建议下拉（popper 渲染在 body 层，不能 scoped）
+.hotel-search-dropdown {
+  .search-suggestion-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 0;
+    .sug-name {
+      font-weight: 600;
+      color: #0f172a;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .sug-type {
+      font-size: 11px;
+      color: #3b82f6;
+      background: #eff6ff;
+      padding: 1px 6px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .sug-dist {
+      font-size: 11px;
+      color: #94a3b8;
+      flex-shrink: 0;
+    }
+  }
+
+  .search-empty-tip {
+    padding: 12px 16px;
+    text-align: center;
+    font-size: 13px;
+    color: #94a3b8;
   }
 }
 </style>

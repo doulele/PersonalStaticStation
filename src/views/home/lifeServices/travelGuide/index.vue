@@ -87,9 +87,9 @@
           v-model="keyword"
           class="search-input"
           placeholder="搜索目的地，如「故宫」「迪士尼」..."
-          @input="handleSearch"
+          @input="handleSearchDebounced"
           @keydown.enter="handleSearchEnter"
-          @focus="handleSearch"
+          @focus="handleSearchFocus"
           autocomplete="off"
         />
         <el-icon v-if="keyword" class="clear-icon" :size="18" @click.stop="clearSearch">
@@ -112,7 +112,7 @@
             </div>
             <div v-for="item in searchResults" :key="item.id" class="dropdown-item" @click="goPlan(item)">
               <div class="item-thumb">
-                <img v-if="item.photos?.[0]" :src="item.photos[0]" alt="" />
+                <img v-if="item.photos?.[0]" :src="item.photos[0]" alt="" draggable="false" />
                 <el-icon v-else :size="22"><MapLocation /></el-icon>
               </div>
               <div class="item-info">
@@ -215,6 +215,7 @@
             :class="{ 'dragging-source': isDragging && currentDragAttraction?.id === item.id }"
             :style="{ '--card-color': (regionColors[item.region] || {}).tag || '#6366f1' }"
             @click="onCardClick(item)"
+            @dragstart.prevent
             @pointerdown="dragPointerDown($event, item)"
             @pointermove="dragPointerMove"
             @pointerup="dragPointerUp"
@@ -357,14 +358,15 @@
           :key="poi.id"
           class="nearby-card"
           @click="onCardClick(poi)"
+          @dragstart.prevent
           @pointerdown="dragPointerDown($event, poi)"
           @pointermove="dragPointerMove"
           @pointerup="dragPointerUp"
           @pointercancel="dragPointerCancel"
         >
           <div class="nb-cover">
-            <img v-if="poi.photos?.[0]" :src="poi.photos[0]" alt="" />
-            <img v-else class="nb-default-img" :src="defaultCoverSrc" alt="" />
+            <img v-if="poi.photos?.[0]" :src="poi.photos[0]" alt="" draggable="false" />
+            <img v-else class="nb-default-img" :src="defaultCoverSrc" alt="" draggable="false" />
           </div>
           <div class="nb-body">
             <h3 class="nb-name">{{ poi.name }}</h3>
@@ -431,14 +433,15 @@
           :key="poi.id"
           class="nearby-card"
           @click="onCardClick(poi)"
+          @dragstart.prevent
           @pointerdown="dragPointerDown($event, poi)"
           @pointermove="dragPointerMove"
           @pointerup="dragPointerUp"
           @pointercancel="dragPointerCancel"
         >
           <div class="nb-cover">
-            <img v-if="poi.photos?.[0]" :src="poi.photos[0]" alt="" />
-            <img v-else class="nb-default-img" :src="defaultCoverSrc" alt="" />
+            <img v-if="poi.photos?.[0]" :src="poi.photos[0]" alt="" draggable="false" />
+            <img v-else class="nb-default-img" :src="defaultCoverSrc" alt="" draggable="false" />
           </div>
           <div class="nb-body">
             <h3 class="nb-name">{{ poi.name }}</h3>
@@ -474,6 +477,7 @@
       @remove="handleDialogRemove"
       @clear="handleDialogClear"
       @auto-sort="handleDialogAutoSort"
+      @reorder="handleDialogReorder"
     />
   </div>
 </template>
@@ -602,13 +606,33 @@ async function switchProvince({ province, region }) {
 const searchLoading = ref(false)
 const DATA_SOURCE = ref('') // 'amap' | 'mock'
 
+// --- 搜索防抖 + 请求取消 ---
+let searchAbortController = null
+let searchDebounceTimer = null
+const DEBOUNCE_MS = 350
+
+function cancelPendingSearch() {
+  if (searchAbortController) {
+    searchAbortController.abort()
+    searchAbortController = null
+  }
+}
+
 const handleSearch = async () => {
-  if (!keyword.value.trim()) { searchResults.value = []; showDropdown.value = false; return }
+  const kw = keyword.value.trim()
+  if (!kw) { searchResults.value = []; showDropdown.value = false; return }
+
+  // 取消上一次未完成的请求
+  cancelPendingSearch()
+
   searchLoading.value = true
+  searchAbortController = new AbortController()
   try {
-    const url = `${API_BASE}/search?keyword=${encodeURIComponent(keyword.value.trim())}`
-    const res = await fetch(url)
+    const url = `${API_BASE}/search?keyword=${encodeURIComponent(kw)}`
+    const res = await fetch(url, { signal: searchAbortController.signal })
     const json = await res.json()
+    // 确保仍是当前关键词（防止竞态）
+    if (keyword.value.trim() !== kw) return
     if (json.success && json.data) {
       searchResults.value = json.data
       DATA_SOURCE.value = json.source || 'amap'
@@ -616,7 +640,8 @@ const handleSearch = async () => {
       searchResults.value = []
       DATA_SOURCE.value = ''
     }
-  } catch {
+  } catch (e) {
+    if (e.name === 'AbortError') return // 被取消，静默
     ElMessage.error('搜索失败，请检查网络后重试')
     searchResults.value = []
   } finally {
@@ -625,22 +650,52 @@ const handleSearch = async () => {
   }
 }
 
-const handleSearchEnter = () => {
-  if (!keyword.value.trim()) return
-  // 重新搜索（以防输入后没触发 @input）
-  handleSearch().then(() => {
-    if (searchResults.value.length === 1) {
-      goPlan(searchResults.value[0])
-    }
-  })
+/** 防抖版搜索：停止输入 DEBOUNCE_MS 后才发起请求 */
+const handleSearchDebounced = () => {
+  const kw = keyword.value.trim()
+  if (!kw) { searchResults.value = []; showDropdown.value = false; cancelPendingSearch(); return }
+  clearTimeout(searchDebounceTimer)
+  searchDebounceTimer = setTimeout(() => handleSearch(), DEBOUNCE_MS)
 }
 
-const clearSearch = () => { keyword.value = ''; searchResults.value = []; showDropdown.value = false; DATA_SOURCE.value = ''; searchInputRef.value?.focus() }
+/** focus 时如果已有内容则立即搜索（不防抖，用户可能点击输入框想查看之前的下拉） */
+const handleSearchFocus = () => {
+  if (keyword.value.trim() && searchResults.value.length === 0) {
+    handleSearch()
+  } else if (searchResults.value.length > 0) {
+    showDropdown.value = true
+  }
+}
 
-// 快捷搜索标签点击
+/** 立即刷新当前搜索（回车/快捷标签等手动触发，不防抖） */
+async function flushAndSearch() {
+  clearTimeout(searchDebounceTimer)
+  cancelPendingSearch()
+  await handleSearch()
+}
+
+const handleSearchEnter = async () => {
+  if (!keyword.value.trim()) return
+  await flushAndSearch()
+  if (searchResults.value.length === 1) {
+    goPlan(searchResults.value[0])
+  }
+}
+
+const clearSearch = () => {
+  keyword.value = ''
+  searchResults.value = []
+  showDropdown.value = false
+  DATA_SOURCE.value = ''
+  cancelPendingSearch()
+  clearTimeout(searchDebounceTimer)
+  searchInputRef.value?.focus()
+}
+
+// 快捷搜索标签点击（立即搜索，不防抖）
 function quickSearch(tag) {
   keyword.value = tag
-  handleSearch()
+  flushAndSearch()
   searchInputRef.value?.focus()
 }
 
@@ -650,10 +705,10 @@ const goPlan = (item) => {
     // 匹配到 Mock 数据（有完整的景点/美食/酒店规划）
     router.push(`/home/lifeServices/travelGuide/plan/${item.mockId}`)
   } else {
-    // 动态 POI：传 name/lat/lng，plan 页动态生成
+    // 动态 POI：传 name/lat/lng/address/city，plan 页动态生成
     router.push({
       path: `/home/lifeServices/travelGuide/plan/${item.id}`,
-      query: { name: item.name, lat: item.lat, lng: item.lng, address: item.address }
+      query: { name: item.name, lat: item.lat, lng: item.lng, address: item.address, city: item.city || '' }
     })
   }
 }
@@ -728,6 +783,10 @@ function handleDialogAutoSort() {
   store.commit('plan/REORDER_MULTI_ATTRACTIONS', list)
 }
 
+function handleDialogReorder(newOrder) {
+  store.commit('plan/REORDER_MULTI_ATTRACTIONS', newOrder)
+}
+
 // 拖拽 composable
 const { isDragging, isDragOverBtn, justDragged, ghostStyle, ghostContent,
   onPointerDown: dragPointerDown, onPointerMove: dragPointerMove,
@@ -751,9 +810,10 @@ function handleClickOutside(e) {
   }
 }
 onMounted(() => {
-  popularList.value = attractions  // 先用 mock 快速显示
+  // 先用缓存或默认数据渲染，后台静默获取后端最新热度排序
+  popularList.value = attractions
   document.addEventListener('click', handleClickOutside)
-  // 后台静默获取真实热度排序
+  // 后台静默获取真实热度排序（switchRegion 内部会更新 popularList）
   switchRegion('全部')
 })
 onUnmounted(() => document.removeEventListener('click', handleClickOutside))
@@ -941,64 +1001,74 @@ async function frontendIpLocate() {
   }
 }
 
+// --- 附近位置会话缓存：同一页面生命周期内避免重复定位 ---
+let cachedNearbyLocation = null // { lng, lat }
+
+async function locateUser() {
+  // 如果已有缓存，直接复用
+  if (cachedNearbyLocation) return cachedNearbyLocation
+
+  let lng, lat
+  let located = false
+
+  // 第一步：浏览器 GPS（在 HTTPS 下可用，HTTP 下直接失败 → 很快）
+  try {
+    const pos = await getCurrentPosition(3000)
+    lng = pos.lng
+    lat = pos.lat
+    located = true
+  } catch (_) { /* 意料之中，继续 */ }
+
+  // 第二步：前端直连公共 IP 服务（浏览器亲自请求 → 对方看到用户真实 IP）
+  if (!located) {
+    console.log('[Nearby] 尝试前端直连 IP 定位...')
+    try {
+      const ipPos = await frontendIpLocate()
+      if (ipPos) {
+        lng = ipPos.lng
+        lat = ipPos.lat
+        located = true
+        nearbyError.value = '已通过 IP 获取大致位置'
+        console.log('[Nearby] 前端 IP 定位成功:', ipPos.address)
+      }
+    } catch (_) { /* 继续 */ }
+  }
+
+  // 第三步：后端高德 IP 定位（生产环境 nginx 代理下可用）
+  if (!located) {
+    console.log('[Nearby] 尝试后端 IP 定位...')
+    try {
+      const ipRes = await fetch(`${API_BASE}/ip-locate`)
+      const ipJson = await ipRes.json()
+      if (ipJson.success && ipJson.data && ipJson.data.source !== 'default') {
+        lng = ipJson.data.lng
+        lat = ipJson.data.lat
+        located = true
+        nearbyError.value = '已通过 IP 获取大致位置'
+        console.log('[Nearby] 后端 IP 定位成功:', ipJson.data.address)
+      }
+    } catch (_) { /* 继续 */ }
+  }
+
+  // 第四步：默认位置
+  if (!located) {
+    console.warn('[Nearby] 所有定位方式均失败，使用默认位置')
+    lng = 116.397
+    lat = 39.908
+    nearbyError.value = '定位失败，已使用默认位置展示附近推荐'
+  }
+
+  // 缓存定位结果，页面生命周期内复用
+  cachedNearbyLocation = { lng, lat }
+  return cachedNearbyLocation
+}
+
 async function loadNearby() {
   nearbyLoading.value = true
   nearbyError.value = ''
 
   try {
-    let lng, lat
-    let located = false
-
-    // 第一步：浏览器 GPS（在 HTTPS 下可用，HTTP 下直接失败 → 很快）
-    if (!located) {
-      try {
-        const pos = await getCurrentPosition(3000)
-        lng = pos.lng
-        lat = pos.lat
-        located = true
-      } catch (_) { /* 意料之中，继续 */ }
-    }
-
-    // 第二步：前端直连公共 IP 服务（浏览器亲自请求 → 对方看到用户真实 IP）
-    if (!located) {
-      console.log('[Nearby] 尝试前端直连 IP 定位...')
-      try {
-        const ipPos = await frontendIpLocate()
-        if (ipPos) {
-          lng = ipPos.lng
-          lat = ipPos.lat
-          located = true
-          nearbyError.value = '已通过 IP 获取大致位置'
-          console.log('[Nearby] 前端 IP 定位成功:', ipPos.address)
-        }
-      } catch (_) { /* 继续 */ }
-    }
-
-    // 第三步：后端高德 IP 定位（生产环境 nginx 代理下可用）
-    if (!located) {
-      console.log('[Nearby] 尝试后端 IP 定位...')
-      try {
-        const ipRes = await fetch(`${API_BASE}/ip-locate`)
-        const ipJson = await ipRes.json()
-        if (ipJson.success && ipJson.data && ipJson.data.source !== 'default') {
-          lng = ipJson.data.lng
-          lat = ipJson.data.lat
-          located = true
-          nearbyError.value = '已通过 IP 获取大致位置'
-          console.log('[Nearby] 后端 IP 定位成功:', ipJson.data.address)
-        }
-      } catch (_) { /* 继续 */ }
-    }
-
-    // 第四步：默认位置
-    if (!located) {
-      console.warn('[Nearby] 所有定位方式均失败，使用默认位置')
-      lng = 116.397
-      lat = 39.908
-      nearbyError.value = '定位失败，已使用默认位置展示附近推荐'
-    }
-
-    // 搜索附近景点
+    const { lng, lat } = await locateUser()
     nearbyCurrentLng = lng
     nearbyCurrentLat = lat
     await searchNearbyPois(lng, lat)

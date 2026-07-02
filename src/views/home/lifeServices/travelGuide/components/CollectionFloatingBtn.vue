@@ -49,7 +49,8 @@ watch(() => props.count, (n, o) => {
 .collection-floating-btn {
   position: fixed;
   right: 28px;
-  bottom: 36px;
+  top: 100px;
+  bottom: auto;
   z-index: 999;
   width: 56px;
   height: 56px;
@@ -176,6 +177,7 @@ watch(() => props.count, (n, o) => {
 @media (max-width: 768px) {
   .collection-floating-btn {
     right: 16px;
+    top: auto;
     bottom: 24px;
     width: 50px;
     height: 50px;

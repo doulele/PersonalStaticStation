@@ -31,12 +31,25 @@
           <el-icon class="tool-arrow"><ArrowRight /></el-icon>
         </div>
       </router-link>
+
+      <router-link to="/home/lifeServices/travelMemo" class="tool-card">
+        <div class="tool-card-inner">
+          <div class="tool-icon orange">
+            <el-icon :size="32"><Memo /></el-icon>
+          </div>
+          <div class="tool-info">
+            <h3 class="tool-name">出行备忘</h3>
+            <p class="tool-desc">出行物品清单，轻松打包不遗漏</p>
+          </div>
+          <el-icon class="tool-arrow"><ArrowRight /></el-icon>
+        </div>
+      </router-link>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ArrowRight, MapLocation, Coin } from '@element-plus/icons-vue'
+import { ArrowRight, MapLocation, Coin, Memo } from '@element-plus/icons-vue'
 </script>
 
 <style lang="scss" scoped>
@@ -141,6 +154,10 @@ import { ArrowRight, MapLocation, Coin } from '@element-plus/icons-vue'
 
   &.green {
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  }
+
+  &.orange {
+    background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
   }
 }
 

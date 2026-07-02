@@ -88,7 +88,7 @@
             </div>
             <div class="tool-info">
               <h3 class="tool-name">生活服务</h3>
-              <p class="tool-desc">旅游攻略、今日油价等生活工具</p>
+              <p class="tool-desc">旅游攻略、出行备忘、今日油价等生活工具</p>
             </div>
             <el-icon class="tool-arrow"><ArrowRight /></el-icon>
           </div>

@@ -23,15 +23,29 @@
           </div>
 
           <!-- 景点列表 -->
-          <div v-else class="dialog-list">
+          <div v-else class="dialog-list" ref="listRef">
             <div
-              v-for="(item, idx) in attractions"
+              v-for="(item, idx) in displayList"
               :key="item.id"
               class="dialog-item"
-              :style="{ '--card-color': item.color || '#6366f1' }"
+              :class="{
+                'dragging': dragIdx === idx,
+                'drag-over-before': dragIdx !== null && dragIdx !== idx && dragOverIdx === idx,
+                'drag-over-after': dragIdx !== null && dragIdx !== idx && dragOverIdx === displayList.length && idx === displayList.length - 1
+              }"
+              :style="{
+                '--card-color': item.color || '#6366f1',
+                transform: dragIdx === idx ? `translateY(${dragOffsetY}px)` : '',
+                opacity: dragIdx === idx ? 0.6 : 1,
+                transition: dragIdx === idx ? 'none' : 'all 0.2s'
+              }"
             >
               <!-- 拖拽排序手柄 -->
-              <span class="drag-handle" @pointerdown.stop @mousedown.stop>
+              <span
+                class="drag-handle"
+                :class="{ active: dragIdx === idx }"
+                @pointerdown.stop="onDragHandleDown($event, idx)"
+              >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                   <line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="18" x2="16" y2="18"/>
                 </svg>
@@ -88,12 +102,116 @@
 </template>
 
 <script setup>
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+
 const props = defineProps({
   visible: { type: Boolean, default: false },
   attractions: { type: Array, default: () => [] }
 })
 
 const emit = defineEmits(['close', 'confirm', 'remove', 'reorder', 'clear', 'auto-sort'])
+
+const listRef = ref(null)
+
+// ===== 拖拽排序状态 =====
+const dragIdx = ref(null)       // 正在拖拽的项索引
+const dragOverIdx = ref(null)   // 拖拽悬停目标索引（插入到该项之前）
+const dragStartY = ref(0)
+const dragOffsetY = ref(0)
+const itemHeights = ref([])     // 各列表项的 top 位置缓存
+
+// 使用 computed 显示列表（实际数据来自 props.attractions）
+const displayList = computed(() => props.attractions)
+
+// 缓存各列表项的 Y 位置
+function cacheItemPositions() {
+  if (!listRef.value) return
+  const items = listRef.value.querySelectorAll('.dialog-item')
+  itemHeights.value = []
+  items.forEach(el => {
+    const rect = el.getBoundingClientRect()
+    itemHeights.value.push({ top: rect.top, bottom: rect.bottom, height: rect.height })
+  })
+}
+
+function getTargetIndex(clientY) {
+  const positions = itemHeights.value
+  for (let i = 0; i < positions.length; i++) {
+    const mid = positions[i].top + positions[i].height / 2
+    if (clientY < mid) return i
+  }
+  return positions.length
+}
+
+// ===== 拖拽手柄事件 =====
+function onDragHandleDown(e, idx) {
+  e.preventDefault()
+  const touch = e.touches?.[0]
+  const clientY = touch ? touch.clientY : e.clientY
+
+  dragIdx.value = idx
+  dragStartY.value = clientY
+  dragOffsetY.value = 0
+  dragOverIdx.value = idx
+  cacheItemPositions()
+
+  document.addEventListener('pointermove', onPointerMove)
+  document.addEventListener('pointerup', onPointerUp)
+  document.addEventListener('pointercancel', onPointerUp)
+  document.addEventListener('touchmove', onTouchMove, { passive: false })
+  document.addEventListener('touchend', onPointerUp)
+  document.addEventListener('touchcancel', onPointerUp)
+  document.body.style.userSelect = 'none'
+  document.body.style.webkitUserSelect = 'none'
+}
+
+function onTouchMove(e) {
+  e.preventDefault()
+  const clientY = e.touches?.[0]?.clientY
+  if (clientY == null) return
+  onPointerMove({ clientY })
+}
+
+function onPointerMove(e) {
+  if (dragIdx.value === null) return
+  const clientY = e.clientY ?? e.touches?.[0]?.clientY ?? 0
+  dragOffsetY.value = clientY - dragStartY.value
+  dragOverIdx.value = getTargetIndex(clientY)
+}
+
+function onPointerUp() {
+  if (dragIdx.value === null) return
+  cleanupListeners()
+
+  const from = dragIdx.value
+  const to = dragOverIdx.value
+
+  if (from !== to && to !== null && to >= 0 && to <= displayList.value.length) {
+    const arr = [...displayList.value]
+    const [item] = arr.splice(from, 1)
+    // adjustedTo：如果目标在 from 之后，splice 后索引会偏移
+    const adjustedTo = to > from ? to - 1 : to
+    arr.splice(adjustedTo, 0, item)
+    emit('reorder', arr)
+  }
+
+  dragIdx.value = null
+  dragOverIdx.value = null
+  dragOffsetY.value = 0
+}
+
+function cleanupListeners() {
+  document.removeEventListener('pointermove', onPointerMove)
+  document.removeEventListener('pointerup', onPointerUp)
+  document.removeEventListener('pointercancel', onPointerUp)
+  document.removeEventListener('touchmove', onTouchMove)
+  document.removeEventListener('touchend', onPointerUp)
+  document.removeEventListener('touchcancel', onPointerUp)
+  document.body.style.userSelect = ''
+  document.body.style.webkitUserSelect = ''
+}
+
+onUnmounted(() => cleanupListeners())
 
 function handleConfirm() {
   if (props.attractions.length) {
@@ -220,10 +338,38 @@ function handleAutoSort() {
   background: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(226, 232, 240, 0.7);
   border-radius: 12px;
-  transition: all 0.25s;
+  transition: all 0.2s;
+  position: relative;
   &:hover {
     border-color: var(--card-color);
     box-shadow: 0 4px 16px rgba(99, 102, 241, 0.08);
+  }
+  // 正在被拖拽
+  &.dragging {
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.18);
+    z-index: 10;
+  }
+  // 拖入指示线（上方）
+  &.drag-over-before::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: 12px;
+    right: 12px;
+    height: 3px;
+    background: linear-gradient(90deg, #6366f1, #a855f7);
+    border-radius: 2px;
+  }
+  // 拖入指示线（下方——在最后一个元素时使用）
+  &.drag-over-after::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 12px;
+    right: 12px;
+    height: 3px;
+    background: linear-gradient(90deg, #6366f1, #a855f7);
+    border-radius: 2px;
   }
 }
 
@@ -235,8 +381,10 @@ function handleAutoSort() {
   display: flex;
   align-items: center;
   justify-content: center;
-  &:active { cursor: grabbing; }
-  svg { width: 16px; height: 16px; }
+  touch-action: none;
+  transition: color 0.2s;
+  &:active, &.active { cursor: grabbing; color: #6366f1; }
+  svg { width: 16px; height: 16px; pointer-events: none; }
 }
 
 .item-index {

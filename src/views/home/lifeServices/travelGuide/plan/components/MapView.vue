@@ -54,14 +54,36 @@ function createMarkerContent(item) {
 
 function clearMarkers() {
   if (mapInstance) {
-    mapInstance.clearMap()
+    // 逐个移除标记，而非 clearMap（避免闪烁 + 保留地图底图）
+    markerInstances.forEach(m => m.setMap(null))
     markerInstances = []
-    polylineInstance = null
+    if (polylineInstance) {
+      polylineInstance.setMap(null)
+      polylineInstance = null
+    }
   }
+}
+
+// 生成标记唯一 key，用于增量对比
+function markerKey(item) {
+  return `${item.lng},${item.lat}|${item.type}|${item.name}`
 }
 
 function renderMarkers() {
   if (!mapInstance) return
+
+  // 计算新旧标记集的 key 集合
+  const newKeys = new Set(props.markers.map(markerKey))
+  const oldKeys = new Set(markerInstances.map((m, i) => {
+    const item = props.markers[i] // 依赖索引对应关系是 approximate 的
+    return item ? markerKey(item) : ''
+  }))
+
+  // 如果标记集合没有变化，跳过重建
+  if (newKeys.size === oldKeys.size && [...newKeys].every(k => oldKeys.has(k))) {
+    return
+  }
+
   clearMarkers()
 
   // 渲染标记点
@@ -132,17 +154,27 @@ function initMap() {
   })
 }
 
-// 监听数据变化，重新渲染
+// 监听数据变化，重新渲染（仅当标记集合确实变化时才重绘）
+let lastMarkerKeys = ''
 watch(
   () => [props.markers, props.polylinePath, props.center],
   () => {
-    if (loaded.value && mapInstance) {
-      renderMarkers()
-      // 自适应视野
+    if (!loaded.value || !mapInstance) return
+    const currentKeys = props.markers.map(m => `${m.lng},${m.lat}|${m.type}|${m.name}`).join(';')
+    // 标记未变化时只更新视野（如 center 变化），不做全量重建
+    if (currentKeys === lastMarkerKeys) {
       const allPoints = props.markers.map(m => [m.lng, m.lat])
       if (allPoints.length > 0) {
-        mapInstance.setFitView(null, false, [60, 60, 60, 60])
+        mapInstance.setFitView(null, false, [16, 16, 16, 16])
       }
+      return
+    }
+    lastMarkerKeys = currentKeys
+    renderMarkers()
+    // 自适应视野
+    const allPoints = props.markers.map(m => [m.lng, m.lat])
+    if (allPoints.length > 0) {
+      mapInstance.setFitView(null, false, [16, 16, 16, 16])
     }
   },
   { deep: true }
