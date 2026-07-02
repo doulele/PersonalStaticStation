@@ -32,6 +32,19 @@
         </div>
       </router-link>
 
+      <router-link to="/home/lifeServices/weather" class="tool-card">
+        <div class="tool-card-inner">
+          <div class="tool-icon blue">
+            <el-icon :size="32"><Sunny /></el-icon>
+          </div>
+          <div class="tool-info">
+            <h3 class="tool-name">天气预报</h3>
+            <p class="tool-desc">全国城市实时天气查询与多日预报</p>
+          </div>
+          <el-icon class="tool-arrow"><ArrowRight /></el-icon>
+        </div>
+      </router-link>
+
       <router-link to="/home/lifeServices/travelMemo" class="tool-card">
         <div class="tool-card-inner">
           <div class="tool-icon orange">
@@ -49,7 +62,7 @@
 </template>
 
 <script setup>
-import { ArrowRight, MapLocation, Coin, Memo } from '@element-plus/icons-vue'
+import { ArrowRight, MapLocation, Coin, Memo, Sunny } from '@element-plus/icons-vue'
 </script>
 
 <style lang="scss" scoped>
@@ -154,6 +167,10 @@ import { ArrowRight, MapLocation, Coin, Memo } from '@element-plus/icons-vue'
 
   &.green {
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  }
+
+  &.blue {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   }
 
   &.orange {

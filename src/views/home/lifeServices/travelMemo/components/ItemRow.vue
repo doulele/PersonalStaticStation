@@ -12,6 +12,7 @@
     <!-- 名称 -->
     <span class="item-name" :title="item.note || item.name" @click="$emit('edit', item)">
       {{ item.name }}
+      <span v-if="item.note" class="item-note-dot" title="有备注">💬</span>
     </span>
 
     <!-- 数量 -->
@@ -19,19 +20,6 @@
       <span class="qty-btn" @click.stop="$emit('qtyChange', item.id, -1)">−</span>
       <span class="qty-val">{{ item.quantity }}</span>
       <span class="qty-btn" @click.stop="$emit('qtyChange', item.id, 1)">+</span>
-    </span>
-
-    <!-- 归属 -->
-    <span
-      class="item-assignee"
-      :class="{ unassigned: !item.assigneeId }"
-      @click="$emit('assign', item)"
-      :title="item.assigneeId ? getMemberName(item.assigneeId) : '分配归属人'"
-    >
-      <span v-if="item.assigneeId" class="assignee-tag">
-        {{ getMemberName(item.assigneeId) }}
-      </span>
-      <span v-else class="assignee-placeholder">+</span>
     </span>
 
     <!-- 删除 -->
@@ -44,17 +32,11 @@
 <script setup>
 import { Close } from '@element-plus/icons-vue'
 
-const props = defineProps({
-  item: { type: Object, required: true },
-  members: { type: Array, default: () => [] }
+defineProps({
+  item: { type: Object, required: true }
 })
 
-defineEmits(['toggle', 'edit', 'delete', 'assign', 'qtyChange'])
-
-function getMemberName(memberId) {
-  const m = props.members.find(m => m.id === memberId)
-  return m ? m.name : '未知'
-}
+defineEmits(['toggle', 'edit', 'delete', 'qtyChange'])
 </script>
 
 <style lang="scss" scoped>
@@ -84,7 +66,6 @@ $text-muted: #94a3b8;
 
   &.checked {
     .item-name {
-      text-decoration: line-through;
       color: $text-muted;
     }
   }
@@ -146,6 +127,14 @@ $text-muted: #94a3b8;
   }
 }
 
+.item-note-dot {
+  font-size: 10px;
+  margin-left: 4px;
+  opacity: 0.5;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
 // 数量
 .item-qty {
   display: flex;
@@ -186,51 +175,6 @@ $text-muted: #94a3b8;
   font-weight: 600;
   color: $text-primary;
   padding: 2px 4px;
-}
-
-// 归属标签
-.item-assignee {
-  flex-shrink: 0;
-  cursor: pointer;
-  transition: all 0.15s;
-
-  .assignee-tag {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 600;
-    color: $brand;
-    background: #f0f0ff;
-    padding: 3px 8px;
-    border-radius: 8px;
-    white-space: nowrap;
-    max-width: 56px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .assignee-placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    border-radius: 8px;
-    border: 1.5px dashed #e2e8f0;
-    font-size: 14px;
-    font-weight: 700;
-    color: $text-muted;
-  }
-
-  &:hover {
-    .assignee-tag {
-      background: #e4e4ff;
-    }
-    .assignee-placeholder {
-      border-color: $brand;
-      color: $brand;
-      background: #f8f7ff;
-    }
-  }
 }
 
 // 删除按钮

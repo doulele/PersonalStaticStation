@@ -4,8 +4,8 @@
     <div class="result-topbar">
       <el-button :icon="ArrowLeft" text @click="$router.back()">返回规划</el-button>
       <div class="topbar-title">
-        <span>{{ safeSummary.attractionName || planResult?.summary?.attractionName || '' }}</span>
-        <el-tag type="success" size="small">攻略已生成</el-tag>
+        <span class="topbar-title-text">{{ safeSummary.attractionName || planResult?.summary?.attractionName || '行程攻略' }}</span>
+        <el-tag type="success" size="small" class="topbar-title-tag">已生成</el-tag>
       </div>
       <div class="topbar-center">
         <!-- 天数切换 -->
@@ -20,10 +20,6 @@
         </div>
       </div>
       <div class="topbar-spacer"></div>
-      <div class="topbar-right-actions">
-        <el-button size="small" :icon="Share" @click="showExport = true">导出</el-button>
-        <el-button size="small" type="success" :icon="FolderAdd" @click="handleSavePlan">保存</el-button>
-      </div>
     </div>
 
     <!-- 主内容区：左右分栏 -->
@@ -252,9 +248,10 @@
 
         <!-- 底部操作 -->
         <div class="result-actions">
-          <el-button :icon="RefreshRight" @click="handleReplan">重新规划</el-button>
-          <el-button :icon="Share" @click="showExport = true">导出分享</el-button>
-          <el-button type="primary" @click="$router.push('/home/lifeServices/travelGuide')">回到首页</el-button>
+          <el-button type="primary" :icon="FolderAdd" size="large" @click="handleSavePlan">保存行程</el-button>
+          <el-button :icon="Share" size="large" @click="showExport = true">导出分享</el-button>
+          <el-button :icon="RefreshRight" size="large" @click="handleReplan">重新规划</el-button>
+          <el-button size="large" @click="$router.push('/home/lifeServices/travelGuide')">回到首页</el-button>
         </div>
       </div>
     </div>
@@ -878,12 +875,11 @@ function handleReplan() {
   margin-left: 14px;
 }
 .topbar-center { flex: 1; display: flex; justify-content: center; }
-.topbar-spacer { width: 80px; }
+.topbar-spacer { flex: 1; }
 
 .day-switcher {
   .el-button-group { box-shadow: 0 1px 4px rgba(0,0,0,0.06); border-radius: 8px; overflow: hidden; }
 }
-.topbar-right-actions { display: flex; gap: 6px; flex-shrink: 0; }
 
 // ========== 主内容区 ==========
 .result-body {
@@ -1090,9 +1086,37 @@ function handleReplan() {
 
 // ========== 底部操作 ==========
 .result-actions {
-  display: flex; justify-content: center; gap: 12px;
-  padding: 16px 0 8px;
-  margin-top: 16px; border-top: 1px solid #e2e8f0;
+  display: flex; justify-content: center; align-items: center;
+  gap: 10px;
+  padding: 20px 24px 16px;
+  margin-top: 20px;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+
+  .el-button {
+    border-radius: 10px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  // 主要按钮（保存）更突出
+  .el-button--primary {
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+    padding: 0 24px;
+
+    &:hover {
+      box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
+    }
+  }
 }
 @keyframes highlightPulse {
   0%, 100% { box-shadow: none; }
@@ -1119,31 +1143,38 @@ function handleReplan() {
 
   // ---- 顶栏：紧凑双行 ----
   .result-topbar {
-    flex-wrap: wrap; gap: 6px;
-    padding: 8px 10px 6px;
+    flex-wrap: wrap; gap: 4px;
+    padding: 6px 8px 4px;
     position: sticky; top: 0; z-index: 20;
     box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   }
   .topbar-title {
-    font-size: 14px; margin-left: 0; order: 1;
-    flex: 1; min-width: 0;
-    span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    font-size: 13px; margin-left: 0; order: 1;
+    flex: 1; min-width: 0; gap: 4px;
+    .topbar-title-text {
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .topbar-title-tag {
+      flex-shrink: 0;
+      font-size: 10px !important;
+      padding: 0 5px !important;
+      height: 18px !important;
+      line-height: 18px !important;
+    }
   }
   .topbar-center {
     order: 3; flex: 1 1 100%; justify-content: center;
-    padding-top: 2px;
+    padding-top: 4px;
   }
   .topbar-spacer { display: none; }
-  .topbar-right-actions {
-    order: 2; gap: 4px; flex-shrink: 0;
-    .el-button { font-size: 12px; padding: 6px 10px; }
-  }
   // 返回按钮只显示图标
   .result-topbar > .el-button--text {
-    order: 0; padding: 4px; min-width: auto;
-    span + span { display: none; } // 隐藏文字
+    order: 0; padding: 4px 2px; min-width: auto;
+    font-size: 14px;
+    // 隐藏文字，只显示图标
+    :deep(span + span) { display: none; }
   }
-  .day-switcher .el-button { font-size: 12px; padding: 4px 10px; }
+  .day-switcher .el-button { font-size: 11px; padding: 3px 8px; }
 
   // ---- 主体 ----
   .result-body { flex-direction: column; }
@@ -1259,12 +1290,24 @@ function handleReplan() {
   // ---- 底部操作：固定 ----
   .result-actions {
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 15;
-    background: rgba(255,255,255,0.92); backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: rgba(255,255,255,0.94); backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border-top: 1px solid #e2e8f0;
-    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-    margin-top: 0; gap: 8px;
-    .el-button { font-size: 12px; padding: 8px 14px; }
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.05);
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+    margin-top: 0; gap: 6px;
+    flex-wrap: nowrap;
+
+    .el-button {
+      font-size: 12px; padding: 10px 4px;
+      flex: 1; min-width: 0; white-space: nowrap;
+      border-radius: 8px; font-weight: 500;
+    }
+
+    // 主按钮保留阴影
+    .el-button--primary {
+      box-shadow: 0 1px 4px rgba(99, 102, 241, 0.2);
+    }
   }
 
   // ---- 打卡高亮适配 ----

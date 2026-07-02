@@ -8,7 +8,7 @@
       </span>
       <span class="nav-title">{{ memo.title || '出行备忘' }}</span>
       <span class="nav-right">
-        <span class="nav-members" @click="showMemberProgress = true">
+        <span class="nav-members">
           <el-icon><User /></el-icon>{{ memo.members?.length || 0 }}
         </span>
         <span class="nav-edit-btn" @click="showMemoEdit = true">
@@ -18,7 +18,15 @@
       </div>
 
       <!-- ========== 进度摘要卡片 ========== -->
-      <div class="progress-card">
+      <div class="progress-card" :class="{ collapsed: progressCollapsed }">
+        <div class="progress-toggle" @click="progressCollapsed = !progressCollapsed">
+          <span class="toggle-icon" :class="{ open: !progressCollapsed }">
+            <el-icon><ArrowRight /></el-icon>
+          </span>
+          <span class="toggle-label">进度概览</span>
+          <span class="toggle-badge">{{ displayCheckedCount }}/{{ displayTotalCount }}</span>
+        </div>
+        <div class="progress-card-body" v-show="!progressCollapsed">
         <!-- 整体进度 -->
         <div class="total-progress">
           <div class="total-progress-header">
@@ -36,17 +44,17 @@
               :class="pctClass(displayPercent)"
               :style="{ width: displayPercent + '%' }"
             ></div>
-            <div class="progress-bar-knob" :class="knobClass(displayPercent)" v-if="displayPercent > 0"></div>
+
           </div>
         </div>
 
         <!-- 分割线 -->
         <div class="progress-divider"></div>
 
-        <!-- 各角色进度 -->
+        <!-- 公共/个人进度 -->
         <div class="member-progress-list">
           <div v-for="m in displayMembers" :key="m.id" class="member-progress-row">
-            <span class="mp-avatar" :class="memberAvatarClass(m)"></span>
+            <!-- <span class="mp-avatar" :class="memberAvatarClass(m)"></span> -->
             <span class="mp-name" :class="{ 'mp-name-public': m.id === 'public' }">
               {{ m.name }}
             </span>
@@ -57,7 +65,7 @@
                 :class="pctClass(m.percent)"
                 :style="{ width: m.percent + '%' }"
               ></div>
-              <div class="mp-bar-knob" :class="knobClass(m.percent)" v-if="m.percent > 0 && m.percent < 100"></div>
+
             </div>
             <span class="mp-pct" :class="pctTextClass(m.percent)">
               {{ m.percent }}%
@@ -65,6 +73,21 @@
             </span>
           </div>
         </div>
+        </div>
+      </div>
+
+      <!-- ========== 搜索框 ========== -->
+      <div class="search-wrap">
+        <el-icon class="search-icon"><Search /></el-icon>
+        <input
+          v-model="searchQuery"
+          class="search-input"
+          placeholder="搜索物品或备注..."
+          clearable
+        />
+        <span v-if="searchQuery" class="search-clear" @click="searchQuery = ''">
+          <el-icon><Close /></el-icon>
+        </span>
       </div>
 
       <!-- ========== 筛选标签栏 ========== -->
@@ -76,7 +99,7 @@
               :class="{ active: activeMemberFilter === 'public' }"
               @click="activeMemberFilter = 'public'"
             >
-              <span class="tab-dot"></span>公共
+              公共
             </span>
               <span
                 v-for="m in (memo.members || [])"
@@ -85,7 +108,7 @@
                 :class="{ active: activeMemberFilter === m.id, 'filter-tab-baby': m.type === 'baby' }"
                 @click="activeMemberFilter = m.id"
               >
-                <span class="tab-dot"></span>{{ m.name }}
+                {{ m.name }}
               </span>
               <span class="filter-tab add-member-tab" @click="showMemberManage = true" title="添加成员">
                 <el-icon><Plus /></el-icon>
@@ -144,9 +167,7 @@
               </span>
             </span>
           </div>
-
-          <!-- 分类内容 -->
-          <div class="cat-body" v-show="activeCategories.includes(cat.id)">
+          <div class="cat-body">
             <!-- 快捷添加标签 -->
             <div v-if="getPresetsForCat(cat).length > 0" class="quick-add-row">
               <div class="qa-toggle" @click.stop="togglePresets(cat.id)">
@@ -161,7 +182,7 @@
                   :key="name"
                   class="qa-chip"
                   @click="openQuickAdd(cat.id, name)"
-                >+ {{ name }}</span>
+                >{{ name }}</span>
               </div>
             </div>
 
@@ -171,11 +192,9 @@
                 v-for="item in getCatItems(cat.id)"
                 :key="item.id"
                 :item="item"
-                :members="memo.members"
                 @toggle="toggleItem"
                 @edit="openEditItem"
                 @delete="deleteItem"
-                @assign="openAssignItem"
                 @qtyChange="handleQtyChange"
               />
             </div>
@@ -197,8 +216,24 @@
 
       <!-- 无分类空状态 -->
       <div v-if="filteredCategories.length === 0" class="no-results">
-        <span v-if="(memo.items?.length || 0) === 0">还没有添加物品，点击「+ 新增分类」开始</span>
-        <span v-else>没有匹配的物品</span>
+        <div v-if="(memo.items?.length || 0) === 0" class="empty-guide">
+          <div class="empty-icon">🎒</div>
+          <div class="empty-title">准备出发吧！</div>
+          <div class="empty-desc">添加分类和物品，轻松管理出行清单</div>
+          <div class="empty-actions">
+            <span class="empty-action-btn" @click="addNewCategory">
+              <el-icon><Plus /></el-icon>新增分类
+            </span>
+            <span class="empty-action-btn secondary" @click="openTemplateDialog" v-if="loadTemplates().length > 0">
+              <el-icon><FolderOpened /></el-icon>加载模板
+            </span>
+          </div>
+        </div>
+        <div v-else class="empty-guide">
+          <div class="empty-icon">🔍</div>
+          <div class="empty-title">没有匹配的物品</div>
+          <div class="empty-desc">试试切换筛选条件或清除搜索</div>
+        </div>
       </div>
 
       <!-- 底部留白 -->
@@ -208,8 +243,29 @@
       <div class="bottom-bar">
         <el-button class="bottom-btn check-all-btn" @click="toggleAll">
           <el-icon><component :is="allChecked ? 'Close' : 'Select'" /></el-icon>
-          {{ allChecked ? '一键取消' : '一键全选' }}
+          {{ allChecked ? '取消' : '全选' }}
         </el-button>
+        <el-button class="bottom-btn reset-btn" @click="clearAllItems">
+          <el-icon><Delete /></el-icon>清空
+        </el-button>
+        <el-button class="bottom-btn copy-btn" @click="copyList">
+          <el-icon><CopyDocument /></el-icon>复制
+        </el-button>
+        <el-dropdown trigger="click" @command="handleMore">
+          <el-button class="bottom-btn more-btn">
+            <el-icon><MoreFilled /></el-icon>
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="save">
+                <el-icon><FolderAdd /></el-icon>保存模板
+              </el-dropdown-item>
+              <el-dropdown-item command="load">
+                <el-icon><FolderOpened /></el-icon>加载模板
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </div>
     </div>
 
@@ -218,7 +274,6 @@
       :visible="showItemDialog"
       :item="editTarget"
       :categories="availableCategories"
-      :members="memo.members"
       @close="closeItemDialog"
       @save="saveItem"
     />
@@ -227,14 +282,6 @@
       :visible="showAddCategoryDialog"
       @close="showAddCategoryDialog = false"
       @save="saveNewCategory"
-    />
-
-    <MemberProgress
-      :visible="showMemberProgress"
-      :members="memo.members"
-      :items="memo.items"
-      :memo-title="memo.title"
-      @close="showMemberProgress = false"
     />
 
     <CategoryManage
@@ -250,6 +297,27 @@
       @close="showMemberManage = false"
       @save="saveMembers"
     />
+
+    <!-- 模板选择弹窗 -->
+    <el-dialog v-model="showTemplateDialog" title="加载模板" width="400px" destroy-on-close>
+      <div v-if="templates.length === 0" class="template-empty">
+        <span>暂无保存的模板，点击底部「保存模板」创建</span>
+      </div>
+      <div v-else class="template-list">
+        <div v-for="tpl in templates" :key="tpl.id" class="template-item" @click="loadTemplate(tpl)">
+          <div class="tpl-info">
+            <span class="tpl-name">{{ tpl.name }}</span>
+            <span class="tpl-meta">{{ tpl.items.length }} 项物品 · {{ formatTplDate(tpl.createdAt) }}</span>
+          </div>
+          <span class="tpl-del" @click.stop="deleteTemplate(tpl.id)" title="删除模板">
+            <el-icon><Delete /></el-icon>
+          </span>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="showTemplateDialog = false">关闭</el-button>
+      </template>
+    </el-dialog>
 
     <!-- 备忘信息编辑弹窗 -->
     <el-dialog
@@ -291,45 +359,17 @@
       </template>
     </el-dialog>
 
-    <!-- 快速分配归属人 -->
-    <el-dialog
-      :model-value="!!assignTarget"
-      title="分配归属人"
-      width="320px"
-      destroy-on-close
-      @close="assignTarget = null"
-    >
-      <div class="assign-list">
-        <div
-          class="assign-option"
-          :class="{ active: assignTarget?.assigneeId === null }"
-          @click="doAssign(null)"
-        >
-          公共
-        </div>
-        <div
-          v-for="m in memo.members"
-          :key="m.id"
-          class="assign-option"
-          :class="{ active: assignTarget?.assigneeId === m.id }"
-          @click="doAssign(m.id)"
-        >
-          {{ m.name }}
-        </div>
-      </div>
-    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowLeft, ArrowRight, Plus, Edit, Delete, EditPen, User, Select, Close } from '@element-plus/icons-vue'
+import { ArrowLeft, ArrowRight, Plus, Edit, Delete, EditPen, User, Select, Close, CopyDocument, Search, FolderAdd, FolderOpened, MoreFilled } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import ItemRow from './components/ItemRow.vue'
 import AddItemDialog from './components/AddItemDialog.vue'
 import AddCategoryDialog from './components/AddCategoryDialog.vue'
-import MemberProgress from './components/MemberProgress.vue'
 import CategoryManage from './components/CategoryManage.vue'
 import MemberManage from './components/MemberManage.vue'
 
@@ -338,14 +378,14 @@ const STORAGE_KEY = 'travel_memo'
 
 // ===================== 默认值 =====================
 const DEFAULT_CATEGORIES = [
-  { id: 'c1', name: '露营野餐装备', icon: '', sortOrder: 0, scope: 'public', note: '' },
-  { id: 'c2', name: '食品', icon: '', sortOrder: 1, scope: 'public', note: '' },
-  { id: 'c3', name: '药品', icon: '', sortOrder: 2, scope: 'public', note: '' },
-  { id: 'c4', name: '其他', icon: '', sortOrder: 3, scope: 'public', note: '' },
-  { id: 'c5', name: '电子设备', icon: '', sortOrder: 4, scope: 'personal', note: '' },
-  { id: 'c6', name: '衣物', icon: '', sortOrder: 5, scope: 'personal', note: '' },
-  { id: 'c7', name: '证件', icon: '', sortOrder: 6, scope: 'personal', note: '' },
-  { id: 'c8', name: '日用品', icon: '', sortOrder: 7, scope: 'personal', note: '' },
+  { id: 'c7', name: '证件', icon: '', sortOrder: 0, scope: 'personal', note: '' },
+  { id: 'c3', name: '药品', icon: '', sortOrder: 1, scope: 'public', note: '' },
+  { id: 'c5', name: '电子设备', icon: '', sortOrder: 2, scope: 'personal', note: '' },
+  { id: 'c6', name: '衣物', icon: '', sortOrder: 3, scope: 'personal', note: '' },
+  { id: 'c8', name: '日用品', icon: '', sortOrder: 4, scope: 'personal', note: '' },
+  { id: 'c2', name: '食品', icon: '', sortOrder: 5, scope: 'public', note: '' },
+  { id: 'c1', name: '露营野餐装备', icon: '', sortOrder: 6, scope: 'public', note: '' },
+  { id: 'c4', name: '其他', icon: '', sortOrder: 7, scope: 'public', note: '' },
   { id: 'c9', name: '其他', icon: '', sortOrder: 8, scope: 'personal', note: '' }
 ]
 
@@ -397,14 +437,14 @@ const activeCategories = ref([])
 const activePresets = ref([])
 const activeMemberFilter = ref('public')
 const activeStatusFilter = ref('all')
+const searchQuery = ref('')
+const progressCollapsed = ref(false)
 const showItemDialog = ref(false)
 const showAddCategoryDialog = ref(false)
-const showMemberProgress = ref(false)
 const showCategoryManage = ref(false)
 const showMemberManage = ref(false)
 const showMemoEdit = ref(false)
 const editTarget = ref(null)
-const assignTarget = ref(null)
 
 const editingCatId = ref(null)
 const editCatName = ref('')
@@ -418,24 +458,13 @@ const statusFilterTabs = [
 const memoEditForm = ref({ title: '', destination: '', tripDate: '' })
 
 // ===================== 辅助函数 =====================
-function memberAvatar(m) {
-  if (m.id === 'public') return '👥'
-  if (m.type === 'baby') return '👶'
-  return '👤'
-}
-
 function memberAvatarClass(m) {
   if (m.id === 'public') return 'avatar-public'
   if (m.type === 'baby') return 'avatar-baby'
   return 'avatar-me'
 }
 
-function knobClass(pct) {
-  if (pct === 0) return 'knob-0'
-  if (pct < 50) return 'knob-low'
-  if (pct < 100) return 'knob-high'
-  return 'knob-full'
-}
+
 const checkedCount = computed(() =>
   (memo.items || []).filter(it => it.checked).length
 )
@@ -451,36 +480,36 @@ const displayPercent = computed(() =>
 
 const displayMembers = computed(() => {
   const items = memo.items || []
-  const members = memo.members || []
-  const list = []
-
   const pubCatIds = new Set((memo.categories || []).filter(c => c.scope === 'public').map(c => c.id))
+  const personalCatIds = new Set((memo.categories || []).filter(c => c.scope === 'personal').map(c => c.id))
+
   const pubItems = items.filter(it => pubCatIds.has(it.categoryId))
   const pubChecked = pubItems.filter(it => it.checked).length
-  list.push({
-    id: 'public',
-    name: '公共',
-    checked: pubChecked,
-    total: pubItems.length,
-    percent: pubItems.length > 0 ? Math.round((pubChecked / pubItems.length) * 100) : 0
-  })
 
-  if (members.length > 0) {
-    const personalCatIds = new Set((memo.categories || []).filter(c => c.scope === 'personal').map(c => c.id))
-    members.forEach(m => {
-      const memberItems = items.filter(it => personalCatIds.has(it.categoryId) && it.assigneeId === m.id)
-      const checked = memberItems.filter(it => it.checked).length
-      const total = memberItems.length
-      list.push({
-        id: m.id,
-        name: m.name,
-        type: m.type || null,
-        checked,
-        total,
-        percent: total > 0 ? Math.round((checked / total) * 100) : 0
-      })
+  const list = [
+    {
+      id: 'public',
+      name: '公共',
+      checked: pubChecked,
+      total: pubItems.length,
+      percent: pubItems.length > 0 ? Math.round((pubChecked / pubItems.length) * 100) : 0
+    }
+  ]
+
+  // 每个成员独立进度
+  ;(memo.members || []).forEach(m => {
+    const memberItems = items.filter(it => personalCatIds.has(it.categoryId) && it.assigneeId === m.id)
+    const checked = memberItems.filter(it => it.checked).length
+    const total = memberItems.length
+    list.push({
+      id: m.id,
+      name: m.name,
+      type: m.type || null,
+      checked,
+      total,
+      percent: total > 0 ? Math.round((checked / total) * 100) : 0
     })
-  }
+  })
 
   return list
 })
@@ -509,31 +538,36 @@ const filteredItems = computed(() => {
   }
   if (activeStatusFilter.value === 'checked') list = list.filter(it => it.checked)
   if (activeStatusFilter.value === 'unchecked') list = list.filter(it => !it.checked)
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.trim().toLowerCase()
+    list = list.filter(it => it.name.toLowerCase().includes(q) || (it.note || '').toLowerCase().includes(q))
+  }
   return list
 })
 
 const availableCategories = computed(() => {
+  let list = memo.categories || []
   if (activeMemberFilter.value === 'public') {
-    return (memo.categories || []).filter(c => c.scope === 'public')
+    list = list.filter(c => c.scope === 'public')
+  } else if (activeMemberFilter.value) {
+    list = list.filter(c => c.scope === 'personal')
   }
-  if (activeMemberFilter.value) {
-    return (memo.categories || []).filter(c => c.scope === 'personal')
-  }
-  return memo.categories || []
+  return list.sort((a, b) => (a.sortOrder ?? 99) - (b.sortOrder ?? 99))
 })
 
 const filteredCategories = computed(() => {
+  let list = memo.categories || []
   if (activeMemberFilter.value === 'public') {
-    return (memo.categories || []).filter(c => c.scope === 'public')
+    list = list.filter(c => c.scope === 'public')
+  } else if (activeMemberFilter.value) {
+    list = list.filter(c => c.scope === 'personal')
   }
-  if (activeMemberFilter.value) {
-    return (memo.categories || []).filter(c => c.scope === 'personal')
-  }
-  return memo.categories || []
+  return list.sort((a, b) => (a.sortOrder ?? 99) - (b.sortOrder ?? 99))
 })
 
 function getCatItems(catId) {
-  return filteredItems.value.filter(it => it.categoryId === catId)
+  return [...filteredItems.value.filter(it => it.categoryId === catId)]
+    .sort((a, b) => (a.checked ? 1 : 0) - (b.checked ? 1 : 0))
 }
 
 function getCatChecked(catId) {
@@ -721,34 +755,176 @@ function deleteItem(itemId) {
   }).catch(() => {})
 }
 
-function openAssignItem(item) {
-  assignTarget.value = item
-}
-
-function doAssign(memberId) {
-  if (assignTarget.value) {
-    const item = memo.items.find(it => it.id === assignTarget.value.id)
-    if (item) {
-      item.assigneeId = memberId
-      persist()
-    }
-  }
-  assignTarget.value = null
-}
-
 const allChecked = computed(() =>
-  (memo.items || []).length > 0 && (memo.items || []).every(it => it.checked)
+  filteredItems.value.length > 0 && filteredItems.value.every(it => it.checked)
 )
 
 function toggleAll() {
+  const list = filteredItems.value
+  if (list.length === 0) {
+    ElMessage.info('当前视图暂无物品')
+    return
+  }
+  const target = !allChecked.value
+  list.forEach(it => { it.checked = target })
+  persist()
+  const label = getFilterLabel()
+  ElMessage.success(target ? (label ? `「${label}」已全部勾选` : '已全部勾选') : (label ? `「${label}」已全部取消` : '已全部取消'))
+}
+
+function clearAllItems() {
   if (!memo.items || memo.items.length === 0) {
     ElMessage.info('暂无物品')
     return
   }
-  const target = !allChecked.value
-  memo.items.forEach(it => { it.checked = target })
-  persist()
-  ElMessage.success(target ? '已全部勾选' : '已全部取消')
+  const count = memo.items.length
+  ElMessageBox.confirm(
+    `确定要删除全部 ${count} 项物品吗？此操作不可恢复。`,
+    '清空清单',
+    { confirmButtonText: '确认清空', cancelButtonText: '取消', type: 'error' }
+  ).then(() => {
+    memo.items = []
+    persist()
+    ElMessage.success(`已清空 ${count} 项物品`)
+  }).catch(() => {})
+}
+
+function handleMore(cmd) {
+  if (cmd === 'save') saveAsTemplate()
+  else if (cmd === 'load') openTemplateDialog()
+}
+
+function copyList() {
+  const list = filteredItems.value
+  if (list.length === 0) {
+    ElMessage.info('当前视图暂无物品可复制')
+    return
+  }
+  const cats = filteredCategories.value
+  const checked = list.filter(it => it.checked).length
+  const lines = []
+
+  // 头部信息
+  const filterLabel = getFilterLabel()
+  lines.push(memo.title ? `📋 ${memo.title}` : '📋 出行清单')
+  if (filterLabel) lines.push(`👤 ${filterLabel}`)
+  if (memo.destination) lines.push(`📍 目的地：${memo.destination}`)
+  if (memo.tripDate) lines.push(`📅 出行日期：${memo.tripDate}`)
+  lines.push(`📊 进度：${checked}/${list.length}（${Math.round((checked / list.length) * 100)}%）`)
+
+  // 按分类输出（只看当前视图中有物品的分类）
+  cats.forEach(cat => {
+    const catItems = list.filter(it => it.categoryId === cat.id)
+    if (catItems.length === 0) return
+    const catChecked = catItems.filter(it => it.checked).length
+    lines.push('')
+    lines.push(`── ${cat.name}（${catChecked}/${catItems.length}）──`)
+    catItems.forEach(it => {
+      const status = it.checked ? '✅' : '⬜'
+      const qty = it.quantity > 1 ? ` ×${it.quantity}` : ''
+      const note = it.note ? ` — ${it.note}` : ''
+      lines.push(`  ${status} ${it.name}${qty}${note}`)
+    })
+  })
+
+  const text = lines.join('\n')
+  copyToClipboard(text)
+}
+
+function getFilterLabel() {
+  const parts = []
+  if (activeMemberFilter.value === 'public') {
+    parts.push('公共物品')
+  } else if (activeMemberFilter.value) {
+    const m = (memo.members || []).find(mb => mb.id === activeMemberFilter.value)
+    parts.push(m ? m.name : '个人')
+  }
+  if (activeStatusFilter.value === 'checked') parts.push('已勾选')
+  if (activeStatusFilter.value === 'unchecked') parts.push('未勾选')
+  return parts.join(' · ')
+}
+
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    ElMessage.success('清单已复制到剪贴板')
+  }).catch(() => {
+    const ta = document.createElement('textarea')
+    ta.value = text
+    document.body.appendChild(ta)
+    ta.select()
+    document.execCommand('copy')
+    document.body.removeChild(ta)
+    ElMessage.success('清单已复制到剪贴板')
+  })
+}
+
+// ===================== 模板保存/加载 =====================
+const TEMPLATES_KEY = 'travel_memo_templates'
+const showTemplateDialog = ref(false)
+const templates = ref([])
+
+function openTemplateDialog() {
+  templates.value = loadTemplates()
+  showTemplateDialog.value = true
+}
+
+function saveAsTemplate() {
+  if (!memo.items || memo.items.length === 0) {
+    ElMessage.info('暂无物品可保存为模板')
+    return
+  }
+  const tpls = loadTemplates()
+  const name = memo.title || `模板_${new Date().toLocaleDateString()}`
+  let finalName = name
+  let idx = 1
+  while (tpls.find(t => t.name === finalName)) {
+    finalName = `${name}(${idx})`
+    idx++
+  }
+  tpls.push({
+    id: 'tpl_' + Date.now(),
+    name: finalName,
+    categories: JSON.parse(JSON.stringify(memo.categories || [])),
+    items: JSON.parse(JSON.stringify(memo.items || [])).map(it => ({ ...it, checked: false })),
+    createdAt: new Date().toISOString()
+  })
+  localStorage.setItem(TEMPLATES_KEY, JSON.stringify(tpls))
+  ElMessage.success(`已保存模板「${finalName}」`)
+}
+
+function loadTemplate(tpl) {
+  ElMessageBox.confirm(
+    `确定加载模板「${tpl.name}」吗？当前所有物品将被替换。`,
+    '加载模板',
+    { confirmButtonText: '确认加载', cancelButtonText: '取消', type: 'warning' }
+  ).then(() => {
+    memo.categories = JSON.parse(JSON.stringify(tpl.categories))
+    memo.items = JSON.parse(JSON.stringify(tpl.items))
+    memo.updatedAt = new Date().toISOString()
+    activeCategories.value = (memo.categories || []).map(c => c.id)
+    persist()
+    ElMessage.success(`已加载模板「${tpl.name}」`)
+  }).catch(() => {})
+}
+
+function deleteTemplate(tplId) {
+  const tpls = loadTemplates()
+  const updated = tpls.filter(t => t.id !== tplId)
+  localStorage.setItem(TEMPLATES_KEY, JSON.stringify(updated))
+  templates.value = updated
+  ElMessage.success('模板已删除')
+}
+
+function loadTemplates() {
+  try {
+    return JSON.parse(localStorage.getItem(TEMPLATES_KEY) || '[]')
+  } catch { return [] }
+}
+
+function formatTplDate(dateStr) {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
 // ===================== 分类管理 =====================
@@ -824,12 +1000,6 @@ function saveCategories(categories) {
 
 // ===================== 成员管理 =====================
 function saveMembers(members) {
-  const newIds = new Set(members.map(m => m.id))
-  ;(memo.items || []).forEach(item => {
-    if (item.assigneeId && !newIds.has(item.assigneeId)) {
-      item.assigneeId = null
-    }
-  })
   memo.members = members
   persist()
   showMemberManage.value = false
@@ -989,13 +1159,67 @@ $text-muted: #94a3b8;
 // ===================== 进度卡片 =====================
 .progress-card {
   margin: 12px 12px 0;
-  padding: 20px;
   background: $bg-card;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid $border-card;
   border-radius: 16px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  transition: all 0.3s ease;
+
+  &.collapsed {
+    .progress-toggle {
+      padding-bottom: 12px;
+    }
+  }
+}
+
+.progress-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 20px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+
+  &:hover {
+    background: rgba(99, 102, 241, 0.04);
+  }
+}
+
+.toggle-icon {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: $text-muted;
+  transition: transform 0.3s;
+  flex-shrink: 0;
+
+  &.open {
+    transform: rotate(90deg);
+  }
+}
+
+.toggle-label {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 700;
+  color: $text-primary;
+}
+
+.toggle-badge {
+  font-size: 12px;
+  font-weight: 600;
+  color: $brand;
+  background: #f0f0ff;
+  padding: 2px 10px;
+  border-radius: 10px;
+}
+
+.progress-card-body {
+  padding: 0 20px 20px;
 }
 
 // 整体进度
@@ -1076,47 +1300,6 @@ $text-muted: #94a3b8;
   }
 }
 
-// 进度条终点节点
-.progress-bar-knob {
-  position: absolute;
-  top: 50%;
-  right: 0;
-  transform: translate(50%, -50%);
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #fff;
-  border: 3px solid;
-  box-shadow: 0 0 8px rgba(0,0,0,0.15), inset 0 0 0 2px #fff;
-  transition: all 0.3s;
-  z-index: 2;
-
-  &.knob-0 { border-color: #e2e8f0; }
-  &.knob-low { border-color: #f59e0b; }
-  &.knob-high { border-color: #3b82f6; }
-  &.knob-full { border-color: #6366f1; }
-}
-
-.mp-bar-knob {
-  position: absolute;
-  top: 50%;
-  right: 0;
-  transform: translate(50%, -50%);
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #fff;
-  border: 2px solid;
-  box-shadow: 0 0 4px rgba(0,0,0,0.12);
-  transition: all 0.3s;
-  z-index: 2;
-
-  &.knob-0 { border-color: #e2e8f0; }
-  &.knob-low { border-color: #f59e0b; }
-  &.knob-high { border-color: #3b82f6; }
-  &.knob-full { border-color: #6366f1; }
-}
-
 @keyframes shimmer {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(100%); }
@@ -1166,7 +1349,7 @@ $text-muted: #94a3b8;
   font-weight: 500;
   color: $text-primary;
   flex-shrink: 0;
-  width: 36px;
+  width: 42px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1224,6 +1407,66 @@ $text-muted: #94a3b8;
   margin-left: 4px;
   font-size: 10px;
   font-weight: 600;
+}
+
+// ===================== 搜索框 =====================
+.search-wrap {
+  margin: 10px 12px 0;
+  padding: 0 14px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  background: $bg-card;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid $border-card;
+  border-radius: 14px;
+  gap: 8px;
+  transition: border-color 0.25s;
+
+  &:focus-within {
+    border-color: $brand;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  }
+}
+
+.search-icon {
+  font-size: 16px;
+  color: $text-muted;
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  color: $text-primary;
+  min-width: 0;
+
+  &::placeholder {
+    color: $text-muted;
+  }
+}
+
+.search-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  cursor: pointer;
+  color: $text-muted;
+  font-size: 12px;
+  flex-shrink: 0;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #f1f5f9;
+    color: $text-secondary;
+  }
 }
 
 // ===================== 筛选卡片 =====================
@@ -1515,6 +1758,16 @@ $text-muted: #94a3b8;
 // 展开体
 .cat-body {
   border-top: 1px solid #f1f5f9;
+  overflow: hidden;
+  max-height: 2000px;
+  opacity: 1;
+  transition: max-height 0.35s ease, opacity 0.25s ease, border-top-color 0.35s;
+}
+
+.cat-card:not(.expanded) .cat-body {
+  max-height: 0;
+  opacity: 0;
+  border-top-color: transparent;
 }
 
 // 快捷添加标签
@@ -1700,34 +1953,175 @@ $text-muted: #94a3b8;
   }
 }
 
-// ===================== 弹窗：分配归属人 =====================
-.assign-list {
+.reset-btn {
+  background: #fff !important;
+  border: 1.5px solid #e2e8f0 !important;
+  color: $text-primary !important;
+  transition: all 0.25s;
+
+  &:hover {
+    border-color: #f59e0b !important;
+    color: #f59e0b !important;
+    background: #fffbeb !important;
+  }
+}
+
+.copy-btn {
+  background: #fff !important;
+  border: 1.5px solid #e2e8f0 !important;
+  color: $text-primary !important;
+  transition: all 0.25s;
+
+  &:hover {
+    border-color: $brand !important;
+    color: $brand !important;
+    background: #f0f0ff !important;
+  }
+}
+
+.more-btn {
+  flex: 0 0 42px !important;
+  min-width: 42px !important;
+  background: #fff !important;
+  border: 1.5px solid #e2e8f0 !important;
+  color: $text-secondary !important;
+  transition: all 0.25s;
+  font-size: 14px !important;
+  padding: 0 !important;
+
+  &:hover {
+    border-color: #a78bfa !important;
+    color: #7c3aed !important;
+    background: #f5f3ff !important;
+  }
+}
+
+// ===================== 模板弹窗 =====================
+.template-empty {
+  text-align: center;
+  padding: 32px 16px;
+  color: $text-muted;
+  font-size: 14px;
+}
+
+.template-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  max-height: 360px;
+  overflow-y: auto;
 }
 
-.assign-option {
+.template-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #f1f5f9;
   cursor: pointer;
-  border: 2px solid transparent;
-  font-size: 15px;
-  font-weight: 500;
-  color: $text-primary;
   transition: all 0.2s;
 
   &:hover {
-    background: #f1f5f9;
+    background: #f8f7ff;
+    border-color: #e0e0ff;
+  }
+}
+
+.tpl-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tpl-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.tpl-meta {
+  font-size: 12px;
+  color: $text-muted;
+}
+
+.tpl-del {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  color: $text-muted;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #fef2f2;
+    color: #ef4444;
+  }
+}
+
+// ===================== 空状态引导 =====================
+.empty-guide {
+  text-align: center;
+  padding: 48px 24px;
+
+  .empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
   }
 
-  &.active {
-    border-color: $brand;
-    background: #f0f0ff;
+  .empty-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: $text-primary;
+    margin-bottom: 8px;
+  }
+
+  .empty-desc {
+    font-size: 14px;
+    color: $text-muted;
+    margin-bottom: 24px;
+  }
+}
+
+.empty-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.empty-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: $brand-gradient;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+  }
+
+  &.secondary {
+    background: #fff;
     color: $brand;
+    border: 1.5px solid #e0e0ff;
+    box-shadow: none;
+
+    &:hover {
+      background: #f8f7ff;
+      border-color: $brand;
+    }
   }
 }
 

@@ -57,7 +57,11 @@
                 <span class="legend-text">{{ r.name }}</span>
               </button>
             </div>
-            <div ref="chartRef" class="echarts-map"></div>
+            <div v-if="mapLoadError" class="map-error-tip">
+              <span class="error-icon">⚠️</span>
+              <span>地图数据加载失败，请刷新页面重试</span>
+            </div>
+            <div ref="chartRef" class="echarts-map" v-show="!mapLoadError"></div>
           </div>
         </div>
       </transition>
@@ -83,7 +87,11 @@
               <span class="legend-text">{{ r.name }}</span>
             </button>
           </div>
-          <div ref="chartRefMobile" class="echarts-map"></div>
+          <div v-if="mapLoadError" class="map-error-tip">
+            <span class="error-icon">⚠️</span>
+            <span>地图数据加载失败，请刷新页面重试</span>
+          </div>
+          <div ref="chartRefMobile" class="echarts-map" v-show="!mapLoadError"></div>
         </div>
       </div>
     </div>
@@ -183,13 +191,16 @@ const chartRefMobile = ref(null)
 let pcChartInstance = null
 let mobileChartInstance = null
 let geoJsonData = null
+const mapLoadError = ref(false) // 地图数据加载失败时的错误状态
 let labelScheduleId = 0 // 递增 ID，用于取消过时的 setTimeout
 let labelTimerPc = null
 let labelTimerMobile = null
 
 async function loadChinaMap() {
   if (geoJsonData) return geoJsonData
-  const res = await fetch('https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json')
+  const base = import.meta.env.BASE_URL
+  const res = await fetch(`${base}data/china-geo.json`)
+  if (!res.ok) throw new Error(`GeoJSON 加载失败: ${res.status}`)
   geoJsonData = await res.json()
   echarts.registerMap('china', geoJsonData)
   return geoJsonData
@@ -475,6 +486,7 @@ watch(panelCollapsed, async (collapsed) => {
   }
   await nextTick()
   await ensureMapLoaded()
+  if (mapLoadError.value) return
   setTimeout(async () => {
     await nextTick()
     if (!pcChartInstance && chartRef.value) {
@@ -493,6 +505,7 @@ watch(mobileCollapsed, async (collapsed) => {
   }
   await nextTick()
   await ensureMapLoaded()
+  if (mapLoadError.value) return
   setTimeout(async () => {
     await nextTick()
     if (!mobileChartInstance && chartRefMobile.value) {
@@ -508,8 +521,10 @@ async function ensureMapLoaded() {
   try {
     await loadChinaMap()
     mapDataLoaded = true
+    mapLoadError.value = false
   } catch (e) {
     console.error('加载中国地图失败:', e)
+    mapLoadError.value = true
   }
 }
 
@@ -674,6 +689,20 @@ onUnmounted(() => {
   background: conic-gradient(#e74c3c, #eab308, #22c55e, #06b6d4, #8b5cf6, #ec4899, #3b82f6) !important;
 }
 .legend-text { line-height: 1; }
+
+// ===== 错误提示 =====
+.map-error-tip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px 20px;
+  color: #94a3b8;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  .error-icon { font-size: 20px; }
+}
 
 // ===== 响应式 =====
 @media (max-width: 1023px) and (min-width: 769px) {

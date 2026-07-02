@@ -107,6 +107,11 @@ const routes = [
         meta: { title: '今日油价', icon: 'Coin' }
       },
       {
+        path: 'lifeServices/weather',
+        component: () => import('@/views/home/lifeServices/weather/index.vue'),
+        meta: { title: '天气预报', icon: 'Sunny' }
+      },
+      {
         path: 'lifeServices/travelMemo',
         component: () => import('@/views/home/lifeServices/travelMemo/index.vue'),
         meta: { title: '出行备忘', icon: 'Memo' }

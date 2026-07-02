@@ -701,16 +701,17 @@ function quickSearch(tag) {
 
 const goPlan = (item) => {
   showDropdown.value = false
-  if (item.mockId) {
-    // 匹配到 Mock 数据（有完整的景点/美食/酒店规划）
-    router.push(`/home/lifeServices/travelGuide/plan/${item.mockId}`)
-  } else {
-    // 动态 POI：传 name/lat/lng/address/city，plan 页动态生成
-    router.push({
-      path: `/home/lifeServices/travelGuide/plan/${item.id}`,
-      query: { name: item.name, lat: item.lat, lng: item.lng, address: item.address, city: item.city || '' }
-    })
-  }
+  // 统一走动态规划路径，传 name/lat/lng/address/city
+  router.push({
+    path: `/home/lifeServices/travelGuide/plan/${item.id}`,
+    query: {
+      name: item.name,
+      lat: item.lat,
+      lng: item.lng,
+      address: item.address || item.desc || '',
+      city: item.city || item.province || ''
+    }
+  })
 }
 
 // ===== 多景点串联选择 =====

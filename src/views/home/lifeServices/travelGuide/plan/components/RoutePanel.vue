@@ -74,7 +74,7 @@
         <template #item="{ element, index }">
           <div
             class="swipe-container"
-            @touchstart.prevent="swipe.onTouchStart($event, element.id)"
+            @touchstart="swipe.onTouchStart($event, element.id)"
             @touchmove="swipe.onTouchMove($event, element.id)"
             @touchend="swipe.onTouchEnd($event, element.id)"
             @touchcancel="swipe.onTouchCancel($event, element.id)"
@@ -128,34 +128,30 @@
       </draggable>
     </div>
 
-    <!-- ===== 推荐路线（可拖拽到已选区域，点击直接添加） ===== -->
+    <!-- ===== 推荐节点（点击添加） ===== -->
     <div v-if="availableSpots.length > 0" class="recommend-section">
       <div class="recommend-header">
         <span class="recommend-label">推荐节点</span>
         <span class="recommend-count">{{ availableSpots.length }} 个可选</span>
       </div>
 
-      <draggable
-        v-model="localRecommended"
-        :group="{ name: 'routeSpots', pull: 'clone', put: false }"
-        item-key="id"
-        :sort="false"
-        :animation="200"
-        ghost-class="recommend-ghost"
-        class="recommend-draggable"
-      >
-        <template #item="{ element }">
-          <div class="recommend-card" @click="handleAdd(element.id)">
-            <div class="rec-info">
-              <div class="rec-name">
-                <span class="rec-name-text">{{ element.name }}</span>
-                <span v-if="element.ticket_price" class="rec-ticket">¥{{ element.ticket_price }}</span>
-              </div>
-              <div class="rec-desc" v-if="element.desc || element.highlight">{{ element.desc || element.highlight }}</div>
+      <div class="recommend-list">
+        <div
+          v-for="element in availableSpots"
+          :key="element.id"
+          class="recommend-card"
+          @click="handleAdd(element.id)"
+          @touchend.prevent="handleAdd(element.id)"
+        >
+          <div class="rec-info">
+            <div class="rec-name">
+              <span class="rec-name-text">{{ element.name }}</span>
+              <span v-if="element.ticket_price" class="rec-ticket">¥{{ element.ticket_price }}</span>
             </div>
+            <div class="rec-desc" v-if="element.desc || element.highlight">{{ element.desc || element.highlight }}</div>
           </div>
-        </template>
-      </draggable>
+        </div>
+      </div>
     </div>
 
     <el-empty v-else description="暂无更多推荐节点" :image-size="40" />
@@ -197,10 +193,8 @@ const recommendSpotNotes = computed(() => store.state.plan.recommendSpotNotes ||
 const recommendActive = computed(() => store.state.plan.recommendActive)
 
 const localSelected = ref([])
-const localRecommended = ref([])
 
 watch(selectedSpots, (val) => { localSelected.value = [...val] }, { immediate: true, deep: true })
-watch(availableSpots, (val) => { localRecommended.value = [...val] }, { immediate: true, deep: true })
 
 // ===== 左滑删除 =====
 const swipe = useSwipeDelete({
@@ -478,6 +472,7 @@ function onSelectedChange(evt) {
   position: relative;
   overflow: hidden;
   border-radius: 12px;
+  touch-action: pan-y; /* 允许垂直滚动，水平滑动留给 JS 处理 */
 }
 
 .swipe-delete-bg {
@@ -700,7 +695,7 @@ function onSelectedChange(evt) {
   border-radius: 10px;
 }
 
-.recommend-draggable {
+.recommend-list {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -728,6 +723,7 @@ function onSelectedChange(evt) {
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   cursor: pointer;
+  touch-action: manipulation; /* 移动端：覆盖 vuedraggable 的 touch-action:none，允许点击 */
   transition: all 0.2s;
 
   &:hover {
@@ -740,12 +736,6 @@ function onSelectedChange(evt) {
   &:active {
     transform: scale(0.98);
   }
-}
-
-.recommend-ghost {
-  opacity: 0.5;
-  background: #eef2ff !important;
-  border: 2px dashed #6366f1 !important;
 }
 
 .rec-info {

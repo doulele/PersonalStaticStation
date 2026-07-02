@@ -73,7 +73,7 @@
         <template #item="{ element, index }">
           <div
             class="swipe-container"
-            @touchstart.prevent="swipe.onTouchStart($event, element.id)"
+            @touchstart="swipe.onTouchStart($event, element.id)"
             @touchmove="swipe.onTouchMove($event, element.id)"
             @touchend="swipe.onTouchEnd($event, element.id)"
             @touchcancel="swipe.onTouchCancel($event, element.id)"
@@ -123,35 +123,30 @@
       </draggable>
     </div>
 
-    <!-- ===== 推荐美食（可拖拽到已选区域，点击直接选中/取消） ===== -->
+    <!-- ===== 推荐美食（点击选中/取消） ===== -->
     <div v-if="allFoods.length > 0" class="recommend-section">
       <div class="recommend-header">
         <span class="recommend-label">推荐美食</span>
         <span class="recommend-count">{{ availableFoods.length }} 个可选</span>
       </div>
 
-      <draggable
-        v-if="availableFoods.length > 0"
-        v-model="localRecommended"
-        :group="{ name: 'foods', pull: 'clone', put: false }"
-        item-key="id"
-        :sort="false"
-        :animation="200"
-        ghost-class="recommend-ghost"
-        class="recommend-draggable"
-      >
-        <template #item="{ element }">
-          <div class="recommend-card" @click="handleToggle(element.id)">
-            <div class="rec-info">
-              <div class="rec-name">
-                <span class="rec-name-text">{{ element.name }}</span>
-                <span class="rec-price">¥{{ element.price_per_person }}/人</span>
-              </div>
-              <div class="rec-desc" v-if="element.highlight || element.recommend_dish">{{ element.highlight || `推荐：${element.recommend_dish}` }}</div>
+      <div v-if="availableFoods.length > 0" class="recommend-list">
+        <div
+          v-for="element in availableFoods"
+          :key="element.id"
+          class="recommend-card"
+          @click="handleToggle(element.id)"
+          @touchend.prevent="handleToggle(element.id)"
+        >
+          <div class="rec-info">
+            <div class="rec-name">
+              <span class="rec-name-text">{{ element.name }}</span>
+              <span class="rec-price">¥{{ element.price_per_person }}/人</span>
             </div>
+            <div class="rec-desc" v-if="element.highlight || element.recommend_dish">{{ element.highlight || `推荐：${element.recommend_dish}` }}</div>
           </div>
-        </template>
-      </draggable>
+        </div>
+      </div>
 
       <div v-else class="recommend-all-selected">
         🎉 已全部选中！取消已选可重新挑选
@@ -208,10 +203,8 @@ const availableFoods = computed(() =>
 )
 
 const localSelected = ref([])
-const localRecommended = ref([])
 
 watch(selectedFoods, (val) => { localSelected.value = [...val] }, { immediate: true, deep: true })
-watch(availableFoods, (val) => { localRecommended.value = [...val] }, { immediate: true, deep: true })
 
 // 左滑删除
 const swipe = useSwipeDelete({
@@ -497,6 +490,7 @@ function onSelectedChange(evt) {
   position: relative;
   overflow: hidden;
   border-radius: 12px;
+  touch-action: pan-y; /* 允许垂直滚动，水平滑动留给 JS 处理 */
 }
 
 .swipe-delete-bg {
@@ -703,7 +697,7 @@ function onSelectedChange(evt) {
   border-radius: 10px;
 }
 
-.recommend-draggable {
+.recommend-list {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -731,6 +725,7 @@ function onSelectedChange(evt) {
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   cursor: pointer;
+  touch-action: manipulation; /* 移动端：覆盖 vuedraggable 的 touch-action:none，允许点击 */
   transition: all 0.2s;
 
   &:hover {
@@ -743,12 +738,6 @@ function onSelectedChange(evt) {
   &:active {
     transform: scale(0.98);
   }
-}
-
-.recommend-ghost {
-  opacity: 0.5;
-  background: #ecfdf5 !important;
-  border: 2px dashed #10b981 !important;
 }
 
 .rec-info {

@@ -1,4 +1,4 @@
-import { getAttractionPlan, generatePlan as apiGeneratePlan } from '@/views/home/lifeServices/travelGuide/mock/data.js'
+import { generatePlan as apiGeneratePlan } from '@/views/home/lifeServices/travelGuide/mock/data.js'
 
 const API_BASE = '/staticTool/api/travel'
 
@@ -579,22 +579,6 @@ export default {
   },
 
   actions: {
-    /**
-     * 获取景点全量规划数据
-     */
-    async fetchPlan({ commit }, id) {
-      commit('SET_LOADING', true)
-      try {
-        const data = await getAttractionPlan(Number(id))
-        commit('INIT_PLAN_DATA', data)
-      } catch (err) {
-        console.error('获取规划数据失败:', err)
-        throw err
-      } finally {
-        commit('SET_LOADING', false)
-      }
-    },
-
     /**
      * 动态获取规划数据（通过后端高德 API）
      */

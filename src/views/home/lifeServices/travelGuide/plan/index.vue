@@ -226,33 +226,21 @@ onMounted(async () => {
     return
   }
 
-  const numId = Number(id)
-  // mock 数据支持的景点 ID：1(故宫) 2(迪士尼) 21(花果山) 22(连岛)
-  if ([1, 2, 21, 22].includes(numId)) {
-    try {
-      await store.dispatch('plan/fetchPlan', id)
-    } catch {
-      ElMessage.error('获取规划数据失败')
-      router.back()
-    }
-    return
-  }
-
   const { name, lat, lng, address, city } = route.query
   if (!lat || !lng) {
     ElMessage.warning('该目的地暂不支持规划')
     router.back()
     return
   }
-    try {
-      await store.dispatch('plan/fetchDynamicPlan', {
-        name: name || '未知景点',
-        lat: parseFloat(lat),
-        lng: parseFloat(lng),
-        address: address || '',
-        city: city || ''
-      })
-    } catch {
+  try {
+    await store.dispatch('plan/fetchDynamicPlan', {
+      name: name || '未知景点',
+      lat: parseFloat(lat),
+      lng: parseFloat(lng),
+      address: address || '',
+      city: city || ''
+    })
+  } catch {
     ElMessage.error('动态规划数据加载失败，请稍后重试')
     router.back()
   }
@@ -566,6 +554,8 @@ async function handleAiRecommend() {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  touch-action: pan-y; /* 移动端：确保垂直滚动不被 vuedraggable/touch-action:none 阻止 */
+  -webkit-overflow-scrolling: touch; /* iOS 平滑滚动 */
 
   &::-webkit-scrollbar {
     width: 6px;
@@ -707,13 +697,17 @@ async function handleAiRecommend() {
     height: 100dvh;
   }
 
+  // ---- 顶栏：双行布局 ----
   .plan-topbar {
-    padding: 8px 12px;
-    gap: 8px;
+    flex-wrap: wrap;
+    padding: 6px 10px;
+    gap: 4px 8px;
   }
 
   .topbar-left {
-    gap: 8px;
+    gap: 6px;
+    flex: 1 1 auto;
+    max-width: 55%; // 给右侧留空间
   }
 
   .topbar-divider {
@@ -721,22 +715,27 @@ async function handleAiRecommend() {
   }
 
   .back-btn {
-    padding: 4px 8px;
-    font-size: 13px;
+    padding: 4px 6px;
+    min-width: auto;
+    // 移动端只显示图标
+    :deep(span + span) {
+      display: none;
+    }
   }
 
   .attraction-title {
-    gap: 8px;
+    gap: 5px;
 
     .title-icon-wrapper {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      :deep(.el-icon) { font-size: 16px !important; }
     }
 
     .title-name {
-      font-size: 14px;
-      max-width: 140px;
+      font-size: 13px;
+      max-width: 110px;
     }
 
     .title-subtitle {
@@ -744,17 +743,33 @@ async function handleAiRecommend() {
     }
   }
 
+  // ---- 切换按钮组：独占第二行，两端对齐 ----
   .topbar-right {
-    gap: 8px;
+    flex: 1 1 100%;
+    justify-content: space-between;
+    gap: 6px;
+    order: 3;
   }
 
   .topbar-info-pills {
     display: none;
   }
 
+  // 交通 & 推荐切换按钮：等分宽度
+  .transport-toggle,
   .recommend-toggle {
-    .toggle-label { display: none; }
-    .toggle-option { padding: 6px 10px; font-size: 13px; }
+    flex: 1;
+    justify-content: center;
+
+    .toggle-option {
+      flex: 1;
+      justify-content: center;
+      padding: 5px 4px;
+      font-size: 12px;
+      gap: 3px;
+      .toggle-icon { font-size: 14px; }
+      .toggle-label { font-size: 11px; display: inline; }
+    }
   }
 
   .plan-body {

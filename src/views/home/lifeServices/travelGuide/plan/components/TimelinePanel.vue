@@ -372,6 +372,7 @@ function handleRemove(node) {
 // ===== 预览列表 =====
 .preview-list {
   display: flex; flex-direction: column; gap: 6px;
+  touch-action: pan-y; /* 移动端：覆盖 vuedraggable 的 touch-action:none，允许垂直滚动 */
 }
 
 .preview-item {

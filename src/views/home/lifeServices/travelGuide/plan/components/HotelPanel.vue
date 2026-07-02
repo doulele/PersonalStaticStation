@@ -55,7 +55,7 @@
       <div v-if="selectedHotel" class="selected-item">
         <div
           class="swipe-container"
-          @touchstart.prevent="swipe.onTouchStart($event, 'selected')"
+          @touchstart="swipe.onTouchStart($event, 'selected')"
           @touchmove="swipe.onTouchMove($event, 'selected')"
           @touchend="swipe.onTouchEnd($event, 'selected')"
           @touchcancel="swipe.onTouchCancel($event, 'selected')"
@@ -110,7 +110,7 @@
       <div v-else-if="selectedHotelId === 'custom'" class="selected-item">
         <div
           class="swipe-container"
-          @touchstart.prevent="swipe.onTouchStart($event, 'selected')"
+          @touchstart="swipe.onTouchStart($event, 'selected')"
           @touchmove="swipe.onTouchMove($event, 'selected')"
           @touchend="swipe.onTouchEnd($event, 'selected')"
           @touchcancel="swipe.onTouchCancel($event, 'selected')"
@@ -166,9 +166,8 @@
           v-for="hotel in availableHotels"
           :key="hotel.id"
           class="recommend-card"
-          draggable="true"
-          @dragstart="onDragStart($event, hotel)"
           @click="handleSelect(hotel.id)"
+          @touchend.prevent="handleSelect(hotel.id)"
         >
           <div class="rec-info">
             <div class="rec-name">
@@ -346,12 +345,6 @@ function handleClear() {
   swipe.resetCard('selected')
   store.commit('plan/SELECT_HOTEL', null)
 }
-
-// 拖拽到已选区域
-function onDragStart(e, hotel) {
-  e.dataTransfer.effectAllowed = 'copy'
-  e.dataTransfer.setData('text/plain', JSON.stringify({ type: 'hotel', id: hotel.id }))
-}
 </script>
 
 <style lang="scss" scoped>
@@ -491,6 +484,7 @@ function onDragStart(e, hotel) {
   position: relative;
   overflow: hidden;
   border-radius: 12px;
+  touch-action: pan-y; /* 允许垂直滚动，水平滑动留给 JS 处理 */
 }
 
 .swipe-delete-bg {
@@ -690,6 +684,7 @@ function onDragStart(e, hotel) {
   max-height: 240px;
   overflow-y: auto;
   padding-right: 4px;
+  touch-action: pan-y; /* 移动端：允许垂直滚动 */
 
   &::-webkit-scrollbar {
     width: 4px;
@@ -711,6 +706,7 @@ function onDragStart(e, hotel) {
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   cursor: pointer;
+  touch-action: manipulation; /* 移动端：允许点击 */
   transition: all 0.2s;
 
   &:hover {

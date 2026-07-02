@@ -53,8 +53,7 @@ import { ref, watch, computed } from 'vue'
 const props = defineProps({
   visible: { type: Boolean, default: false },
   item: { type: Object, default: null },       // null = 新增, 有值 = 编辑
-  categories: { type: Array, default: () => [] },
-  members: { type: Array, default: () => [] }
+  categories: { type: Array, default: () => [] }
 })
 
 const emit = defineEmits(['close', 'save'])
