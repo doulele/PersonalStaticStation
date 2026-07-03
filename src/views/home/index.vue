@@ -7,28 +7,27 @@
         <div class="hero-particles"></div>
       </div>
       <div class="hero-content">
-        <span class="hero-badge">免费工具 · 人人可用</span>
         <h1 class="hero-title">
-          <span class="title-line">强大的在线工具集</span>
-          <span class="title-line accent">无限可能等你探索</span>
+          <span class="title-line">一个网站，搞定日常所需</span>
+          <span class="title-line accent">理财 · 出行 · 娱乐 · 创作</span>
         </h1>
         <p class="hero-subtitle">
-          精心挑选的优质工具合集，助你提升工作效率，一站式解决日常开发与办公需求
+          精选实用工具，覆盖基金理财、影音娱乐、生活出行，打开即用
         </p>
         <div class="hero-stats">
           <div class="stat-item">
-            <span class="stat-value">50+</span>
+            <span class="stat-value">{{ tools.length }}</span>
             <span class="stat-label">实用工具</span>
           </div>
           <div class="stat-divider"></div>
           <div class="stat-item">
-            <span class="stat-value">10K+</span>
-            <span class="stat-label">累计用户</span>
+            <span class="stat-value">永久</span>
+            <span class="stat-label">免费使用</span>
           </div>
           <div class="stat-divider"></div>
           <div class="stat-item">
-            <span class="stat-value">99.9%</span>
-            <span class="stat-label">服务可用</span>
+            <span class="stat-value">持续</span>
+            <span class="stat-label">更新迭代</span>
           </div>
         </div>
       </div>
@@ -38,118 +37,127 @@
     <section class="tools-section">
       <div class="section-header">
         <h2 class="section-title">热门工具</h2>
-        <p class="section-desc">为开发者和职场人士打造的高效工具集合</p>
+        <p class="section-desc">精选实用工具集合 · 按热度排序</p>
       </div>
       
-      <div class="tools-grid">
-        <router-link to="/home/fund" class="tool-card">
+      <div class="tools-grid" :class="{ collapsed: showCollapsed }">
+        <div
+          v-for="tool in visibleTools"
+          :key="tool.id"
+          class="tool-card"
+          @click.prevent="handleToolClick(tool)"
+        >
           <div class="tool-card-inner">
-            <div class="tool-icon">
-              <el-icon :size="28"><DataLine /></el-icon>
+            <div class="tool-icon" :class="tool.color">
+              <el-icon :size="28"><component :is="getIcon(tool.icon)" /></el-icon>
             </div>
             <div class="tool-info">
-              <h3 class="tool-name">基金/股票</h3>
-              <p class="tool-desc">基金筛选、股票信息查询与分析</p>
+              <h3 class="tool-name">
+                {{ tool.name }}
+                <span v-if="tool.clicks >= 1000" class="tool-clicks">{{ formatClicks(tool.clicks) }}</span>
+              </h3>
+              <p class="tool-desc">{{ tool.desc }}</p>
             </div>
             <el-icon class="tool-arrow"><ArrowRight /></el-icon>
           </div>
-        </router-link>
-
-        <router-link to="/home/lottery" class="tool-card">
-          <div class="tool-card-inner">
-            <div class="tool-icon yellow">
-              <el-icon :size="28"><Present /></el-icon>
-            </div>
-            <div class="tool-info">
-              <h3 class="tool-name">双色球 / 大乐透分析</h3>
-              <p class="tool-desc">双色球 / 大乐透历史数据统计分析</p>
-            </div>
-            <el-icon class="tool-arrow"><ArrowRight /></el-icon>
-          </div>
-        </router-link>
-
-        <router-link to="/home/audioVideoImagesTools" class="tool-card">
-          <div class="tool-card-inner">
-            <div class="tool-icon blue">
-              <el-icon :size="28"><Document /></el-icon>
-            </div>
-            <div class="tool-info">
-              <h3 class="tool-name">影音图像</h3>
-              <p class="tool-desc">音频、视频、图片在线工具</p>
-            </div>
-            <el-icon class="tool-arrow"><ArrowRight /></el-icon>
-          </div>
-        </router-link>
-
-        <router-link to="/home/lifeServices" class="tool-card">
-          <div class="tool-card-inner">
-            <div class="tool-icon green">
-              <el-icon :size="28"><Service /></el-icon>
-            </div>
-            <div class="tool-info">
-              <h3 class="tool-name">生活服务</h3>
-              <p class="tool-desc">旅游攻略、出行备忘、今日油价等生活工具</p>
-            </div>
-            <el-icon class="tool-arrow"><ArrowRight /></el-icon>
-          </div>
-        </router-link>
-
-        <router-link to="/password-generator" class="tool-card">
-          <div class="tool-card-inner">
-            <div class="tool-icon orange">
-              <el-icon :size="28"><Lock /></el-icon>
-            </div>
-            <div class="tool-info">
-              <h3 class="tool-name">密码生成器</h3>
-              <p class="tool-desc">生成高强度安全密码</p>
-            </div>
-            <el-icon class="tool-arrow"><ArrowRight /></el-icon>
-          </div>
-        </router-link>
-
-        <router-link to="/api-tester" class="tool-card">
-          <div class="tool-card-inner">
-            <div class="tool-icon purple">
-              <el-icon :size="28"><Connection /></el-icon>
-            </div>
-            <div class="tool-info">
-              <h3 class="tool-name">API 测试</h3>
-              <p class="tool-desc">快速测试 REST API 接口</p>
-            </div>
-            <el-icon class="tool-arrow"><ArrowRight /></el-icon>
-          </div>
-        </router-link>
-
-        <router-link to="/time-converter" class="tool-card">
-          <div class="tool-card-inner">
-            <div class="tool-icon red">
-              <el-icon :size="28"><Timer /></el-icon>
-            </div>
-            <div class="tool-info">
-              <h3 class="tool-name">时区转换</h3>
-              <p class="tool-desc">全球时区时间即时转换</p>
-            </div>
-            <el-icon class="tool-arrow"><ArrowRight /></el-icon>
-          </div>
-        </router-link>
+        </div>
       </div>
-    </section>
 
-    <!-- CTA Section -->
-    <section class="cta-section">
-      <div class="cta-content">
-        <h2 class="cta-title">准备好提升效率了吗？</h2>
-        <p class="cta-desc">无需注册，立即开始使用我们的免费工具</p>
-        <el-button type="primary" size="large" class="cta-btn">
-          免费开始使用
-        </el-button>
+      <!-- 移动端折叠展开 -->
+      <div class="tools-toggle" v-if="showToggle">
+        <button class="toggle-btn" @click="showCollapsed = !showCollapsed">
+          <span>{{ showCollapsed ? `展开全部 (${tools.length}个工具)` : '收起' }}</span>
+          <el-icon :class="{ rotated: !showCollapsed }"><ArrowDown /></el-icon>
+        </button>
       </div>
     </section>
   </div>
 </template>
 
 <script setup>
-import { ArrowRight, DataLine, Present, Document, Service, Lock, Connection, Timer } from '@element-plus/icons-vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { ArrowRight, ArrowDown, DataLine, Present, Document, Service, Lock, Connection, Timer, Filter, TrendCharts, Headset, Picture, VideoPlay, MapLocation, Coin, Memo, Sunny, VideoCamera } from '@element-plus/icons-vue'
+import { ALL_TOOLS } from '@/config/toolsRegistry'
+import { fetchToolRanking, recordToolClick } from '@/api/stats'
+
+const router = useRouter()
+
+const showCollapsed = ref(true)
+const ranking = ref([])
+const loading = ref(true)
+
+// 图标名称到组件的映射
+const iconMap = {
+  DataLine, Present, Document, Service, Lock, Connection, Timer,
+  Filter, TrendCharts, Headset, Picture, VideoPlay, MapLocation,
+  Coin, Memo, Sunny, VideoCamera
+}
+
+function getIcon(name) {
+  return iconMap[name] || DataLine
+}
+
+// 合并注册表数据与后端排名数据
+const tools = computed(() => {
+  const clickMap = {}
+  ranking.value.forEach(item => {
+    clickMap[item.path] = item.clicks
+  })
+
+  return ALL_TOOLS.map(tool => ({
+    ...tool,
+    clicks: clickMap[tool.path] || 0
+  })).sort((a, b) => {
+    // 按点击量降序排列
+    if (b.clicks !== a.clicks) return b.clicks - a.clicks
+    // 点击量相同时保持注册表顺序
+    return 0
+  })
+})
+
+// 移动端：折叠时显示前6个，PC/平板全部显示
+const MOBILE_BREAKPOINT = 768
+const COLLAPSED_COUNT = 6
+
+const isMobile = ref(false)
+const visibleTools = computed(() => {
+  if (!isMobile.value || !showCollapsed.value) return tools.value
+  return tools.value.slice(0, COLLAPSED_COUNT)
+})
+
+const showToggle = computed(() => {
+  return isMobile.value && tools.value.length > COLLAPSED_COUNT
+})
+
+function formatClicks(num) {
+  if (num >= 10000) return (num / 10000).toFixed(1) + 'W'
+  return (num / 1000).toFixed(1) + 'K'
+}
+
+async function handleToolClick(tool) {
+  // 先上报点击，不等待响应直接导航
+  recordToolClick(tool.path)
+  router.push(tool.path)
+}
+
+// 检测是否为移动端
+function checkMobile() {
+  isMobile.value = window.innerWidth < MOBILE_BREAKPOINT
+}
+
+onMounted(async () => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+
+  try {
+    ranking.value = await fetchToolRanking()
+  } catch (e) {
+    console.warn('获取工具排名失败:', e)
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <style lang="scss" scoped>
@@ -160,7 +168,7 @@ import { ArrowRight, DataLine, Present, Document, Service, Lock, Connection, Tim
 // Hero Section
 .hero {
   position: relative;
-  min-height: 520px;
+  min-height: 320px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -196,29 +204,29 @@ import { ArrowRight, DataLine, Present, Document, Service, Lock, Connection, Tim
   position: relative;
   z-index: 1;
   text-align: center;
-  padding: 60px 24px;
+  padding: 36px 24px;
   max-width: 900px;
   width: 100%;
 }
 
 .hero-badge {
   display: inline-block;
-  padding: 6px 16px;
+  padding: 5px 14px;
   background: rgba(99, 102, 241, 0.15);
   border: 1px solid rgba(99, 102, 241, 0.3);
   border-radius: 20px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: #818cf8;
   letter-spacing: 0.5px;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .hero-title {
-  font-size: clamp(28px, 5vw, 64px);
+  font-size: clamp(24px, 4vw, 48px);
   font-weight: 800;
-  line-height: 1.2;
-  margin-bottom: 20px;
+  line-height: 1.25;
+  margin-bottom: 14px;
   letter-spacing: -0.02em;
 }
 
@@ -235,18 +243,18 @@ import { ArrowRight, DataLine, Present, Document, Service, Lock, Connection, Tim
 }
 
 .hero-subtitle {
-  font-size: 16px;
+  font-size: 15px;
   color: rgba(255, 255, 255, 0.6);
-  max-width: 500px;
-  margin: 0 auto 36px;
-  line-height: 1.7;
+  margin: 0 auto 24px;
+  line-height: 1.6;
+  white-space: nowrap;
 }
 
 .hero-stats {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 32px;
+  gap: 28px;
   flex-wrap: wrap;
 }
 
@@ -256,26 +264,26 @@ import { ArrowRight, DataLine, Present, Document, Service, Lock, Connection, Tim
 
 .stat-value {
   display: block;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
   color: #ffffff;
 }
 
 .stat-label {
-  font-size: 13px;
+  font-size: 12px;
   color: rgba(255, 255, 255, 0.5);
   letter-spacing: 1px;
 }
 
 .stat-divider {
   width: 1px;
-  height: 40px;
+  height: 32px;
   background: rgba(255, 255, 255, 0.15);
 }
 
 // Tools Section
 .tools-section {
-  padding: 80px 24px;
+  padding: 40px 24px;
   background: #ffffff;
 }
 
@@ -308,6 +316,7 @@ import { ArrowRight, DataLine, Present, Document, Service, Lock, Connection, Tim
 .tool-card {
   display: block;
   text-decoration: none;
+  cursor: pointer;
 }
 
 .tool-card-inner {
@@ -397,6 +406,20 @@ import { ArrowRight, DataLine, Present, Document, Service, Lock, Connection, Tim
   font-weight: 600;
   color: #0f172a;
   margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tool-clicks {
+  font-size: 11px;
+  font-weight: 600;
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  letter-spacing: 0.03em;
 }
 
 .tool-desc {
@@ -409,81 +432,77 @@ import { ArrowRight, DataLine, Present, Document, Service, Lock, Connection, Tim
   color: #94a3b8;
   transition: all 0.3s ease;
   font-size: 20px;
+  flex-shrink: 0;
 }
 
-// CTA Section
-.cta-section {
-  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-  padding: 80px 24px;
-}
-
-.cta-content {
+// 移动端折叠展开按钮
+.tools-toggle {
   text-align: center;
-  max-width: 600px;
-  margin: 0 auto;
+  margin-top: 20px;
 }
 
-.cta-title {
-  font-size: 32px;
-  font-weight: 700;
-  color: #ffffff;
-  margin-bottom: 12px;
-}
-
-.cta-desc {
-  font-size: 16px;
-  color: rgba(255, 255, 255, 0.6);
-  margin-bottom: 32px;
-}
-
-.cta-btn {
-  padding: 14px 40px;
-  font-size: 16px;
-  font-weight: 600;
+.toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 24px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  border: none;
-  
+  font-size: 14px;
+  font-weight: 500;
+  color: #6366f1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
   &:hover {
-    background: linear-gradient(135deg, #5558e3 0%, #7c3aed 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+    background: #eef2ff;
+    border-color: #6366f1;
+  }
+
+  .el-icon {
+    transition: transform 0.3s ease;
+    &.rotated {
+      transform: rotate(180deg);
+    }
   }
 }
+
+
 
 // Responsive
 @media (max-width: 768px) {
   .hero {
-    min-height: 380px;
+    min-height: 260px;
   }
 
   .hero-content {
-    padding: 48px 20px;
+    padding: 28px 20px;
   }
 
   .hero-badge {
     font-size: 11px;
-    padding: 5px 12px;
-    margin-bottom: 18px;
+    padding: 4px 10px;
+    margin-bottom: 12px;
   }
 
   .hero-title {
-    font-size: clamp(22px, 6vw, 36px);
-    margin-bottom: 14px;
+    font-size: clamp(20px, 5vw, 32px);
+    margin-bottom: 10px;
   }
 
   .hero-subtitle {
-    font-size: 14px;
-    max-width: 360px;
-    margin-bottom: 28px;
+    font-size: 13px;
+    margin-bottom: 18px;
+    white-space: normal;
   }
 
   .hero-stats {
-    gap: 20px;
+    gap: 18px;
   }
 
   .stat-value {
-    font-size: 22px;
+    font-size: 20px;
   }
 
   .stat-label {
@@ -491,7 +510,7 @@ import { ArrowRight, DataLine, Present, Document, Service, Lock, Connection, Tim
   }
 
   .stat-divider {
-    height: 30px;
+    height: 26px;
   }
 
   .section-title {
@@ -535,57 +554,42 @@ import { ArrowRight, DataLine, Present, Document, Service, Lock, Connection, Tim
     font-size: 12px;
   }
 
-  .cta-section {
-    padding: 48px 16px;
-  }
 
-  .cta-title {
-    font-size: 24px;
-  }
-
-  .cta-desc {
-    font-size: 14px;
-  }
-
-  .cta-btn {
-    padding: 12px 32px;
-    font-size: 14px;
-  }
 }
 
 @media (max-width: 480px) {
   .hero {
-    min-height: 340px;
+    min-height: 220px;
   }
 
   .hero-content {
-    padding: 40px 16px;
+    padding: 24px 16px;
   }
 
   .hero-badge {
     font-size: 10px;
-    padding: 4px 10px;
-    margin-bottom: 14px;
-  }
-
-  .hero-title {
-    font-size: clamp(20px, 5vw, 28px);
+    padding: 3px 8px;
     margin-bottom: 10px;
   }
 
+  .hero-title {
+    font-size: clamp(18px, 5vw, 24px);
+    margin-bottom: 8px;
+  }
+
   .hero-subtitle {
-    font-size: 13px;
-    max-width: 300px;
-    margin-bottom: 22px;
-    line-height: 1.6;
+    font-size: 12px;
+    margin-bottom: 14px;
+    line-height: 1.5;
+    white-space: normal;
   }
 
   .hero-stats {
-    gap: 14px;
+    gap: 12px;
   }
 
   .stat-value {
-    font-size: 20px;
+    font-size: 18px;
   }
 
   .stat-label {
@@ -636,21 +640,12 @@ import { ArrowRight, DataLine, Present, Document, Service, Lock, Connection, Tim
     font-size: 18px;
   }
 
-  .cta-section {
-    padding: 40px 16px;
-  }
-
-  .cta-title {
-    font-size: 20px;
-  }
-
-  .cta-desc {
+  .toggle-btn {
+    padding: 8px 18px;
     font-size: 13px;
+    border-radius: 10px;
   }
 
-  .cta-btn {
-    padding: 10px 28px;
-    font-size: 13px;
-  }
+
 }
 </style>

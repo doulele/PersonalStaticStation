@@ -3,30 +3,21 @@
     <div class="header-container">
       <div class="header-left">
         <router-link to="/home" class="logo">
-          <svg class="logo-icon" width="32" height="32" viewBox="0 0 32 32" fill="none">
-            <rect width="32" height="32" rx="8" fill="url(#logoGradient)"/>
-            <path d="M10 16L14 20L22 12" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <defs>
-              <linearGradient id="logoGradient" x1="0" y1="0" x2="32" y2="32">
-                <stop stop-color="#6366f1"/>
-                <stop offset="1" stop-color="#a855f7"/>
-              </linearGradient>
-            </defs>
-          </svg>
-          <span class="logo-text">ToolHub</span>
+          <img class="logo-icon" src="/favicon.svg" alt="工具集" />
+          <span class="logo-text"><span class="logo-utility">Utility</span><span class="logo-tool">Tool</span></span>
         </router-link>
       </div>
       
-      <nav class="nav-menu">
+      <nav class="nav-menu" ref="navMenuRef">
         <router-link 
           v-for="item in navList" 
           :key="item.path"
           :to="item.path"
           class="nav-item"
-          :class="{ active: isActive(item.path) }"
+          :class="{ active: isActive(item) }"
         >
           <el-icon :size="18"><component :is="item.icon" /></el-icon>
-          <span>{{ item.title }}</span>
+          <span class="nav-label">{{ item.title }}</span>
         </router-link>
       </nav>
     </div>
@@ -35,23 +26,37 @@
 
 <script setup>
 import { useRoute } from 'vue-router'
-import { 
-  HomeFilled, 
-  Grid
-} from '@element-plus/icons-vue'
+import { HomeFilled, DataLine, VideoCamera, Service } from '@element-plus/icons-vue'
+import { TOOL_CATEGORIES } from '@/config/toolsRegistry'
 
 const route = useRoute()
 
+const iconMap = { DataLine, VideoCamera, Service }
+
 const navList = [
-  { path: '/home', title: '首页', icon: 'HomeFilled' },
-  { path: '/other', title: '其他', icon: 'Grid' }
+  { path: '/home', title: '首页', icon: HomeFilled, match: 'home' },
+  ...TOOL_CATEGORIES.map(cat => ({
+    path: cat.path,
+    title: cat.name,
+    icon: iconMap[cat.icon] || Service,
+    match: cat.id
+  }))
 ]
 
-const isActive = (path) => {
-  if (path === '/home') {
-    return route.path === '/home' || route.path.startsWith('/home/')
+const isActive = (item) => {
+  if (item.match === 'home') {
+    return route.path === '/home'
   }
-  return route.path.startsWith(path)
+  if (item.match === 'fund') {
+    return route.path.startsWith('/home/fund')
+  }
+  if (item.match === 'media') {
+    return route.path.startsWith('/home/audioVideoImagesTools')
+  }
+  if (item.match === 'life') {
+    return route.path.startsWith('/home/lifeServices')
+  }
+  return false
 }
 </script>
 
@@ -77,6 +82,7 @@ const isActive = (path) => {
 .header-left {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .logo {
@@ -84,12 +90,26 @@ const isActive = (path) => {
   align-items: center;
   gap: 10px;
   text-decoration: none;
-  
+
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+  }
+
   .logo-text {
-    font-size: 20px;
-    font-weight: 700;
-    color: #0f172a;
+    font-size: 18px;
+    font-weight: 600;
     letter-spacing: -0.02em;
+    line-height: 32px;
+  }
+
+  .logo-utility {
+    color: #64748b;
+  }
+
+  .logo-tool {
+    color: #0f172a;
   }
 }
 
@@ -98,6 +118,13 @@ const isActive = (path) => {
   display: flex;
   align-items: center;
   gap: 4px;
+  flex: 1;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;  /* Firefox */
+  &::-webkit-scrollbar {
+    display: none;  /* Chrome/Safari */
+  }
 }
 
 .nav-item {
@@ -112,6 +139,7 @@ const isActive = (path) => {
   text-decoration: none;
   transition: all 0.2s ease;
   white-space: nowrap;
+  flex-shrink: 0;
   
   &:hover {
     color: #0f172a;
@@ -124,56 +152,118 @@ const isActive = (path) => {
   }
 }
 
-/* 移动端适配 */
+/* 移动端适配 — 单行布局，菜单均匀铺满 Logo 右侧剩余空间 */
 @media (max-width: 768px) {
   .header-container {
-    height: 56px;
-    padding: 0 16px;
+    height: 48px;
+    padding: 0 12px;
+    gap: 0;
   }
 
-  .logo .logo-text {
-    font-size: 17px;
+  .header-left {
+    flex-shrink: 0;
+  }
+
+  .logo {
+    gap: 0;
+
+    .logo-text {
+      display: none;
+    }
+
+    .logo-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+    }
   }
 
   .nav-menu {
     margin-left: 12px;
-    gap: 2px;
+    flex: 1;
+    gap: 0;
+    overflow-x: visible;
+    mask-image: none;
+    -webkit-mask-image: none;
   }
 
   .nav-item {
-    padding: 6px 10px;
+    flex: 1;
+    justify-content: center;
+
+    .el-icon {
+      display: none;
+    }
+
+    /* 纯文字 + 下划线激活 */
+    padding: 0 4px;
     font-size: 13px;
-    gap: 4px;
+    font-weight: 500;
+    gap: 0;
+    border-radius: 0;
+    position: relative;
+    color: #64748b;
+    background: transparent;
+    height: 100%;
+    align-items: center;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 2.5px;
+      background: #6366f1;
+      border-radius: 2px;
+      transition: width 0.25s ease;
+    }
+
+    &:hover {
+      color: #0f172a;
+      background: transparent;
+    }
+
+    &.active {
+      color: #6366f1;
+      background: transparent;
+      font-weight: 600;
+
+      &::after {
+        width: 24px;
+      }
+    }
   }
 }
 
 @media (max-width: 480px) {
   .header-container {
-    height: 52px;
-    padding: 0 12px;
+    height: 44px;
+    padding: 0 10px;
   }
 
-  .logo {
-    gap: 6px;
-    .logo-text {
-      font-size: 15px;
-    }
-    .logo-icon {
-      width: 26px;
-      height: 26px;
-    }
+  .logo .logo-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 5px;
+  }
+
+  .logo .logo-text {
+    display: none;
   }
 
   .nav-menu {
     margin-left: 8px;
-    gap: 0;
   }
 
   .nav-item {
-    padding: 6px 8px;
     font-size: 12px;
-    gap: 3px;
-    border-radius: 6px;
+    padding: 0 2px;
+
+    &.active::after {
+      width: 20px;
+    }
   }
 }
 </style>

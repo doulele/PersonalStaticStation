@@ -2,57 +2,70 @@
   <div class="life-services-page">
     <div class="page-header">
       <h1 class="page-title">生活服务</h1>
-      <p class="page-desc">实用的日常生活工具集合</p>
+      <p class="page-desc">让日常生活更便捷</p>
     </div>
 
     <div class="tools-grid">
-      <router-link to="/home/lifeServices/travelGuide" class="tool-card">
+      <router-link to="/home/lifeServices/lottery" class="tool-card" @click="recordToolClick('/home/lifeServices/lottery')">
+        <div class="tool-card-inner">
+          <div class="tool-icon yellow">
+            <el-icon :size="32"><Present /></el-icon>
+          </div>
+          <div class="tool-info">
+            <h3 class="tool-name">双色球/大乐透分析</h3>
+            <p class="tool-desc">历史开奖数据智能分析，辅助选号参考</p>
+          </div>
+          <el-icon class="tool-arrow"><ArrowRight /></el-icon>
+        </div>
+      </router-link>
+
+      <router-link to="/home/lifeServices/travelGuide" class="tool-card" @click="recordToolClick('/home/lifeServices/travelGuide')">
         <div class="tool-card-inner">
           <div class="tool-icon">
             <el-icon :size="32"><MapLocation /></el-icon>
           </div>
           <div class="tool-info">
             <h3 class="tool-name">旅游攻略</h3>
-            <p class="tool-desc">热门旅游目的地攻略与行程规划</p>
+            <p class="tool-desc">热门目的地攻略 + 智能行程规划</p>
           </div>
           <el-icon class="tool-arrow"><ArrowRight /></el-icon>
         </div>
       </router-link>
 
-      <router-link to="/home/lifeServices/oilPrice" class="tool-card">
+      <router-link to="/home/lifeServices/oilPrice" class="tool-card" @click="recordToolClick('/home/lifeServices/oilPrice')">
         <div class="tool-card-inner">
           <div class="tool-icon green">
             <el-icon :size="32"><Coin /></el-icon>
           </div>
           <div class="tool-info">
             <h3 class="tool-name">今日油价</h3>
-            <p class="tool-desc">全国各地实时油价查询</p>
+            <p class="tool-desc">全国各省市实时油价一键查询</p>
           </div>
           <el-icon class="tool-arrow"><ArrowRight /></el-icon>
         </div>
       </router-link>
 
-      <router-link to="/home/lifeServices/weather" class="tool-card">
+      <router-link to="/home/lifeServices/weather" class="tool-card" @click="recordToolClick('/home/lifeServices/weather')">
         <div class="tool-card-inner">
           <div class="tool-icon blue">
             <el-icon :size="32"><Sunny /></el-icon>
           </div>
           <div class="tool-info">
             <h3 class="tool-name">天气预报</h3>
-            <p class="tool-desc">全国城市实时天气查询与多日预报</p>
+            <p class="tool-desc">全国城市实时天气与多日预报查询</p>
           </div>
           <el-icon class="tool-arrow"><ArrowRight /></el-icon>
         </div>
       </router-link>
 
-      <router-link to="/home/lifeServices/travelMemo" class="tool-card">
+      <router-link to="/home/lifeServices/travelMemo" class="tool-card" @click="recordToolClick('/home/lifeServices/travelMemo')">
         <div class="tool-card-inner">
           <div class="tool-icon orange">
             <el-icon :size="32"><Memo /></el-icon>
           </div>
           <div class="tool-info">
             <h3 class="tool-name">出行备忘</h3>
-            <p class="tool-desc">出行物品清单，轻松打包不遗漏</p>
+            <p class="tool-desc">出行物品清单管理，打包不遗漏</p>
           </div>
           <el-icon class="tool-arrow"><ArrowRight /></el-icon>
         </div>
@@ -62,7 +75,8 @@
 </template>
 
 <script setup>
-import { ArrowRight, MapLocation, Coin, Memo, Sunny } from '@element-plus/icons-vue'
+import { ArrowRight, MapLocation, Coin, Memo, Sunny, Present } from '@element-plus/icons-vue'
+import { recordToolClick } from '@/api/stats'
 </script>
 
 <style lang="scss" scoped>
@@ -175,6 +189,10 @@ import { ArrowRight, MapLocation, Coin, Memo, Sunny } from '@element-plus/icons-
 
   &.orange {
     background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+  }
+
+  &.yellow {
+    background: linear-gradient(135deg, #f59e0b 0%, #eab308 100%);
   }
 }
 

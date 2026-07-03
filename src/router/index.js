@@ -46,13 +46,12 @@ const routes = [
         meta: { title: '大道七线股诊', icon: 'DataLine' }
       },
       /**股票及基金end */
-      /**彩票start */
+      /**彩票分析 — 归入生活服务目录下 */
       {
-        path: 'lottery',
+        path: 'lifeServices/lottery',
         component: () => import('@/views/home/lotteryTools/index.vue'),
         meta: { title: '双色球/大乐透分析', icon: 'Present' }
       },
-      /**彩票end */
       /**音视频图像start */
       {
         path: 'audioVideoImagesTools',
