@@ -116,6 +116,18 @@ const routes = [
         meta: { title: '出行备忘', icon: 'Memo' }
       },
       /**生活服务end */
+      /**家庭/教育start */
+      {
+        path: 'familyEducation',
+        component: () => import('@/views/home/familyEducation/index.vue'),
+        meta: { title: '家庭/教育', icon: 'School' }
+      },
+      {
+        path: 'familyEducation/babySleep',
+        component: () => import('@/views/home/familyEducation/babySleep/index.vue'),
+        meta: { title: '宝宝哄睡', icon: 'Moon' }
+      },
+      /**家庭/教育end */
     ]
   },
   {

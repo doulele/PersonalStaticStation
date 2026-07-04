@@ -77,7 +77,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowRight, ArrowDown, DataLine, Present, Document, Service, Lock, Connection, Timer, Filter, TrendCharts, Headset, Picture, VideoPlay, MapLocation, Coin, Memo, Sunny, VideoCamera } from '@element-plus/icons-vue'
+import { ArrowRight, ArrowDown, DataLine, Present, Document, Service, Lock, Connection, Timer, Filter, TrendCharts, Headset, Picture, VideoPlay, MapLocation, Coin, Memo, Sunny, VideoCamera, Moon, School } from '@element-plus/icons-vue'
 import { ALL_TOOLS } from '@/config/toolsRegistry'
 import { fetchToolRanking, recordToolClick } from '@/api/stats'
 
@@ -91,7 +91,7 @@ const loading = ref(true)
 const iconMap = {
   DataLine, Present, Document, Service, Lock, Connection, Timer,
   Filter, TrendCharts, Headset, Picture, VideoPlay, MapLocation,
-  Coin, Memo, Sunny, VideoCamera
+  Coin, Memo, Sunny, VideoCamera, Moon, School
 }
 
 function getIcon(name) {

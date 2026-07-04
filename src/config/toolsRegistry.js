@@ -32,6 +32,13 @@ export const TOOL_CATEGORIES = [
     icon: 'Service',
     path: '/home/lifeServices',
     desc: '天气、油价、旅游攻略、出行备忘等生活助手'
+  },
+  {
+    id: 'family',
+    name: '家庭/教育',
+    icon: 'School',
+    path: '/home/familyEducation',
+    desc: '宝宝哄睡、育儿工具与教育资源'
   }
 ]
 
@@ -142,5 +149,16 @@ export const ALL_TOOLS = [
     path: '/home/lifeServices/travelMemo',
     icon: 'Memo',
     color: 'orange'
+  },
+
+  // ========== 家庭/教育 ==========
+  {
+    id: 'baby-sleep',
+    name: '宝宝哄睡',
+    desc: '白噪音、摇篮曲、自然音效，帮助宝宝安心入睡',
+    category: 'family',
+    path: '/home/familyEducation/babySleep',
+    icon: 'Moon',
+    color: 'purple'
   }
 ]

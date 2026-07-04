@@ -26,12 +26,12 @@
 
 <script setup>
 import { useRoute } from 'vue-router'
-import { HomeFilled, DataLine, VideoCamera, Service } from '@element-plus/icons-vue'
+import { HomeFilled, DataLine, VideoCamera, Service, School } from '@element-plus/icons-vue'
 import { TOOL_CATEGORIES } from '@/config/toolsRegistry'
 
 const route = useRoute()
 
-const iconMap = { DataLine, VideoCamera, Service }
+const iconMap = { DataLine, VideoCamera, Service, School }
 
 const navList = [
   { path: '/home', title: '首页', icon: HomeFilled, match: 'home' },
@@ -55,6 +55,9 @@ const isActive = (item) => {
   }
   if (item.match === 'life') {
     return route.path.startsWith('/home/lifeServices')
+  }
+  if (item.match === 'family') {
+    return route.path.startsWith('/home/familyEducation')
   }
   return false
 }
