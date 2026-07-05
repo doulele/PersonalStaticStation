@@ -1231,7 +1231,7 @@ function handleClickOutside(e) {
 }
 
 // ==================== 倍速 ====================
-const speedOptions = [0.5, 0.75, 1.0, 1.25, 1.5]
+const speedOptions = [0.6, 0.9, 1.0, 1.2, 1.5, 1.8]
 
 function setSpeed(s) {
   playbackSpeed.value = s
@@ -1249,6 +1249,62 @@ function setSpeed(s) {
 let audioCtx = null
 let songAudio = null // 歌曲播放器
 let activeNodes = []
+
+// TTS 音频缓存：key → AudioBuffer，避免重复请求后端合成
+const ttsAudioCache = new Map()
+const TTS_CACHE_MAX = 20
+
+/** 生成缓存 key：itemId + voice + speed */
+function getTtsCacheKey(itemId, voice, speed) {
+  return `${itemId}::${voice}::${speed}`
+}
+
+/** 存入缓存（超过上限则删最旧的） */
+function setTtsCache(key, audioBuffer) {
+  if (ttsAudioCache.size >= TTS_CACHE_MAX) {
+    const firstKey = ttsAudioCache.keys().next().value
+    ttsAudioCache.delete(firstKey)
+  }
+  ttsAudioCache.set(key, audioBuffer)
+}
+
+/** 预加载下一首的 TTS 音频（不阻塞当前播放） */
+async function prefetchNextTts() {
+  const list = currentItemList.value
+  if (!list.length || !selectedItem.value) return
+  const currentId = selectedItem.value.id
+  const idx = list.findIndex(item => item.id === currentId)
+  if (idx < 0) return
+  const nextIdx = idx >= list.length - 1 ? 0 : idx + 1
+  const nextItem = list[nextIdx]
+  if (!nextItem.text) return
+
+  const voice = customVoiceId.value || selectedVoice.value
+  const speed = +(playbackSpeed.value * 0.85).toFixed(2)
+  const key = getTtsCacheKey(nextItem.id, voice, speed)
+  if (ttsAudioCache.has(key)) return // 已缓存
+
+  try {
+    const endpoint = customVoiceId.value ? `${API_BASE}/tts` : `${API_BASE}/tts/edge`
+    const body = customVoiceId.value
+      ? { text: nextItem.text, customVoiceId: customVoiceId.value, speed, clonePassword: clonePassword.value }
+      : { text: nextItem.text, voice, speed }
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    })
+    const json = await res.json()
+    if (json.success && json.data?.audio) {
+      const ctx = getAudioContext()
+      const audioData = base64ToArrayBuffer(json.data.audio)
+      const audioBuffer = await ctx.decodeAudioData(audioData)
+      setTtsCache(key, audioBuffer)
+    }
+  } catch {
+    // 预加载失败不影响主流程，静默忽略
+  }
+}
 
 function getAudioContext() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)()
@@ -1493,71 +1549,80 @@ async function playEdgeTTS(item) {
   isBuffering.value = true
   ttsProgress.value = 0
 
-  const reqId = ++ttsRequestId  // 记录当前请求 ID
+  const reqId = ++ttsRequestId
+  const voice = selectedVoice.value
+  const speed = +(playbackSpeed.value * 0.85).toFixed(2)
+  const cacheKey = getTtsCacheKey(item.id, voice, speed)
 
-  try {
-    const res = await fetch(`${API_BASE}/tts/edge`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        text: item.text,
-        voice: selectedVoice.value,
-        speed: playbackSpeed.value
+  // 检查缓存
+  let audioBuffer = ttsAudioCache.get(cacheKey) || null
+  if (!audioBuffer) {
+    try {
+      const res = await fetch(`${API_BASE}/tts/edge`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: item.text, voice, speed })
       })
-    })
+      if (reqId !== ttsRequestId) return
+      const json = await res.json()
+      if (reqId !== ttsRequestId) return
 
-    // 请求返回后校验：如果已被取消，丢弃结果
-    if (reqId !== ttsRequestId) return
-
-    const json = await res.json()
-    if (reqId !== ttsRequestId) return
-
-    if (json.success && json.data?.audio) {
-      const ctx = getAudioContext()
-      const audioData = base64ToArrayBuffer(json.data.audio)
-      const audioBuffer = await ctx.decodeAudioData(audioData)
-
-      if (reqId !== ttsRequestId) return  // 解码后再次校验
-
-      const source = ctx.createBufferSource()
-      source.buffer = audioBuffer
-      source.playbackRate.value = playbackSpeed.value
-
-      const gain = ctx.createGain()
-      gain.gain.value = volume.value / 100
-      source.connect(gain)
-      gain.connect(ctx.destination)
-
-      source.onended = () => {
-        clearProgress()
-        ttsProgress.value = 100
-        if (!isPlaying.value || selectedItem.value?.id !== item.id) return
-        if (loopMode.value === 'single') {
-          playEdgeTTS(item)
-        } else if (loopMode.value === 'list') {
-          playNextInList()
-        } else {
-          stopAllSounds(); isPlaying.value = false; clearTimer()
-        }
+      if (json.success && json.data?.audio) {
+        const ctx = getAudioContext()
+        const audioData = base64ToArrayBuffer(json.data.audio)
+        audioBuffer = await ctx.decodeAudioData(audioData)
+        setTtsCache(cacheKey, audioBuffer)
+      } else {
+        if (reqId !== ttsRequestId) return
+        isBuffering.value = false
+        console.warn('[babySleep] Edge TTS 失败，降级到浏览器 TTS')
+        playBrowserTTS(item)
+        return
       }
-
-      source.start()
-      isBuffering.value = false
-      startProgressTracking(ctx, source, audioBuffer.duration)
-      ttsAudioElement = { pause: () => { try { source.stop(); clearProgress() } catch (e) {} }, source, gain }
-      activeNodes.push(source, gain)
-    } else {
+    } catch (e) {
       if (reqId !== ttsRequestId) return
       isBuffering.value = false
-      console.warn('[babySleep] Edge TTS 失败，降级到浏览器 TTS')
+      console.warn('[babySleep] Edge TTS 异常，降级到浏览器 TTS:', e)
       playBrowserTTS(item)
+      return
     }
-  } catch (e) {
-    if (reqId !== ttsRequestId) return
-    isBuffering.value = false
-    console.warn('[babySleep] Edge TTS 异常，降级到浏览器 TTS:', e)
-    playBrowserTTS(item)
   }
+
+  // 创建播放（audioBuffer 来自缓存或刚刚 fetch 获取）
+  if (reqId !== ttsRequestId) return
+  if (!audioBuffer) return  // 理论上不会到这里，兜底
+  const ctx = getAudioContext()
+  const source = ctx.createBufferSource()
+  source.buffer = audioBuffer
+  // 后端已通过 SSML prosody rate 将语速烧录进音频，前端统一 1.0 倍速播放
+  source.playbackRate.value = 1.0
+
+  const gain = ctx.createGain()
+  gain.gain.value = volume.value / 100
+  source.connect(gain)
+  gain.connect(ctx.destination)
+
+  source.onended = () => {
+    clearProgress()
+    ttsProgress.value = 100
+    if (!isPlaying.value || selectedItem.value?.id !== item.id) return
+    if (loopMode.value === 'single') {
+      playEdgeTTS(item)
+    } else if (loopMode.value === 'list') {
+      playNextInList()
+    } else {
+      stopAllSounds(); isPlaying.value = false; clearTimer()
+    }
+  }
+
+  source.start()
+  isBuffering.value = false
+  startProgressTracking(ctx, source, audioBuffer.duration)
+  ttsAudioElement = { pause: () => { try { source.stop(); clearProgress() } catch (e) {} }, source, gain }
+  activeNodes.push(source, gain)
+
+  // 后台预加载下一首
+  if (loopMode.value === 'list') prefetchNextTts()
 }
 
 // 语音克隆 TTS 播放（付费，需密码）
@@ -1572,71 +1637,85 @@ async function playCloneTTS(item) {
   isBuffering.value = true
   ttsProgress.value = 0
 
-  const reqId = ++ttsRequestId  // 记录当前请求 ID
+  const reqId = ++ttsRequestId
+  const voice = customVoiceId.value
+  const speed = +(playbackSpeed.value * 0.85).toFixed(2)
+  const cacheKey = getTtsCacheKey(item.id, voice, speed)
 
-  try {
-    const res = await fetch(`${API_BASE}/tts`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        text: item.text,
-        customVoiceId: customVoiceId.value,
-        speed: playbackSpeed.value,
-        clonePassword: clonePassword.value
+  // 检查缓存
+  let audioBuffer = ttsAudioCache.get(cacheKey) || null
+  if (!audioBuffer) {
+    try {
+      const res = await fetch(`${API_BASE}/tts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: item.text,
+          customVoiceId: voice,
+          speed,
+          clonePassword: clonePassword.value
+        })
       })
-    })
-
-    if (reqId !== ttsRequestId) return
-
-    const json = await res.json()
-    if (reqId !== ttsRequestId) return
-
-    if (json.success && json.data?.audio) {
-      const ctx = getAudioContext()
-      const audioData = base64ToArrayBuffer(json.data.audio)
-      const audioBuffer = await ctx.decodeAudioData(audioData)
-
+      if (reqId !== ttsRequestId) return
+      const json = await res.json()
       if (reqId !== ttsRequestId) return
 
-      const source = ctx.createBufferSource()
-      source.buffer = audioBuffer
-      source.playbackRate.value = playbackSpeed.value
-
-      const gain = ctx.createGain()
-      gain.gain.value = volume.value / 100
-      source.connect(gain)
-      gain.connect(ctx.destination)
-
-      source.onended = () => {
-        clearProgress()
-        ttsProgress.value = 100
-        if (!isPlaying.value || selectedItem.value?.id !== item.id) return
-        if (loopMode.value === 'single') {
-          playCloneTTS(item)
-        } else if (loopMode.value === 'list') {
-          playNextInList()
-        } else {
-          stopAllSounds(); isPlaying.value = false; clearTimer()
-        }
+      if (json.success && json.data?.audio) {
+        const ctx = getAudioContext()
+        const audioData = base64ToArrayBuffer(json.data.audio)
+        audioBuffer = await ctx.decodeAudioData(audioData)
+        setTtsCache(cacheKey, audioBuffer)
+      } else {
+        if (reqId !== ttsRequestId) return
+        isBuffering.value = false
+        console.warn('[babySleep] 克隆 TTS 失败，降级到 Edge TTS')
+        playEdgeTTS(item)
+        return
       }
-
-      source.start()
-      isBuffering.value = false
-      startProgressTracking(ctx, source, audioBuffer.duration)
-      ttsAudioElement = { pause: () => { try { source.stop(); clearProgress() } catch (e) {} }, source, gain }
-      activeNodes.push(source, gain)
-    } else {
+    } catch (e) {
       if (reqId !== ttsRequestId) return
       isBuffering.value = false
-      console.warn('[babySleep] 克隆 TTS 失败，降级到 Edge TTS')
+      console.warn('[babySleep] 克隆 TTS 异常:', e)
       playEdgeTTS(item)
+      return
     }
-  } catch (e) {
-    if (reqId !== ttsRequestId) return
-    isBuffering.value = false
-    console.warn('[babySleep] 克隆 TTS 异常:', e)
-    playEdgeTTS(item)
   }
+
+  // 创建播放
+  if (reqId !== ttsRequestId) return
+  if (!audioBuffer) return
+  const ctx = getAudioContext()
+  const source = ctx.createBufferSource()
+  source.buffer = audioBuffer
+  // 后端已通过 speech_rate 参数将语速烧录进音频，前端统一 1.0 倍速播放
+  source.playbackRate.value = 1.0
+
+  const gain = ctx.createGain()
+  gain.gain.value = volume.value / 100
+  source.connect(gain)
+  gain.connect(ctx.destination)
+
+  source.onended = () => {
+    clearProgress()
+    ttsProgress.value = 100
+    if (!isPlaying.value || selectedItem.value?.id !== item.id) return
+    if (loopMode.value === 'single') {
+      playCloneTTS(item)
+    } else if (loopMode.value === 'list') {
+      playNextInList()
+    } else {
+      stopAllSounds(); isPlaying.value = false; clearTimer()
+    }
+  }
+
+  source.start()
+  isBuffering.value = false
+  startProgressTracking(ctx, source, audioBuffer.duration)
+  ttsAudioElement = { pause: () => { try { source.stop(); clearProgress() } catch (e) {} }, source, gain }
+  activeNodes.push(source, gain)
+
+  // 后台预加载下一首
+  if (loopMode.value === 'list') prefetchNextTts()
 }
 
 function base64ToArrayBuffer(base64) {
@@ -1668,7 +1747,7 @@ function playBrowserTTS(item) {
   if (!item.text) return
   const u = new SpeechSynthesisUtterance(item.text)
   u.lang = 'zh-CN'
-  u.rate = playbackSpeed.value * 0.75
+  u.rate = playbackSpeed.value * 0.85
   u.pitch = 1.0
   u.volume = volume.value / 100
   u.onend = () => {
@@ -2098,8 +2177,8 @@ onUnmounted(() => {
 // 循环图标
 .loop-icon-wrap {
   display: flex; align-items: center; justify-content: center;
-  width: 30px; height: 26px;
-  svg { color: inherit; }
+  width: 28px; height: 28px;
+  svg { color: inherit; width: 100%; height: 100%; }
 }
 .loop-badge-svg {
   circle, path, text { color: inherit; }
@@ -2414,11 +2493,16 @@ onUnmounted(() => {
   .category-tabs { gap: 3px; }
   .tab-btn { padding: 5px 8px; font-size: 11px; gap: 3px; }
   .tab-btn .el-icon { display: none; }
-  .player-inner { padding: 6px 12px 8px; gap: 8px; }
-  .player-right { gap: 6px; }
-  .ctrl-pill { height: 30px; padding: 0 7px; font-size: 11px; }
-  .player-cover { width: 36px; height: 36px; min-width: 36px; }
+  .player-inner { padding: 8px 12px 10px; gap: 8px; }
+  .player-right { gap: 8px; }
+  .ctrl-pill { height: 38px; padding: 0 12px; font-size: 12px; gap: 4px; min-width: 38px; justify-content: center; }
+  .ctrl-pill .el-icon { font-size: 18px !important; }
+  .loop-icon-wrap { width: 28px; height: 28px; }
+  .player-cover { width: 42px; height: 42px; min-width: 42px; }
   .player-title { max-width: 150px; }
+  .dropdown-item { padding: 10px 14px; font-size: 13px; }
+  .dropdown-menu { min-width: 120px; }
+  .voice-menu { min-width: 180px; }
 }
 @media (max-width: 480px) {
   .baby-sleep-page { padding: 16px 10px 130px; }
@@ -2432,14 +2516,17 @@ onUnmounted(() => {
   .content-card { padding: 10px 12px; }
   .content-icon { width: 34px; height: 34px; min-width: 34px; }
   .clone-modal { max-width: 100%; border-radius: 16px 16px 0 0; margin-top: auto; }
-  .player-inner { padding: 5px 10px 7px; gap: 6px; }
+  .player-inner { padding: 8px 10px 10px; gap: 6px; }
   .player-left { gap: 6px; }
-  .player-cover { width: 32px; height: 32px; min-width: 32px; }
+  .player-cover { width: 38px; height: 38px; min-width: 38px; }
   .player-title { font-size: 12px; max-width: 120px; }
   .player-sub { font-size: 10px; gap: 3px; }
-  .player-right { gap: 4px; }
-  .ctrl-pill { height: 28px; padding: 0 6px; font-size: 10px; gap: 2px; }
+  .player-right { gap: 6px; }
+  .ctrl-pill { height: 36px; padding: 0 10px; font-size: 11px; gap: 4px; min-width: 36px; justify-content: center; }
+  .ctrl-pill .el-icon { font-size: 17px !important; }
+  .loop-icon-wrap { width: 28px; height: 28px; }
   .ctrl-pill span:not(.loop-icon-wrap) { display: none; } // 移动端隐藏文字只显示图标
+  .dropdown-item { padding: 10px 14px; font-size: 13px; }
   .dropdown-menu { min-width: 110px; left: auto; right: 0; transform: none; }
   .voice-menu { min-width: 160px; }
 }
