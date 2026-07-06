@@ -13,10 +13,10 @@
     <div class="input-section">
       <!-- 输入模式切换 -->
       <div class="input-mode-switch">
-        <button class="input-mode-btn" :class="{ active: inputMode === 'search' }" @click="switchInputMode('search')">
+        <button class="input-mode-btn" :class="{ active: inputMode === 'search' }" :disabled="searching" @click="switchInputMode('search')">
           <el-icon :size="14"><Search /></el-icon> 搜索视频
         </button>
-        <button class="input-mode-btn" :class="{ active: inputMode === 'url' }" @click="switchInputMode('url')">
+        <button class="input-mode-btn" :class="{ active: inputMode === 'url' }" :disabled="searching" @click="switchInputMode('url')">
           <el-icon :size="14"><Link /></el-icon> 链接解析
         </button>
       </div>
@@ -37,30 +37,58 @@
 
       <!-- 名称搜索框 -->
       <div class="search-box" v-if="inputMode === 'search'">
+        <!-- 不支持名称搜索的平台提示 -->
+        <div v-if="isUnsupportedPlatform && !searching" class="platform-search-hint">
+          <el-icon :size="16"><WarningFilled /></el-icon>
+          <span>{{ { tencent: '腾讯视频', youku: '优酷', iqiyi: '爱奇艺', mgtv: '芒果TV' }[searchPlatform] }}暂不支持名称搜索，将在B站中搜索相关视频</span>
+          <span class="hint-action" @click="switchInputMode('url')">如需观看该平台独播剧集，请切换到「链接解析」模式</span>
+        </div>
         <div class="search-row">
           <el-icon class="input-icon" :size="20"><Search /></el-icon>
           <input
             v-model="searchQuery"
             class="url-input"
             placeholder="输入视频名称搜索（如：周杰伦 稻香 MV）"
+            :disabled="searching"
             @keydown.enter="handleSearch"
           />
-          <el-icon v-if="searchQuery" class="clear-icon" :size="18" @click="searchQuery = ''">
+          <el-icon v-if="searchQuery && !searching" class="clear-icon" :size="18" @click="searchQuery = ''">
             <CircleClose />
           </el-icon>
-          <select v-model="searchPlatform" class="platform-select">
-            <option value="auto">自动</option>
+          <select v-model="searchPlatform" class="platform-select" :disabled="searching">
             <option value="bilibili">B站</option>
+            <option value="youtube">YouTube</option>
+            <option value="bilibili_youtube">B站 + YouTube</option>
             <option value="tencent">腾讯视频</option>
             <option value="youku">优酷</option>
             <option value="iqiyi">爱奇艺</option>
             <option value="mgtv">芒果TV</option>
-            <option value="youtube">YouTube</option>
           </select>
           <button class="search-btn" :disabled="!searchQuery.trim() || searching" @click="handleSearch">
             <el-icon v-if="!searching" :size="16"><Search /></el-icon>
             <el-icon v-else class="is-loading" :size="16"><Loading /></el-icon>
           </button>
+        </div>
+      </div>
+
+      <!-- 搜索加载遮罩层 -->
+      <div v-if="searching" class="search-loading-overlay">
+        <div class="search-loading-card">
+          <div class="search-loading-icon">
+            <el-icon class="is-loading" :size="48"><Loading /></el-icon>
+          </div>
+          <h3 class="search-loading-title">正在搜索中...</h3>
+          <p class="search-loading-query">"{{ searchQuery }}"</p>
+          <p class="search-loading-platform">
+            搜索范围：{{ { auto: 'B站 + YouTube', bilibili: 'B站', youtube: 'YouTube', tencent: 'B站 + YouTube', youku: 'B站 + YouTube', iqiyi: 'B站 + YouTube', mgtv: 'B站 + YouTube' }[searchPlatform] || 'B站 + YouTube' }}
+          </p>
+          <div class="search-loading-progress">
+            <div class="progress-bar">
+              <div class="progress-fill" :style="{ width: Math.min(searchElapsed / 60 * 100, 95) + '%' }"></div>
+            </div>
+            <span class="progress-text">已等待 {{ searchElapsed }} 秒{{ searchElapsed > 30 ? '，yt-dlp 搜索较慢请耐心等待' : '' }}{{ searchElapsed > 55 ? '，即将完成...' : '' }}</span>
+          </div>
+          <p class="search-loading-hint">搜索过程中请勿刷新页面或切换模式</p>
         </div>
       </div>
 
@@ -176,12 +204,10 @@
         <div v-if="useYtDlp && ytDlpStreamUrl" class="video-wrapper">
           <video
             ref="videoPlayer"
-            :src="ytDlpStreamUrl"
             class="video-player-native"
             controls
             autoplay
             playsinline
-            crossorigin="anonymous"
           ></video>
         </div>
 
@@ -499,12 +525,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import {
   ArrowLeft, Link, CircleClose, VideoPlay, Loading, VideoCamera,
   ArrowDown, Setting, Plus, Refresh, WarningFilled, Search
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import Hls from 'hls.js'
 
 // ==================== 输入状态 ====================
 const videoUrl = ref('')
@@ -517,8 +544,10 @@ const inputMode = ref('search')
 
 // ==================== 搜索状态 ====================
 const searchQuery = ref('')
-const searchPlatform = ref('auto')
+const searchPlatform = ref('bilibili')
 const searching = ref(false)
+const searchElapsed = ref(0)            // 搜索已用秒数
+let searchTimer = null                  // 计时器
 const searchResults = ref([])          // 原始全量结果（兼容）
 const searchGroups = ref([])           // 分组：剧目列表
 const searchUngrouped = ref([])        // 未分组：独立视频
@@ -535,6 +564,10 @@ const playingEpisodeId = ref('')       // 当前播放中的剧集ID
 const totalEpisodes = computed(() => {
   return searchGroups.value.reduce((sum, g) => sum + g.episodeCount, 0)
 })
+
+// 不支持名称搜索的平台（yt-dlp 只有 bilisearch 和 ytsearch）
+const unsupportedPlatforms = new Set(['tencent', 'youku', 'iqiyi', 'mgtv'])
+const isUnsupportedPlatform = computed(() => unsupportedPlatforms.has(searchPlatform.value))
 
 function toggleGroup(gi) {
   const newSet = new Set(expandedGroups.value)
@@ -657,7 +690,20 @@ async function handleSearch() {
     return
   }
 
+  // 不支持名称搜索的平台，给出提示但仍然搜索
+  if (isUnsupportedPlatform.value) {
+    const platformNames = {
+      tencent: '腾讯视频', youku: '优酷', iqiyi: '爱奇艺', mgtv: '芒果TV'
+    }
+    ElMessage.warning(`${platformNames[searchPlatform.value]}暂不支持名称搜索，将在B站中搜索相关视频`)
+  }
+
   searching.value = true
+  searchElapsed.value = 0
+  // 启动计时器
+  searchTimer = setInterval(() => {
+    searchElapsed.value++
+  }, 1000)
   searchResults.value = []
   searchGroups.value = []
   searchUngrouped.value = []
@@ -674,7 +720,7 @@ async function handleSearch() {
       body: JSON.stringify({
         query: q,
         platform: searchPlatform.value,
-        limit: 20  // 多取一些，后端会智能过滤
+        limit: 10
       })
     })
     const data = await res.json()
@@ -695,6 +741,8 @@ async function handleSearch() {
     console.error('搜索失败:', err)
     ElMessage.error('搜索失败，请检查网络或稍后重试')
   } finally {
+    clearInterval(searchTimer)
+    searchTimer = null
     searching.value = false
   }
 }
@@ -770,6 +818,7 @@ const ytDlpVersion = ref('')
 const useYtDlp = ref(false)                // 当前是否使用 yt-dlp 模式
 const ytDlpExtracting = ref(false)
 const ytDlpStreamUrl = ref('')
+const ytDlpStreamType = ref('')     // 'm3u8' | 'mp4' | 'direct'
 const ytDlpVideoInfo = ref(null)
 const ytDlpError = ref('')
 const ytDlpExtractHint = ref('')
@@ -801,6 +850,7 @@ async function handleYtDlpExtract(url) {
   ytDlpExtracting.value = true
   ytDlpError.value = ''
   ytDlpStreamUrl.value = ''
+  ytDlpStreamType.value = ''
   ytDlpVideoInfo.value = null
 
   // 阶段1：提取视频信息（标题、格式等）
@@ -840,6 +890,7 @@ async function handleYtDlpExtract(url) {
       return
     }
     ytDlpStreamUrl.value = streamData.data.url
+    ytDlpStreamType.value = streamData.data.type || ''
     ytDlpExtracting.value = false
     ElMessage.success('提取成功！开始播放')
 
@@ -1093,6 +1144,68 @@ function handleClickOutside(e) {
   }
 }
 
+// ==================== hls.js 播放器 ====================
+let hls = null
+
+watch(ytDlpStreamUrl, async (url) => {
+  if (!url) return
+
+  // 销毁旧实例
+  if (hls) {
+    hls.destroy()
+    hls = null
+  }
+
+  await nextTick()
+  const video = videoPlayer.value
+  if (!video) return
+
+  // 流类型来自后端响应，代理 URL 不再包含 .m3u8 后缀
+  const isM3u8 = ytDlpStreamType.value === 'm3u8' ||
+    url.includes('.m3u8') || url.includes('/m3u8') || /m3u8/i.test(url)
+
+  const isProxyUrl = url.includes('/proxy-stream/')
+
+  if (isM3u8 && Hls.isSupported()) {
+    hls = new Hls({
+      xhrSetup: (xhr) => {
+        // 非代理模式需要手动设置 Referer；代理模式下后端已处理
+        if (!isProxyUrl) {
+          xhr.setRequestHeader('Referer', 'https://www.bilibili.com/')
+        }
+      }
+    })
+    hls.loadSource(url)
+    hls.attachMedia(video)
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      video.play().catch(() => {})
+    })
+    hls.on(Hls.Events.ERROR, (event, data) => {
+      if (data.fatal) {
+        console.error('[hls.js fatal]', data.type, data.details)
+        switch (data.type) {
+          case Hls.ErrorTypes.NETWORK_ERROR:
+            ElMessage.error('网络错误，视频加载失败')
+            break
+          case Hls.ErrorTypes.MEDIA_ERROR:
+            // 尝试恢复
+            hls.recoverMediaError()
+            break
+          default:
+            hls.destroy()
+            break
+        }
+      }
+    })
+  } else if (isM3u8 && video.canPlayType('application/vnd.apple.mpegurl')) {
+    // Safari 原生支持 HLS
+    video.src = url
+  } else {
+    // 普通 mp4 或其他格式
+    video.src = url
+  }
+})
+
 // 注册/移除全局点击事件
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
@@ -1101,6 +1214,14 @@ onMounted(() => {
 })
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside)
+  if (hls) {
+    hls.destroy()
+    hls = null
+  }
+  if (searchTimer) {
+    clearInterval(searchTimer)
+    searchTimer = null
+  }
 })
 </script>
 
@@ -1557,6 +1678,111 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
   &:hover:not(:disabled) { transform: scale(1.08); box-shadow: 0 4px 16px rgba(99,102,241,0.35); }
   &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+// 不支持名称搜索的平台提示
+.platform-search-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #92400e;
+  .hint-action {
+    color: #6366f1;
+    font-weight: 500;
+    cursor: pointer;
+    &:hover { text-decoration: underline; }
+  }
+}
+
+// 搜索加载遮罩层
+.search-loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease-out;
+}
+.search-loading-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 44px 48px;
+  max-width: 440px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.25);
+  animation: scaleIn 0.3s ease-out;
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+.search-loading-icon {
+  margin-bottom: 16px;
+  color: #6366f1;
+}
+.search-loading-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 8px;
+}
+.search-loading-query {
+  font-size: 15px;
+  color: #6366f1;
+  font-weight: 600;
+  margin: 0 0 4px;
+  word-break: break-all;
+}
+.search-loading-platform {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0 0 24px;
+}
+.search-loading-progress {
+  margin-bottom: 16px;
+  .progress-bar {
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6);
+    border-radius: 3px;
+    transition: width 0.5s ease;
+    min-width: 2%;
+  }
+  .progress-text {
+    font-size: 12px;
+    color: #94a3b8;
+  }
+}
+.search-loading-hint {
+  font-size: 12px;
+  color: #cbd5e1;
+  margin: 0;
+}
+
+// 搜索中禁用状态
+.input-mode-btn:disabled,
+.platform-select:disabled,
+.url-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 // 搜索结果
