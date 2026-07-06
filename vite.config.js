@@ -14,11 +14,11 @@ export default defineConfig({
     port: 3000,
     open: false,
     proxy: {
-      // 开发环境：将 /staticTool/api/* 转发到本地 Node.js 后端
+      // 开发环境：将 /staticTool/api/* 转发到云端后端
       '/staticTool/api': {
-        target: 'http://localhost:3001',
+        target: 'https://wellwin.top',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/staticTool\/api/, '')
+        secure: false
       }
     }
   }
