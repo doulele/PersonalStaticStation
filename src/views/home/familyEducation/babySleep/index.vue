@@ -1,5 +1,5 @@
 ﻿<template>
-  <div class="baby-sleep-page">
+  <div class="baby-sleep-page" :class="{ 'dark-mode': isDarkMode }">
     <div class="page-header">
       <h1 class="page-title">
         <el-icon :size="32"><Moon /></el-icon>
@@ -46,6 +46,7 @@
             <el-icon :size="24"><component :is="item.icon" /></el-icon>
           </div>
           <div class="sound-label">{{ item.label }}</div>
+          <div class="audio-source-badge" v-if="item.audioUrl && OSS_BASE_URL">真实音效</div>
           <div class="play-count-badge" v-if="playCountMap[item.id] && sortMode === 'playCount'" :title="'播放 ' + playCountMap[item.id] + ' 次'">
             {{ playCountMap[item.id] >= 100 ? '99+' : playCountMap[item.id] }}次
           </div>
@@ -216,6 +217,9 @@
           <div class="player-lyrics" v-if="lyrics.length > 0 && (selectedItemType === 'stream' || selectedItemType === 'song' || selectedItemType === 'tts')" :key="'lrc-' + (streamingItem?.id || selectedItem?.id || '')" ref="lyricScrollEl">
             <span class="lyric-line" :class="{ active: currentLyricIndex === idx, past: currentLyricIndex > idx }" v-for="(l, idx) in lyrics" :key="idx">{{ l.text }}</span>
           </div>
+          <div class="player-lyrics no-lyrics" v-else-if="lyricsNotFound">
+            <span>暂无歌词</span>
+          </div>
           <div class="player-lyrics loading" v-else-if="lyricsLoading">
             <el-icon :size="12" class="spinning"><Loading /></el-icon>
             <span>歌词加载中...</span>
@@ -255,10 +259,10 @@
               <span>{{ volume }}</span>
             </button>
             <div class="dropdown-menu volume-drop" v-show="activeDropdown === 'volume'">
-              <div class="volume-drop-row">
+              <div class="volume-drop-col">
+                <el-icon :size="16" class="vol-icon" @click="setVolume(100)"><Microphone /></el-icon>
+                <input type="range" class="volume-slider-drop" min="0" max="100" v-model.number="volume" @input="onVolumeChange" orient="vertical" />
                 <el-icon :size="14" class="vol-icon" @click="setVolume(0)"><Mute /></el-icon>
-                <input type="range" class="volume-slider-drop" min="0" max="100" v-model.number="volume" @input="onVolumeChange" />
-                <el-icon :size="16" class="vol-icon"><Microphone /></el-icon>
                 <span class="vol-num">{{ volume }}</span>
               </div>
             </div>
@@ -278,6 +282,8 @@
               >{{ s }}x</div>
             </div>
           </div>
+
+
 
           <!-- 音色 -->
           <div class="ctrl-group dropdown-group" ref="voiceDropdownRef">
@@ -539,23 +545,30 @@ import {
   Headset, Sunny, Reading, Notebook, EditPen,
   Cloudy, WindPower, Promotion, Film, Bell, Umbrella, Ship, Watch, Collection,
   Timer, ArrowDown, User, Plus, Upload, Clock, Loading, Lock, Refresh,
-  Sort, Search, Close,
+  Sort, Search, Close, Lightning, Pouring, Van,
   Edit, Delete
 } from '@element-plus/icons-vue'
 
 // ==================== 常量 ====================
 const API_BASE = '/staticTool/api/family'
+// OSS 音频基础路径（阿里云 OSS Bucket 公共读 + CDN 加速域名）
+// 请替换为你的 OSS Bucket 地址，例如：https://your-bucket.oss-cn-hangzhou.aliyuncs.com/audio
+const OSS_BASE_URL = ''
 
 const noiseIconMap = {
   white: Headset, pink: Headset, brown: Headset,
-  rain: Umbrella, thunder: Cloudy, ocean: Ship, stream: Sunny,
-  fan: WindPower, campfire: Promotion, heartbeat: Watch, windchime: Bell, tvstatic: Film
+  rain: Umbrella, rain_heavy: Umbrella, thunder: Lightning, ocean: Ship, stream: Pouring,
+  waterfall: Pouring, fan: WindPower, vacuum: WindPower, washing: WindPower,
+  campfire: Sunny, heartbeat: Timer, windchime: Bell, musicbox: Bell,
+  crickets: Sunny, cat_purr: Moon, train: Van, tvstatic: Film
 }
 
 function attachNoiseIcons(items) {
   return items.map(item => ({
     ...item,
-    icon: markRaw(noiseIconMap[item.type] || Headset)
+    icon: markRaw(noiseIconMap[item.type] || Headset),
+    // 统一 snake_case → camelCase：后端 audio_url 映射为前端 audioUrl
+    audioUrl: item.audioUrl || item.audio_url || ''
   }))
 }
 
@@ -706,9 +719,13 @@ async function fetchSleepContent() {
     console.warn('[babySleep] 获取数据失败:', err)
     whiteNoiseItems.value = attachNoiseIcons([
       { id: 'white', label: '白噪音', color: 'default', type: 'white' },
-      { id: 'rain', label: '雨声', color: 'blue', type: 'rain' },
+      { id: 'rain', label: '细雨声', color: 'sky', type: 'rain' },
+      { id: 'rain_heavy', label: '大雨声', color: 'blue', type: 'rain_heavy' },
+      { id: 'thunder', label: '雷雨声', color: 'indigo', type: 'thunder' },
       { id: 'ocean', label: '海浪声', color: 'teal', type: 'ocean' },
-      { id: 'fan', label: '风扇声', color: 'green', type: 'fan' }
+      { id: 'stream', label: '溪流声', color: 'cyan', type: 'stream' },
+      { id: 'fan', label: '风扇声', color: 'green', type: 'fan' },
+      { id: 'heartbeat', label: '心跳声', color: 'red', type: 'heartbeat' }
     ])
   }
 }
@@ -754,7 +771,7 @@ const editTypePlaceholder = computed(() => {
   return '选择声音类型'
 })
 const editTypeOptions = computed(() => {
-  if (editCategory.value === 'whitenoise') return ['white', 'pink', 'brown', 'rain', 'thunder', 'ocean', 'stream', 'fan', 'campfire', 'heartbeat', 'windchime', 'tvstatic']
+  if (editCategory.value === 'whitenoise') return ['white', 'pink', 'brown', 'rain', 'rain_heavy', 'thunder', 'ocean', 'stream', 'waterfall', 'fan', 'vacuum', 'washing', 'campfire', 'heartbeat', 'windchime', 'musicbox', 'crickets', 'cat_purr', 'train', 'tvstatic']
   if (editCategory.value === 'lullaby') return ['儿歌', '摇篮曲', '轻音乐', '流行', '古典']
   if (editCategory.value === 'poetry') return ['五言绝句', '七言绝句', '五言律诗', '七言律诗', '宋词', '元曲', '古体诗']
   return []
@@ -968,12 +985,15 @@ let lyricScrollAnimId = null          // 歌词横向平滑滚动 rAF ID
 let targetScrollLeft = 0              // 歌词滚动目标 scrollLeft
 let lineGeom = []                     // 每一行歌词相对容器的 {left, width}
 let lyricContainerW = 0               // 歌词容器可见宽度（固定渐变 + 滚动基准）
+const lyricsOffset = ref(0)            // 歌词偏移（秒），正值=歌词延后，负值=歌词提前，解决LRC与流媒体不同步
+const lyricsNotFound = ref(false)      // 是否未找到歌词（用于展示提示）
 const savingItemId = ref(null)         // 正在保存到歌单的 item id
 
 // 前端音频流缓存（localStorage）
 // key: "audio_cache:{videoId}" → { url, expires, title, thumbnail }
 const AUDIO_CACHE_KEY = 'babySleep_audioStreamCache_v1'
 const AUDIO_CACHE_TTL = 25 * 60 * 1000 // 25 分钟（略小于服务端 30 分钟）
+let fallbackSearchSeq = 0  // 竞态控制：快速切歌时丢弃旧请求结果
 
 function loadAudioCache() {
   try {
@@ -1239,9 +1259,10 @@ function streamAudioPlay() {
     audio.play().then(() => {
       isPlaying.value = true
       setupMediaSession(streamingItem.value?.title)
-      // 流媒体歌曲启动歌词同步
-      if (streamingItem.value?.title && lyrics.value.length === 0) {
-        fetchLyrics(streamingItem.value.title).then(() => startLyricSync())
+      // 流媒体歌曲启动歌词同步（优先用原始歌名，提高命中率）
+      const lyricTitle = streamingItem.value?.originalTitle || streamingItem.value?.title
+      if (lyricTitle && lyrics.value.length === 0) {
+        fetchLyrics(lyricTitle).then(() => startLyricSync())
       } else {
         startLyricSync()
       }
@@ -1302,14 +1323,20 @@ async function fetchLyrics(title) {
   lyricsLoading.value = true
   lyrics.value = []
   currentLyricIndex.value = -1
+  lyricsNotFound.value = false
+  lyricsOffset.value = 0  // 切歌时重置偏移
   try {
     const res = await fetch(`${SEARCH_VIDEO_API}/lyrics?title=${encodeURIComponent(title)}`)
     const data = await res.json()
     if (data?.code === 0 && data?.data?.syncedLyrics) {
       lyrics.value = parseLRC(data.data.syncedLyrics)
+      lyricsNotFound.value = false
+    } else {
+      lyricsNotFound.value = true
     }
   } catch (e) {
     console.error('[babySleep] 歌词拉取失败:', e.message)
+    lyricsNotFound.value = true
   } finally {
     lyricsLoading.value = false
   }
@@ -1330,6 +1357,7 @@ function stopLyricSync() {
 function activeAudioEl() {
   if (selectedItemType.value === 'song') return songAudio
   if (selectedItemType.value === 'stream') return streamAudioEl.value
+  if (selectedItemType.value === 'noise') return noiseAudio
   return null
 }
 
@@ -1363,7 +1391,7 @@ function computeCursorX() {
   } else {
     const audio = activeAudioEl()
     if (!audio) return 0
-    const t = audio.currentTime
+    const t = audio.currentTime + lyricsOffset.value  // 应用用户手动偏移
     let li = 0
     for (let k = lines.length - 1; k >= 0; k--) {
       if ((lines[k].time || 0) <= t) { li = k; break }
@@ -1396,7 +1424,7 @@ function startSmoothLyricScroll() {
       } else {
         const a = activeAudioEl()
         if (a) {
-          const t = a.currentTime
+          const t = a.currentTime + lyricsOffset.value  // 应用用户手动偏移
           for (let k = lines.length - 1; k >= 0; k--) {
             if ((lines[k].time || 0) <= t) { li = k; break }
           }
@@ -1787,6 +1815,19 @@ const isBuffering = ref(false)
 let wasPlayingBeforeHidden = false  // 页面隐藏前是否正在播放，用于回到前台自动恢复
 const ttsProgress = ref(0)
 const volume = ref(50)
+
+// ==================== 深色模式（晚上8点 ~ 早上7点自动切换） ====================
+const isDarkMode = ref(false)
+let darkModeTimer = null
+
+/** 根据当前时间判断是否应该开启深色模式 */
+function checkDarkMode() {
+  const hour = new Date().getHours()
+  const shouldDark = hour >= 20 || hour < 7
+  if (isDarkMode.value !== shouldDark) {
+    isDarkMode.value = shouldDark
+  }
+}
 const playbackSpeed = ref(1.0)
 const timerMinutes = ref(0)
 const remainingSeconds = ref(0)
@@ -1926,7 +1967,10 @@ function setSpeed(s) {
 // ==================== Web Audio 引擎 ====================
 let audioCtx = null
 let songAudio = null // 歌曲播放器
+let noiseAudio = null // 白噪音真实音频播放器（OSS 音频文件）
 let activeNodes = []
+let bgAudioEl = null           // 后台播放 Audio 元素（接收 Web Audio 输出）
+let mediaStreamDest = null     // AudioContext → MediaStream 桥梁
 
 // TTS 音频缓存：key → AudioBuffer，避免重复请求后端合成
 const ttsAudioCache = new Map()
@@ -1985,7 +2029,20 @@ async function prefetchNextTts() {
 }
 
 function getAudioContext() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+    // 监听状态变化：当 AudioContext 被系统挂起时自动恢复
+    audioCtx.onstatechange = () => {
+      if (audioCtx && audioCtx.state === 'suspended' && isPlaying.value) {
+        audioCtx.resume().then(() => {
+          // 恢复后确保后台 Audio 元素仍在播放
+          if (bgAudioEl && bgAudioEl.paused) {
+            bgAudioEl.play().catch(() => {})
+          }
+        }).catch(() => {})
+      }
+    }
+  }
   if (audioCtx.state === 'suspended') audioCtx.resume()
   return audioCtx
 }
@@ -2014,6 +2071,7 @@ function stopAllSounds() {
   stopBrowserTTS()
   stopAudioElement()
   stopSongAudio()
+  stopNoiseAudio()
   stopStreamAudio(true)
   clearProgress()
   isBuffering.value = false
@@ -2023,6 +2081,10 @@ function stopAllSounds() {
     try { n.disconnect() } catch (e) {}
   })
   activeNodes = []
+  // 暂停后台音频桥梁（但不销毁，下次播放时自动恢复）
+  if (bgAudioEl) {
+    try { bgAudioEl.pause() } catch (e) {}
+  }
   stopSmoothLyricScroll()
 }
 
@@ -2039,15 +2101,58 @@ function setupAudioForBackground(audio) {
   audio.setAttribute('x5-video-orientation', 'portraint')
 }
 
+/**
+ * 创建/获取后台音频输出桥梁：将 Web Audio API（AudioContext）的输出
+ * 路由到一个 HTMLAudioElement，从而获得后台/锁屏播放能力。
+ * 这是让白噪音、TTS 哄睡故事等 AudioContext 音源在 Mate80 等手机上
+ * 锁屏后继续播放的关键。
+ * @returns {{ audioEl: HTMLAudioElement, dest: MediaStreamAudioDestinationNode }}
+ */
+function ensureBgAudioOutput() {
+  if (!bgAudioEl) {
+    const ctx = getAudioContext()
+    mediaStreamDest = ctx.createMediaStreamDestination()
+    bgAudioEl = new Audio()
+    bgAudioEl.srcObject = mediaStreamDest.stream
+    setupAudioForBackground(bgAudioEl)
+    // 静音循环，让浏览器认为该页面正在"播放音频"，防止 AudioContext 被挂起
+    bgAudioEl.loop = true
+  }
+  // 确保 Audio 元素处于播放状态（即使当前没有音源输出，静默流也能保持音频会话活跃）
+  if (bgAudioEl.paused) {
+    bgAudioEl.play().catch(() => {})
+  }
+  return { audioEl: bgAudioEl, dest: mediaStreamDest }
+}
+
 /** 页面可见性变化：隐藏时记录播放状态，恢复可见时自动继续播放 */
 function handleVisibilityChange() {
   if (document.hidden) {
     wasPlayingBeforeHidden = isPlaying.value
   } else {
+    // 恢复 AudioContext（白噪音、TTS 等 Web Audio 类型）
     if (wasPlayingBeforeHidden && !isPlaying.value) {
-      const a = activeAudioEl()
-      if (a && a.paused) {
-        a.play().then(() => { isPlaying.value = true }).catch(() => {})
+      const type = selectedItemType.value
+      // 对于 HTMLAudioElement 类型（歌曲/流媒体/OSS白噪音）
+      if (type === 'song' || type === 'stream' || (type === 'noise' && noiseAudio)) {
+        const a = activeAudioEl()
+        if (a && a.paused) {
+          a.play().then(() => { isPlaying.value = true }).catch(() => {})
+        }
+      }
+      // 对于 AudioContext 合成类型（白噪音合成/TTS）：恢复 AudioContext 并重新播放
+      if ((type === 'noise' && !noiseAudio) || type === 'tts') {
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume().then(() => {
+            // 确保后台音频元素仍在播放
+            if (bgAudioEl && bgAudioEl.paused) {
+              bgAudioEl.play().catch(() => {})
+            }
+            isPlaying.value = true
+          }).catch(() => {})
+        } else {
+          isPlaying.value = true
+        }
       }
     }
     wasPlayingBeforeHidden = false
@@ -2108,8 +2213,10 @@ function playSongAudio(url, title) {
 async function fallbackToStreaming(title) {
   if (!title) return
 
-  // 0. 优先查本地音频缓存（同一首歌之前缓存过，直接播放）
   const cachedEntry = findCachedByTitle(title)
+  const searchSeq = ++fallbackSearchSeq  // 递增序号，防止旧请求覆盖新展示
+
+  // 有缓存：先行播放，不等待搜索
   if (cachedEntry) {
     stopAllSounds()
     isPlaying.value = false
@@ -2117,18 +2224,21 @@ async function fallbackToStreaming(title) {
       id: cachedEntry.videoId,
       title: cachedEntry.title || title,
       url: cachedEntry.url,
-      thumbnail: cachedEntry.thumbnail || ''
+      thumbnail: cachedEntry.thumbnail || '',
+      originalTitle: title  // 原始歌名，用于精确歌词搜索
     }
     selectedItem.value = null
     selectedItemType.value = 'stream'
-    searchHint.value = `已缓存 — 直接播放 "${title}"`
+    searchHint.value = `已缓存 — 正在获取在线结果...`
     isPlaying.value = true
     streamAudioPlay()
-    return
   }
 
+  // 无论有无缓存，都发起搜索展示结果
   searchLoading.value = true
-  searchHint.value = `正在在线搜索 "${title}"...`
+  if (!cachedEntry) {
+    searchHint.value = `正在在线搜索 "${title}"...`
+  }
 
   try {
     const res = await fetch(`${SEARCH_VIDEO_API}/search`, {
@@ -2136,20 +2246,27 @@ async function fallbackToStreaming(title) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query: title, platform: 'bilibili', limit: 5 })
     })
+    // 竞态保护：如果不是最新的搜索请求，丢弃结果
+    if (searchSeq !== fallbackSearchSeq) return
     const json = await res.json()
     if (json?.code === 0 && json.data?.results?.length > 0) {
-      const best = json.data.results[0]
+      if (searchSeq !== fallbackSearchSeq) return  // 再次检查，防止切歌
       searchResults.value = json.data.results
       searchHint.value = ''
-      await playStreaming(best)
+      if (!cachedEntry) {
+        const best = { ...json.data.results[0], originalTitle: title }  // 注入原始歌名用于歌词搜索
+        await playStreaming(best)
+      }
     } else {
-      searchHint.value = `未找到 "${title}" 的在线版本，请尝试其他歌曲`
+      if (searchSeq !== fallbackSearchSeq) return
+      searchHint.value = cachedEntry ? '' : `未找到 "${title}" 的在线版本，请尝试其他歌曲`
     }
   } catch (err) {
+    if (searchSeq !== fallbackSearchSeq) return
     console.error('[babySleep] 在线搜索失败:', err)
-    searchHint.value = '搜索服务不可用，请检查后端是否启动'
+    if (!cachedEntry) searchHint.value = '搜索服务不可用，请检查后端是否启动'
   } finally {
-    searchLoading.value = false
+    if (searchSeq === fallbackSearchSeq) searchLoading.value = false
   }
 }
 
@@ -2160,148 +2277,444 @@ function stopSongAudio() {
   }
 }
 
-// ---- 白噪音生成 ----
-function createNoiseBuffer(type) {
-  const ctx = getAudioContext(); const sr = ctx.sampleRate; const len = sr * 2
-  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
-  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1
-  if (type === 'pink') {
-    let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0
-    for (let i = 0; i < len; i++) {
-      const w = Math.random() * 2 - 1
-      b0 = 0.99886 * b0 + w * 0.0555179; b1 = 0.99332 * b1 + w * 0.0750759
-      b2 = 0.96900 * b2 + w * 0.1538520; b3 = 0.86650 * b3 + w * 0.3104856
-      b4 = 0.55000 * b4 + w * 0.5329522; b5 = -0.7616 * b5 - w * 0.0168980
-      d[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * 0.5362) * 0.11; b6 = w * 0.115926
+function stopNoiseAudio() {
+  if (noiseAudio) {
+    try { noiseAudio.pause() } catch (e) {}
+    noiseAudio = null
+  }
+}
+
+/** 播放真实白噪音音频文件（OSS CDN） — 循环播放，支持后台/锁屏 */
+function playNoiseAudio(url, label) {
+  stopAllSounds()
+  if (!url) return
+  try {
+    noiseAudio = new Audio(url)
+    noiseAudio.loop = true
+    setupAudioForBackground(noiseAudio)
+    noiseAudio.volume = volume.value / 100
+    noiseAudio.play().then(() => {
+      isPlaying.value = true
+      setupMediaSession(label || '白噪音')
+    }).catch(err => {
+      console.warn('[babySleep] OSS 音频播放失败，回退到 Web Audio 合成:', err)
+      noiseAudio = null
+      // 用 type 字符串调用 → 跳过 audioUrl 检查，直接走合成
+      if (selectedItem.value) createNoise(selectedItem.value.type)
+    })
+  } catch (e) {
+    console.error('[babySleep] 白噪音音频播放异常:', e)
+    noiseAudio = null
+    if (selectedItem.value) createNoise(selectedItem.value.type)
+  }
+}
+
+// ---- 白噪音生成（高音质版） ----
+const NOISE_BUF_SEC = 30  // 30 秒长缓冲，循环感大幅降低
+
+/** Voss-McCartney 粉红噪音算法（每八度 +1 个白噪音源，产生真正的 1/f 频谱） */
+function vossPinkNoise(ctx, len) {
+  const buf = ctx.createBuffer(1, len, ctx.sampleRate); const d = buf.getChannelData(0)
+  const octaves = 7; const rolls = new Float64Array(octaves)
+  for (let i = 0; i < len; i++) {
+    let sum = 0; let mask = 1
+    for (let o = 0; o < octaves; o++) {
+      if ((i & mask) === 0) rolls[o] = Math.random() * 2 - 1
+      sum += rolls[o]; mask <<= 1
     }
-  } else if (type === 'brown') {
-    let lo = 0
-    for (let i = 0; i < len; i++) { d[i] = (lo + 0.02 * (Math.random() * 2 - 1)) / 1.02; lo = d[i]; d[i] *= 3.5 }
+    d[i] = sum / octaves * 0.5
   }
   return buf
 }
 
-function createRainBuffer(heavy) {
-  const ctx = getAudioContext(); const sr = ctx.sampleRate; const len = sr * 2
-  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
-  const prob = heavy ? 0.5 : 0.3; const amp = heavy ? 0.8 : 0.5
+/** 布朗/棕色噪音（随机游走 + 低频约束） */
+function brownNoiseBuf(ctx, len) {
+  const buf = ctx.createBuffer(1, len, ctx.sampleRate); const d = buf.getChannelData(0)
+  let lo = 0
   for (let i = 0; i < len; i++) {
-    let s = (Math.random() * 2 - 1) * 0.1
-    if (Math.random() < prob) s += (Math.random() * 2 - 1) * amp
-    d[i] = s
+    lo += (Math.random() * 2 - 1) * 0.08
+    if (lo > 1.2) lo = 1.2; if (lo < -1.2) lo = -1.2
+    d[i] = lo * 0.7
   }
   return buf
 }
 
-function createOceanBuffer() {
-  const ctx = getAudioContext(); const sr = ctx.sampleRate; const len = sr * 4
+/** 高质量雨声 —— 多层雨滴（大/中/小），自然随机的密度和强度变化 */
+function rainBuffer(ctx, heavy) {
+  const sr = ctx.sampleRate; const len = sr * NOISE_BUF_SEC
   const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
-  for (let i = 0; i < len; i++) {
-    const t = i / sr; const env = Math.sin(t * 0.3 * Math.PI) * 0.5 + 0.5
-    d[i] = (Math.random() * 2 - 1) * 0.3 * env * 1.5
-  }
-  return buf
-}
-
-function createStreamBuffer() {
-  const ctx = getAudioContext(); const sr = ctx.sampleRate; const len = sr * 2
-  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
-  for (let i = 0; i < len; i++) {
-    let s = (Math.random() * 2 - 1) * 0.08
-    if (Math.random() < 0.25) s += (Math.random() * 2 - 1) * 0.35
-    s += Math.sin((i * 0.02) % (2 * Math.PI)) * 0.05
-    d[i] = s
-  }
-  return buf
-}
-
-function createCampfireBuffer() {
-  const ctx = getAudioContext(); const sr = ctx.sampleRate; const len = sr * 2
-  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
-  for (let i = 0; i < len; i++) {
-    let s = (Math.random() * 2 - 1) * 0.05
-    if (Math.random() < 0.08) s += (Math.random() * 2 - 1) * (0.3 + Math.random() * 0.5)
-    s += Math.sin(i / sr * 40 * Math.PI * 2) * 0.03
-    d[i] = s
-  }
-  return buf
-}
-
-function createWindchimeBuffer() {
-  const ctx = getAudioContext(); const sr = ctx.sampleRate; const len = sr * 3
-  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
-  const notes = [523, 587, 659, 698, 784, 880, 988, 1047]
-  const chimeGap = sr * 0.8
+  // 大滴/中滴/细滴 三层
+  const baseProb = heavy ? 0.02 : 0.008
+  const baseAmp = heavy ? 0.7 : 0.4
   for (let i = 0; i < len; i++) {
     let s = (Math.random() * 2 - 1) * 0.02
-    const noteIdx = Math.floor(i / chimeGap)
-    if (noteIdx < 50) {
+    // 细密背景雨声（持续白噪声 + 低通）
+    s += (Math.random() * 2 - 1) * 0.06
+    // 中雨滴（随机间隔）
+    if (Math.random() < baseProb) {
+      s += (Math.random() * 2 - 1) * baseAmp * 0.7
+    }
+    // 大雨滴（稀疏但有冲击感）
+    if (Math.random() < baseProb * 0.25) {
+      const burst = Math.sin(Math.random() * Math.PI * 2) * 0.8 + (Math.random() * 2 - 1) * 0.5
+      s += burst * baseAmp * 1.2
+    }
+    d[i] = Math.max(-1, Math.min(1, s * 0.7))
+  }
+  return buf
+}
+
+/** 高质量海浪 —— 多层正弦调制 + 背景噪声，自然潮汐感 */
+function oceanBuffer(ctx) {
+  const sr = ctx.sampleRate; const len = sr * NOISE_BUF_SEC
+  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
+  for (let i = 0; i < len; i++) {
+    const t = i / sr
+    // 主波浪包络（低频 0.08-0.15Hz 变化）
+    const env1 = Math.sin(t * 0.12 * Math.PI * 2) * 0.5 + 0.5
+    const env2 = Math.sin(t * 0.17 * Math.PI * 2 + 1.5) * 0.3 + 0.7
+    const env = env1 * 0.6 + env2 * 0.4
+    // 泡沫高频 + 低频涌动
+    const foam = (Math.random() * 2 - 1) * 0.35
+    const swell = Math.sin(t * 1.8 * Math.PI * 2) * 0.1
+    d[i] = ((Math.random() * 2 - 1) * 0.45 * env + swell + foam * env * 0.6) * 0.65
+  }
+  return buf
+}
+
+/** 溪流 —— 湍流 + 飞溅 + 低频水流声 */
+function streamBuffer(ctx) {
+  const sr = ctx.sampleRate; const len = sr * NOISE_BUF_SEC
+  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
+  for (let i = 0; i < len; i++) {
+    const t = i / sr
+    let s = (Math.random() * 2 - 1) * 0.1
+    // 水滴飞溅
+    if (Math.random() < 0.06) s += (Math.random() * 2 - 1) * 0.35
+    // 湍流低频调制
+    s += Math.sin(t * 2.5 * Math.PI * 2 + Math.sin(t * 0.4) * 3) * 0.06
+    // 流水持续声
+    s += Math.sin(t * 6.3 * Math.PI * 2) * 0.03
+    d[i] = s * 0.8
+  }
+  return buf
+}
+
+/** 瀑布 —— 持续强大的水流轰鸣 + 水雾飞溅 */
+function waterfallBuffer(ctx) {
+  const sr = ctx.sampleRate; const len = sr * NOISE_BUF_SEC
+  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
+  for (let i = 0; i < len; i++) {
+    const t = i / sr
+    let s = (Math.random() * 2 - 1) * 0.35  // 强大持续轰鸣
+    s += Math.sin(t * 40 * Math.PI * 2 + Math.random() * 2) * 0.05
+    if (Math.random() < 0.15) s += (Math.random() * 2 - 1) * 0.3  // 水雾飞溅
+    s += Math.sin(t * 0.6 * Math.PI * 2) * 0.08  // 低频起伏
+    d[i] = s * 0.5
+  }
+  return buf
+}
+
+/** 风扇 —— 电机低频嗡鸣 + 叶片切风声 */
+function fanBuffer(ctx) {
+  const sr = ctx.sampleRate; const len = sr * NOISE_BUF_SEC
+  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
+  for (let i = 0; i < len; i++) {
+    const t = i / sr
+    // 电机基频 + 谐波
+    let s = Math.sin(120 * Math.PI * t) * 0.22
+    s += Math.sin(180 * Math.PI * t) * 0.08
+    s += Math.sin(240 * Math.PI * t) * 0.04
+    // 宽频气流声
+    s += (Math.random() * 2 - 1) * 0.12
+    // 微小速度波动
+    const wobble = 1 + Math.sin(t * 0.3) * 0.05
+    d[i] = s * wobble * 0.8
+  }
+  return buf
+}
+
+/** 吸尘器 —— 强低频轰鸣 + 高频电机声 */
+function vacuumBuffer(ctx) {
+  const sr = ctx.sampleRate; const len = sr * NOISE_BUF_SEC
+  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
+  for (let i = 0; i < len; i++) {
+    const t = i / sr
+    let s = Math.sin(150 * Math.PI * t) * 0.25
+    s += Math.sin(300 * Math.PI * t) * 0.12
+    s += Math.sin(450 * Math.PI * t) * 0.06
+    s += (Math.random() * 2 - 1) * 0.2
+    d[i] = s * 0.65
+  }
+  return buf
+}
+
+/** 洗衣机 —— 低频旋转嗡鸣 + 水声 + 周期节奏 */
+function washingBuffer(ctx) {
+  const sr = ctx.sampleRate; const len = sr * NOISE_BUF_SEC
+  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
+  for (let i = 0; i < len; i++) {
+    const t = i / sr
+    const cycle = (t % 3) / 3  // 3秒循环周期
+    let s = Math.sin(80 * Math.PI * t) * 0.15
+    s += Math.sin(160 * Math.PI * t) * 0.06
+    s += (Math.random() * 2 - 1) * 0.15
+    // 旋转节奏
+    s += Math.sin(cycle * 8 * Math.PI * 2) * 0.08 * Math.sin(t * 0.5 * Math.PI)
+    // 间歇水声
+    if (cycle < 0.3) s += (Math.random() * 2 - 1) * 0.25
+    d[i] = s * 0.7
+  }
+  return buf
+}
+
+/** 高质量篝火 —— 多层爆裂 + 持续背景燃烧 */
+function campfireBuffer(ctx) {
+  const sr = ctx.sampleRate; const len = sr * NOISE_BUF_SEC
+  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
+  for (let i = 0; i < len; i++) {
+    const t = i / sr
+    let s = (Math.random() * 2 - 1) * 0.06  // 背景燃烧
+    // 随机爆裂声（多种强度）
+    const r = Math.random()
+    if (r < 0.005) {
+      const burst = Math.exp(-((i % 200) / 80)) * (Math.random() * 2 - 1) * 0.8
+      s += burst
+    } else if (r < 0.02) {
+      const burst = Math.exp(-((i % 150) / 60)) * (Math.random() * 2 - 1) * 0.4
+      s += burst
+    }
+    // 微风摇曳火焰
+    s += Math.sin(t * 2.5 * Math.PI * 2 + Math.sin(t * 0.3) * 2) * 0.03
+    d[i] = Math.max(-1, Math.min(1, s * 0.7))
+  }
+  return buf
+}
+
+/** 心跳 —— 更真实的双脉冲（lub-dub） */
+function heartbeatBuffer(ctx) {
+  const sr = ctx.sampleRate; const len = sr * NOISE_BUF_SEC
+  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
+  const bpm = 65; const beatLen = Math.floor(sr * 60 / bpm)
+  const gap = Math.floor(beatLen * 0.18)  // lub-dub 间距
+  for (let b = 0; b * beatLen < len; b++) {
+    const start1 = b * beatLen
+    const start2 = start1 + gap
+    ;[start1, start2].forEach((s0, idx) => {
+      const amp = idx === 0 ? 0.7 : 0.55
+      for (let j = 0; j < Math.floor(gap * 0.6) && s0 + j < len; j++) {
+        d[s0 + j] += Math.sin(30 * Math.PI * (j / sr)) * Math.exp(-j / (sr * 0.06)) * amp
+        d[s0 + j] += Math.sin(55 * Math.PI * (j / sr)) * Math.exp(-j / (sr * 0.03)) * amp * 0.3
+      }
+    })
+  }
+  for (let i = 0; i < len; i++) d[i] = Math.max(-1, Math.min(1, d[i] * 0.8))
+  return buf
+}
+
+/** 高质量风铃 —— 随机音符 + 自然衰减 + 微风背景 */
+function windchimeBuffer(ctx) {
+  const sr = ctx.sampleRate; const len = sr * NOISE_BUF_SEC
+  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
+  const notes = [523, 587, 659, 698, 784, 880, 988, 1047, 1175, 1319]
+  const chimeGap = sr * 1.2  // 平均 1.2 秒一次
+  for (let i = 0; i < len; i++) {
+    let s = (Math.random() * 2 - 1) * 0.01
+    const chimeIdx = Math.floor(i / chimeGap)
+    if (chimeIdx < 50) {
       const noteFreq = notes[Math.floor(Math.random() * notes.length)]
-      const tInNote = (i % Math.floor(chimeGap)) / sr
-      s += Math.sin(2 * Math.PI * noteFreq * tInNote) * Math.exp(-tInNote * 3) * 0.3
+      const tInNote = (i % Math.floor(chimeGap * (0.5 + Math.random() * 0.5))) / sr
+      s += Math.sin(2 * Math.PI * noteFreq * tInNote) * Math.exp(-tInNote * 2.5) * 0.25
+      // 泛音
+      s += Math.sin(2 * Math.PI * noteFreq * 2 * tInNote) * Math.exp(-tInNote * 4) * 0.08
     }
     d[i] = s
   }
   return buf
 }
 
-function createNoise(type) {
-  stopAllSounds()
-  const ctx = getAudioContext(); let buf
-  switch (type) {
-    case 'white': buf = createNoiseBuffer('white'); break
-    case 'pink': buf = createNoiseBuffer('pink'); break
-    case 'brown': buf = createNoiseBuffer('brown'); break
-    case 'rain': buf = createRainBuffer(false); break
-    case 'thunder': buf = createRainBuffer(true); break
-    case 'ocean': buf = createOceanBuffer(); break
-    case 'stream': buf = createStreamBuffer(); break
-    case 'fan': {
-      buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate); const d = buf.getChannelData(0)
-      for (let i = 0; i < d.length; i++) { const t = i / ctx.sampleRate; d[i] = Math.sin(120 * Math.PI * t) * 0.3 + Math.sin(180 * Math.PI * t) * 0.1 + (Math.random() * 2 - 1) * 0.08 }
-      break
+/** 八音盒 —— 轻柔旋律碎片 + 机械齿轮质感 */
+function musicboxBuffer(ctx) {
+  const sr = ctx.sampleRate; const len = sr * NOISE_BUF_SEC
+  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
+  // 摇篮曲风格音阶
+  const melody = [523, 587, 659, 784, 880, 784, 659, 587,
+                 523, 659, 784, 880, 1047, 880, 784, 659]
+  const noteDur = sr * 0.7
+  for (let n = 0; n < melody.length && n * noteDur < len; n++) {
+    const freq = melody[n]
+    const start = n * noteDur
+    for (let j = 0; j < noteDur && start + j < len; j++) {
+      const tIn = j / sr
+      const env = Math.exp(-tIn * 2.0)
+      let s = Math.sin(2 * Math.PI * freq * tIn) * env * 0.18
+      s += Math.sin(2 * Math.PI * freq * 2 * tIn) * env * 0.05
+      s += Math.sin(2 * Math.PI * freq * 3 * tIn) * env * 0.02
+      // 齿轮质感
+      s += (Math.random() * 2 - 1) * 0.008 * env
+      d[start + j] += s
     }
-    case 'campfire': buf = createCampfireBuffer(); break
-    case 'windchime': buf = createWindchimeBuffer(); break
-    case 'tvstatic': buf = createNoiseBuffer('white'); break
-    default: buf = createNoiseBuffer('white')
   }
-  const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true
-  let filter = null
-  if (type === 'rain') { filter = ctx.createBiquadFilter(); filter.type = 'highpass'; filter.frequency.value = 2000 }
-  else if (type === 'thunder') { filter = ctx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 1500 }
-  else if (type === 'ocean') { filter = ctx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 800 }
-  else if (type === 'tvstatic') { filter = ctx.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.value = 3000; filter.Q.value = 0.5 }
-  const gain = ctx.createGain(); gain.gain.value = volume.value / 100 * 0.5
-  if (filter) { src.connect(filter); filter.connect(gain) } else { src.connect(gain) }
-  gain.connect(ctx.destination); src.start()
-  activeNodes.push(src, gain); if (filter) activeNodes.push(filter)
+  return buf
 }
 
-function playHeartbeat() {
-  stopAllSounds(); const ctx = getAudioContext()
-  const beat = () => {
-    if (!isPlaying.value) return
-    const t = ctx.currentTime
-    const mk = (freq, gv, start, len) => {
-      const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = freq
-      const g = ctx.createGain()
-      g.gain.setValueAtTime(0, start); g.gain.linearRampToValueAtTime(gv, start + 0.04)
-      g.gain.exponentialRampToValueAtTime(0.001, start + len)
-      o.connect(g); g.connect(ctx.destination); o.start(start); o.stop(start + len)
-      activeNodes.push(o, g)
+/** 蟋蟀声 —— 高频颤音 + 夜间环境 */
+function cricketsBuffer(ctx) {
+  const sr = ctx.sampleRate; const len = sr * NOISE_BUF_SEC
+  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
+  const chirpFreq = 4500
+  let chirpPhase = 0; let chirping = false; let chirpRemain = 0
+  let chirpCount = 0
+  for (let i = 0; i < len; i++) {
+    let s = (Math.random() * 2 - 1) * 0.008  // 夜间静默背景
+    if (chirpRemain > 0) {
+      chirping = true; chirpRemain--; chirpPhase += chirpFreq * (1 + 0.05 * Math.sin(i * 0.003)) / sr
+      s += Math.sin(chirpPhase * Math.PI * 2) * 0.18 * Math.sin((chirpCount % 15) * Math.PI / 15)
+    } else {
+      chirping = false
+      // 随机开始下一串
+      chirpCount++
+      if (Math.random() < (chirpCount > 3 ? 0.015 : 0.3)) {
+        chirpRemain = Math.floor(sr * (0.08 + Math.random() * 0.12))
+        chirpPhase = Math.random() * 2 * Math.PI
+      }
     }
-    mk(50, 0.5 * (volume.value / 100), t, 0.14)
-    mk(50, 0.3 * (volume.value / 100), t + 0.16, 0.1)
+    d[i] = s * 0.7
   }
-  beat()
-  const iv = setInterval(() => {
-    if (!isPlaying.value) { clearInterval(iv); return }
-    activeNodes.forEach(n => { try { n.disconnect() } catch (e) {} }); activeNodes = []
-    beat()
-  }, 1000)
-  activeNodes.push({ disconnect: () => clearInterval(iv) })
+  return buf
 }
+
+/** 猫咪呼噜 —— 低频震颤（约25Hz基频 + 谐波） */
+function catPurrBuffer(ctx) {
+  const sr = ctx.sampleRate; const len = sr * NOISE_BUF_SEC
+  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
+  for (let i = 0; i < len; i++) {
+    const t = i / sr
+    // 呼噜基频 25Hz + 震颤波动
+    const wobble = 1 + 0.15 * Math.sin(t * 3 * Math.PI * 2) + 0.1 * Math.sin(t * 0.7 * Math.PI * 2)
+    let s = Math.sin(25 * Math.PI * 2 * t) * 0.3 * wobble
+    s += Math.sin(50 * Math.PI * 2 * t) * 0.12 * wobble
+    s += Math.sin(75 * Math.PI * 2 * t) * 0.06 * wobble
+    // 轻微呼吸感
+    s += Math.sin(t * 1.2 * Math.PI * 2) * 0.04
+    d[i] = s * 0.8
+  }
+  return buf
+}
+
+/** 火车声 —— 轮轨节奏 + 低频轰鸣 + 汽笛 */
+function trainBuffer(ctx) {
+  const sr = ctx.sampleRate; const len = sr * NOISE_BUF_SEC
+  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
+  const clickFreq = 2.8  // 每秒 2.8 次铁轨撞击
+  for (let i = 0; i < len; i++) {
+    const t = i / sr
+    let s = (Math.random() * 2 - 1) * 0.05  // 背景轰隆
+    s += Math.sin(60 * Math.PI * t) * 0.1  // 低频引擎
+    // 铁轨节奏
+    const phase = (t * clickFreq) % 1
+    if (phase < 0.12) {
+      const clickEnv = Math.sin(phase / 0.12 * Math.PI)
+      s += (Math.random() * 2 - 1) * 0.3 * clickEnv
+      s += Math.sin(200 * Math.PI * t) * 0.08 * clickEnv
+    }
+    // 偶尔汽笛
+    if ((Math.floor(t / 12) % 3) === 0 && (t % 12) < 2) {
+      s += Math.sin(800 * Math.PI * t) * 0.06 * Math.sin((t % 2) * Math.PI / 2)
+    }
+    d[i] = s * 0.65
+  }
+  return buf
+}
+
+/** 雨声增强版（大雨） */
+function rainHeavyBuffer(ctx) {
+  const sr = ctx.sampleRate; const len = sr * NOISE_BUF_SEC
+  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
+  for (let i = 0; i < len; i++) {
+    let s = (Math.random() * 2 - 1) * 0.15
+    if (Math.random() < 0.04) s += (Math.random() * 2 - 1) * 0.7
+    if (Math.random() < 0.012) s += (Math.random() * 2 - 1) * 0.9
+    d[i] = Math.max(-1, Math.min(1, s * 0.6))
+  }
+  return buf
+}
+
+/** 创建噪音音频 */
+function createNoise(noiseItem) {
+  const type = noiseItem?.type || noiseItem
+  // 优先使用 OSS 真实音频文件；没有 audioUrl 则回退到 Web Audio 合成
+  const audioUrl = noiseItem?.audioUrl
+  if (audioUrl && OSS_BASE_URL) {
+    const fullUrl = audioUrl.startsWith('http') ? audioUrl : `${OSS_BASE_URL}/${audioUrl.replace(/^\//, '')}`
+    playNoiseAudio(fullUrl, noiseItem?.label || type)
+    return
+  }
+
+  stopAllSounds()
+  const ctx = getAudioContext(); const sr = ctx.sampleRate; let buf
+  const bufLen = sr * NOISE_BUF_SEC
+  // 启用后台音频桥梁：将 AudioContext 输出路由到支持后台播放的 HTMLAudioElement
+  const { dest } = ensureBgAudioOutput()
+
+  switch (type) {
+    case 'white': { buf = ctx.createBuffer(1, bufLen, sr); const d = buf.getChannelData(0); for (let i = 0; i < bufLen; i++) d[i] = (Math.random() * 2 - 1) * 0.5; break }
+    case 'pink': buf = vossPinkNoise(ctx, bufLen); break
+    case 'brown': buf = brownNoiseBuf(ctx, bufLen); break
+    case 'rain': buf = rainBuffer(ctx, false); break
+    case 'rain_heavy': buf = rainHeavyBuffer(ctx); break
+    case 'thunder': buf = rainBuffer(ctx, true); break  // 雷雨 → 大雨算法 + 低频滤波
+    case 'ocean': buf = oceanBuffer(ctx); break
+    case 'stream': buf = streamBuffer(ctx); break
+    case 'waterfall': buf = waterfallBuffer(ctx); break
+    case 'fan': buf = fanBuffer(ctx); break
+    case 'vacuum': buf = vacuumBuffer(ctx); break
+    case 'washing': buf = washingBuffer(ctx); break
+    case 'campfire': buf = campfireBuffer(ctx); break
+    case 'heartbeat': buf = heartbeatBuffer(ctx); break
+    case 'windchime': buf = windchimeBuffer(ctx); break
+    case 'musicbox': buf = musicboxBuffer(ctx); break
+    case 'crickets': buf = cricketsBuffer(ctx); break
+    case 'cat_purr': buf = catPurrBuffer(ctx); break
+    case 'train': buf = trainBuffer(ctx); break
+    case 'tvstatic': { buf = ctx.createBuffer(1, bufLen, sr); const d = buf.getChannelData(0); for (let i = 0; i < bufLen; i++) d[i] = (Math.random() * 2 - 1) * 0.6; break }
+    default: { buf = ctx.createBuffer(1, bufLen, sr); const d = buf.getChannelData(0); for (let i = 0; i < bufLen; i++) d[i] = (Math.random() * 2 - 1) * 0.5; break }
+  }
+
+  const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true
+
+  // 高质量滤波链路
+  const gain = ctx.createGain(); gain.gain.value = volume.value / 100 * 0.5
+  let prev = src
+  const addFilter = (type, freq, Q) => {
+    const f = ctx.createBiquadFilter(); f.type = type; f.frequency.value = freq
+    if (Q) f.Q.value = Q
+    prev.connect(f); prev = f
+  }
+  switch (type) {
+    case 'rain': addFilter('highpass', 1500); break
+    case 'rain_heavy': addFilter('highpass', 800); break
+    case 'thunder': addFilter('lowpass', 1200); addFilter('highpass', 60); break
+    case 'ocean': addFilter('lowpass', 700); break
+    case 'stream': addFilter('highpass', 600); addFilter('lowpass', 8000); break
+    case 'waterfall': addFilter('lowpass', 5000); addFilter('highpass', 100); break
+    case 'fan': addFilter('lowpass', 800); break
+    case 'vacuum': addFilter('lowpass', 2000); addFilter('highpass', 60); break
+    case 'washing': addFilter('lowpass', 1500); break
+    case 'tvstatic': addFilter('bandpass', 3000, 0.5); break
+    case 'cat_purr': addFilter('lowpass', 300); break
+    case 'train': addFilter('lowpass', 1200); break
+    case 'crickets': addFilter('highpass', 2000); break
+    case 'campfire': addFilter('highpass', 200); break
+    default: break
+  }
+  prev.connect(gain); gain.connect(dest); src.start()
+  activeNodes.push(src, gain)
+  // 注册 Media Session 以支持锁屏控制中心
+  const playingItem = selectedItem.value
+  setupMediaSession(playingItem?.label || playingItem?.text?.slice(0, 30) || '白噪音')
+}
+
 
 // ==================== TTS 播放（Edge TTS 免费 / 语音克隆 / 浏览器降级） ====================
 let ttsAudioElement = null
@@ -2375,10 +2788,11 @@ async function playEdgeTTS(item) {
   // 后端已通过 SSML prosody rate 将语速烧录进音频，前端统一 1.0 倍速播放
   source.playbackRate.value = 1.0
 
+  const { dest } = ensureBgAudioOutput()
   const gain = ctx.createGain()
   gain.gain.value = volume.value / 100
   source.connect(gain)
-  gain.connect(ctx.destination)
+  gain.connect(dest)
 
   source.onended = () => {
     clearProgress()
@@ -2469,10 +2883,11 @@ async function playCloneTTS(item) {
   // 后端已通过 speech_rate 参数将语速烧录进音频，前端统一 1.0 倍速播放
   source.playbackRate.value = 1.0
 
+  const { dest } = ensureBgAudioOutput()
   const gain = ctx.createGain()
   gain.gain.value = volume.value / 100
   source.connect(gain)
-  gain.connect(ctx.destination)
+  gain.connect(dest)
 
   source.onended = () => {
     clearProgress()
@@ -2562,8 +2977,7 @@ function startPlayback() {
   const type = selectedItemType.value
   const item = selectedItem.value
   if (type === 'noise') {
-    if (item.type === 'heartbeat') playHeartbeat()
-    else createNoise(item.type)
+    createNoise(item)
   } else if (type === 'song') {
     // 歌曲播放：先尝试 audio_url，失败则自动在线搜索
     const url = item.audioUrl || ''
@@ -2631,6 +3045,10 @@ function onVolumeChange() {
     streamAudioEl.value.volume = volume.value / 100
     return
   }
+  if (selectedItemType.value === 'noise' && noiseAudio) {
+    noiseAudio.volume = volume.value / 100
+    return
+  }
   if (window.speechSynthesis.speaking) window.speechSynthesis.cancel()
   if (selectedItem.value && isPlaying.value) {
     stopAllSounds()
@@ -2681,6 +3099,8 @@ function clearTimer() {
 
 // ==================== 生命周期 ====================
 onMounted(() => {
+  checkDarkMode()  // 进入页面立即判断
+  darkModeTimer = setInterval(checkDarkMode, 60000)  // 每分钟检查一次
   fetchSleepContent()
   fetchVoices()
   document.addEventListener('click', handleClickOutside)
@@ -2691,9 +3111,16 @@ onMounted(() => {
 onUnmounted(() => {
   stopAllSounds()
   clearTimer()
+  if (darkModeTimer) { clearInterval(darkModeTimer); darkModeTimer = null }
   if (previewAudio) { previewAudio.pause(); previewAudio = null }
   if (songAudio) { songAudio.pause(); songAudio = null }
+  if (noiseAudio) { noiseAudio.pause(); noiseAudio = null }
   if (streamAudioEl.value) { streamAudioEl.value.pause(); streamAudioEl.value = null }
+  if (bgAudioEl) {
+    try { bgAudioEl.pause(); bgAudioEl.srcObject = null } catch (e) {}
+    bgAudioEl = null
+    mediaStreamDest = null
+  }
   if (audioCtx) { audioCtx.close() }
   document.removeEventListener('click', handleClickOutside)
   document.removeEventListener('visibilitychange', handleVisibilityChange)
@@ -2822,6 +3249,13 @@ onUnmounted(() => {
   background: #f0edff; border-radius: 4px; padding: 1px 6px;
   white-space: nowrap; flex-shrink: 0;
   &.inline { margin-left: 4px; }
+}
+
+// "真实音效"标识（OSS 音频文件）
+.audio-source-badge {
+  font-size: 9px; font-weight: 600; color: #059669;
+  background: #d1fae5; border-radius: 3px; padding: 1px 5px;
+  white-space: nowrap; flex-shrink: 0; line-height: 1.5;
 }
 .add-item-btn {
   display: flex; align-items: center; justify-content: center; gap: 6px;
@@ -3128,6 +3562,10 @@ onUnmounted(() => {
     font-size: 11px; color: #6b7280;
     .el-icon { color: #a78bfa; }
   }
+  &.no-lyrics {
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: #6b7280;
+  }
 }
 
 // --- 逐行歌词（固定渐变：始终锚定到盒子左→右，所有可见歌词统一渐变） ---
@@ -3144,6 +3582,8 @@ onUnmounted(() => {
   -webkit-text-fill-color: transparent;
   &.active { font-weight: 700; }  // 当前句仅靠加粗标识，颜色仍统一为左→右渐变
 }
+
+
 
 // 通用药丸按钮
 .ctrl-pill {
@@ -3213,16 +3653,18 @@ onUnmounted(() => {
 
 .voice-menu { min-width: 190px; }
 
-// 音量下拉
-.volume-drop { min-width: 180px; padding: 8px 10px; }
-.volume-drop-row {
-  display: flex; align-items: center; gap: 6px;
+// 音量下拉（垂直滑块）
+.volume-drop { min-width: auto; padding: 8px 6px; }
+.volume-drop-col {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
   .vol-icon { color: #9ca3af; cursor: pointer; flex-shrink: 0; &:hover { color: #c4b5fd; } }
-  .vol-num { font-size: 12px; font-weight: 600; color: #a78bfa; min-width: 24px; text-align: right; }
+  .vol-num { font-size: 12px; font-weight: 600; color: #a78bfa; text-align: center; }
 }
 .volume-slider-drop {
-  flex: 1; -webkit-appearance: none; appearance: none; height: 4px; border-radius: 2px;
-  background: rgba(255, 255, 255, 0.12); outline: none; cursor: pointer;
+  -webkit-appearance: slider-vertical; appearance: slider-vertical;
+  writing-mode: vertical-lr; direction: rtl; /* Firefox 兼容，0在下100在上 */
+  width: 20px; height: 100px; cursor: pointer;
+  background: rgba(255, 255, 255, 0.12); border-radius: 4px; outline: none;
   &::-webkit-slider-thumb {
     -webkit-appearance: none; width: 14px; height: 14px; border-radius: 2px;
     background: #a78bfa; cursor: pointer;
@@ -3518,4 +3960,139 @@ onUnmounted(() => {
   .dropdown-menu { min-width: 110px; left: auto; right: 0; transform: none; }
   .voice-menu { min-width: 160px; }
 }
+
+// ====== 深色模式（晚上8点 ~ 早上7点自动切换） ======
+.baby-sleep-page.dark-mode {
+  background: #0f0f1a;
+  // 页面头部
+  .page-title { color: #e2dee9; .el-icon { color: #a78bfa; } }
+  .page-desc { color: #94a3b8; }
+
+  // 分类 Tab
+  .tab-btn {
+    border-color: #2d2d4a; background: #1e1e2e; color: #94a3b8;
+    &:hover { border-color: #6d5acf; color: #a78bfa; background: #252540; }
+    &.active { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+  }
+
+  // 排序工具栏
+  .sort-hint { color: #6b7280; &:hover { color: #a78bfa; } }
+  .sort-btn {
+    border-color: #2d2d4a; background: #1e1e2e; color: #94a3b8;
+    &:hover { border-color: #6d5acf; color: #a78bfa; }
+    &.active { background: #252040; border-color: #6d5acf; color: #a78bfa; }
+  }
+
+  // 白噪音卡片
+  .sound-card {
+    border-color: #2d2d4a; background: #1e1e2e;
+    &:hover { border-color: #6d5acf; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.12); }
+    &.active { border-color: #6d5acf; background: #252040; }
+    &.playing { border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15); }
+  }
+  .sound-label { color: #cbd5e1; }
+  .sound-playing-dot { background: #a78bfa; }
+
+  // 播放次数徽章
+  .play-count-badge { color: #a78bfa; background: #252040; }
+
+  // "真实音效"标识
+  .audio-source-badge { color: #34d399; background: #064e3b; }
+
+  // 添加按钮
+  .add-item-btn { border-color: #4c3d8f; background: #1e1e2e; color: #a78bfa; &:hover { background: #252540; border-color: #6d5acf; } }
+
+  // 内容卡片（故事、诗歌等）
+  .content-card {
+    border-color: #2d2d4a; background: #1e1e2e;
+    &:hover { border-color: #6d5acf; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.08); }
+    &.active { border-color: #6d5acf; background: #252040; }
+    &.playing { border-color: #7c3aed; box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.1); }
+  }
+  .content-title { color: #e2dee9; }
+  .content-meta { color: #6b7280; }
+  .audio-dot { &.has { color: #34d399; } &.none { color: #4b5563; } }
+  .content-playing-dot { background: #a78bfa; }
+
+  // 卡片操作按钮
+  .card-action-btn {
+    &.edit { background: rgba(139, 92, 246, 0.12); color: #a78bfa; &:hover { background: #7c3aed; color: #fff; } }
+    &.delete { background: rgba(239, 68, 68, 0.12); color: #f87171; &:hover { background: #ef4444; color: #fff; } }
+  }
+
+  // 在线搜索面板
+  .search-input-wrap {
+    background: #1a1a2e; border-color: #2d2d4a;
+    &:focus-within { border-color: #7c3aed; background: #1e1e2e; }
+    .search-icon { color: #6b7280; }
+  }
+  .search-input { color: #e2dee9; &::placeholder { color: #4b5563; } }
+  .search-clear-btn { background: #2d2d4a; color: #94a3b8; &:hover { background: #3d3d5a; color: #cbd5e1; } }
+  .platform-select { border-color: #2d2d4a; color: #cbd5e1; background: #1e1e2e; &:focus { border-color: #7c3aed; } }
+  .search-results { border-color: #2d2d4a; }
+  .search-results-header { background: #1a1a2e; border-bottom-color: #2d2d4a; color: #94a3b8; }
+  .search-close-btn { color: #6b7280; &:hover { color: #cbd5e1; background: #2d2d4a; } }
+  .search-result-item {
+    border-bottom-color: #252540;
+    &:hover { background: #1e1e2e; }
+    &.playing { background: #252040; }
+    &.cached { background: #0d2818; border-left-color: #34d399; &:hover { background: #0f3020; } }
+  }
+  .sr-title { color: #e2dee9; }
+  .sr-meta { color: #6b7280; }
+  .sr-in-list-badge { color: #6b7280; border-color: #2d2d4a; }
+  .sr-save-btn { border-color: #2d2d4a; background: #1e1e2e; color: #34d399; &:hover:not(:disabled) { background: #0d2818; border-color: #34d399; } }
+  .search-hint { background: #1c1a0a; border-color: #5c4a0a; color: #fcd34d; .el-icon { color: #fbbf24; } }
+  .sr-thumb { background: #1a1a2e; .el-icon { color: #6b7280; } }
+
+  // 播放器面板（已为深色，微调）
+  .player-panel {
+    background: linear-gradient(180deg, #1a1825 0%, #0f0f1a 100%);
+    border-top-color: rgba(255, 255, 255, 0.04);
+  }
+  .ctrl-pill {
+    border-color: rgba(255, 255, 255, 0.08);
+    &:hover { border-color: rgba(167, 139, 250, 0.2); }
+  }
+  .dropdown-menu { background: #1a1825; border-color: rgba(255, 255, 255, 0.06); }
+  .dropdown-item {
+    &:hover { background: rgba(167, 139, 250, 0.08); }
+    &.active { background: rgba(167, 139, 250, 0.12); }
+  }
+
+  // 弹窗（密码、克隆、编辑）
+  .password-modal, .clone-modal, .edit-modal {
+    background: #1e1e2e;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .password-header, .clone-header, .edit-header {
+    border-bottom-color: #2d2d4a;
+    h3 { color: #e2dee9; }
+  }
+  .password-close, .clone-close, .edit-close {
+    background: #2d2d4a; color: #94a3b8;
+    &:hover { background: #3d3d5a; }
+  }
+  .password-desc { color: #94a3b8; }
+  .password-input, .clone-name-input, .edit-field input, .edit-field textarea, .edit-field select {
+    border-color: #2d2d4a; background: #1a1a2e; color: #e2dee9;
+    &:focus { border-color: #7c3aed; }
+  }
+  .password-footer, .clone-footer, .edit-footer, .clone-name-row {
+    border-top-color: #2d2d4a;
+  }
+  .password-cancel-btn, .clone-cancel-btn, .edit-cancel-btn {
+    background: #1e1e2e; border-color: #2d2d4a; color: #94a3b8;
+    &:hover { background: #252540; }
+  }
+  .edit-field label, .clone-name-row label { color: #cbd5e1; }
+  .icon-color-swatch { &:hover { border-color: #6d5acf; } }
+
+  // 提示卡片
+  .tip-card { background: #1c1a0a; border-color: #5c4a0a; color: #fcd34d; .el-icon { color: #fbbf24; } }
+
+  // 上传区域
+  .clone-upload { border-color: #3d3d5a; color: #94a3b8; &:hover { border-color: #6d5acf; background: #1e1e2e; } &.has-file { border-color: #6d5acf; background: #1a1830; } p { color: #94a3b8; } .file-name { color: #e2dee9; } .file-size { color: #6b7280; } .upload-hint { color: #6b7280; } .el-icon { color: #6d5acf; } }
+}
+
 </style>

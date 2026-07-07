@@ -65,12 +65,13 @@ const isActive = (item) => {
 
 <style lang="scss" scoped>
 .header {
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--header-bg);
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--header-border);
   position: sticky;
   top: 0;
   z-index: 1000;
+  transition: background 0.4s ease, border-color 0.4s ease;
 }
 
 .header-container {
@@ -108,11 +109,13 @@ const isActive = (item) => {
   }
 
   .logo-utility {
-    color: #64748b;
+    color: var(--logo-utility-color);
+    transition: color 0.4s ease;
   }
 
   .logo-tool {
-    color: #0f172a;
+    color: var(--logo-tool-color);
+    transition: color 0.4s ease;
   }
 }
 
@@ -138,20 +141,20 @@ const isActive = (item) => {
   border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
-  color: #64748b;
+  color: var(--nav-text);
   text-decoration: none;
   transition: all 0.2s ease;
   white-space: nowrap;
   flex-shrink: 0;
   
   &:hover {
-    color: #0f172a;
-    background: #f1f5f9;
+    color: var(--nav-text-hover);
+    background: var(--nav-hover-bg);
   }
   
   &.active {
-    color: #6366f1;
-    background: rgba(99, 102, 241, 0.1);
+    color: var(--nav-active-color);
+    background: var(--nav-active-bg);
   }
 }
 
@@ -205,7 +208,7 @@ const isActive = (item) => {
     gap: 0;
     border-radius: 0;
     position: relative;
-    color: #64748b;
+    color: var(--nav-text);
     background: transparent;
     height: 100%;
     align-items: center;
@@ -218,18 +221,18 @@ const isActive = (item) => {
       transform: translateX(-50%);
       width: 0;
       height: 2.5px;
-      background: #6366f1;
+      background: var(--nav-active-color);
       border-radius: 2px;
       transition: width 0.25s ease;
     }
 
     &:hover {
-      color: #0f172a;
+      color: var(--nav-text-hover);
       background: transparent;
     }
 
     &.active {
-      color: #6366f1;
+      color: var(--nav-active-color);
       background: transparent;
       font-weight: 600;
 

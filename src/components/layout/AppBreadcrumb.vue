@@ -36,8 +36,9 @@ const breadcrumbs = computed(() => {
 <style lang="scss" scoped>
 .breadcrumb-wrapper {
   padding: 16px 24px;
-  background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
+  background: var(--breadcrumb-bg);
+  border-bottom: 1px solid var(--breadcrumb-border);
+  transition: background 0.4s ease, border-color 0.4s ease;
 
   :deep(.el-breadcrumb) {
     font-size: 14px;
@@ -46,11 +47,12 @@ const breadcrumbs = computed(() => {
       display: flex;
       align-items: center;
       gap: 4px;
-      color: #64748b;
+      color: var(--breadcrumb-text);
       
       a {
-        color: #64748b;
+        color: var(--breadcrumb-text);
         font-weight: 400;
+        transition: color 0.3s ease;
         
         &:hover {
           color: #6366f1;
@@ -59,7 +61,7 @@ const breadcrumbs = computed(() => {
     }
 
     .el-breadcrumb__separator {
-      color: #cbd5e1;
+      color: var(--breadcrumb-separator);
     }
   }
 }

@@ -26,9 +26,10 @@
 
 <style lang="scss" scoped>
 .app-footer {
-  background: #1a1f2e;
+  background: var(--footer-bg);
   padding: 20px 24px;
   margin-top: auto;
+  transition: background 0.4s ease;
 }
 
 .footer-inner {
@@ -51,17 +52,20 @@
 
 .copyright {
   font-size: 0.78rem;
-  color: #8892a6;
+  color: var(--footer-text);
+  transition: color 0.4s ease;
 }
 
 .footer-link {
   font-size: 0.78rem;
-  color: #8892a6;
+  color: var(--footer-text);
+  transition: color 0.4s ease;
 }
 
 .footer-divider {
   font-size: 0.78rem;
-  color: #4a5568;
+  color: var(--footer-divider);
+  transition: color 0.4s ease;
 }
 
 .footer-beian {
@@ -71,12 +75,12 @@
 
 .beian-link {
   text-decoration: none;
-  color: #5a6478;
+  color: var(--footer-beian);
   font-size: 0.75rem;
   transition: color 0.2s ease;
 
   &:hover {
-    color: #8892a6;
+    color: var(--footer-beian-hover);
   }
 }
 

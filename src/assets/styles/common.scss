@@ -44,6 +44,165 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --border-radius: #{$border-radius};
   --box-shadow: #{$box-shadow};
   --transition: #{$transition};
+
+  // 布局组件专用变量（浅色）
+  --header-bg: rgba(255, 255, 255, 0.95);
+  --header-border: #e2e8f0;
+  --nav-text: #64748b;
+  --nav-text-hover: #0f172a;
+  --nav-hover-bg: #f1f5f9;
+  --nav-active-color: #6366f1;
+  --nav-active-bg: rgba(99, 102, 241, 0.1);
+  --logo-utility-color: #64748b;
+  --logo-tool-color: #0f172a;
+  --breadcrumb-bg: #ffffff;
+  --breadcrumb-border: #e2e8f0;
+  --breadcrumb-text: #64748b;
+  --breadcrumb-separator: #cbd5e1;
+  --footer-bg: #1a1f2e;
+  --footer-text: #8892a6;
+  --footer-divider: #4a5568;
+  --footer-beian: #5a6478;
+  --footer-beian-hover: #8892a6;
+
+  // Element Plus 浅色模式变量
+  --el-bg-color: #ffffff;
+  --el-bg-color-overlay: #ffffff;
+  --el-bg-color-page: #f5f7fa;
+  --el-border-color-light: #e4e7ed;
+  --el-text-color-primary: #303133;
+  --el-text-color-regular: #606266;
+  --el-text-color-secondary: #909399;
+  --el-fill-color-blank: #ffffff;
+  --el-fill-color-light: #f5f7fa;
+}
+
+// ===== 深色模式覆盖 =====
+html.dark-mode {
+  --primary-color: #a78bfa;
+  --bg-color: #0f0f1a;
+  --bg-white: #1e1e2e;
+  --text-primary: #e2dee9;
+  --text-regular: #94a3b8;
+  --text-secondary: #64748b;
+  --border-color: #2d2d4a;
+  --box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.3);
+
+  // 布局组件专用变量（深色）
+  --header-bg: rgba(15, 15, 26, 0.95);
+  --header-border: #2d2d4a;
+  --nav-text: #94a3b8;
+  --nav-text-hover: #e2dee9;
+  --nav-hover-bg: #252540;
+  --nav-active-color: #a78bfa;
+  --nav-active-bg: rgba(124, 58, 237, 0.15);
+  --logo-utility-color: #94a3b8;
+  --logo-tool-color: #e2dee9;
+  --breadcrumb-bg: #1e1e2e;
+  --breadcrumb-border: #2d2d4a;
+  --breadcrumb-text: #94a3b8;
+  --breadcrumb-separator: #4a4a6a;
+  --footer-bg: #0a0a14;
+  --footer-text: #64748b;
+  --footer-divider: #3a3a5a;
+  --footer-beian: #4a5568;
+  --footer-beian-hover: #64748b;
+
+  // Element Plus 深色模式变量
+  --el-bg-color: #1e1e2e;
+  --el-bg-color-overlay: #1e1e2e;
+  --el-bg-color-page: #0f0f1a;
+  --el-border-color-light: #2d2d4a;
+  --el-text-color-primary: #e2dee9;
+  --el-text-color-regular: #94a3b8;
+  --el-text-color-secondary: #64748b;
+  --el-fill-color-blank: #1e1e2e;
+  --el-fill-color-light: #252540;
+}
+
+// ===== Element Plus 对话框/弹出层全局深色适配 =====
+html.dark-mode {
+  .el-dialog {
+    --el-dialog-bg-color: var(--el-bg-color-overlay);
+  }
+
+  .el-popper,
+  .el-dropdown__popper,
+  .el-select-dropdown,
+  .el-cascader__dropdown,
+  .el-picker__popper {
+    --el-bg-color-overlay: #1e1e2e;
+    --el-border-color-light: #2d2d4a;
+    --el-text-color-regular: #94a3b8;
+    --el-fill-color-blank: #252540;
+    background: #1e1e2e !important;
+    border-color: #2d2d4a !important;
+  }
+
+  .el-popover {
+    background: #1e1e2e !important;
+    border-color: #2d2d4a !important;
+    color: #e2dee9;
+  }
+
+  .el-tooltip__popper {
+    background: #252540 !important;
+    color: #e2dee9;
+  }
+
+  .el-message,
+  .el-notification {
+    background: #1e1e2e !important;
+    border-color: #2d2d4a !important;
+  }
+
+  .el-tag--plain {
+    background: #252540;
+    border-color: #2d2d4a;
+    color: #94a3b8;
+  }
+
+  .el-input__wrapper {
+    background: #252540;
+    box-shadow: 0 0 0 1px #2d2d4a inset;
+  }
+
+  .el-input__inner {
+    color: #e2dee9;
+  }
+
+  .el-select .el-input .el-input__wrapper {
+    background: #252540;
+  }
+
+  // 表格
+  .el-table {
+    --el-table-bg-color: #1e1e2e;
+    --el-table-tr-bg-color: #1e1e2e;
+    --el-table-header-bg-color: #252540;
+    --el-table-border-color: #2d2d4a;
+    --el-table-text-color: #e2dee9;
+    --el-table-row-hover-bg-color: #252540;
+  }
+
+  // 分页
+  .el-pagination {
+    --el-pagination-bg-color: transparent;
+    --el-pagination-button-bg-color: #252540;
+    --el-pagination-text-color: #94a3b8;
+  }
+
+  // 选项卡
+  .el-tabs__header {
+    border-bottom-color: #2d2d4a;
+  }
+
+  .el-tabs__item {
+    color: #94a3b8;
+    &.is-active {
+      color: #a78bfa;
+    }
+  }
 }
 
 // 重置样式
@@ -61,6 +220,42 @@ html, body {
   background: var(--bg-color);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background 0.4s ease, color 0.4s ease;
+}
+
+// 深色模式全局过渡
+html.dark-mode {
+  body {
+    background: var(--bg-color);
+    color: var(--text-primary);
+  }
+
+  // 滚动条深色
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  // 全局卡片
+  .card {
+    background: var(--bg-white);
+    box-shadow: var(--box-shadow);
+  }
+
+  // 输入框/文本框
+  input:not(.search-input):not([class*="el"]),
+  textarea:not([class*="el"]),
+  select:not(.platform-select):not([class*="el"]) {
+    background: #252540;
+    color: #e2dee9;
+    border-color: #2d2d4a;
+  }
 }
 
 a {
