@@ -50,15 +50,8 @@
             {{ playCountMap[item.id] >= 100 ? '99+' : playCountMap[item.id] }}次
           </div>
           <div class="sound-playing-dot" v-if="isPlaying && selectedItem?.id === item.id"></div>
-          <div class="card-actions">
-            <button class="card-action-btn edit" title="编辑" @click.stop="openEditModal('whitenoise', item)"><el-icon :size="13"><Edit /></el-icon></button>
-            <button class="card-action-btn delete" title="删除" @click.stop="confirmDelete('whitenoise', item)"><el-icon :size="13"><Delete /></el-icon></button>
-          </div>
         </div>
       </div>
-      <button class="add-item-btn" @click="openEditModal('whitenoise')">
-        <el-icon :size="14"><Plus /></el-icon> 新增白噪音
-      </button>
     </div>
 
     <!-- ====== 故事/寓言/神曲/古诗/名篇 ====== -->
@@ -74,6 +67,84 @@
           <span>{{ sortMode === 'playCount' ? '按热度' : '按默认' }}</span>
         </button>
       </div>
+
+      <!-- ====== 哄睡神曲：在线搜索 ====== -->
+      <div v-if="activeTab === 'lullaby'" class="online-search-panel">
+        <div class="search-input-row">
+          <div class="search-input-wrap">
+            <el-icon :size="16" class="search-icon"><Search /></el-icon>
+            <input
+              v-model="searchQuery"
+              class="search-input"
+              placeholder="搜索歌曲：儿歌 / 摇篮曲 / 轻音乐..."
+              @keydown.enter="handleSearch"
+            />
+            <button v-if="searchQuery" class="search-clear-btn" @click="clearSearch"><el-icon :size="12"><Close /></el-icon></button>
+          </div>
+          <select v-model="searchPlatform" class="platform-select">
+            <option value="bilibili">B站</option>
+            <option value="youtube">YouTube</option>
+          </select>
+          <button class="search-btn" :disabled="searchLoading || !searchQuery.trim()" @click="handleSearch">
+            <el-icon v-if="!searchLoading" :size="14"><Search /></el-icon>
+            <el-icon v-else :size="14" class="spinning"><Loading /></el-icon>
+            <span>{{ searchLoading ? '搜索中' : '搜索' }}</span>
+          </button>
+        </div>
+
+        <!-- 搜索结果 -->
+        <div v-if="searchResults.length > 0" class="search-results">
+          <div class="search-results-header">
+            <span>搜索 "{{ lastSearchQuery }}" — {{ searchResults.length }} 个结果{{ searchCached ? ' (缓存)' : '' }}</span>
+            <button class="search-close-btn" @click="clearSearch">收起</button>
+          </div>
+          <div
+            v-for="item in searchResults" :key="item.id"
+            class="search-result-item"
+            :class="{ playing: streamingItem?.id === item.id, cached: hasAudioCache(item.id) }"
+          >
+            <div class="sr-thumb" @click="playStreaming(item)">
+              <img v-if="item.thumbnail && !thumbErrors[item.id]" :src="proxyImage(item.thumbnail)" alt=""
+                @error="thumbErrors[item.id] = true" />
+              <el-icon v-if="!item.thumbnail || thumbErrors[item.id]" :size="20"><VideoPlay /></el-icon>
+              <div class="sr-play-overlay">
+                <el-icon v-if="streamingItem?.id === item.id && isPlaying" :size="18"><VideoPause /></el-icon>
+                <el-icon v-else :size="18"><VideoPlay /></el-icon>
+              </div>
+            </div>
+            <div class="sr-info" @click="playStreaming(item)">
+              <div class="sr-title">
+                <span v-if="hasAudioCache(item.id)" class="sr-cached-badge" title="已缓存音频，点击直接播放">🎵 已缓存</span>
+                {{ item.title }}
+              </div>
+              <div class="sr-meta">
+                <span>{{ item.uploader || item.platform || '' }}</span>
+                <span v-if="item.duration">{{ formatDuration(item.duration) }}</span>
+              </div>
+            </div>
+            <div class="sr-actions">
+              <button
+                v-if="!isInLullabyList(item)"
+                class="sr-save-btn"
+                :disabled="savingItemId === item.id"
+                title="保存到歌单"
+                @click.stop="saveToSongList(item)"
+              >
+                <el-icon v-if="savingItemId !== item.id" :size="14"><Plus /></el-icon>
+                <el-icon v-else :size="14" class="spinning"><Loading /></el-icon>
+              </button>
+              <span v-else class="sr-in-list-badge" title="已在歌单中">已收藏</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 搜索提示 -->
+        <div v-if="searchHint" class="search-hint">
+          <el-icon :size="13"><InfoFilled /></el-icon>
+          <span>{{ searchHint }}</span>
+        </div>
+      </div>
+
       <div class="content-grid">
         <div
           v-for="item in currentContentItems" :key="item.id"
@@ -112,7 +183,7 @@
     </div>
 
     <!-- ====== 播放器控制栏（固定在底部） ====== -->
-    <div class="player-panel" :class="{ active: isPlaying, visible: selectedItem }">
+    <div class="player-panel" :class="{ active: isPlaying, visible: selectedItem || streamingItem }">
       <!-- 进度条 -->
       <div class="player-progress-bar" v-if="playerFeatures.showProgress">
         <div class="progress-track">
@@ -121,16 +192,14 @@
       </div>
 
       <div class="player-inner">
-        <!-- 左侧：封面 / 信息 -->
+        <!-- 第一行：歌名 + 类型标签 + 滚动歌词 -->
         <div class="player-left">
-          <div class="player-cover" :class="{ active: isPlaying, disabled: !playerFeatures.canPlay }" @click="playerFeatures.canPlay && togglePlay()">
-            <el-icon :size="20"><VideoPause v-if="isPlaying && playerFeatures.canPlay" /><VideoPlay v-else /></el-icon>
-          </div>
           <div class="player-meta">
             <div class="player-title">{{ playingItemLabel }}</div>
             <div class="player-sub">
               <span class="player-type-badge" v-if="selectedItemType === 'noise'">白噪音</span>
               <span class="player-type-badge song" v-else-if="selectedItemType === 'song'">歌曲</span>
+              <span class="player-type-badge stream" v-else-if="selectedItemType === 'stream'">在线</span>
               <span class="player-song-note" v-if="selectedItemType === 'song' && !selectedItem?.audioUrl">无音频</span>
               <span class="player-type-badge tts" v-else-if="selectedItemType === 'tts'">朗读</span>
               <span class="player-buffering" v-if="isBuffering && selectedItemType === 'tts'">
@@ -143,10 +212,30 @@
               </span>
             </div>
           </div>
+          <!-- 歌词：逐行横向平滑滚动（TTS / 歌曲 / 流媒体通用） -->
+          <div class="player-lyrics" v-if="lyrics.length > 0 && (selectedItemType === 'stream' || selectedItemType === 'song' || selectedItemType === 'tts')" :key="'lrc-' + (streamingItem?.id || selectedItem?.id || '')" ref="lyricScrollEl">
+            <span class="lyric-line" :class="{ active: currentLyricIndex === idx, past: currentLyricIndex > idx }" v-for="(l, idx) in lyrics" :key="idx">{{ l.text }}</span>
+          </div>
+          <div class="player-lyrics loading" v-else-if="lyricsLoading">
+            <el-icon :size="12" class="spinning"><Loading /></el-icon>
+            <span>歌词加载中...</span>
+          </div>
         </div>
 
-        <!-- 右侧：控制按钮 -->
-        <div class="player-right">
+        <!-- 第二行：所有控制按钮 -->
+        <div class="player-controls">
+          <!-- 上一首 / 播放暂停 / 下一首 -->
+          <div class="player-nav">
+            <button class="ctrl-pill" :class="{ disabled: !playerFeatures.canPrevNext }" @click="playerFeatures.canPrevNext && playPrevInList()" title="上一首">
+              <el-icon :size="16"><DArrowLeft /></el-icon>
+            </button>
+            <button class="player-cover" :class="{ active: isPlaying, disabled: !playerFeatures.canPlay }" @click="playerFeatures.canPlay && togglePlay()">
+              <el-icon :size="20"><VideoPause v-if="isPlaying && playerFeatures.canPlay" /><VideoPlay v-else /></el-icon>
+            </button>
+            <button class="ctrl-pill" :class="{ disabled: !playerFeatures.canPrevNext }" @click="playerFeatures.canPrevNext && playNextInList()" title="下一首">
+              <el-icon :size="16"><DArrowRight /></el-icon>
+            </button>
+          </div>
           <!-- 循环模式 -->
           <button class="ctrl-pill" :class="{ active: loopMode !== 'none', disabled: !playerFeatures.canLoop }" @click="playerFeatures.canLoop && toggleLoopMode()" :title="playerFeatures.canLoop ? loopModeTooltip : '当前类型不支持循环'">
             <span class="loop-icon-wrap">
@@ -444,13 +533,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, markRaw, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, markRaw, nextTick } from 'vue'
 import {
   Moon, VideoPlay, VideoPause, Mute, Microphone, InfoFilled,
   Headset, Sunny, Reading, Notebook, EditPen,
   Cloudy, WindPower, Promotion, Film, Bell, Umbrella, Ship, Watch, Collection,
   Timer, ArrowDown, User, Plus, Upload, Clock, Loading, Lock, Refresh,
-  Sort,
+  Sort, Search, Close,
   Edit, Delete
 } from '@element-plus/icons-vue'
 
@@ -842,6 +931,555 @@ function removeItemFromList(category, itemId) {
   }
 }
 
+// ==================== 在线搜索 & 流媒体播放（哄睡神曲） ====================
+const SEARCH_VIDEO_API = '/staticTool/api/video-parse/ytdlp'
+
+/** B站等平台的图片通过后端代理，避免403防盗链 */
+function proxyImage(url) {
+  if (!url) return ''
+  if (url.includes('hdslb.com') || url.includes('bilivideo.com')) {
+    return `${SEARCH_VIDEO_API}/image-proxy?url=${encodeURIComponent(url)}`
+  }
+  return url
+}
+
+// 搜索状态
+const searchQuery = ref('')
+const searchPlatform = ref('bilibili')
+const searchLoading = ref(false)
+const searchResults = ref([])
+const searchCached = ref(false)
+const thumbErrors = reactive({})  // 记录加载失败的缩略图
+const searchHint = ref('')
+const lastSearchQuery = ref('')
+
+// 流媒体播放状态
+const streamingItem = ref(null)        // 当前流媒体项 { id, title, thumbnail, uploader, duration, url }
+const streamAudioEl = ref(null)        // 流媒体 Audio 元素
+
+// 歌词状态
+const lyrics = ref([])                 // [{time:秒, text:'歌词行'}] 或 [{charOffset, text}]
+const currentLyricIndex = ref(-1)      // 当前高亮的歌词行索引
+const lyricsLoading = ref(false)
+const lyricScrollEl = ref(null)        // 歌词滚动容器
+let lyricSyncTimer = null             // requestAnimationFrame ID（兼容旧逻辑）
+let ttsLyricTotalChars = 0            // TTS文本总字符数，用于进度→字符坐标映射
+let lyricScrollAnimId = null          // 歌词横向平滑滚动 rAF ID
+let targetScrollLeft = 0              // 歌词滚动目标 scrollLeft
+let lineGeom = []                     // 每一行歌词相对容器的 {left, width}
+let lyricContainerW = 0               // 歌词容器可见宽度（固定渐变 + 滚动基准）
+const savingItemId = ref(null)         // 正在保存到歌单的 item id
+
+// 前端音频流缓存（localStorage）
+// key: "audio_cache:{videoId}" → { url, expires, title, thumbnail }
+const AUDIO_CACHE_KEY = 'babySleep_audioStreamCache_v1'
+const AUDIO_CACHE_TTL = 25 * 60 * 1000 // 25 分钟（略小于服务端 30 分钟）
+
+function loadAudioCache() {
+  try {
+    const raw = localStorage.getItem(AUDIO_CACHE_KEY)
+    return raw ? JSON.parse(raw) : {}
+  } catch { return {} }
+}
+
+function saveAudioCache(cache) {
+  try {
+    // 清理过期条目
+    const now = Date.now()
+    for (const [key, val] of Object.entries(cache)) {
+      if (val.expires < now) delete cache[key]
+    }
+    localStorage.setItem(AUDIO_CACHE_KEY, JSON.stringify(cache))
+  } catch { /* 忽略存储错误 */ }
+}
+
+function getCachedAudioUrl(videoId) {
+  const cache = loadAudioCache()
+  const entry = cache[videoId]
+  if (entry && entry.expires > Date.now()) {
+    return entry
+  }
+  if (entry) delete cache[videoId]; saveAudioCache(cache) // 过期清理
+  return null
+}
+
+function setCachedAudioUrl(videoId, data) {
+  const cache = loadAudioCache()
+  cache[videoId] = {
+    ...data,
+    expires: Date.now() + AUDIO_CACHE_TTL
+  }
+  saveAudioCache(cache)
+}
+
+// 判断某个视频 ID 是否已有音频缓存
+function hasAudioCache(videoId) {
+  return !!getCachedAudioUrl(videoId)
+}
+
+// 判断搜索结果歌曲是否已在本地歌单中（用于控制 + 按钮显隐）
+function isInLullabyList(item) {
+  if (!lullabyItems.value.length) return false
+  const t = (item.title || '').toLowerCase().trim()
+  if (!t) return false
+  return lullabyItems.value.some(li => {
+    const lt = (li.label || '').toLowerCase().trim()
+    return lt && (lt.includes(t) || t.includes(lt))
+  })
+}
+
+// 根据歌曲标题查找已缓存的音频（用于点击本地歌曲时跳过搜索）
+function findCachedByTitle(title) {
+  if (!title) return null
+  const cache = loadAudioCache()
+  const lowerTitle = title.toLowerCase().trim()
+  for (const [videoId, entry] of Object.entries(cache)) {
+    if (entry.expires < Date.now()) continue
+    const entryTitle = (entry.title || '').toLowerCase()
+    if (entryTitle && (entryTitle.includes(lowerTitle) || lowerTitle.includes(entryTitle))) {
+      return { videoId, ...entry }
+    }
+  }
+  return null
+}
+
+// 搜索缓存（localStorage，TTL 30 分钟）
+const SEARCH_CACHE_KEY = 'babySleep_searchCache_v1'
+const SEARCH_CACHE_TTL = 30 * 60 * 1000
+
+function getCachedSearch(key) {
+  try {
+    const raw = localStorage.getItem(SEARCH_CACHE_KEY)
+    const cache = raw ? JSON.parse(raw) : {}
+    const entry = cache[key]
+    if (entry && entry.expires > Date.now()) return entry.data
+  } catch { return null }
+}
+
+function setCachedSearch(key, data) {
+  try {
+    const raw = localStorage.getItem(SEARCH_CACHE_KEY)
+    const cache = raw ? JSON.parse(raw) : {}
+    // 限制缓存 50 条
+    const keys = Object.keys(cache)
+    if (keys.length >= 50) {
+      keys.sort((a, b) => (cache[a].expires || 0) - (cache[b].expires || 0))
+      for (let i = 0; i < Math.floor(keys.length / 2); i++) delete cache[keys[i]]
+    }
+    cache[key] = { data, expires: Date.now() + SEARCH_CACHE_TTL }
+    localStorage.setItem(SEARCH_CACHE_KEY, JSON.stringify(cache))
+  } catch { /* 忽略 */ }
+}
+
+async function handleSearch() {
+  const q = searchQuery.value.trim()
+  if (!q) return
+  searchLoading.value = true
+  searchHint.value = ''
+  searchResults.value = []
+  searchCached.value = false
+  Object.keys(thumbErrors).forEach(k => delete thumbErrors[k])
+  lastSearchQuery.value = q
+
+  // 1. 先查前端缓存
+  const cacheKey = `${searchPlatform.value}:${q}`
+  const cached = getCachedSearch(cacheKey)
+  if (cached) {
+    searchResults.value = cached
+    searchCached.value = true
+    searchLoading.value = false
+    return
+  }
+
+  // 2. 请求服务端搜索
+  try {
+    const res = await fetch(`${SEARCH_VIDEO_API}/search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: q, platform: searchPlatform.value, limit: 10 })
+    })
+    const json = await res.json()
+    if (json?.code === 0 && json.data?.results?.length > 0) {
+      searchResults.value = json.data.results
+      searchCached.value = !!json.cached
+      // 保存到前端缓存
+      setCachedSearch(cacheKey, json.data.results)
+    } else if (json?.code === 0) {
+      searchHint.value = `未找到 "${q}" 的相关结果，换个关键词试试`
+    } else {
+      searchHint.value = json?.message || '搜索失败，请重试'
+    }
+  } catch (err) {
+    console.error('[babySleep] 搜索失败:', err)
+    searchHint.value = '搜索服务不可用，请检查后端是否启动'
+  } finally {
+    searchLoading.value = false
+  }
+}
+
+function clearSearch() {
+  searchQuery.value = ''
+  searchResults.value = []
+  searchHint.value = ''
+  searchCached.value = false
+  lastSearchQuery.value = ''
+  Object.keys(thumbErrors).forEach(k => delete thumbErrors[k])
+}
+
+function formatDuration(seconds) {
+  if (!seconds || seconds <= 0) return ''
+  const m = Math.floor(seconds / 60)
+  const s = Math.floor(seconds % 60)
+  return `${m}:${String(s).padStart(2, '0')}`
+}
+
+/**
+ * 播放流媒体音频：先查缓存 → 再请求后端提取 → 代理播放
+ */
+async function playStreaming(item) {
+  if (streamingItem.value?.id === item.id) {
+    // 已选中该项，切换播放/暂停
+    if (isPlaying.value) {
+      stopStreamAudio()
+      isPlaying.value = false
+    } else {
+      isPlaying.value = true
+      streamAudioPlay()
+    }
+    return
+  }
+
+  // 切换到新项
+  stopAllSounds()
+  isPlaying.value = false
+  streamingItem.value = { ...item }
+  selectedItem.value = null  // 取消本地歌单项选中
+  selectedItemType.value = 'stream'
+  searchHint.value = ''
+
+  const videoId = item.id
+  const videoUrl = item.webpage_url || item.webpageUrl || item.url || item.original_url || ''
+
+  // 1. 查前端音频缓存
+  const cachedAudio = getCachedAudioUrl(videoId)
+  if (cachedAudio && cachedAudio.url) {
+    console.log('[babySleep] 命中音频缓存:', item.title)
+    streamingItem.value.url = cachedAudio.url
+    isPlaying.value = true
+    streamAudioPlay()
+    return
+  }
+
+  // 2. 请求后端提取音频流
+  if (!videoUrl) {
+    searchHint.value = '该搜索结果缺少播放链接，无法播放'
+    return
+  }
+
+  searchHint.value = '正在提取音频流...'
+  try {
+    const res = await fetch(`${SEARCH_VIDEO_API}/audio-stream`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: videoUrl })
+    })
+    const json = await res.json()
+    if (json?.code === 0 && json.data?.url) {
+      streamingItem.value.url = json.data.url
+      streamingItem.value.title = json.data.title || item.title
+      streamingItem.value.duration = json.data.duration || item.duration
+      streamingItem.value.thumbnail = json.data.thumbnail || item.thumbnail
+
+      // 保存到前端缓存
+      setCachedAudioUrl(videoId, {
+        url: json.data.url,
+        title: json.data.title || item.title || '',
+        thumbnail: json.data.thumbnail || item.thumbnail || ''
+      })
+
+      searchHint.value = ''
+
+      // 如果是从缓存命中的，也提示一下
+      if (json.data.cached) {
+        searchHint.value = ''
+      }
+
+      isPlaying.value = true
+      streamAudioPlay()
+    } else {
+      searchHint.value = json?.message || '提取音频失败，请尝试其他来源'
+    }
+  } catch (err) {
+    console.error('[babySleep] 提取音频流失败:', err)
+    searchHint.value = '提取音频流失败，请检查后端是否启动'
+  }
+}
+
+function streamAudioPlay() {
+  if (!streamingItem.value?.url) return
+  try {
+    // 复用 Audio 元素避免浏览器自动播放策略拦截
+    let audio = streamAudioEl.value
+    if (!audio) {
+      audio = new Audio()
+      setupAudioForBackground(audio)
+      audio.addEventListener('ended', () => {
+        isPlaying.value = false
+        if (loopMode.value === 'list') playNextInList()
+        else if (loopMode.value === 'single') { streamAudioPlay() }
+      })
+      streamAudioEl.value = audio
+    } else {
+      // 暂停当前播放（如果有）
+      try { audio.pause() } catch (e) {}
+    }
+    audio.src = streamingItem.value.url
+    audio.volume = volume.value / 100
+    audio.load()
+    audio.play().then(() => {
+      isPlaying.value = true
+      setupMediaSession(streamingItem.value?.title)
+      // 流媒体歌曲启动歌词同步
+      if (streamingItem.value?.title && lyrics.value.length === 0) {
+        fetchLyrics(streamingItem.value.title).then(() => startLyricSync())
+      } else {
+        startLyricSync()
+      }
+    }).catch(err => {
+      console.error('[babySleep] 流媒体播放失败:', err)
+      isPlaying.value = false
+      searchHint.value = '播放失败，请重试'
+    })
+  } catch (e) {
+    console.error('[babySleep] 流媒体播放异常:', e)
+    isPlaying.value = false
+  }
+}
+
+// ==================== 歌词显示 ====================
+
+/** 解析LRC歌词格式，返回 [{time:秒, text:'歌词'}] */
+function parseLRC(lrcString) {
+  if (!lrcString) return []
+  const lines = lrcString.split('\n')
+  const result = []
+  const timeRegex = /\[(\d{2}):(\d{2})(?:\.(\d{2,3}))?\]/g
+
+  for (const line of lines) {
+    const matches = [...line.matchAll(timeRegex)]
+    if (matches.length === 0) continue
+    const text = line.replace(timeRegex, '').trim()
+    if (!text) continue
+    for (const match of matches) {
+      const min = parseInt(match[1]), sec = parseInt(match[2])
+      let ms = 0
+      if (match[3]) ms = match[3].length === 2 ? parseInt(match[3]) * 10 : parseInt(match[3])
+      result.push({ time: min * 60 + sec + ms / 1000, text })
+    }
+  }
+  return result.sort((a, b) => a.time - b.time)
+}
+
+/** 将TTS文本拆为歌词行，按句子分割，附带累计字符数用于进度映射 */
+function textToLyricLines(text) {
+  if (!text) return []
+  // 按句子分隔符拆分，保留分隔符
+  const sentences = text.split(/(?<=[。！？；\n])/)
+  const lines = []
+  let charCount = 0
+  for (const s of sentences) {
+    const trimmed = s.trim()
+    if (!trimmed) continue
+    lines.push({ charOffset: charCount, text: trimmed })
+    charCount += trimmed.length
+  }
+  return { lines, totalChars: charCount }
+}
+
+/** 根据歌名拉取LRC歌词 */
+async function fetchLyrics(title) {
+  if (!title) return
+  lyricsLoading.value = true
+  lyrics.value = []
+  currentLyricIndex.value = -1
+  try {
+    const res = await fetch(`${SEARCH_VIDEO_API}/lyrics?title=${encodeURIComponent(title)}`)
+    const data = await res.json()
+    if (data?.code === 0 && data?.data?.syncedLyrics) {
+      lyrics.value = parseLRC(data.data.syncedLyrics)
+    }
+  } catch (e) {
+    console.error('[babySleep] 歌词拉取失败:', e.message)
+  } finally {
+    lyricsLoading.value = false
+  }
+}
+
+/** 启动歌词时间同步（委托给统一的平滑滚动 + 固定渐变循环） */
+function startLyricSync() {
+  stopLyricSync()
+  startSmoothLyricScroll()
+  nextTick(measureLyricGeom)  // 渲染后测量每行位置
+}
+
+function stopLyricSync() {
+  if (lyricSyncTimer) { cancelAnimationFrame(lyricSyncTimer); lyricSyncTimer = null }
+}
+
+/** 当前正在播放的音频元素（歌曲用 songAudio，流媒体用 streamAudioEl） */
+function activeAudioEl() {
+  if (selectedItemType.value === 'song') return songAudio
+  if (selectedItemType.value === 'stream') return streamAudioEl.value
+  return null
+}
+
+/** 测量每行歌词相对容器的几何位置，并设置固定渐变所需的容器宽度变量 */
+function measureLyricGeom() {
+  const c = lyricScrollEl.value
+  if (!c) return
+  lyricContainerW = c.clientWidth
+  c.style.setProperty('--lw', lyricContainerW + 'px')
+  const spans = c.querySelectorAll('.lyric-line')
+  lineGeom = Array.from(spans).map(el => ({ left: el.offsetLeft, width: el.offsetWidth }))
+}
+
+/** 根据当前播放进度，算出“当前读到位置”在歌词条中的 x 坐标（连续、平滑） */
+function computeCursorX() {
+  const lines = lyrics.value
+  if (!lines.length || !lyricContainerW) return 0
+  if (selectedItemType.value === 'tts') {
+    const total = ttsLyricTotalChars || 0
+    if (total <= 0) return 0
+    const read = (ttsProgress.value / 100) * total
+    let li = 0
+    for (let k = lines.length - 1; k >= 0; k--) {
+      if (read >= (lines[k].charOffset || 0)) { li = k; break }
+    }
+    const startC = lines[li].charOffset || 0
+    const endC = (li + 1 < lines.length ? (lines[li + 1].charOffset || 0) : total)
+    const frac = endC > startC ? (read - startC) / (endC - startC) : 0
+    const g = lineGeom[li]
+    return g ? g.left + frac * g.width : 0
+  } else {
+    const audio = activeAudioEl()
+    if (!audio) return 0
+    const t = audio.currentTime
+    let li = 0
+    for (let k = lines.length - 1; k >= 0; k--) {
+      if ((lines[k].time || 0) <= t) { li = k; break }
+    }
+    const t0 = lines[li].time || 0
+    const t1 = (li + 1 < lines.length ? (lines[li + 1].time || 0) : (audio.duration || t))
+    const frac = t1 > t0 ? (t - t0) / (t1 - t0) : 0
+    const g = lineGeom[li]
+    return g ? g.left + frac * g.width : 0
+  }
+}
+
+/** 启动歌词横向平滑滚动 + 固定渐变（单一 rAF 循环，匀速跟随阅读，无跳变） */
+function startSmoothLyricScroll() {
+  stopSmoothLyricScroll()
+  measureLyricGeom()  // 先测一次（DOM 未更新时用旧值，nextTick 会再校正）
+  function animate() {
+    const c = lyricScrollEl.value
+    if (!c) { lyricScrollAnimId = requestAnimationFrame(animate); return }
+    const lines = lyrics.value
+    // 1) 计算当前阅读位置对应的高亮行与滚动目标
+    if (lines.length && lyricContainerW) {
+      let li = 0
+      if (selectedItemType.value === 'tts') {
+        const total = ttsLyricTotalChars || 0
+        const read = (ttsProgress.value / 100) * total
+        for (let k = lines.length - 1; k >= 0; k--) {
+          if (read >= (lines[k].charOffset || 0)) { li = k; break }
+        }
+      } else {
+        const a = activeAudioEl()
+        if (a) {
+          const t = a.currentTime
+          for (let k = lines.length - 1; k >= 0; k--) {
+            if ((lines[k].time || 0) <= t) { li = k; break }
+          }
+        }
+      }
+      currentLyricIndex.value = li
+      const cursorX = computeCursorX()
+      // 让“读到位置”稳定在容器左侧 ~22% 处，匀速跟随阅读
+      targetScrollLeft = Math.max(0, cursorX - lyricContainerW * 0.22)
+    }
+    // 2) 平滑插值滚动（指数缓动，无跳变）
+    const cur = c.scrollLeft
+    const d = targetScrollLeft - cur
+    c.scrollLeft = Math.abs(d) < 0.3 ? targetScrollLeft : cur + d * 0.1
+    // 3) 固定渐变：把每行渐变锚定到“可见窗口”，实现盒子左→右渐变
+    const S = c.scrollLeft
+    const spans = c.querySelectorAll('.lyric-line')
+    for (let i = 0; i < spans.length; i++) {
+      spans[i].style.backgroundPositionX = (S - spans[i].offsetLeft) + 'px'
+    }
+    lyricScrollAnimId = requestAnimationFrame(animate)
+  }
+  lyricScrollAnimId = requestAnimationFrame(animate)
+}
+function stopSmoothLyricScroll() {
+  if (lyricScrollAnimId) { cancelAnimationFrame(lyricScrollAnimId); lyricScrollAnimId = null }
+}
+
+/**
+ * @param {boolean} destroy 是否彻底销毁（切换模式时传 true，列表内切歌传 false）
+ */
+function stopStreamAudio(destroy = false) {
+  if (streamAudioEl.value) {
+    try { streamAudioEl.value.pause() } catch (e) {}
+    if (destroy) {
+      try { streamAudioEl.value.src = '' } catch (e) {}
+      streamAudioEl.value = null
+    }
+  }
+  if (destroy) {
+    stopLyricSync()
+    lyrics.value = []
+    currentLyricIndex.value = -1
+  }
+}
+
+/**
+ * 将搜索到的在线歌曲保存到本地歌单
+ */
+async function saveToSongList(item) {
+  savingItemId.value = item.id
+  try {
+    const body = {
+      title: item.title || '未命名歌曲',
+      content: `线上来源：${item.uploader || item.platform || '未知'} · 时长：${formatDuration(item.duration) || '未知'}`,
+      artist: item.uploader || '',
+      type: '轻音乐',
+      audio_url: item.webpage_url || item.url || '',
+      category: 'lullaby'
+    }
+    const res = await fetch(`${API_BASE}/sleep-content`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    })
+    const json = await res.json()
+    if (json.success) {
+      // 刷新歌单
+      await fetchSleepContent()
+      searchHint.value = `"${item.title}" 已保存到歌单`
+      // 3秒后清除提示
+      setTimeout(() => { if (searchHint.value === `"${item.title}" 已保存到歌单`) searchHint.value = '' }, 3000)
+    } else {
+      searchHint.value = json.error || '保存失败'
+    }
+  } catch (e) {
+    console.error('[babySleep] 保存到歌单失败:', e)
+    searchHint.value = '保存失败，网络错误'
+  } finally {
+    savingItemId.value = null
+  }
+}
+
 // ==================== 音色配置 ====================
 const presetVoices = ref([
   { id: 'zh-CN-XiaoxiaoNeural', label: '晓晓', desc: '活泼温暖', type: 'preset' },
@@ -860,7 +1498,7 @@ const presetVoices = ref([
   { id: 'zh-TW-YunJheNeural', label: '雲哲', desc: '台湾国语', type: 'preset' }
 ])
 const customVoices = ref([])
-const selectedVoice = ref('zh-CN-XiaoxiaoNeural')  // Edge TTS 默认音色
+const selectedVoice = ref('zh-CN-YunjianNeural')  // Edge TTS 默认音色：云健
 const customVoiceId = ref(null)
 const ttsAvailable = ref(true)  // Edge TTS 始终免费可用
 const cloneAvailable = ref(false)
@@ -869,10 +1507,10 @@ const cloneNeedPassword = ref(false)
 const currentVoiceLabel = computed(() => {
   if (customVoiceId.value) {
     const cv = customVoices.value.find(v => v.id === customVoiceId.value)
-    return cv ? cv.label : '晓晓'
+    return cv ? cv.label : '云健'
   }
   const pv = presetVoices.value.find(v => v.id === selectedVoice.value)
-  return pv ? pv.label : '晓晓'
+  return pv ? pv.label : '云健'
 })
 
 function selectVoice(voiceId) {
@@ -1146,6 +1784,7 @@ const selectedItem = ref(null)
 const selectedItemType = ref('')
 const isPlaying = ref(false)
 const isBuffering = ref(false)
+let wasPlayingBeforeHidden = false  // 页面隐藏前是否正在播放，用于回到前台自动恢复
 const ttsProgress = ref(0)
 const volume = ref(50)
 const playbackSpeed = ref(1.0)
@@ -1168,14 +1807,16 @@ const playerFeatures = computed(() => {
   const isTts = type === 'tts'
   const isNoise = type === 'noise'
   const isSong = type === 'song'
-  // 有音频的歌曲：基础播放能力（无进度条/倍速/音色）；无音频的歌曲：完全不可用
+  const isStream = type === 'stream'
+  // 有音频的歌曲/流媒体：基础播放能力（无进度条/倍速/音色）；无音频的歌曲：完全不可用
   return {
-    canPlay: isNoise || isTts || hasSongAudio,
-    canLoop: isNoise || isTts || hasSongAudio,
-    canVolume: isNoise || isTts || hasSongAudio,
+    canPlay: isNoise || isTts || hasSongAudio || isStream,
+    canLoop: isNoise || isTts || hasSongAudio || isStream,
+    canVolume: isNoise || isTts || hasSongAudio || isStream,
     canSpeed: isTts,
     canVoice: isTts,
-    canTimer: isNoise || isTts || hasSongAudio,
+    canTimer: isNoise || isTts || hasSongAudio || isStream,
+    canPrevNext: isTts || isNoise || isStream || (isSong && getPlayableList().length > 1),
     showProgress: isTts,
   }
 })
@@ -1194,22 +1835,59 @@ function toggleLoopMode() {
   else loopMode.value = 'single'
 }
 
-/** 播放列表中的下一首（列表循环） */
+/** 获取当前播放列表（兼容本地歌曲/TTS/白噪音 + 搜索结果流媒体） */
+function getPlayableList() {
+  const type = selectedItemType.value
+  if (type === 'stream') return searchResults.value
+  return currentItemList.value
+}
+
+/** 播放列表中的下一首 */
 function playNextInList() {
-  const list = currentItemList.value
+  const list = getPlayableList()
   if (!list.length) return
-  const currentId = selectedItem.value?.id
+  const type = selectedItemType.value
+  const currentId = type === 'stream'
+    ? streamingItem.value?.id
+    : selectedItem.value?.id
   const idx = list.findIndex(item => item.id === currentId)
   const nextIdx = idx < 0 || idx >= list.length - 1 ? 0 : idx + 1
   const nextItem = list[nextIdx]
-  const type = selectedItemType.value
-  // 直接切换（不通过 selectItem 避免重置状态）
-  selectedItem.value = nextItem
-  stopAllSounds()
-  startPlayback()
+  if (type === 'stream') {
+    playStreaming(nextItem)
+  } else {
+    selectedItem.value = nextItem
+    stopAllSounds()
+    startPlayback()
+  }
 }
 
-const playingItemLabel = computed(() => selectedItem.value?.label || '未选择')
+/** 播放列表中的上一首 */
+function playPrevInList() {
+  const list = getPlayableList()
+  if (!list.length) return
+  const type = selectedItemType.value
+  const currentId = type === 'stream'
+    ? streamingItem.value?.id
+    : selectedItem.value?.id
+  const idx = list.findIndex(item => item.id === currentId)
+  const prevIdx = idx <= 0 ? list.length - 1 : idx - 1
+  const prevItem = list[prevIdx]
+  if (type === 'stream') {
+    playStreaming(prevItem)
+  } else {
+    selectedItem.value = prevItem
+    stopAllSounds()
+    startPlayback()
+  }
+}
+
+const playingItemLabel = computed(() => {
+  if (selectedItemType.value === 'stream' && streamingItem.value) {
+    return streamingItem.value.title || '在线播放'
+  }
+  return selectedItem.value?.label || '未选择'
+})
 
 // ==================== 下拉菜单 ====================
 const activeDropdown = ref(null)
@@ -1312,14 +1990,16 @@ function getAudioContext() {
   return audioCtx
 }
 
-/** 进度条追踪 */
+/** 进度条追踪（含TTS歌词同步） */
 function startProgressTracking(ctx, source, duration) {
   clearProgress()
+  currentLyricIndex.value = -1
   const startTime = ctx.currentTime
   const update = () => {
     if (!isPlaying.value) { clearProgress(); return }
     const elapsed = ctx.currentTime - startTime
     ttsProgress.value = Math.min((elapsed / (duration / source.playbackRate.value)) * 100, 99)
+    // 歌词高亮/滚动由统一循环（startSmoothLyricScroll）根据 ttsProgress 处理
     progressInterval = requestAnimationFrame(update)
   }
   progressInterval = requestAnimationFrame(update)
@@ -1334,6 +2014,7 @@ function stopAllSounds() {
   stopBrowserTTS()
   stopAudioElement()
   stopSongAudio()
+  stopStreamAudio(true)
   clearProgress()
   isBuffering.value = false
   ttsRequestId++  // 取消所有进行中的异步 TTS 请求
@@ -1342,36 +2023,133 @@ function stopAllSounds() {
     try { n.disconnect() } catch (e) {}
   })
   activeNodes = []
+  stopSmoothLyricScroll()
+}
+
+// ---- 后台播放 ----
+
+/** 给 Audio 元素加上移动端后台播放所需属性 */
+function setupAudioForBackground(audio) {
+  if (!audio) return
+  audio.setAttribute('playsinline', '')
+  audio.setAttribute('webkit-playsinline', '')
+  audio.setAttribute('x5-playsinline', '')       // 微信 X5 内核
+  audio.setAttribute('x5-video-player-type', 'h5')
+  audio.setAttribute('x5-video-player-fullscreen', 'true')
+  audio.setAttribute('x5-video-orientation', 'portraint')
+}
+
+/** 页面可见性变化：隐藏时记录播放状态，恢复可见时自动继续播放 */
+function handleVisibilityChange() {
+  if (document.hidden) {
+    wasPlayingBeforeHidden = isPlaying.value
+  } else {
+    if (wasPlayingBeforeHidden && !isPlaying.value) {
+      const a = activeAudioEl()
+      if (a && a.paused) {
+        a.play().then(() => { isPlaying.value = true }).catch(() => {})
+      }
+    }
+    wasPlayingBeforeHidden = false
+  }
+}
+
+/** 注册 Media Session API，让系统锁屏/控制中心知道有音频，有助于后台播放 */
+function setupMediaSession(title) {
+  if (!('mediaSession' in navigator)) return
+  try {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: title || '哄睡音乐',
+      artist: '宝宝睡前故事',
+      album: 'Baby Sleep'
+    })
+    navigator.mediaSession.setActionHandler('play', () => togglePlay())
+    navigator.mediaSession.setActionHandler('pause', () => togglePlay())
+    navigator.mediaSession.setActionHandler('stop', () => stopAllSounds())
+  } catch (e) { /* 静默 */ }
 }
 
 // ---- 歌曲音频播放 ----
-function playSongAudio(url) {
+function playSongAudio(url, title) {
   stopSongAudio()
   if (!url || (!url.startsWith('http') && !url.startsWith('/'))) {
     console.warn('[babySleep] 无效的音频地址，跳过播放:', url)
     isPlaying.value = false
+    fallbackToStreaming(title)
     return
   }
   try {
     songAudio = new Audio(url)
+    setupAudioForBackground(songAudio)
     songAudio.volume = volume.value / 100
     songAudio.play().then(() => {
       isPlaying.value = true
-    }).catch(err => {
-      console.error('[babySleep] 歌曲播放失败:', err)
+      setupMediaSession(title)
+    }).catch(async (err) => {
+      console.warn('[babySleep] 歌曲直接播放失败，尝试在线搜索:', title)
       isPlaying.value = false
       songAudio = null
+      await fallbackToStreaming(title)
     })
     songAudio.addEventListener('ended', () => {
       isPlaying.value = false
       songAudio = null
       // 列表循环
       if (loopMode.value === 'list') playNextInList()
-      else if (loopMode.value === 'single') { songAudio = new Audio(url); songAudio.volume = volume.value / 100; songAudio.play() }
+      else if (loopMode.value === 'single') { songAudio = new Audio(url); setupAudioForBackground(songAudio); songAudio.volume = volume.value / 100; songAudio.play() }
     })
   } catch (e) {
     console.error('[babySleep] 歌曲播放异常:', e)
     isPlaying.value = false
+  }
+}
+
+// 播放失败时自动通过 yt-dlp 在线搜索 → 流媒体播放
+async function fallbackToStreaming(title) {
+  if (!title) return
+
+  // 0. 优先查本地音频缓存（同一首歌之前缓存过，直接播放）
+  const cachedEntry = findCachedByTitle(title)
+  if (cachedEntry) {
+    stopAllSounds()
+    isPlaying.value = false
+    streamingItem.value = {
+      id: cachedEntry.videoId,
+      title: cachedEntry.title || title,
+      url: cachedEntry.url,
+      thumbnail: cachedEntry.thumbnail || ''
+    }
+    selectedItem.value = null
+    selectedItemType.value = 'stream'
+    searchHint.value = `已缓存 — 直接播放 "${title}"`
+    isPlaying.value = true
+    streamAudioPlay()
+    return
+  }
+
+  searchLoading.value = true
+  searchHint.value = `正在在线搜索 "${title}"...`
+
+  try {
+    const res = await fetch(`${SEARCH_VIDEO_API}/search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: title, platform: 'bilibili', limit: 5 })
+    })
+    const json = await res.json()
+    if (json?.code === 0 && json.data?.results?.length > 0) {
+      const best = json.data.results[0]
+      searchResults.value = json.data.results
+      searchHint.value = ''
+      await playStreaming(best)
+    } else {
+      searchHint.value = `未找到 "${title}" 的在线版本，请尝试其他歌曲`
+    }
+  } catch (err) {
+    console.error('[babySleep] 在线搜索失败:', err)
+    searchHint.value = '搜索服务不可用，请检查后端是否启动'
+  } finally {
+    searchLoading.value = false
   }
 }
 
@@ -1617,6 +2395,7 @@ async function playEdgeTTS(item) {
 
   source.start()
   isBuffering.value = false
+  setupMediaSession(item.label || item.text?.slice(0, 30) || '哄睡故事')
   startProgressTracking(ctx, source, audioBuffer.duration)
   ttsAudioElement = { pause: () => { try { source.stop(); clearProgress() } catch (e) {} }, source, gain }
   activeNodes.push(source, gain)
@@ -1710,6 +2489,7 @@ async function playCloneTTS(item) {
 
   source.start()
   isBuffering.value = false
+  setupMediaSession(item.label || item.text?.slice(0, 30) || '哄睡故事')
   startProgressTracking(ctx, source, audioBuffer.duration)
   ttsAudioElement = { pause: () => { try { source.stop(); clearProgress() } catch (e) {} }, source, gain }
   activeNodes.push(source, gain)
@@ -1767,20 +2547,17 @@ function playBrowserTTS(item) {
 // ==================== 统一控制 ====================
 function selectItem(type, item) {
   incrementPlayCount(item)  // 仅用户主动点击才计数
-  const wasPlaying = isPlaying.value
   stopAllSounds()
-  isPlaying.value = false
+  streamingItem.value = null  // 切换到本地项时清除流媒体状态
   selectedItem.value = item
   selectedItemType.value = type
-  // 自动续播（歌曲无音频时 startPlayback 会自动跳过）
-  if (wasPlaying) {
-    isPlaying.value = true
-    startPlayback()
-  }
+  // 点击曲目直接开始播放
+  startPlayback()
+  isPlaying.value = true
 }
 
 function startPlayback() {
-  if (!selectedItem.value) return
+  if (!selectedItem.value && !streamingItem.value) return
   stopAllSounds()
   const type = selectedItemType.value
   const item = selectedItem.value
@@ -1788,14 +2565,36 @@ function startPlayback() {
     if (item.type === 'heartbeat') playHeartbeat()
     else createNoise(item.type)
   } else if (type === 'song') {
-    // 歌曲播放：使用 audio_url，无 audio_url 则仅展示信息
+    // 歌曲播放：先尝试 audio_url，失败则自动在线搜索
     const url = item.audioUrl || ''
+    const title = item.label || ''
     if (url) {
-      playSongAudio(url)
+      playSongAudio(url, title)
     } else {
       isPlaying.value = false
+      fallbackToStreaming(title)
+      return
     }
+    // 拉取 LRC 歌词并启动横向平滑滚动同步（歌曲与流媒体共用）
+    if (title) fetchLyrics(title).then(() => startLyricSync())
+  } else if (type === 'stream') {
+    // 流媒体在线播放
+    streamAudioPlay()
   } else if (type === 'tts') {
+    // TTS 文本即"歌词"，按句子拆分逐行显示——无需外部拉取
+    stopLyricSync()
+    lyricsLoading.value = false
+    if (item?.text) {
+      const result = textToLyricLines(item.text)
+      lyrics.value = result.lines
+      ttsLyricTotalChars = result.totalChars
+    } else {
+      lyrics.value = []
+      ttsLyricTotalChars = 0
+    }
+    currentLyricIndex.value = -1
+    nextTick(measureLyricGeom)  // 渲染后测量每行位置
+    startSmoothLyricScroll()  // 启动横向平滑滚动
     if (customVoiceId.value && cloneAvailable.value) {
       playCloneTTS(item)    // 语音克隆（付费，需密码）
     } else {
@@ -1805,7 +2604,7 @@ function startPlayback() {
 }
 
 function togglePlay() {
-  if (!selectedItem.value) {
+  if (!selectedItem.value && !streamingItem.value) {
     selectedItem.value = whiteNoiseItems.value[0]
     selectedItemType.value = 'noise'
   }
@@ -1826,6 +2625,10 @@ function togglePlay() {
 function onVolumeChange() {
   if (selectedItemType.value === 'song' && songAudio) {
     songAudio.volume = volume.value / 100
+    return
+  }
+  if (selectedItemType.value === 'stream' && streamAudioEl.value) {
+    streamAudioEl.value.volume = volume.value / 100
     return
   }
   if (window.speechSynthesis.speaking) window.speechSynthesis.cancel()
@@ -1881,6 +2684,8 @@ onMounted(() => {
   fetchSleepContent()
   fetchVoices()
   document.addEventListener('click', handleClickOutside)
+  document.addEventListener('visibilitychange', handleVisibilityChange)
+  window.addEventListener('resize', measureLyricGeom)
 })
 
 onUnmounted(() => {
@@ -1888,8 +2693,11 @@ onUnmounted(() => {
   clearTimer()
   if (previewAudio) { previewAudio.pause(); previewAudio = null }
   if (songAudio) { songAudio.pause(); songAudio = null }
+  if (streamAudioEl.value) { streamAudioEl.value.pause(); streamAudioEl.value = null }
   if (audioCtx) { audioCtx.close() }
   document.removeEventListener('click', handleClickOutside)
+  document.removeEventListener('visibilitychange', handleVisibilityChange)
+  window.removeEventListener('resize', measureLyricGeom)
 })
 </script>
 
@@ -1993,11 +2801,6 @@ onUnmounted(() => {
 .card-actions {
   position: absolute; top: 6px; right: 6px;
   display: flex; gap: 3px;
-  opacity: 0; transition: opacity 0.2s;
-}
-.sound-card:hover .card-actions,
-.content-card:hover .card-actions {
-  opacity: 1;
 }
 .card-action-btn {
   width: 26px; height: 26px; border-radius: 5px; border: none;
@@ -2044,7 +2847,7 @@ onUnmounted(() => {
   flex: 1; min-width: 0; cursor: pointer;
 }
 .content-card-actions {
-  position: static; opacity: 0; flex-shrink: 0;
+  position: static; flex-shrink: 0;
   padding-right: 8px;
 }
 .content-icon {
@@ -2067,6 +2870,126 @@ onUnmounted(() => {
 .content-playing-dot {
   position: absolute; top: 10px; right: 10px; width: 7px; height: 7px; border-radius: 50%;
   background: #7c3aed; animation: blink 0.8s ease-in-out infinite;
+}
+
+// ====== 在线搜索面板（哄睡神曲） ======
+.online-search-panel {
+  margin-bottom: 14px;
+}
+.search-input-row {
+  display: flex; gap: 6px; align-items: center;
+}
+.search-input-wrap {
+  flex: 1; display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 8px;
+  transition: border-color 0.2s;
+  &:focus-within { border-color: #6366f1; background: #fff; }
+  .search-icon { color: #94a3b8; flex-shrink: 0; }
+}
+.search-input {
+  flex: 1; border: none; outline: none; background: transparent;
+  font-size: 13px; color: #1e1b4b;
+  &::placeholder { color: #cbd5e1; }
+}
+.search-clear-btn {
+  flex-shrink: 0; width: 22px; height: 22px; border: none; border-radius: 50%;
+  background: #e2e8f0; color: #64748b; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.15s; padding: 0;
+  &:hover { background: #cbd5e1; color: #475569; }
+}
+.platform-select {
+  padding: 8px 6px; border: 1.5px solid #e2e8f0; border-radius: 8px;
+  font-size: 12px; color: #475569; background: #fff; cursor: pointer; outline: none;
+  min-width: 72px; transition: border-color 0.2s;
+  &:focus { border-color: #6366f1; }
+}
+.search-btn {
+  display: flex; align-items: center; gap: 4px;
+  padding: 8px 12px; border: none; border-radius: 8px;
+  background: linear-gradient(135deg, #10b981, #34d399);
+  color: #fff; font-size: 12px; font-weight: 600; cursor: pointer;
+  white-space: nowrap; transition: all 0.2s;
+  &:hover:not(:disabled) { background: linear-gradient(135deg, #059669, #10b981); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+// 搜索结果
+.search-results {
+  margin-top: 10px; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden;
+}
+.search-results-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+  font-size: 12px; color: #64748b; font-weight: 500;
+}
+.search-close-btn {
+  border: none; background: none; color: #94a3b8; cursor: pointer;
+  font-size: 12px; padding: 2px 8px; border-radius: 4px;
+  &:hover { color: #64748b; background: #e2e8f0; }
+}
+.search-result-item {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+  border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: background 0.15s;
+  &:last-child { border-bottom: none; }
+  &:hover { background: #faf9ff; }
+  &.playing { background: #f0edff; }
+  &.cached {
+    background: #f0fdf6;
+    border-left: 3px solid #10b981;
+    padding-left: 9px;
+    &:hover { background: #e6f9ee; }
+  }
+}
+.sr-thumb {
+  width: 48px; height: 36px; border-radius: 6px; overflow: hidden;
+  background: #f1f5f9; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; position: relative; cursor: pointer;
+  img { width: 100%; height: 100%; object-fit: cover; }
+  .el-icon { color: #94a3b8; }
+  .sr-play-overlay {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.25);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.2s;
+    .el-icon { color: #fff; }
+  }
+  &:hover .sr-play-overlay { opacity: 1; }
+}
+.sr-info { flex: 1; min-width: 0; cursor: pointer; }
+.sr-title {
+  font-size: 13px; font-weight: 500; color: #1e1b4b;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px;
+}
+.sr-cached-badge {
+  display: inline-block; padding: 0 6px; height: 18px; line-height: 18px;
+  border-radius: 10px; background: linear-gradient(135deg, #10b981, #059669); color: #fff;
+  font-size: 10px; font-weight: 600; margin-right: 6px; vertical-align: middle;
+  flex-shrink: 0; white-space: nowrap;
+}
+.sr-in-list-badge {
+  font-size: 10px; color: #94a3b8; border: 1px solid #e2e8f0; border-radius: 8px;
+  padding: 3px 7px; white-space: nowrap; cursor: default;
+}
+.sr-meta {
+  font-size: 11px; color: #94a3b8; display: flex; gap: 8px;
+}
+.sr-actions { flex-shrink: 0; }
+.sr-save-btn {
+  width: 30px; height: 30px; border: 1.5px solid #e2e8f0; border-radius: 8px;
+  background: #fff; color: #10b981; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.15s; padding: 0;
+  &:hover:not(:disabled) { background: #ecfdf5; border-color: #10b981; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+// 搜索提示
+.search-hint {
+  display: flex; align-items: center; gap: 6px; margin-top: 8px;
+  padding: 8px 12px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px;
+  font-size: 12px; color: #92400e;
+  .el-icon { color: #f59e0b; flex-shrink: 0; }
+}
+
+// 播放器 stream 类型徽章
+.player-type-badge.stream {
+  background: rgba(16, 185, 129, 0.15); color: #10b981;
 }
 
 // ====== 播放器控制面板（底部固定，全宽通栏） ======
@@ -2103,16 +3026,53 @@ onUnmounted(() => {
 }
 
 .player-inner {
-  display: flex; align-items: center; gap: 12px;
-  padding: 8px 16px 10px;
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 12px 8px;
+  flex-wrap: wrap;
 }
 
 // 左侧：封面+信息
 .player-left {
-  display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;
+  display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;
+}
+
+// 上下首按钮组
+.player-nav {
+  display: flex; gap: 4px; flex-shrink: 0;
+}
+
+// 其他控制按钮栏
+.player-controls {
+  display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+}
+
+// ====== 移动端：两行布局 ======
+@media (max-width: 640px) {
+  .player-inner {
+    padding: 4px 8px 6px;
+    gap: 4px;
+  }
+  .player-left {
+    flex: 1 1 100%;  // 第一行：封面+歌名+类型标签
+  }
+  .player-controls {
+    flex: 1 1 100%;  // 第二行：所有控制按钮
+    justify-content: space-evenly;
+    overflow: visible;  // 允许下拉菜单弹出不被裁切
+    padding-top: 4px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    margin-top: 2px;
+  }
+  .player-lyrics {
+    height: 30px; line-height: 30px;
+    font-size: 11px;
+    .lyric-line { font-size: 11px; padding: 0 8px; }
+    .lyric-line.active { font-size: 11px; }
+  }
 }
 .player-cover {
-  width: 40px; height: 40px; min-width: 40px;
+  appearance: none; outline: none; padding: 0;
+  width: 32px; height: 32px; min-width: 32px;
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -2152,9 +3112,37 @@ onUnmounted(() => {
   font-size: 10px; color: #f59e0b; font-weight: 600;
 }
 
-// 右侧：控制区
-.player-right {
-  display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+// 滚动歌词（横向平滑滚动）
+.player-lyrics {
+  flex: 1.5; min-width: 0; height: 36px; line-height: 36px;
+  position: relative;  // 让每行 offsetLeft 相对本容器，固定渐变才准确
+  overflow-x: auto; overflow-y: hidden;
+  white-space: nowrap;
+  mask-image: linear-gradient(to right, transparent 0%, white 4%, white 96%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, white 4%, white 96%, transparent 100%);
+  &::-webkit-scrollbar { display: none; }
+  scrollbar-width: none;
+  display: flex; align-items: center;
+  &.loading {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 11px; color: #6b7280;
+    .el-icon { color: #a78bfa; }
+  }
+}
+
+// --- 逐行歌词（固定渐变：始终锚定到盒子左→右，所有可见歌词统一渐变） ---
+.lyric-line {
+  display: inline-block; padding: 0 14px; font-size: 13px;
+  color: #6366f1; opacity: 1; transition: font-weight 0.3s;
+  // 渐变背景的尺寸固定为容器可见宽度，再由 JS 每帧把位置锚定到可见窗口，
+  // 从而让每一句可见文字都呈现“盒子左边深→右边浅”的渐变，并随阅读匀速滚动。
+  background-image: linear-gradient(90deg, #6366f1 0%, #818cf8 50%, #c4b5fd 100%);
+  background-size: var(--lw, 100%) 100%;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  &.active { font-weight: 700; }  // 当前句仅靠加粗标识，颜色仍统一为左→右渐变
 }
 
 // 通用药丸按钮
@@ -2498,7 +3486,7 @@ onUnmounted(() => {
   .ctrl-pill { height: 38px; padding: 0 12px; font-size: 12px; gap: 4px; min-width: 38px; justify-content: center; }
   .ctrl-pill .el-icon { font-size: 18px !important; }
   .loop-icon-wrap { width: 28px; height: 28px; }
-  .player-cover { width: 42px; height: 42px; min-width: 42px; }
+  .player-cover { width: 38px; height: 38px; min-width: 38px; }
   .player-title { max-width: 150px; }
   .dropdown-item { padding: 10px 14px; font-size: 13px; }
   .dropdown-menu { min-width: 120px; }
@@ -2518,7 +3506,7 @@ onUnmounted(() => {
   .clone-modal { max-width: 100%; border-radius: 16px 16px 0 0; margin-top: auto; }
   .player-inner { padding: 8px 10px 10px; gap: 6px; }
   .player-left { gap: 6px; }
-  .player-cover { width: 38px; height: 38px; min-width: 38px; }
+  .player-cover { width: 36px; height: 36px; min-width: 36px; }
   .player-title { font-size: 12px; max-width: 120px; }
   .player-sub { font-size: 10px; gap: 3px; }
   .player-right { gap: 6px; }

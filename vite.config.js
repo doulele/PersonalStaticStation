@@ -14,11 +14,19 @@ export default defineConfig({
     port: 3000,
     open: false,
     proxy: {
-      // 开发环境：将 /staticTool/api/* 转发到云端后端
-      '/staticTool/api': {
+      // 本地调试：video-parse（含 yt-dlp）转发到线上（线上有 yt-dlp）
+      '/staticTool/api/video-parse': {
         target: 'https://wellwin.top',
         changeOrigin: true,
-        secure: false
+        secure: false,
+        rewrite: (path) => path.replace(/^\/staticTool\/api/, '')
+      },
+      // 其他 API 转发到本地后端
+      '/staticTool/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/staticTool\/api/, '')
       }
     }
   }
