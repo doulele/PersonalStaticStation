@@ -8,8 +8,8 @@
       <p class="page-desc">精选安抚音效 · 故事 · 诗歌，帮助宝宝安心入睡</p>
     </div>
 
-    <!-- ====== 分类 Tab ====== -->
-    <div class="category-tabs">
+    <!-- ====== 分类 Tab（PC 端） ====== -->
+    <div class="category-tabs pc-tabs">
       <button
         v-for="tab in tabs"
         :key="tab.id"
@@ -21,6 +21,16 @@
         <span>{{ tab.label }}</span>
       </button>
     </div>
+
+    <!-- ====== 分类 Tab（移动端 el-tabs） ====== -->
+    <el-tabs v-model="activeTab" class="mobile-tabs">
+      <el-tab-pane
+        v-for="tab in tabs"
+        :key="tab.id"
+        :label="tab.label"
+        :name="tab.id"
+      />
+    </el-tabs>
 
     <!-- ====== 白噪音 ====== -->
     <div v-show="activeTab === 'whitenoise'" class="tab-content">
@@ -56,7 +66,7 @@
     </div>
 
     <!-- ====== 故事/寓言/神曲/古诗/名篇 ====== -->
-    <div v-show="activeTab !== 'whitenoise'" class="tab-content">
+    <div v-show="activeTab !== 'whitenoise' && activeTab !== 'myvoice'" class="tab-content">
       <!-- 排序工具栏 -->
       <div class="sort-toolbar">
         <el-tooltip placement="top" effect="dark" raw-content>
@@ -183,6 +193,75 @@
       </button>
     </div>
 
+    <!-- ====== 我的声音（录音 / 上传） ====== -->
+    <div v-show="activeTab === 'myvoice'" class="tab-content">
+      <!-- 录制 / 上传工具条 -->
+      <div class="voice-toolbar">
+        <button class="voice-act-btn record" :class="{ recording: isRecording }" @click="isRecording ? stopRecording() : startRecording()">
+          <el-icon :size="15"><Microphone /></el-icon>
+          <span v-if="!isRecording">录制我的声音</span>
+          <span v-else>停止录制 ({{ recordSeconds }}s)</span>
+        </button>
+        <label class="voice-act-btn upload">
+          <el-icon :size="15"><Upload /></el-icon>
+          <span>上传音频</span>
+          <input type="file" accept="audio/*" class="hidden-file-input" @change="onVoiceFileUpload" />
+        </label>
+        <span class="voice-tip" v-if="!myVoiceItems.length && !pendingVoice">录一段专属哄睡声音，或上传喜欢的音频文件</span>
+      </div>
+
+      <!-- 待保存的录音 / 上传预览 -->
+      <div class="pending-voice" v-if="pendingVoice">
+        <div class="pv-head">
+          <span class="pv-title">{{ pendingVoice.isRecorded ? '录音预览' : '上传预览' }}</span>
+          <button class="pv-cancel" @click="cancelPendingVoice">取消</button>
+        </div>
+        <audio :src="pendingVoice.blobUrl" controls class="pv-audio"></audio>
+        <div class="pv-row">
+          <input v-model="pendingVoice.name" class="pv-name-input" placeholder="给这段声音起个名字，如：妈妈的摇篮曲" maxlength="40" />
+          <button class="pv-save" :disabled="!pendingVoice.name.trim() || savingVoice" @click="savePendingVoice">
+            <el-icon v-if="savingVoice" :size="13" class="spinning"><Loading /></el-icon>
+            {{ savingVoice ? '保存中' : '保存' }}
+          </button>
+        </div>
+        <div class="pv-error" v-if="voiceError">{{ voiceError }}</div>
+      </div>
+
+      <!-- 声音列表 -->
+      <div class="voice-list" v-if="myVoiceItems.length">
+        <div
+          v-for="item in myVoiceItems" :key="item.id"
+          class="voice-list-item"
+          :class="{ active: selectedItem?.id === item.id, playing: isPlaying && selectedItem?.id === item.id }"
+          @click="selectItem('voice', item)"
+        >
+          <div class="vli-left">
+            <div class="vli-icon" :class="{ playing: isPlaying && selectedItem?.id === item.id }">
+              <el-icon :size="18"><Microphone /></el-icon>
+            </div>
+            <div class="vli-info">
+              <div class="vli-name">{{ item.label }}</div>
+              <div class="vli-meta" v-if="item.meta">{{ item.meta }}</div>
+            </div>
+          </div>
+          <div class="vli-right">
+            <div class="vli-playing-dot" v-if="isPlaying && selectedItem?.id === item.id"></div>
+            <button class="vli-delete-btn" title="删除" @click.stop="deleteMyVoice(item)">
+              <el-icon :size="14"><Delete /></el-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="voice-empty" v-if="!myVoiceItems.length && !pendingVoice">
+        <div class="voice-empty-icon">
+          <el-icon :size="36"><Microphone /></el-icon>
+        </div>
+        <p class="voice-empty-title">还没有专属声音</p>
+        <p class="voice-empty-desc">点击上方「录制我的声音」或「上传音频」添加吧</p>
+      </div>
+    </div>
+
     <!-- ====== 播放器控制栏（固定在底部） ====== -->
     <div class="player-panel" :class="{ active: isPlaying, visible: selectedItem || streamingItem }">
       <!-- 进度条 -->
@@ -203,6 +282,7 @@
               <span class="player-type-badge stream" v-else-if="selectedItemType === 'stream'">在线</span>
               <span class="player-song-note" v-if="selectedItemType === 'song' && !selectedItem?.audioUrl">无音频</span>
               <span class="player-type-badge tts" v-else-if="selectedItemType === 'tts'">朗读</span>
+              <span class="player-type-badge voice" v-else-if="selectedItemType === 'voice'">我的声音</span>
               <span class="player-buffering" v-if="isBuffering && selectedItemType === 'tts'">
                 <el-icon :size="12" class="spinning"><Loading /></el-icon>
                 加载中
@@ -295,24 +375,9 @@
               <div class="dropdown-section-title">预置音色</div>
               <div
                 v-for="v in presetVoices" :key="v.id"
-                class="dropdown-item" :class="{ active: selectedVoice === v.id && !customVoiceId }"
+                class="dropdown-item" :class="{ active: selectedVoice === v.id }"
                 @click="selectVoice(v.id); activeDropdown = null"
               >{{ v.label }} <span class="voice-desc">{{ v.desc }}</span></div>
-              <template v-if="customVoices.length > 0">
-                <div class="dropdown-section-title">我的音色</div>
-                <div
-                  v-for="v in customVoices" :key="v.id"
-                  class="dropdown-item custom-voice-item" :class="{ active: customVoiceId === v.id }"
-                  @click="selectCustomVoice(v); activeDropdown = null"
-                >
-                  <span>{{ v.label }}</span>
-                  <button class="voice-delete-btn" @click.stop="deleteCustomVoice(v)" title="删除">×</button>
-                </div>
-              </template>
-              <div class="dropdown-section-title" style="margin-top:6px">操作</div>
-              <div class="dropdown-item add-voice" @click="openCloneWithPassword(); activeDropdown = null">
-                <el-icon :size="14"><Plus /></el-icon> 添加我的声音
-              </div>
             </div>
           </div>
 
@@ -333,135 +398,6 @@
         </div>
       </div>
     </div>
-
-    <!-- ====== 语音克隆密码验证弹窗 ====== -->
-    <Teleport to="body">
-      <div class="password-overlay" v-if="showPasswordModal" @click.self="closePasswordModal">
-        <div class="password-modal">
-          <div class="password-header">
-            <h3><el-icon :size="20"><Lock /></el-icon> 功能授权</h3>
-            <button class="password-close" @click="closePasswordModal">×</button>
-          </div>
-          <div class="password-body">
-            <p class="password-desc">「添加我的声音」需要授权密码才能使用，避免误操作产生费用。</p>
-            <div class="password-input-row">
-              <input
-                v-model="clonePassword"
-                type="password"
-                class="password-input"
-                placeholder="请输入授权密码"
-                @keydown.enter="verifyClonePassword"
-                ref="passwordInputRef"
-              />
-            </div>
-            <div class="password-error" v-if="passwordError">{{ passwordError }}</div>
-          </div>
-          <div class="password-footer">
-            <button class="password-cancel-btn" @click="closePasswordModal">取消</button>
-            <button class="password-submit-btn" @click="verifyClonePassword">确认</button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
-
-    <!-- ====== 语音克隆弹窗 ====== -->
-    <Teleport to="body">
-      <div class="clone-overlay" v-if="showCloneModal" @click.self="closeCloneModal">
-        <div class="clone-modal">
-          <div class="clone-header">
-            <h3><el-icon :size="20"><Microphone /></el-icon> 添加我的声音</h3>
-            <button class="clone-close" @click="closeCloneModal">×</button>
-          </div>
-
-          <!-- Tab 切换 -->
-          <div class="clone-tabs">
-            <button class="clone-tab" :class="{ active: cloneTab === 'record' }" @click="cloneTab = 'record'">
-              录制声音
-            </button>
-            <button class="clone-tab" :class="{ active: cloneTab === 'upload' }" @click="cloneTab = 'upload'">
-              上传音频
-            </button>
-          </div>
-
-          <!-- 录制模式 -->
-          <div class="clone-body" v-if="cloneTab === 'record'">
-            <div class="record-area">
-              <div class="record-visual" :class="{ recording: isRecording }">
-                <div class="record-wave" v-if="isRecording">
-                  <span v-for="n in 12" :key="n" class="wave-bar" :style="{ '--delay': n * 0.08 + 's', '--h': (60 + Math.random() * 40) + '%' }"></span>
-                </div>
-                <el-icon v-else :size="48"><Microphone /></el-icon>
-              </div>
-              <div class="record-timer" v-if="isRecording">{{ recordSeconds }}s / 20s</div>
-              <div class="record-hint" v-if="!isRecording && !recordedBlob">
-                请朗读一段 10~20 秒的文字，保持匀速清晰，环境安静
-              </div>
-              <div class="record-hint success" v-if="recordedBlob && !isRecording">
-                ✓ 录制完成 ({{ recordedDuration }}秒)
-              </div>
-              <div class="record-actions">
-                <button v-if="!isRecording && !recordedBlob" class="btn-record-start" @click="startRecording">
-                  <el-icon :size="18"><VideoPlay /></el-icon> 开始录制
-                </button>
-                <button v-if="isRecording" class="btn-record-stop" @click="stopRecording">
-                  <el-icon :size="18"><VideoPause /></el-icon> 停止录制
-                </button>
-                <button v-if="recordedBlob && !isRecording" class="btn-record-retry" @click="retryRecording">
-                  重新录制
-                </button>
-                <button v-if="recordedBlob && !isRecording" class="btn-play-preview" @click="previewRecording">
-                  <el-icon :size="14"><VideoPlay v-if="!isPreviewing" /><VideoPause v-else /></el-icon>
-                  {{ isPreviewing ? '停止' : '试听' }}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- 上传模式 -->
-          <div class="clone-body" v-if="cloneTab === 'upload'">
-            <div class="upload-area" :class="{ 'has-file': uploadedFile }" @click="triggerFileInput" @dragover.prevent @drop.prevent="handleFileDrop">
-              <input ref="fileInputRef" type="file" accept="audio/*" style="display:none" @change="handleFileSelect" />
-              <template v-if="!uploadedFile">
-                <el-icon :size="36"><Upload /></el-icon>
-                <p>点击或拖拽音频文件到此处</p>
-                <p class="upload-hint">支持 MP3 / WAV / M4A，10~20 秒，无背景音</p>
-              </template>
-              <template v-else>
-                <el-icon :size="28" class="file-icon"><VideoPlay /></el-icon>
-                <p class="file-name">{{ uploadedFile.name }}</p>
-                <p class="file-size">{{ formatFileSize(uploadedFile.size) }}</p>
-                <button class="btn-remove-file" @click.stop="uploadedFile = null">移除</button>
-              </template>
-            </div>
-          </div>
-
-          <!-- 音色名称 -->
-          <div class="clone-name-row">
-            <label>音色名称</label>
-            <input
-              v-model="cloneName"
-              class="clone-name-input"
-              placeholder="例如：妈妈的声音"
-              maxlength="20"
-            />
-          </div>
-
-          <!-- 底部按钮 -->
-          <div class="clone-footer">
-            <span class="clone-error" v-if="cloneError">{{ cloneError }}</span>
-            <button class="clone-cancel-btn" @click="closeCloneModal">取消</button>
-            <button
-              class="clone-submit-btn"
-              :disabled="!canSubmitClone || cloneSubmitting"
-              @click="submitClone"
-            >
-              <el-icon v-if="cloneSubmitting" :size="14" class="spinning"><Loading /></el-icon>
-              {{ cloneSubmitting ? '创建中...' : '创建我的音色' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
 
     <!-- ====== 编辑/新增弹窗 ====== -->
     <Teleport to="body">
@@ -581,6 +517,7 @@ const tabs = [
   { id: 'poetry', label: '古诗词', icon: markRaw(EditPen) },
   { id: 'whitenoise', label: '白噪音', icon: markRaw(Headset) },
   { id: 'lullaby', label: '哄睡神曲', icon: markRaw(Headset) },
+  { id: 'myvoice', label: '我的声音', icon: markRaw(Microphone) },
 ]
 
 function switchTab(id) { activeTab.value = id }
@@ -606,6 +543,7 @@ const fableItems = ref([])
 const lullabyItems = ref([])
 const poetryItems = ref([])
 const classicsItems = ref([])
+const myVoiceItems = ref([])  // 我的声音（录音/上传）
 
 // ==================== 播放次数排序 ====================
 const PLAY_COUNT_KEY = 'babySleep_playCounts_v1'
@@ -1358,6 +1296,7 @@ function activeAudioEl() {
   if (selectedItemType.value === 'song') return songAudio
   if (selectedItemType.value === 'stream') return streamAudioEl.value
   if (selectedItemType.value === 'noise') return noiseAudio
+  if (selectedItemType.value === 'voice') return voiceAudio
   return null
 }
 
@@ -1525,18 +1464,10 @@ const presetVoices = ref([
   { id: 'zh-TW-HsiaoYuNeural', label: '曉雨', desc: '台湾国语', type: 'preset' },
   { id: 'zh-TW-YunJheNeural', label: '雲哲', desc: '台湾国语', type: 'preset' }
 ])
-const customVoices = ref([])
 const selectedVoice = ref('zh-CN-YunjianNeural')  // Edge TTS 默认音色：云健
-const customVoiceId = ref(null)
 const ttsAvailable = ref(true)  // Edge TTS 始终免费可用
-const cloneAvailable = ref(false)
-const cloneNeedPassword = ref(false)
 
 const currentVoiceLabel = computed(() => {
-  if (customVoiceId.value) {
-    const cv = customVoices.value.find(v => v.id === customVoiceId.value)
-    return cv ? cv.label : '云健'
-  }
   const pv = presetVoices.value.find(v => v.id === selectedVoice.value)
   return pv ? pv.label : '云健'
 })
@@ -1546,19 +1477,6 @@ function selectVoice(voiceId) {
   stopAllSounds()
   isPlaying.value = false
   selectedVoice.value = voiceId
-  customVoiceId.value = null
-  if (wasPlaying) {
-    isPlaying.value = true
-    startPlayback()
-  }
-}
-
-function selectCustomVoice(voice) {
-  const wasPlaying = isPlaying.value
-  stopAllSounds()
-  isPlaying.value = false
-  customVoiceId.value = voice.id
-  selectedVoice.value = voice.id
   if (wasPlaying) {
     isPlaying.value = true
     startPlayback()
@@ -1571,240 +1489,10 @@ async function fetchVoices() {
     const json = await res.json()
     if (json.success && json.data) {
       ttsAvailable.value = json.data.ttsAvailable !== false   // Edge TTS 始终可用
-      cloneAvailable.value = json.data.cloneAvailable || false
-      cloneNeedPassword.value = json.data.cloneNeedPassword !== false
       if (json.data.presetVoices) presetVoices.value = json.data.presetVoices
-      if (json.data.customVoices) customVoices.value = json.data.customVoices
       if (json.data.defaultVoice) selectedVoice.value = json.data.defaultVoice
     }
   } catch (e) { console.warn('[babySleep] 获取音色失败:', e) }
-}
-
-async function deleteCustomVoice(voice) {
-  try {
-    await fetch(`${API_BASE}/tts/voice/${voice.id}`, { method: 'DELETE' })
-    customVoices.value = customVoices.value.filter(v => v.id !== voice.id)
-    if (customVoiceId.value === voice.id) {
-      customVoiceId.value = null
-      selectedVoice.value = 'Cherry'
-    }
-  } catch (e) { console.error('[babySleep] 删除音色失败:', e) }
-}
-
-// ==================== 语音克隆弹窗 ====================
-const showCloneModal = ref(false)
-const cloneTab = ref('record')
-const cloneName = ref('')
-const cloneError = ref('')
-const cloneSubmitting = ref(false)
-
-// 密码门控
-const showPasswordModal = ref(false)
-const clonePassword = ref('')
-const passwordError = ref('')
-const passwordInputRef = ref(null)
-let pendingPasswordAction = null  // 验证通过后执行的操作
-
-function openCloneWithPassword() {
-  if (cloneNeedPassword.value) {
-    showPasswordModal.value = true
-    clonePassword.value = ''
-    passwordError.value = ''
-    pendingPasswordAction = 'openClone'
-    nextTick(() => passwordInputRef.value?.focus())
-  } else {
-    openCloneModal()
-  }
-}
-
-function verifyClonePassword() {
-  // 简单本地验证：将该密码也同时发送到后端做最终验证
-  if (!clonePassword.value.trim()) {
-    passwordError.value = '请输入密码'
-    return
-  }
-  passwordError.value = ''
-  showPasswordModal.value = false
-  if (pendingPasswordAction === 'openClone') {
-    openCloneModal()
-  }
-  pendingPasswordAction = null
-}
-
-function closePasswordModal() {
-  showPasswordModal.value = false
-  clonePassword.value = ''
-  passwordError.value = ''
-  pendingPasswordAction = null
-}
-
-// 录制
-const isRecording = ref(false)
-const recordedBlob = ref(null)
-const recordedDuration = ref(0)
-const isPreviewing = ref(false)
-const recordSeconds = ref(0)
-let mediaRecorder = null
-let recordTimer = null
-let recordChunks = []
-let recordStartTime = 0
-let previewAudio = null
-
-// 上传
-const uploadedFile = ref(null)
-const fileInputRef = ref(null)
-
-const canSubmitClone = computed(() => {
-  if (!cloneName.value.trim()) return false
-  if (cloneTab.value === 'record' && !recordedBlob.value) return false
-  if (cloneTab.value === 'upload' && !uploadedFile.value) return false
-  return true
-})
-
-function openCloneModal() {
-  showCloneModal.value = true
-  cloneName.value = ''
-  cloneError.value = ''
-  cloneTab.value = 'record'
-  recordedBlob.value = null
-  recordedDuration.value = 0
-  uploadedFile.value = null
-}
-
-function closeCloneModal() {
-  showCloneModal.value = false
-  stopRecording()
-  if (previewAudio) { previewAudio.pause(); previewAudio = null }
-}
-
-async function startRecording() {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-    mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' })
-    recordChunks = []
-    recordStartTime = Date.now()
-    isRecording.value = true
-    recordSeconds.value = 0
-    recordedBlob.value = null
-
-    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordChunks.push(e.data) }
-    mediaRecorder.onstop = () => {
-      recordedBlob.value = new Blob(recordChunks, { type: 'audio/webm' })
-      recordedDuration.value = Math.round((Date.now() - recordStartTime) / 1000)
-      stream.getTracks().forEach(t => t.stop())
-    }
-
-    mediaRecorder.start(100)
-    recordTimer = setInterval(() => {
-      recordSeconds.value = Math.round((Date.now() - recordStartTime) / 1000)
-      if (recordSeconds.value >= 20) stopRecording()
-    }, 200)
-  } catch (e) {
-    console.error('[babySleep] 录制失败:', e)
-    cloneError.value = '无法访问麦克风，请检查浏览器权限'
-  }
-}
-
-function stopRecording() {
-  if (mediaRecorder && mediaRecorder.state === 'recording') {
-    mediaRecorder.stop()
-  }
-  isRecording.value = false
-  clearInterval(recordTimer)
-}
-
-function retryRecording() {
-  recordedBlob.value = null
-  recordedDuration.value = 0
-  if (previewAudio) { previewAudio.pause(); previewAudio = null; isPreviewing.value = false }
-}
-
-function previewRecording() {
-  if (isPreviewing.value) {
-    previewAudio?.pause()
-    isPreviewing.value = false
-    return
-  }
-  if (!recordedBlob.value) return
-  const url = URL.createObjectURL(recordedBlob.value)
-  previewAudio = new Audio(url)
-  previewAudio.onended = () => { isPreviewing.value = false }
-  previewAudio.onerror = () => { isPreviewing.value = false }
-  previewAudio.play()
-  isPreviewing.value = true
-}
-
-function triggerFileInput() { fileInputRef.value?.click() }
-
-function handleFileSelect(e) {
-  const file = e.target.files?.[0]
-  if (file) uploadedFile.value = file
-}
-
-function handleFileDrop(e) {
-  const file = e.dataTransfer?.files?.[0]
-  if (file) uploadedFile.value = file
-}
-
-function formatFileSize(bytes) {
-  if (bytes < 1024) return bytes + ' B'
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
-  return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
-}
-
-// 读取文件为 base64
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-      const result = reader.result
-      const base64 = result.split(',')[1]
-      resolve(base64)
-    }
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
-}
-
-async function submitClone() {
-  if (!canSubmitClone.value || cloneSubmitting.value) return
-  cloneSubmitting.value = true
-  cloneError.value = ''
-
-  try {
-    let audioBase64 = null
-    if (cloneTab.value === 'record' && recordedBlob.value) {
-      audioBase64 = await fileToBase64(recordedBlob.value)
-    } else if (cloneTab.value === 'upload' && uploadedFile.value) {
-      audioBase64 = await fileToBase64(uploadedFile.value)
-    }
-
-    const res = await fetch(`${API_BASE}/tts/enroll`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ audioBase64, name: cloneName.value.trim(), clonePassword: clonePassword.value })
-    })
-
-    const json = await res.json()
-    if (json.success && json.data) {
-      customVoices.value.push({
-        id: json.data.voiceId,
-        label: json.data.label,
-        desc: '自定义克隆音色',
-        type: 'custom',
-        voiceId: json.data.voiceId
-      })
-      customVoiceId.value = json.data.voiceId
-      closeCloneModal()
-    } else {
-      cloneError.value = json.error || '音色创建失败'
-    }
-  } catch (e) {
-    console.error('[babySleep] 克隆失败:', e)
-    cloneError.value = '网络错误，请重试'
-  } finally {
-    cloneSubmitting.value = false
-  }
 }
 
 // ==================== 全局播放状态 ====================
@@ -1849,15 +1537,16 @@ const playerFeatures = computed(() => {
   const isNoise = type === 'noise'
   const isSong = type === 'song'
   const isStream = type === 'stream'
-  // 有音频的歌曲/流媒体：基础播放能力（无进度条/倍速/音色）；无音频的歌曲：完全不可用
+  const isVoice = type === 'voice'
+  // 有音频的歌曲/流媒体/我的声音：基础播放能力（无进度条/倍速/音色）；无音频的歌曲：完全不可用
   return {
-    canPlay: isNoise || isTts || hasSongAudio || isStream,
-    canLoop: isNoise || isTts || hasSongAudio || isStream,
-    canVolume: isNoise || isTts || hasSongAudio || isStream,
+    canPlay: isNoise || isTts || hasSongAudio || isStream || isVoice,
+    canLoop: isNoise || isTts || hasSongAudio || isStream || isVoice,
+    canVolume: isNoise || isTts || hasSongAudio || isStream || isVoice,
     canSpeed: isTts,
     canVoice: isTts,
-    canTimer: isNoise || isTts || hasSongAudio || isStream,
-    canPrevNext: isTts || isNoise || isStream || (isSong && getPlayableList().length > 1),
+    canTimer: isNoise || isTts || hasSongAudio || isStream || isVoice,
+    canPrevNext: isTts || isNoise || isStream || isVoice || (isSong && getPlayableList().length > 1),
     showProgress: isTts,
   }
 })
@@ -1866,6 +1555,7 @@ const playerFeatures = computed(() => {
 const currentItemList = computed(() => {
   const type = selectedItemType.value
   if (type === 'noise') return whiteNoiseItems.value
+  if (type === 'voice') return myVoiceItems.value
   if (type === 'tts' || type === 'song') return currentContentItems.value
   return []
 })
@@ -1880,6 +1570,7 @@ function toggleLoopMode() {
 function getPlayableList() {
   const type = selectedItemType.value
   if (type === 'stream') return searchResults.value
+  if (type === 'voice') return myVoiceItems.value
   return currentItemList.value
 }
 
@@ -1956,11 +1647,7 @@ function setSpeed(s) {
   playbackSpeed.value = s
   if (isPlaying.value && selectedItemType.value === 'tts') {
     stopAllSounds()
-    if (customVoiceId.value) {
-      playCloneTTS(selectedItem.value)
-    } else {
-      playEdgeTTS(selectedItem.value)
-    }
+    playEdgeTTS(selectedItem.value)
   }
 }
 
@@ -2001,16 +1688,14 @@ async function prefetchNextTts() {
   const nextItem = list[nextIdx]
   if (!nextItem.text) return
 
-  const voice = customVoiceId.value || selectedVoice.value
+  const voice = selectedVoice.value
   const speed = +(playbackSpeed.value * 0.85).toFixed(2)
   const key = getTtsCacheKey(nextItem.id, voice, speed)
   if (ttsAudioCache.has(key)) return // 已缓存
 
   try {
-    const endpoint = customVoiceId.value ? `${API_BASE}/tts` : `${API_BASE}/tts/edge`
-    const body = customVoiceId.value
-      ? { text: nextItem.text, customVoiceId: customVoiceId.value, speed, clonePassword: clonePassword.value }
-      : { text: nextItem.text, voice, speed }
+    const endpoint = `${API_BASE}/tts/edge`
+    const body = { text: nextItem.text, voice, speed }
     const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2072,6 +1757,7 @@ function stopAllSounds() {
   stopAudioElement()
   stopSongAudio()
   stopNoiseAudio()
+  stopMyVoiceAudio()
   stopStreamAudio(true)
   clearProgress()
   isBuffering.value = false
@@ -2133,8 +1819,8 @@ function handleVisibilityChange() {
     // 恢复 AudioContext（白噪音、TTS 等 Web Audio 类型）
     if (wasPlayingBeforeHidden && !isPlaying.value) {
       const type = selectedItemType.value
-      // 对于 HTMLAudioElement 类型（歌曲/流媒体/OSS白噪音）
-      if (type === 'song' || type === 'stream' || (type === 'noise' && noiseAudio)) {
+      // 对于 HTMLAudioElement 类型（歌曲/流媒体/OSS白噪音/我的声音）
+      if (type === 'song' || type === 'stream' || (type === 'noise' && noiseAudio) || type === 'voice') {
         const a = activeAudioEl()
         if (a && a.paused) {
           a.play().then(() => { isPlaying.value = true }).catch(() => {})
@@ -2281,6 +1967,196 @@ function stopNoiseAudio() {
   if (noiseAudio) {
     try { noiseAudio.pause() } catch (e) {}
     noiseAudio = null
+  }
+}
+
+// ---- 我的声音播放（录音/上传音频文件，直接播放，无在线回退） ----
+let voiceAudio = null
+
+function playMyVoiceAudio(url, title) {
+  stopMyVoiceAudio()
+  if (!url) { isPlaying.value = false; return }
+  try {
+    voiceAudio = new Audio(url)
+    setupAudioForBackground(voiceAudio)
+    voiceAudio.volume = volume.value / 100
+    voiceAudio.play().then(() => {
+      isPlaying.value = true
+      setupMediaSession(title || '我的声音')
+    }).catch(err => {
+      console.warn('[babySleep] 我的声音播放失败:', err)
+      isPlaying.value = false
+    })
+    voiceAudio.addEventListener('ended', () => {
+      isPlaying.value = false
+      voiceAudio = null
+      if (loopMode.value === 'list') playNextInList()
+      else if (loopMode.value === 'single') {
+        voiceAudio = new Audio(url); setupAudioForBackground(voiceAudio); voiceAudio.volume = volume.value / 100; voiceAudio.play()
+      }
+    })
+  } catch (e) {
+    console.error('[babySleep] 我的声音播放异常:', e)
+    isPlaying.value = false
+  }
+}
+
+function stopMyVoiceAudio() {
+  if (voiceAudio) {
+    try { voiceAudio.pause() } catch (e) {}
+    voiceAudio = null
+  }
+}
+
+// ---- 我的声音：录音 / 上传 ----
+const isRecording = ref(false)
+const recordSeconds = ref(0)
+const savingVoice = ref(false)
+const voiceError = ref('')
+const pendingVoice = ref(null)  // { name, blobUrl, base64, format, mime, isRecorded }
+let mediaRecorder = null
+let recordChunks = []
+let recordTimer = null
+
+function formatFileSize(bytes) {
+  if (!bytes) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(1024))
+  return `${(bytes / Math.pow(1024, i)).toFixed(i ? 1 : 0)} ${units[i]}`
+}
+
+async function startRecording() {
+  voiceError.value = ''
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    recordChunks = []
+    mediaRecorder = new MediaRecorder(stream)
+    mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) recordChunks.push(e.data) }
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(recordChunks, { type: mediaRecorder.mimeType || 'audio/webm' })
+      stream.getTracks().forEach(t => t.stop())
+      handleCapturedAudio(blob, true)
+    }
+    mediaRecorder.start()
+    isRecording.value = true
+    recordSeconds.value = 0
+    recordTimer = setInterval(() => { recordSeconds.value++ }, 1000)
+  } catch (e) {
+    voiceError.value = '无法访问麦克风：' + (e?.message || e)
+  }
+}
+
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    try { mediaRecorder.stop() } catch (e) {}
+  }
+  isRecording.value = false
+  if (recordTimer) { clearInterval(recordTimer); recordTimer = null }
+}
+
+function onVoiceFileUpload(e) {
+  const file = e.target.files && e.target.files[0]
+  e.target.value = ''  // 允许重复选择同一文件
+  if (!file) return
+  voiceError.value = ''
+  handleCapturedAudio(file, false)
+}
+
+function handleCapturedAudio(blob, isRecorded) {
+  const reader = new FileReader()
+  reader.onload = () => {
+    const result = reader.result || ''
+    const base64 = result.includes(',') ? result.split(',')[1] : result
+    const mime = blob.type || 'audio/webm'
+    let ext = (mime.split('/')[1] || 'webm').toLowerCase()
+    if (ext === 'x-wav') ext = 'wav'
+    if (ext === 'mpeg' || ext === 'mp3') ext = 'mp3'
+    if (ext === 'quicktime') ext = 'm4a'
+    if (ext === 'x-ms-wma') ext = 'wav'
+    if (!['mp3', 'wav', 'ogg', 'webm', 'm4a', 'aac', 'opus'].includes(ext)) ext = 'webm'
+    if (pendingVoice.value?.blobUrl) { try { URL.revokeObjectURL(pendingVoice.value.blobUrl) } catch (e) {} }
+    pendingVoice.value = {
+      name: '',
+      blobUrl: URL.createObjectURL(blob),
+      base64,
+      format: ext,
+      mime,
+      isRecorded: !!isRecorded
+    }
+  }
+  reader.onerror = () => { voiceError.value = '读取音频失败' }
+  reader.readAsDataURL(blob)
+}
+
+function cancelPendingVoice() {
+  if (pendingVoice.value?.blobUrl) { try { URL.revokeObjectURL(pendingVoice.value.blobUrl) } catch (e) {} }
+  pendingVoice.value = null
+  voiceError.value = ''
+}
+
+async function savePendingVoice() {
+  if (!pendingVoice.value) return
+  const name = pendingVoice.value.name.trim()
+  if (!name) { voiceError.value = '请填写声音名称'; return }
+  savingVoice.value = true
+  voiceError.value = ''
+  try {
+    const res = await fetch(`${API_BASE}/voices`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name,
+        audio: pendingVoice.value.base64,
+        format: pendingVoice.value.format
+      })
+    })
+    const json = await res.json()
+    if (json.success) {
+      cancelPendingVoice()
+      await fetchMyVoices()
+    } else {
+      voiceError.value = json.error || '保存失败'
+    }
+  } catch (e) {
+    console.error('[babySleep] 保存我的声音失败:', e)
+    voiceError.value = '网络错误，请重试'
+  } finally {
+    savingVoice.value = false
+  }
+}
+
+async function deleteMyVoice(item) {
+  if (!confirm(`确定删除「${item.label}」吗？此操作不可撤销。`)) return
+  try {
+    const res = await fetch(`${API_BASE}/voices/${item.id}`, { method: 'DELETE' })
+    const json = await res.json()
+    if (json.success) {
+      myVoiceItems.value = myVoiceItems.value.filter(v => v.id !== item.id)
+      if (selectedItem.value?.id === item.id) {
+        stopAllSounds()
+        isPlaying.value = false
+      }
+    }
+  } catch (e) {
+    console.error('[babySleep] 删除我的声音失败:', e)
+  }
+}
+
+async function fetchMyVoices() {
+  try {
+    const res = await fetch(`${API_BASE}/voices`)
+    const json = await res.json()
+    if (json.success && json.data) {
+      myVoiceItems.value = json.data.map(v => ({
+        id: v.id,
+        label: v.name,
+        audioUrl: v.url,
+        meta: `${formatFileSize(v.size)}${v.duration ? ' · ' + formatDuration(v.duration) : ''}`,
+        type: 'voice'
+      }))
+    }
+  } catch (e) {
+    console.warn('[babySleep] 获取我的声音失败:', e)
   }
 }
 
@@ -2716,7 +2592,7 @@ function createNoise(noiseItem) {
 }
 
 
-// ==================== TTS 播放（Edge TTS 免费 / 语音克隆 / 浏览器降级） ====================
+// ==================== TTS 播放（Edge TTS 免费 / 浏览器降级） ====================
 let ttsAudioElement = null
 let ttsRequestId = 0  // 请求 ID，用于取消旧请求
 
@@ -2800,101 +2676,6 @@ async function playEdgeTTS(item) {
     if (!isPlaying.value || selectedItem.value?.id !== item.id) return
     if (loopMode.value === 'single') {
       playEdgeTTS(item)
-    } else if (loopMode.value === 'list') {
-      playNextInList()
-    } else {
-      stopAllSounds(); isPlaying.value = false; clearTimer()
-    }
-  }
-
-  source.start()
-  isBuffering.value = false
-  setupMediaSession(item.label || item.text?.slice(0, 30) || '哄睡故事')
-  startProgressTracking(ctx, source, audioBuffer.duration)
-  ttsAudioElement = { pause: () => { try { source.stop(); clearProgress() } catch (e) {} }, source, gain }
-  activeNodes.push(source, gain)
-
-  // 后台预加载下一首
-  if (loopMode.value === 'list') prefetchNextTts()
-}
-
-// 语音克隆 TTS 播放（付费，需密码）
-async function playCloneTTS(item) {
-  if (!item.text || !customVoiceId.value) {
-    playEdgeTTS(item)
-    return
-  }
-
-  stopAudioElement()
-  clearProgress()
-  isBuffering.value = true
-  ttsProgress.value = 0
-
-  const reqId = ++ttsRequestId
-  const voice = customVoiceId.value
-  const speed = +(playbackSpeed.value * 0.85).toFixed(2)
-  const cacheKey = getTtsCacheKey(item.id, voice, speed)
-
-  // 检查缓存
-  let audioBuffer = ttsAudioCache.get(cacheKey) || null
-  if (!audioBuffer) {
-    try {
-      const res = await fetch(`${API_BASE}/tts`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: item.text,
-          customVoiceId: voice,
-          speed,
-          clonePassword: clonePassword.value
-        })
-      })
-      if (reqId !== ttsRequestId) return
-      const json = await res.json()
-      if (reqId !== ttsRequestId) return
-
-      if (json.success && json.data?.audio) {
-        const ctx = getAudioContext()
-        const audioData = base64ToArrayBuffer(json.data.audio)
-        audioBuffer = await ctx.decodeAudioData(audioData)
-        setTtsCache(cacheKey, audioBuffer)
-      } else {
-        if (reqId !== ttsRequestId) return
-        isBuffering.value = false
-        console.warn('[babySleep] 克隆 TTS 失败，降级到 Edge TTS')
-        playEdgeTTS(item)
-        return
-      }
-    } catch (e) {
-      if (reqId !== ttsRequestId) return
-      isBuffering.value = false
-      console.warn('[babySleep] 克隆 TTS 异常:', e)
-      playEdgeTTS(item)
-      return
-    }
-  }
-
-  // 创建播放
-  if (reqId !== ttsRequestId) return
-  if (!audioBuffer) return
-  const ctx = getAudioContext()
-  const source = ctx.createBufferSource()
-  source.buffer = audioBuffer
-  // 后端已通过 speech_rate 参数将语速烧录进音频，前端统一 1.0 倍速播放
-  source.playbackRate.value = 1.0
-
-  const { dest } = ensureBgAudioOutput()
-  const gain = ctx.createGain()
-  gain.gain.value = volume.value / 100
-  source.connect(gain)
-  gain.connect(dest)
-
-  source.onended = () => {
-    clearProgress()
-    ttsProgress.value = 100
-    if (!isPlaying.value || selectedItem.value?.id !== item.id) return
-    if (loopMode.value === 'single') {
-      playCloneTTS(item)
     } else if (loopMode.value === 'list') {
       playNextInList()
     } else {
@@ -3009,11 +2790,11 @@ function startPlayback() {
     currentLyricIndex.value = -1
     nextTick(measureLyricGeom)  // 渲染后测量每行位置
     startSmoothLyricScroll()  // 启动横向平滑滚动
-    if (customVoiceId.value && cloneAvailable.value) {
-      playCloneTTS(item)    // 语音克隆（付费，需密码）
-    } else {
-      playEdgeTTS(item)     // Edge TTS（免费主力）
-    }
+    playEdgeTTS(item)     // Edge TTS（免费主力）
+  } else if (type === 'voice') {
+    // 我的声音：直接播放录音/上传的音频文件
+    const url = item.audioUrl || ''
+    playMyVoiceAudio(url, item.label || '')
   }
 }
 
@@ -3047,6 +2828,10 @@ function onVolumeChange() {
   }
   if (selectedItemType.value === 'noise' && noiseAudio) {
     noiseAudio.volume = volume.value / 100
+    return
+  }
+  if (selectedItemType.value === 'voice' && voiceAudio) {
+    voiceAudio.volume = volume.value / 100
     return
   }
   if (window.speechSynthesis.speaking) window.speechSynthesis.cancel()
@@ -3103,6 +2888,7 @@ onMounted(() => {
   darkModeTimer = setInterval(checkDarkMode, 60000)  // 每分钟检查一次
   fetchSleepContent()
   fetchVoices()
+  fetchMyVoices()
   document.addEventListener('click', handleClickOutside)
   document.addEventListener('visibilitychange', handleVisibilityChange)
   window.addEventListener('resize', measureLyricGeom)
@@ -3116,6 +2902,7 @@ onUnmounted(() => {
   if (songAudio) { songAudio.pause(); songAudio = null }
   if (noiseAudio) { noiseAudio.pause(); noiseAudio = null }
   if (streamAudioEl.value) { streamAudioEl.value.pause(); streamAudioEl.value = null }
+  if (voiceAudio) { voiceAudio.pause(); voiceAudio = null }
   if (bgAudioEl) {
     try { bgAudioEl.pause(); bgAudioEl.srcObject = null } catch (e) {}
     bgAudioEl = null
@@ -3148,7 +2935,7 @@ onUnmounted(() => {
 }
 .page-desc { font-size: 14px; color: #64748b; }
 
-// ====== 分类 Tab ======
+// ====== 分类 Tab（PC 端） ======
 .category-tabs {
   display: flex; gap: 4px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 18px;
   scrollbar-width: none; &::-webkit-scrollbar { display: none; }
@@ -3160,6 +2947,51 @@ onUnmounted(() => {
   white-space: nowrap; transition: all 0.2s; flex-shrink: 0;
   &:hover { border-color: #a78bfa; color: #6366f1; background: #faf9ff; }
   &.active { background: #6366f1; color: #fff; border-color: #6366f1; }
+}
+
+// ====== 分类 Tab（移动端 el-tabs） ======
+.mobile-tabs {
+  display: none;
+  margin-bottom: 16px;
+  :deep(.is-scrollable){
+    padding: 0 8px;
+  }
+  :deep(.el-tabs__header) {
+    margin: 0;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  :deep(.el-tabs__nav-wrap) {
+    overflow: hidden;
+    &::after {
+      height: 1px;
+      background: #e2e8f0;
+    }
+  }
+  :deep(.el-tabs__nav-scroll) {
+    overflow-x: auto !important;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+  }
+  :deep(.el-tabs__active-bar) {
+    height: 2px;
+    background: #6366f1;
+    border-radius: 1px;
+  }
+  :deep(.el-tabs__item) {
+    font-size: 12px;
+    color: #64748b;
+    padding: 0 8px;
+    height: 36px;
+    line-height: 36px;
+    &:hover { color: #6366f1; }
+    &.is-active { color: #6366f1; font-weight: 600; }
+  }
+  :deep(.el-tabs__nav-next),
+  :deep(.el-tabs__nav-prev) {
+    display: none;
+  }
 }
 
 // ====== 内容区 ======
@@ -3266,6 +3098,119 @@ onUnmounted(() => {
   transition: all 0.2s;
   &:hover { background: #f0edff; border-color: #a78bfa; }
 }
+
+// ====== 我的声音 ======
+.voice-toolbar {
+  display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 14px;
+  @media (max-width: 768px) { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 10px; }
+  @media (max-width: 480px) { gap: 6px; }
+}
+.voice-act-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 18px; border-radius: 10px; border: none; cursor: pointer;
+  font-size: 13px; font-weight: 600; color: #fff; flex: 0 0 auto;
+  background: linear-gradient(135deg, #6366f1, #818cf8);
+  transition: all 0.2s;
+  @media (max-width: 480px) { flex: 1 1 auto; padding: 10px 12px; font-size: 12px; gap: 4px; min-width: 0; }
+  &:hover { filter: brightness(1.05); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99,102,241,0.25); }
+  &.record { background: linear-gradient(135deg, #ec4899, #f472b6); }
+  &.record.recording { background: linear-gradient(135deg, #ef4444, #f87171); animation: pulseRec 1.2s ease-in-out infinite; }
+  &.upload { background: linear-gradient(135deg, #0ea5e9, #38bdf8); position: relative; }
+  .hidden-file-input { display: none; }
+}
+@keyframes pulseRec { 0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); } 50% { box-shadow: 0 0 0 6px rgba(239,68,68,0); } }
+.voice-tip {
+  font-size: 12px; color: #94a3b8; text-align: center;
+  @media (max-width: 768px) { flex: 1 1 100%; text-align: center; }
+}
+
+// 待保存预览卡片
+.pending-voice {
+  background: #faf9ff; border: 1.5px solid #e9d5ff; border-radius: 12px; padding: 16px; margin-bottom: 16px;
+  .pv-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .pv-title { font-size: 14px; font-weight: 700; color: #7c3aed; display: flex; align-items: center; gap: 6px; }
+  .pv-cancel { border: none; background: transparent; color: #94a3b8; cursor: pointer; font-size: 13px; padding: 4px 8px; border-radius: 6px; &:hover { color: #ef4444; background: #fef2f2; } }
+  .pv-audio { width: 100%; height: 36px; margin-bottom: 12px; border-radius: 8px; }
+  .pv-row { display: flex; gap: 8px; }
+  .pv-name-input {
+    flex: 1; padding: 10px 14px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 14px; color: #334155;
+    background: #fff; transition: border-color 0.2s;
+    &:focus { outline: none; border-color: #a78bfa; box-shadow: 0 0 0 3px rgba(167,139,250,0.1); }
+    &::placeholder { color: #cbd5e1; }
+  }
+  .pv-save {
+    padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; color: #fff;
+    background: linear-gradient(135deg, #6366f1, #818cf8); white-space: nowrap; transition: all 0.2s;
+    @media (max-width: 480px) { padding: 10px 14px; font-size: 13px; }
+    &:disabled { opacity: 0.4; cursor: not-allowed; }
+    &:hover:not(:disabled) { filter: brightness(1.05); transform: translateY(-1px); }
+  }
+  .pv-error { margin-top: 10px; font-size: 12px; color: #ef4444; display: flex; align-items: center; gap: 4px; }
+}
+
+// 声音列表（列表型布局）
+.voice-list {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.voice-list-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; border-radius: 10px; border: 1.5px solid #e2e8f0;
+  background: #fff; cursor: pointer; transition: all 0.2s; position: relative;
+  @media (max-width: 480px) { padding: 10px 12px; }
+  &:hover { border-color: #a78bfa; background: #faf9ff; }
+  &.active { border-color: #a78bfa; background: #faf9ff; }
+  &.playing { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99,102,241,0.07); background: #faf9ff; }
+}
+.vli-left {
+  display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1;
+  @media (max-width: 480px) { gap: 10px; }
+}
+.vli-icon {
+  width: 40px; height: 40px; min-width: 40px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #8b5cf6, #a78bfa); color: #fff;
+  transition: all 0.3s;
+  @media (max-width: 480px) { width: 34px; height: 34px; min-width: 34px; border-radius: 8px; }
+  &.playing { animation: vliPulse 1.5s ease-in-out infinite; }
+}
+@keyframes vliPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(139,92,246,0.3); } 50% { box-shadow: 0 0 0 8px rgba(139,92,246,0); } }
+.vli-info { min-width: 0; flex: 1; }
+.vli-name {
+  font-size: 14px; font-weight: 600; color: #1e1b4b;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  @media (max-width: 480px) { font-size: 13px; }
+}
+.vli-meta {
+  font-size: 11px; color: #94a3b8; margin-top: 2px;
+  @media (max-width: 480px) { font-size: 10px; }
+}
+.vli-right {
+  display: flex; align-items: center; gap: 8px; flex-shrink: 0; margin-left: 8px;
+}
+.vli-playing-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: #7c3aed;
+  animation: blink 0.8s ease-in-out infinite;
+}
+.vli-delete-btn {
+  width: 30px; height: 30px; border-radius: 6px; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(239,68,68,0.08); color: #ef4444; padding: 0;
+  transition: all 0.15s; flex-shrink: 0;
+  @media (max-width: 480px) { width: 26px; height: 26px; }
+  &:hover { background: #ef4444; color: #fff; }
+}
+
+.voice-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  padding: 48px 20px; text-align: center;
+}
+.voice-empty-icon {
+  width: 64px; height: 64px; border-radius: 16px; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #ede9fe, #ddd6fe); color: #8b5cf6; margin-bottom: 4px;
+  @media (max-width: 480px) { width: 52px; height: 52px; border-radius: 14px; }
+}
+.voice-empty-title { font-size: 15px; font-weight: 600; color: #64748b; margin: 0; }
+.voice-empty-desc { font-size: 12px; color: #94a3b8; margin: 0; }
 
 // 内容卡片
 .content-card {
@@ -3549,11 +3494,12 @@ onUnmounted(() => {
 // 滚动歌词（横向平滑滚动）
 .player-lyrics {
   flex: 1.5; min-width: 0; height: 36px; line-height: 36px;
-  position: relative;  // 让每行 offsetLeft 相对本容器，固定渐变才准确
+  position: relative;
   overflow-x: auto; overflow-y: hidden;
   white-space: nowrap;
-  mask-image: linear-gradient(to right, transparent 0%, white 4%, white 96%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, white 4%, white 96%, transparent 100%);
+  // 左右毛玻璃渐变遮罩：宽过渡区 + 半透明中间层模拟模糊感
+  mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.08) 5%, rgba(0,0,0,0.35) 10%, black 22%, black 78%, rgba(0,0,0,0.35) 90%, rgba(0,0,0,0.08) 95%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.08) 5%, rgba(0,0,0,0.35) 10%, black 22%, black 78%, rgba(0,0,0,0.35) 90%, rgba(0,0,0,0.08) 95%, transparent 100%);
   &::-webkit-scrollbar { display: none; }
   scrollbar-width: none;
   display: flex; align-items: center;
@@ -3636,21 +3582,6 @@ onUnmounted(() => {
   .voice-desc { font-size: 11px; color: #6b7280; font-weight: 400; }
 }
 
-.custom-voice-item {
-  justify-content: space-between;
-  .voice-delete-btn {
-    width: 18px; height: 18px; border-radius: 3px; border: none;
-    background: rgba(239, 68, 68, 0.15); color: #f87171; font-size: 13px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; padding: 0; line-height: 1;
-    &:hover { background: rgba(239, 68, 68, 0.25); }
-  }
-}
-
-.add-voice {
-  color: #a78bfa; font-weight: 500; gap: 6px;
-  &:hover { background: rgba(167, 139, 250, 0.1); }
-}
-
 .voice-menu { min-width: 190px; }
 
 // 音量下拉（垂直滑块）
@@ -3671,150 +3602,7 @@ onUnmounted(() => {
   }
 }
 
-// ====== 密码验证弹窗 ======
-.password-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
-  display: flex; align-items: center; justify-content: center; z-index: 1100; padding: 20px;
-}
-.password-modal {
-  background: #fff; border-radius: 12px; width: 100%; max-width: 380px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.15); animation: modalIn 0.3s ease-out; overflow: hidden;
-}
-.password-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 18px 20px; border-bottom: 1px solid #f1f5f9;
-  h3 { font-size: 16px; font-weight: 600; color: #1e1b4b; display: flex; align-items: center; gap: 8px; margin: 0; }
-  .el-icon { color: #f59e0b; }
-}
-.password-close {
-  width: 32px; height: 32px; border-radius: 50%; border: none; background: #f1f5f9;
-  font-size: 18px; color: #64748b; cursor: pointer; display: flex; align-items: center; justify-content: center;
-  &:hover { background: #e2e8f0; }
-}
-.password-body { padding: 20px; }
-.password-desc { font-size: 13px; color: #64748b; margin: 0 0 14px; line-height: 1.6; }
-.password-input-row { margin-bottom: 8px; }
-.password-input {
-  width: 100%; padding: 10px 14px; border: 1.5px solid #e2e8f0; border-radius: 8px;
-  font-size: 14px; outline: none; transition: border-color 0.2s; box-sizing: border-box;
-  &:focus { border-color: #6366f1; }
-}
-.password-error { font-size: 12px; color: #ef4444; margin-top: 4px; }
-.password-footer {
-  display: flex; align-items: center; justify-content: flex-end; gap: 8px;
-  padding: 14px 20px; border-top: 1px solid #f1f5f9;
-}
-.password-cancel-btn {
-  padding: 8px 16px; border-radius: 6px; border: 1px solid #e2e8f0;
-  background: #fff; font-size: 13px; color: #64748b; cursor: pointer;
-  &:hover { background: #f8fafc; }
-}
-.password-submit-btn {
-  padding: 8px 20px; border-radius: 6px; border: none;
-  background: linear-gradient(135deg, #f59e0b, #f97316); color: #fff;
-  font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s;
-  &:hover { opacity: 0.9; }
-}
-
-// ====== 语音克隆弹窗 ======
-.clone-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
-  display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px;
-}
-.clone-modal {
-  background: #fff; border-radius: 12px; width: 100%; max-width: 440px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.15); overflow: hidden; animation: modalIn 0.3s ease-out;
-}
 @keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-.clone-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 18px 20px; border-bottom: 1px solid #f1f5f9;
-  h3 { font-size: 16px; font-weight: 600; color: #1e1b4b; display: flex; align-items: center; gap: 8px; margin: 0; }
-}
-.clone-close {
-  width: 32px; height: 32px; border-radius: 50%; border: none; background: #f1f5f9;
-  font-size: 18px; color: #64748b; cursor: pointer; display: flex; align-items: center; justify-content: center;
-  &:hover { background: #e2e8f0; }
-}
-
-.clone-tabs { display: flex; padding: 12px 20px 0; gap: 4px; }
-.clone-tab {
-  flex: 1; padding: 8px; border: none; background: #f1f5f9; border-radius: 6px 6px 0 0;
-  font-size: 13px; font-weight: 500; color: #64748b; cursor: pointer; transition: all 0.2s;
-  &.active { background: #fff; color: #6366f1; font-weight: 600; }
-}
-
-.clone-body { padding: 16px 20px; }
-
-.record-area { text-align: center; }
-.record-visual {
-  width: 96px; height: 96px; border-radius: 50%; margin: 0 auto 12px;
-  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
-  display: flex; align-items: center; justify-content: center; transition: all 0.3s;
-  .el-icon { color: #94a3b8; }
-  &.recording { background: linear-gradient(135deg, #fecaca, #fca5a5); box-shadow: 0 0 30px rgba(239,68,68,0.2); animation: pulse-rec 1.5s ease-in-out infinite; }
-}
-@keyframes pulse-rec { 0%,100% { box-shadow: 0 0 20px rgba(239,68,68,0.2); } 50% { box-shadow: 0 0 40px rgba(239,68,68,0.35); } }
-.record-wave { display: flex; align-items: center; gap: 3px; height: 40px; }
-.wave-bar {
-  width: 3px; height: var(--h); background: #ef4444; border-radius: 2px;
-  animation: wave 0.6s ease-in-out infinite alternate; animation-delay: var(--delay);
-}
-@keyframes wave { to { height: 20%; } }
-.record-timer { font-size: 14px; font-weight: 600; color: #ef4444; margin-bottom: 8px; }
-.record-hint { font-size: 12px; color: #94a3b8; margin-bottom: 12px; line-height: 1.5; &.success { color: #16a34a; } }
-.record-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
-
-.btn-record-start, .btn-record-stop, .btn-record-retry, .btn-play-preview, .btn-remove-file {
-  padding: 10px 20px; border-radius: 8px; border: none; font-size: 13px; font-weight: 500;
-  cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;
-}
-.btn-record-start { background: linear-gradient(135deg, #ef4444, #f97316); color: #fff; &:hover { opacity: 0.9; } }
-.btn-record-stop { background: #1e1b4b; color: #fff; &:hover { opacity: 0.9; } }
-.btn-record-retry { background: #f1f5f9; color: #475569; &:hover { background: #e2e8f0; } }
-.btn-play-preview { background: #eef2ff; color: #6366f1; &:hover { background: #e0e7ff; } }
-.btn-remove-file { background: #fee2e2; color: #ef4444; &:hover { background: #fecaca; } }
-
-.upload-area {
-  border: 2px dashed #e2e8f0; border-radius: 10px; padding: 30px 20px;
-  text-align: center; cursor: pointer; transition: all 0.2s;
-  &:hover { border-color: #c4b5fd; background: #faf9ff; }
-  &.has-file { border-style: solid; border-color: #a78bfa; background: #f5f3ff; }
-  p { font-size: 13px; color: #64748b; margin: 8px 0 0; }
-  .upload-hint { font-size: 11px; color: #94a3b8; margin-top: 4px; }
-  .file-name { font-size: 14px; font-weight: 600; color: #1e1b4b; }
-  .file-size { font-size: 12px; color: #94a3b8; }
-  .el-icon { color: #c4b5fd; }
-}
-
-.clone-name-row {
-  display: flex; align-items: center; gap: 10px; padding: 12px 20px; border-top: 1px solid #f1f5f9;
-  label { font-size: 13px; font-weight: 500; color: #475569; flex-shrink: 0; }
-}
-.clone-name-input {
-  flex: 1; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px;
-  font-size: 14px; outline: none; transition: border-color 0.2s;
-  &:focus { border-color: #6366f1; }
-}
-
-.clone-footer {
-  display: flex; align-items: center; justify-content: flex-end; gap: 8px;
-  padding: 14px 20px; border-top: 1px solid #f1f5f9;
-}
-.clone-error { font-size: 12px; color: #ef4444; flex: 1; }
-.clone-cancel-btn {
-  padding: 8px 16px; border-radius: 6px; border: 1px solid #e2e8f0;
-  background: #fff; font-size: 13px; color: #64748b; cursor: pointer;
-  &:hover { background: #f8fafc; }
-}
-.clone-submit-btn {
-  padding: 8px 20px; border-radius: 6px; border: none;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff;
-  font-size: 13px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 6px;
-  transition: all 0.2s;
-  &:hover:not(:disabled) { opacity: 0.9; }
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
-}
 .spinning { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -3920,9 +3708,8 @@ onUnmounted(() => {
   .baby-sleep-page { padding: 20px 14px 140px; }
   .page-title { font-size: 24px; }
   .sound-grid { grid-template-columns: repeat(3, 1fr); }
-  .category-tabs { gap: 3px; }
-  .tab-btn { padding: 5px 8px; font-size: 11px; gap: 3px; }
-  .tab-btn .el-icon { display: none; }
+  .pc-tabs { display: none; }
+  .mobile-tabs { display: block; }
   .player-inner { padding: 8px 12px 10px; gap: 8px; }
   .player-right { gap: 8px; }
   .ctrl-pill { height: 38px; padding: 0 12px; font-size: 12px; gap: 4px; min-width: 38px; justify-content: center; }
@@ -3937,15 +3724,13 @@ onUnmounted(() => {
 @media (max-width: 480px) {
   .baby-sleep-page { padding: 16px 10px 130px; }
   .page-title { font-size: 20px; }
-  .category-tabs { gap: 3px; flex-wrap: wrap; overflow-x: visible; }
-  .tab-btn { padding: 4px 7px; font-size: 10px; gap: 2px; }
-  .tab-btn .el-icon { display: none; }
+  .pc-tabs { display: none; }
+  .mobile-tabs { display: block; }
   .sound-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
   .sound-card { padding: 10px 4px; }
   .sound-icon { width: 36px; height: 36px; }
   .content-card { padding: 10px 12px; }
   .content-icon { width: 34px; height: 34px; min-width: 34px; }
-  .clone-modal { max-width: 100%; border-radius: 16px 16px 0 0; margin-top: auto; }
   .player-inner { padding: 8px 10px 10px; gap: 6px; }
   .player-left { gap: 6px; }
   .player-cover { width: 36px; height: 36px; min-width: 36px; }
@@ -4060,39 +3845,63 @@ onUnmounted(() => {
     &.active { background: rgba(167, 139, 250, 0.12); }
   }
 
-  // 弹窗（密码、克隆、编辑）
-  .password-modal, .clone-modal, .edit-modal {
+  // 弹窗（编辑）
+.edit-modal {
     background: #1e1e2e;
     box-shadow: 0 20px 60px rgba(0,0,0,0.5);
   }
-  .password-header, .clone-header, .edit-header {
+.edit-header {
     border-bottom-color: #2d2d4a;
     h3 { color: #e2dee9; }
   }
-  .password-close, .clone-close, .edit-close {
+.edit-close {
     background: #2d2d4a; color: #94a3b8;
     &:hover { background: #3d3d5a; }
   }
-  .password-desc { color: #94a3b8; }
-  .password-input, .clone-name-input, .edit-field input, .edit-field textarea, .edit-field select {
+.edit-field input, .edit-field textarea, .edit-field select {
     border-color: #2d2d4a; background: #1a1a2e; color: #e2dee9;
     &:focus { border-color: #7c3aed; }
   }
-  .password-footer, .clone-footer, .edit-footer, .clone-name-row {
+.edit-footer {
     border-top-color: #2d2d4a;
   }
-  .password-cancel-btn, .clone-cancel-btn, .edit-cancel-btn {
+.edit-cancel-btn {
     background: #1e1e2e; border-color: #2d2d4a; color: #94a3b8;
     &:hover { background: #252540; }
   }
-  .edit-field label, .clone-name-row label { color: #cbd5e1; }
+.edit-field label { color: #cbd5e1; }
   .icon-color-swatch { &:hover { border-color: #6d5acf; } }
 
   // 提示卡片
   .tip-card { background: #1c1a0a; border-color: #5c4a0a; color: #fcd34d; .el-icon { color: #fbbf24; } }
 
+  // 我的声音
+  .voice-act-btn {
+    &.record:not(.recording) { background: linear-gradient(135deg, #db2777, #ec4899); }
+    &.upload { background: linear-gradient(135deg, #0284c7, #0ea5e9); }
+  }
+  .voice-tip { color: #6b7280; }
+  .pending-voice {
+    background: #1e1e2e; border-color: #4c3d8f;
+    .pv-title { color: #a78bfa; }
+    .pv-name-input { border-color: #2d2d4a; background: #1a1a2e; color: #e2dee9; &:focus { border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,0.15); } }
+    .pv-cancel { color: #6b7280; &:hover { color: #f87171; background: rgba(239,68,68,0.1); } }
+  }
+  .voice-list-item {
+    background: #1a1a2e; border-color: #2d2d4a;
+    &:hover { border-color: #4c3d8f; background: #1e1e32; }
+    &.active { border-color: #6d5acf; background: #1e1e32; }
+    &.playing { border-color: #818cf8; box-shadow: 0 0 0 2px rgba(129,140,248,0.12); background: #1e1e32; }
+  }
+  .vli-icon { background: linear-gradient(135deg, #6d5acf, #8b5cf6); }
+  .vli-name { color: #e2dee9; }
+  .vli-meta { color: #6b7280; }
+  .vli-delete-btn { background: rgba(239,68,68,0.12); }
+  .voice-empty { color: #6b7280; }
+  .voice-empty-icon { background: linear-gradient(135deg, #2d2d4a, #3d3d6a); color: #8b5cf6; }
+  .voice-empty-title { color: #94a3b8; }
+
   // 上传区域
-  .clone-upload { border-color: #3d3d5a; color: #94a3b8; &:hover { border-color: #6d5acf; background: #1e1e2e; } &.has-file { border-color: #6d5acf; background: #1a1830; } p { color: #94a3b8; } .file-name { color: #e2dee9; } .file-size { color: #6b7280; } .upload-hint { color: #6b7280; } .el-icon { color: #6d5acf; } }
 }
 
 </style>
