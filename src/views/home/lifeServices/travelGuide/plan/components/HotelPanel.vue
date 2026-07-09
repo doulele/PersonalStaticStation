@@ -870,3 +870,50 @@ function handleClear() {
   }
 }
 </style>
+
+
+<style lang="scss">
+// ==================== 夜间模式 ====================
+html.dark-mode {
+  .hotel-panel {
+    background: rgba(19, 19, 42, 0.8); border-color: rgba(45, 45, 74, 0.8);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    &:hover { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); }
+  }
+  .panel-title { color: #e2dee9; }
+  .panel-badge { background: rgba(30, 30, 60, 0.8); color: #94a3b8; }
+  .hotel-search-section { border-top-color: rgba(45, 45, 74, 0.6); }
+  .empty-drop-zone {
+    border-color: rgba(45, 45, 74, 0.7); color: #64748b;
+    &:hover { border-color: #60a5fa; color: #60a5fa; background: rgba(59, 130, 246, 0.06); }
+    .empty-icon-wrap { background: rgba(26, 26, 46, 0.8); color: #64748b; }
+    &:hover .empty-icon-wrap { background: rgba(59, 130, 246, 0.12); color: #60a5fa; }
+    .empty-title { color: #94a3b8; }
+    .empty-hint { color: #64748b; }
+  }
+  .hotel-card {
+    background: rgba(26, 26, 46, 0.8); border-color: rgba(45, 45, 74, 0.7);
+    &.selected { background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3); box-shadow: 0 2px 8px rgba(59, 130, 246, 0.08); }
+    &.custom-selected { background: rgba(99, 102, 241, 0.1); border-color: rgba(99, 102, 241, 0.3); box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08); }
+  }
+  .hotel-name { color: #e2dee9; }
+  .hotel-meta { color: #94a3b8; }
+  .hotel-edit-btn { color: #a78bfa; background: rgba(99, 102, 241, 0.15); border-color: rgba(99, 102, 241, 0.25); }
+  .hotel-remove-btn { color: #f87171; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); }
+  .recommend-section { border-top-color: rgba(45, 45, 74, 0.6); }
+  .recommend-label { color: #94a3b8; }
+  .recommend-count { background: rgba(26, 26, 46, 0.6); color: #64748b; }
+  .recommend-card {
+    background: rgba(26, 26, 46, 0.8); border-color: rgba(45, 45, 74, 0.7);
+    &:hover { background: rgba(59, 130, 246, 0.08); border-color: #60a5fa; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.12); }
+  }
+  .rec-name-text { color: #e2dee9; }
+  .rec-rating { color: #fbbf24; }
+  .rec-desc { color: #64748b; }
+  .rec-meta { color: #94a3b8; }
+  .rec-price-range { background: rgba(59, 130, 246, 0.12); color: #60a5fa; }
+  .recommend-all-selected { color: #64748b; }
+  .recommend-list::-webkit-scrollbar-thumb { background: #3d3d5c; }
+  .ai-badge { color: #fcd34d; background: rgba(251, 191, 36, 0.15); border-color: rgba(251, 191, 36, 0.3); }
+}
+</style>

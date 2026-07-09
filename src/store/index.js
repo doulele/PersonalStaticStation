@@ -61,11 +61,23 @@ export default createStore({
     setUserInfo({ commit }, payload) {
       commit('SET_USER_INFO', payload)
     },
-    // 手动切换主题（进入手动模式，持久化）
+    // 点击切换：黑暗 → 白天 → 自动 → 黑暗（循环，持久化）
     toggleTheme({ commit, state, dispatch }) {
-      const nextTheme = state.theme === 'light' ? 'dark' : 'light'
-      commit('SET_THEME', nextTheme)
-      commit('SET_THEME_MODE', nextTheme) // 进入手动模式
+      if (state.themeMode === 'dark') {
+        // 黑暗 → 白天
+        commit('SET_THEME', 'light')
+        commit('SET_THEME_MODE', 'light')
+      } else if (state.themeMode === 'light') {
+        // 白天 → 自动
+        commit('SET_THEME_MODE', 'auto')
+        const hour = new Date().getHours()
+        const timeTheme = (hour >= 20 || hour < 7) ? 'dark' : 'light'
+        commit('SET_THEME', timeTheme)
+      } else {
+        // 自动 → 黑暗
+        commit('SET_THEME', 'dark')
+        commit('SET_THEME_MODE', 'dark')
+      }
       dispatch('_persistThemeMode')
     },
     // 重置为自动模式（跟随时间）

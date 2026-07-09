@@ -2194,16 +2194,20 @@ $text-muted: #94a3b8;
   }
 }
 
-// ==================== 夜间模式全覆盖 ====================
-:global(html.dark-mode .memo-page) {
+</style>
+
+<style lang="scss">
+// ==================== 夜间模式（独立非 scoped 块） ====================
+html.dark-mode .memo-page {
   background: #0f0f1a !important;
 }
 
-:global(html.dark-mode) {
-  .memo-container {
-    background: #13132a !important;
-    box-shadow: 0 0 60px rgba(0, 0, 0, 0.3) !important;
-  }
+html.dark-mode .memo-container {
+  background: #13132a !important;
+  box-shadow: 0 0 60px rgba(0, 0, 0, 0.3) !important;
+}
+
+html.dark-mode {
 
   .nav-bar {
     background: rgba(19, 19, 42, 0.92) !important;
@@ -2402,5 +2406,88 @@ $text-muted: #94a3b8;
   .tpl-meta { color: #64748b !important; }
   .tpl-del { color: #64748b !important; &:hover { background: #3b1010 !important; color: #f87171 !important; } }
   .template-empty { color: #64748b !important; }
+}
+
+html.dark-mode {
+  // Element Plus 弹窗/表单适配（弹窗挂载在 body 下）
+  .el-dialog {
+    background: #1a1a2e !important;
+    .el-dialog__title { color: #e2dee9 !important; }
+    .el-dialog__header { border-bottom-color: #2d2d4a !important; }
+    .el-dialog__close { color: #64748b !important; &:hover { color: #e2dee9 !important; } }
+    .el-dialog__body { color: #94a3b8 !important; }
+  }
+  .el-form-item__label { color: #94a3b8 !important; }
+  .el-input__wrapper {
+    background: #252540 !important;
+    border-color: #2d2d4a !important;
+    box-shadow: none !important;
+  }
+  .el-input__inner {
+    color: #e2dee9 !important;
+    &::placeholder { color: #64748b !important; }
+  }
+  .el-textarea__inner {
+    background: #252540 !important;
+    border-color: #2d2d4a !important;
+    color: #e2dee9 !important;
+    &::placeholder { color: #64748b !important; }
+  }
+  .el-input-number {
+    .el-input__wrapper { background: #252540 !important; }
+    .el-input__inner { color: #e2dee9 !important; }
+    .el-input-number__decrease, .el-input-number__increase {
+      background: #1e1e3c !important;
+      border-color: #2d2d4a !important;
+      color: #94a3b8 !important;
+      &:hover { color: #e2dee9 !important; }
+    }
+  }
+  .el-select {
+    .el-input__wrapper { background: #252540 !important; }
+    .el-input__inner { color: #e2dee9 !important; }
+    .el-input__suffix, .el-input__suffix-inner, .el-icon { color: #94a3b8 !important; }
+    .el-select__caret { color: #94a3b8 !important; }
+  }
+  .el-select-dropdown {
+    background: #1a1a2e !important;
+    border: 1px solid #2d2d4a !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5) !important;
+  }
+  .el-select-dropdown__item {
+    color: #e2dee9 !important;
+    &.hover, &:hover { background: #252540 !important; }
+    &.selected { color: #a78bfa !important; background: #1e1e3c !important; }
+  }
+  .el-popper__arrow::before {
+    background: #1a1a2e !important;
+    border-color: #2d2d4a !important;
+  }
+  .el-button--default {
+    background: #1e1e3c !important;
+    border-color: #2d2d4a !important;
+    color: #e2dee9 !important;
+    &:hover { background: #252540 !important; border-color: #3d3d6c !important; }
+  }
+  .el-button--primary {
+    background: #6366f1 !important;
+    border-color: #6366f1 !important;
+    color: #fff !important;
+    &:hover { background: #818cf8 !important; border-color: #818cf8 !important; }
+  }
+  .el-dropdown-menu {
+    background: #1a1a2e !important;
+    border-color: #2d2d4a !important;
+  }
+  .el-dropdown-menu__item {
+    color: #e2dee9 !important;
+    &:hover { background: #252540 !important; color: #a78bfa !important; }
+  }
+  .el-message-box {
+    background: #1a1a2e !important;
+    border-color: #2d2d4a !important;
+    .el-message-box__title { color: #e2dee9 !important; }
+    .el-message-box__content { color: #94a3b8 !important; }
+  }
 }
 </style>

@@ -149,26 +149,56 @@ function save() {
 .add-cat-btn {
   border-style: dashed;
 }
+</style>
 
-// ==================== 夜间模式 ====================
-:global(html.dark-mode) {
-  .cat-row {
-    background: #1a1a2e;
-  }
+<style lang="scss">
+// ==================== 夜间模式（独立非 scoped 块） ====================
+html.dark-mode .cat-row {
+  background: #1a1a2e;
+}
 
-  .cat-grip {
-    color: #3d3d5c;
-  }
+html.dark-mode .cat-grip {
+  color: #3d3d5c;
+}
 
-  .cat-arrow {
-    color: #94a3b8;
-    &:hover:not(.disabled) { background: #252540; }
-    &.disabled { color: #3d3d5c; }
-  }
+html.dark-mode .cat-arrow {
+  color: #94a3b8;
+  &:hover:not(.disabled) { background: #252540; }
+  &.disabled { color: #3d3d5c; }
+}
 
-  .cat-delete {
-    color: #3d3d5c;
-    &:hover { color: #f87171; background: #3b1010; }
-  }
+html.dark-mode .cat-delete {
+  color: #3d3d5c;
+  &:hover { color: #f87171; background: #3b1010; }
+}
+
+html.dark-mode .el-dialog {
+  background: #1a1a2e !important;
+  .el-dialog__title { color: #e2dee9 !important; }
+  .el-dialog__header { border-bottom-color: #2d2d4a !important; }
+  .el-dialog__close { color: #64748b !important; &:hover { color: #e2dee9 !important; } }
+  .el-dialog__body { color: #94a3b8 !important; }
+}
+html.dark-mode .el-form-item__label { color: #94a3b8 !important; }
+html.dark-mode .el-input__wrapper {
+  background: #252540 !important;
+  border-color: #2d2d4a !important;
+  box-shadow: none !important;
+}
+html.dark-mode .el-input__inner {
+  color: #e2dee9 !important;
+  &::placeholder { color: #64748b !important; }
+}
+html.dark-mode .el-button--default {
+  background: #1e1e3c !important;
+  border-color: #2d2d4a !important;
+  color: #e2dee9 !important;
+  &:hover { background: #252540 !important; border-color: #3d3d6c !important; }
+}
+html.dark-mode .el-button--primary {
+  background: #6366f1 !important;
+  border-color: #6366f1 !important;
+  color: #fff !important;
+  &:hover { background: #818cf8 !important; border-color: #818cf8 !important; }
 }
 </style>

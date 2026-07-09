@@ -73,19 +73,19 @@
           </router-link>
         </div>
 
-        <!-- 主题切换按钮（游客和登录用户都可见） -->
+        <!-- 主题切换按钮：单击循环 黑暗→白天→自动 -->
         <button
           class="theme-toggle"
-          :class="{ 'manual-mode': isThemeManual }"
+          :class="{ 'auto-mode': !isThemeManual }"
           @click="toggleTheme"
-          @dblclick.prevent="resetToAuto"
           :title="themeTitle"
         >
           <el-icon :size="18">
-            <Sunny v-if="isDark" />
-            <Moon v-else />
+            <Sunny v-if="themeMode === 'light'" />
+            <Moon v-else-if="themeMode === 'dark'" />
+            <el-icon v-else :size="18"><component :is="isDark ? Moon : Sunny" /></el-icon>
           </el-icon>
-          <span v-if="isThemeManual" class="manual-dot"></span>
+          <span v-if="!isThemeManual" class="auto-dot">A</span>
         </button>
       </div>
     </div>
@@ -151,11 +151,13 @@ const isLoggedIn = computed(() => store.getters['auth/isLoggedIn'])
 const currentUser = computed(() => store.getters['auth/currentUser'])
 const isDark = computed(() => store.getters.isDark)
 const isThemeManual = computed(() => store.getters.isThemeManual)
+const themeMode = computed(() => store.state.themeMode)
 
 const themeTitle = computed(() => {
-  const base = isDark.value ? '当前：暗色模式' : '当前：亮色模式'
-  const extra = isThemeManual.value ? '（手动 · 双击恢复自动）' : '（自动跟随时间）'
-  return base + '\n' + extra
+  const mode = themeMode.value
+  if (mode === 'dark') return '当前：暗色模式\n点击切换为白天'
+  if (mode === 'light') return '当前：亮色模式\n点击切换为自动'
+  return '当前：自动模式（跟随时间）\n点击切换为暗色'
 })
 
 const userInitial = computed(() => {
@@ -221,27 +223,14 @@ const isActive = (item) => {
 
 function toggleTheme() {
   store.dispatch('toggleTheme')
-  const htmlEl = document.documentElement
   const nextDark = store.state.theme === 'dark'
+  const htmlEl = document.documentElement
   if (nextDark) {
     htmlEl.classList.add('dark-mode')
   } else {
     htmlEl.classList.remove('dark-mode')
   }
   document.querySelector('meta[name="color-scheme"]')?.setAttribute('content', nextDark ? 'dark' : 'light')
-}
-
-function resetToAuto() {
-  store.dispatch('resetToAuto')
-  const shouldDark = store.state.theme === 'dark'
-  const htmlEl = document.documentElement
-  if (shouldDark) {
-    htmlEl.classList.add('dark-mode')
-  } else {
-    htmlEl.classList.remove('dark-mode')
-  }
-  document.querySelector('meta[name="color-scheme"]')?.setAttribute('content', shouldDark ? 'dark' : 'light')
-  ElMessage.success('已恢复自动模式（跟随时间切换）')
 }
 
 async function handleLogout() {
@@ -539,18 +528,18 @@ $drawer-width: 270px;
 
   &:hover { background: var(--nav-hover-bg); }
 
-  // 手动模式指示器（右上角小圆点）
-  &.manual-mode {
+  // 自动模式指示器（右下角 "A"）
+  &.auto-mode {
     border: 1.5px solid var(--color-primary, #409eff);
   }
-  .manual-dot {
+  .auto-dot {
     position: absolute;
-    top: 4px;
-    right: 4px;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--color-primary, #409eff);
+    bottom: 2px;
+    right: 2px;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--color-primary, #409eff);
     pointer-events: none;
   }
 }

@@ -526,8 +526,11 @@ function handleAutoSort() {
   .footer-btn { padding: 8px 12px; font-size: 12px; }
 }
 
+</style>
+
+<style lang="scss">
 // ==================== 夜间模式 ====================
-:global(html.dark-mode) {
+html.dark-mode {
   .dialog-overlay {
     background: rgba(0, 0, 0, 0.6);
   }

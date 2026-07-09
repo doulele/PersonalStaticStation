@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="result-page">
     <!-- 固定顶栏 -->
     <div class="result-topbar">
@@ -1339,12 +1339,15 @@ function handleReplan() {
   .state-btns .el-button { font-size: 10px; padding: 5px 6px; min-height: 28px; }
 }
 
-// ==================== 夜间模式 ====================
-:global(html.dark-mode .result-page) {
+</style>
+
+<style lang="scss">
+// ==================== 夜间模式（独立非 scoped 块） ====================
+html.dark-mode .result-page {
   background: #0f0f1a;
 }
 
-:global(html.dark-mode) {
+html.dark-mode {
   // 顶栏
   .result-topbar { background: #1a1a2e; border-bottom-color: #2d2d4a; }
   .topbar-title { color: #e2dee9; }

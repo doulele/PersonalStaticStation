@@ -204,9 +204,11 @@ $text-muted: #94a3b8;
     opacity: 1;
   }
 }
+</style>
 
-// ==================== 夜间模式 ====================
-:global(html.dark-mode .item-row) {
+<style lang="scss">
+// ==================== 夜间模式（独立非 scoped 块） ====================
+html.dark-mode .item-row {
   + .item-row {
     border-top-color: #252540;
   }
@@ -220,9 +222,7 @@ $text-muted: #94a3b8;
       color: #64748b;
     }
   }
-}
 
-:global(html.dark-mode) {
   .item-check {
     border-color: #3d3d5c;
     background: transparent;
@@ -270,5 +270,15 @@ $text-muted: #94a3b8;
       color: #f87171;
     }
   }
+}
+</style>
+
+<style lang="scss">
+// Element Plus 全局弹窗适配
+html.dark-mode .el-message-box {
+  background: #1a1a2e !important;
+  border-color: #2d2d4a !important;
+  .el-message-box__title { color: #e2dee9 !important; }
+  .el-message-box__content { color: #94a3b8 !important; }
 }
 </style>

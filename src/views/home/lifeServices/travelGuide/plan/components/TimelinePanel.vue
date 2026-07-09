@@ -462,3 +462,33 @@ function handleRemove(node) {
   .timeline-panel { padding: 14px; border-radius: 12px; }
 }
 </style>
+
+
+<style lang="scss">
+// ==================== 夜间模式 ====================
+html.dark-mode {
+  .timeline-panel {
+    background: rgba(19, 19, 42, 0.8); border-color: rgba(45, 45, 74, 0.8);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
+  .panel-title { color: #e2dee9; }
+  .panel-badge { background: rgba(30, 30, 60, 0.8); color: #94a3b8; }
+  .panel-hint { color: #64748b; }
+  .empty-state { border-color: rgba(45, 45, 74, 0.7); color: #64748b; }
+  .preview-item {
+    &.preview-hotel { background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.2); }
+    &.preview-spot  { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); }
+    &.preview-food  { background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2); }
+  }
+  .preview-name { color: #e2dee9; }
+  .preview-time { color: #94a3b8; }
+  .preview-duration { color: #64748b; }
+  .preview-drag-handle { color: #4a4a6a; &:hover { color: #a78bfa; background: rgba(99, 102, 241, 0.12); } }
+  .preview-remove-btn { color: #64748b; &:hover { color: #f87171; } }
+  .preview-summary { background: rgba(26, 26, 46, 0.8); border-color: rgba(45, 45, 74, 0.7); }
+  .summary-label { color: #64748b; }
+  .summary-value { color: #e2dee9; &.price { color: #a78bfa; } }
+  .summary-row:not(:last-child) { border-bottom-color: rgba(45, 45, 74, 0.5); }
+  .preview-ghost { border-color: rgba(99, 102, 241, 0.5) !important; }
+}
+</style>

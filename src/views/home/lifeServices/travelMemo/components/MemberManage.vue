@@ -209,43 +209,73 @@ function save() {
     background: #fffbeb;
   }
 }
+</style>
 
-// ==================== 夜间模式 ====================
-:global(html.dark-mode) {
-  .member-row {
-    background: #1a1a2e;
-  }
+<style lang="scss">
+// ==================== 夜间模式（独立非 scoped 块） ====================
+html.dark-mode .member-row {
+  background: #1a1a2e;
+}
 
-  .member-emoji:hover {
-    background: #252540;
-  }
+html.dark-mode .member-emoji:hover {
+  background: #252540;
+}
 
-  .member-delete {
-    color: #4a4a6a;
-    &:hover { color: #f87171; background: #3b1010; }
-  }
+html.dark-mode .member-delete {
+  color: #4a4a6a;
+  &:hover { color: #f87171; background: #3b1010; }
+}
 
-  .emoji-picker-popup {
-    background: #1a1a2e;
-    border-color: #2d2d4a;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
-  }
+html.dark-mode .emoji-picker-popup {
+  background: #1a1a2e;
+  border-color: #2d2d4a;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+}
 
-  .emoji-popup-header {
-    color: #94a3b8;
-  }
+html.dark-mode .emoji-popup-header {
+  color: #94a3b8;
+}
 
-  .emoji-popup-close {
-    color: #64748b;
-    &:hover { color: #e2dee9; }
-  }
+html.dark-mode .emoji-popup-close {
+  color: #64748b;
+  &:hover { color: #e2dee9; }
+}
 
-  .emoji-cell {
-    &:hover { background: #252540; }
-    &.active {
-      border-color: #f59e0b;
-      background: #2e1f0a;
-    }
+html.dark-mode .emoji-cell {
+  &:hover { background: #252540; }
+  &.active {
+    border-color: #f59e0b;
+    background: #2e1f0a;
   }
+}
+
+html.dark-mode .el-dialog {
+  background: #1a1a2e !important;
+  .el-dialog__title { color: #e2dee9 !important; }
+  .el-dialog__header { border-bottom-color: #2d2d4a !important; }
+  .el-dialog__close { color: #64748b !important; &:hover { color: #e2dee9 !important; } }
+  .el-dialog__body { color: #94a3b8 !important; }
+}
+html.dark-mode .el-form-item__label { color: #94a3b8 !important; }
+html.dark-mode .el-input__wrapper {
+  background: #252540 !important;
+  border-color: #2d2d4a !important;
+  box-shadow: none !important;
+}
+html.dark-mode .el-input__inner {
+  color: #e2dee9 !important;
+  &::placeholder { color: #64748b !important; }
+}
+html.dark-mode .el-button--default {
+  background: #1e1e3c !important;
+  border-color: #2d2d4a !important;
+  color: #e2dee9 !important;
+  &:hover { background: #252540 !important; border-color: #3d3d6c !important; }
+}
+html.dark-mode .el-button--primary {
+  background: #6366f1 !important;
+  border-color: #6366f1 !important;
+  color: #fff !important;
+  &:hover { background: #818cf8 !important; border-color: #818cf8 !important; }
 }
 </style>

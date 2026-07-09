@@ -518,21 +518,20 @@ onMounted(() => {
   }
 }
 
-// ==================== 夜间模式全覆盖 ====================
-:global(html.dark-mode .weather-page) {
+</style>
+
+<style lang="scss">
+// ==================== 夜间模式（独立非 scoped 块） ====================
+html.dark-mode .weather-page {
   background: #0f0f1a !important;
   color: #e2dee9 !important;
 
-  .page-title {
-    color: #e2dee9 !important;
-  }
-
-  .page-desc {
-    color: #94a3b8 !important;
-  }
+  .page-title { color: #e2dee9 !important; }
+  .page-desc { color: #94a3b8 !important; }
 
   .header-left {
     color: #94a3b8 !important;
+    svg { color: #94a3b8 !important; }
     &:hover { color: #93c5fd !important; }
   }
 
@@ -542,65 +541,66 @@ onMounted(() => {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
   }
 
-  .city-province {
-    color: #64748b !important;
+  .city-province { color: #64748b !important; }
+  .hot-cities { border-top-color: #2d2d4a !important; }
+  .hot-label { color: #94a3b8 !important; }
+
+  .loading-icon, .error-icon, .empty-icon { filter: brightness(0.8) !important; }
+  .loading-text { color: #94a3b8 !important; }
+  .loading-sub { color: #64748b !important; }
+  .empty-text { color: #94a3b8 !important; }
+  .empty-sub { color: #64748b !important; }
+  .error-text { color: #f87171 !important; }
+
+  .city-select {
+    .el-input__wrapper {
+      background: #252540 !important;
+      border-color: #2d2d4a !important;
+      box-shadow: none !important;
+    }
+    .el-input__inner {
+      color: #e2dee9 !important;
+      &::placeholder { color: #64748b !important; }
+    }
+    .el-input__suffix, .el-input__suffix-inner, .el-icon {
+      color: #94a3b8 !important;
+    }
+    .el-select__caret { color: #94a3b8 !important; }
   }
 
-  .hot-cities {
-    border-top-color: #2d2d4a !important;
-  }
-
-  .hot-label {
-    color: #94a3b8 !important;
-  }
-
-  .loading-icon, .error-icon, .empty-icon {
-    filter: brightness(0.8) !important;
-  }
-  .loading-text {
-    color: #94a3b8 !important;
-  }
-
-  .loading-sub {
-    color: #64748b !important;
-  }
-
-  .empty-text {
-    color: #94a3b8 !important;
-  }
-
-  .empty-sub {
-    color: #64748b !important;
-  }
-
-  .error-text {
-    color: #f87171 !important;
-  }
-
-  // Element Plus select 暗色适配
-  :deep(.el-select .el-input__wrapper) {
-    background: #252540 !important;
-    border-color: #2d2d4a !important;
-    box-shadow: none !important;
-  }
-  :deep(.el-select .el-input__inner) {
-    color: #e2dee9 !important;
-    &::placeholder { color: #64748b !important; }
-  }
-  :deep(.el-button--primary) {
+  .el-button--primary {
     background: #6366f1 !important;
     border-color: #6366f1 !important;
-    &:hover { background: #818cf8 !important; }
+    &:hover { background: #818cf8 !important; border-color: #818cf8 !important; }
   }
-  :deep(.el-tag--info) {
+  .el-tag--info {
     background: #1e1e3c !important;
     border-color: #2d2d4a !important;
     color: #94a3b8 !important;
   }
-  :deep(.el-tag--primary) {
+  .el-tag--primary {
     background: #6366f1 !important;
     border-color: #6366f1 !important;
     color: #fff !important;
+  }
+
+  .el-select-dropdown {
+    background: #1a1a2e !important;
+    border: 1px solid #2d2d4a !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5) !important;
+  }
+  .el-select-dropdown__item {
+    color: #e2dee9 !important;
+    &.hover, &:hover { background: #252540 !important; }
+    &.selected {
+      color: #a78bfa !important;
+      background: #1e1e3c !important;
+      font-weight: 600;
+    }
+  }
+  .el-popper__arrow::before {
+    background: #1a1a2e !important;
+    border-color: #2d2d4a !important;
   }
 }
 </style>

@@ -2338,8 +2338,11 @@ async function searchByAddress() {
   .cover-emoji { font-size: 36px; }
 }
 
-// ==================== 夜间模式全覆盖 ====================
-:global(html.dark-mode .search-page) {
+</style>
+
+<style lang="scss">
+// ==================== 夜间模式（独立非 scoped 块） ====================
+html.dark-mode .search-page {
   // ===== Hero 区域 =====
   .hero-section .hero-bg {
     background: linear-gradient(170deg, #0f0f2a 0%, #10102e 25%, #12122a 50%, #0e0e2e 75%, #0f0f2e 100%) !important;

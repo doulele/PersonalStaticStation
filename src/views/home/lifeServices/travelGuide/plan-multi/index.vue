@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="multi-plan-page">
     <!-- 顶部导航 -->
     <div class="plan-topbar">
@@ -2223,12 +2223,15 @@ const API_BASE = '/staticTool/api/travel'
   .spot-desc { display: none; }
 }
 
-// ==================== 夜间模式 ====================
-:global(html.dark-mode .multi-plan-page) {
+</style>
+
+<style lang="scss">
+// ==================== 夜间模式（独立非 scoped 块） ====================
+html.dark-mode .multi-plan-page {
   background: #0f0f1a;
 }
 
-:global(html.dark-mode) {
+html.dark-mode {
   // 顶栏
   .plan-topbar {
     background: rgba(26, 26, 46, 0.9); border-bottom-color: rgba(45, 45, 74, 0.6);

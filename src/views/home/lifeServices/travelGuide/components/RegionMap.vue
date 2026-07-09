@@ -196,6 +196,28 @@ let labelScheduleId = 0 // 递增 ID，用于取消过时的 setTimeout
 let labelTimerPc = null
 let labelTimerMobile = null
 
+// ===== 暗色模式 =====
+let isDark = false
+let darkModeObserver = null
+
+function checkDark() {
+  return document.documentElement.classList.contains('dark-mode')
+}
+
+function watchDarkModeForChart() {
+  darkModeObserver = new MutationObserver(() => {
+    const wasDark = isDark
+    isDark = checkDark()
+    if (wasDark !== isDark) {
+      updateRegion(props.activeRegion, props.activeProvince)
+    }
+  })
+  darkModeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['class']
+  })
+}
+
 async function loadChinaMap() {
   if (geoJsonData) return geoJsonData
   const base = import.meta.env.BASE_URL
@@ -226,7 +248,13 @@ const SOFT_COLOR_MAP = {
 
 function buildColoredData(activeRegionVal, activeProvinceVal) {
   const features = geoJsonData.features || []
-  const defaultDim = '#eceef2'  // 无区域匹配的淡化色
+  const defaultDim = isDark ? '#2a2a3c' : '#eceef2'  // 无区域匹配的淡化色
+  const defaultBorder = isDark ? '#3d3d5c' : '#c8d2dc'
+  const allBorderColor = isDark ? '#4a4a6a' : '#bcc6d4'
+  const noMatchFill = isDark ? '#252540' : '#f1f3f6'
+  const noMatchBorder = isDark ? '#3d3d5c' : '#d0d7e0'
+  const labelColor = isDark ? '#e2dee9' : '#0f172a'
+  const highlightBorder = isDark ? '#6366f1' : '#1e1e20'
 
   return features.map(f => {
     const pname = f.properties.name
@@ -240,11 +268,11 @@ function buildColoredData(activeRegionVal, activeProvinceVal) {
         return {
           name: pname, value: 3,
           itemStyle: {
-            areaColor: rc, borderColor: '#1e1e20', borderWidth: 2.5,
+            areaColor: rc, borderColor: highlightBorder, borderWidth: 2.5,
             shadowBlur: 12, shadowOffsetX: 2, shadowOffsetY: 2,
             shadowColor: 'rgba(0,0,0,0.25)'
           },
-          label: { show: true, fontSize: 14, fontWeight: 800, color: '#0f172a' }
+          label: { show: true, fontSize: 14, fontWeight: 800, color: labelColor }
         }
       }
       // 非选中省份：用柔和色，保留区域辨识度，方便点击切换
@@ -252,7 +280,7 @@ function buildColoredData(activeRegionVal, activeProvinceVal) {
         name: pname, value: 0,
         itemStyle: {
           areaColor: (rc && SOFT_COLOR_MAP[rc]) ? SOFT_COLOR_MAP[rc] : defaultDim,
-          borderColor: '#c8d2dc', borderWidth: 0.6
+          borderColor: defaultBorder, borderWidth: 0.6
         },
         label: { show: false }
       }
@@ -263,8 +291,8 @@ function buildColoredData(activeRegionVal, activeProvinceVal) {
       return {
         name: pname, value: 1,
         itemStyle: rc
-          ? { areaColor: rc, borderColor: '#bcc6d4', borderWidth: 0.8, shadowBlur: 0 }
-          : { areaColor: '#f1f3f6', borderColor: '#d0d7e0', borderWidth: 0.5 }
+          ? { areaColor: rc, borderColor: allBorderColor, borderWidth: 0.8, shadowBlur: 0 }
+          : { areaColor: noMatchFill, borderColor: noMatchBorder, borderWidth: 0.5 }
       }
     }
 
@@ -273,11 +301,11 @@ function buildColoredData(activeRegionVal, activeProvinceVal) {
       return {
         name: pname, value: 2,
         itemStyle: {
-          areaColor: rc, borderColor: '#3d3d40', borderWidth: 2,
+          areaColor: rc, borderColor: isDark ? '#6366f1' : '#3d3d40', borderWidth: 2,
           shadowBlur: 8, shadowOffsetX: 1, shadowOffsetY: 1,
           shadowColor: 'rgba(0,0,0,0.18)'
         },
-        label: { show: true, fontSize: 14, fontWeight: 800, color: '#0f172a' }
+        label: { show: true, fontSize: 14, fontWeight: 800, color: labelColor }
       }
     }
 
@@ -286,7 +314,7 @@ function buildColoredData(activeRegionVal, activeProvinceVal) {
       name: pname, value: 0,
       itemStyle: {
         areaColor: (rc && SOFT_COLOR_MAP[rc]) ? SOFT_COLOR_MAP[rc] : defaultDim,
-        borderColor: '#c8d2dc', borderWidth: 0.6
+        borderColor: defaultBorder, borderWidth: 0.6
       },
       label: { show: false }
     }
@@ -295,8 +323,15 @@ function buildColoredData(activeRegionVal, activeProvinceVal) {
 
 function getBaseOption(region, province) {
   const isAll = region === '全部' && !province
+  const bgColor = isDark ? '#1a1a2e' : '#eeeff1'
+  const labelColor = isDark ? '#94a3b8' : '#475569'
+  const emphasisLabelColor = isDark ? '#e2dee9' : '#0f172a'
+  const emphasisBorderColor = isDark ? '#6366f1' : '#475569'
+  const itemBorderColor = isDark ? '#3d3d5c' : '#c8d2dc'
+  const emphasisAreaColor = (isAll && !isDark) ? '#d0d7e0' : undefined
+
   return {
-    backgroundColor: '#eeeff1',
+    backgroundColor: bgColor,
     tooltip: {
       trigger: 'item',
       formatter: p => {
@@ -305,11 +340,11 @@ function getBaseOption(region, province) {
         return preg ? `<b>${p.name}</b><br/>所属区域：${preg}` : p.name
       },
       textStyle: { fontSize: 13 },
-      backgroundColor: 'rgba(255,255,255,0.96)',
-      borderColor: '#e2e8f0',
+      backgroundColor: isDark ? 'rgba(30,30,50,0.96)' : 'rgba(255,255,255,0.96)',
+      borderColor: isDark ? '#3d3d5c' : '#e2e8f0',
       borderWidth: 1,
       padding: [8, 14],
-      extraCssText: 'box-shadow: 0 4px 16px rgba(0,0,0,0.1);border-radius:8px;'
+      extraCssText: isDark ? 'box-shadow: 0 4px 16px rgba(0,0,0,0.4);border-radius:8px;' : 'box-shadow: 0 4px 16px rgba(0,0,0,0.1);border-radius:8px;'
     },
     series: [{
       name: 'china',
@@ -321,22 +356,22 @@ function getBaseOption(region, province) {
       aspectScale: 1.0,
       label: {
         show: isAll,
-        color: '#475569',
+        color: labelColor,
         fontSize: isAll ? 11 : 10,
         fontWeight: 600
       },
       itemStyle: {
-        borderColor: '#c8d2dc',
+        borderColor: itemBorderColor,
         borderWidth: 0.8
       },
       emphasis: {
-        label: { show: true, color: '#0f172a', fontSize: 15, fontWeight: 800 },
+        label: { show: true, color: emphasisLabelColor, fontSize: 15, fontWeight: 800 },
         itemStyle: {
-          areaColor: isAll ? '#d0d7e0' : undefined,
-          borderColor: '#475569',
+          areaColor: emphasisAreaColor,
+          borderColor: emphasisBorderColor,
           borderWidth: 2,
           shadowBlur: isAll ? 0 : 12,
-          shadowColor: isAll ? 'transparent' : 'rgba(0,0,0,0.25)',
+          shadowColor: isAll ? 'transparent' : (isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.25)'),
           shadowOffsetX: isAll ? 0 : 2,
           shadowOffsetY: isAll ? 0 : 3
         }
@@ -348,7 +383,8 @@ function getBaseOption(region, province) {
 
 function initChart(domRef, isPC) {
   if (!domRef) return
-  const inst = echarts.init(domRef)
+  isDark = checkDark()
+  const inst = echarts.init(domRef, isDark ? 'dark' : undefined)
   if (isPC) pcChartInstance = inst
   else mobileChartInstance = inst
 
@@ -370,8 +406,16 @@ function initChart(domRef, isPC) {
 function updateRegion(region, province) {
   const data = buildColoredData(region, province)
   const isAll = region === '全部' && !province
+  const labelColor = isDark ? '#94a3b8' : '#475569'
+  const emphasisLabelColor = isDark ? '#e2dee9' : '#0f172a'
+  const emphasisBorderColor = isDark ? '#6366f1' : '#475569'
+  const itemBorderColor = isDark ? '#3d3d5c' : '#c8d2dc'
+  const emphasisAreaColor = (isAll && !isDark) ? '#d0d7e0' : undefined
+  const bgColor = isDark ? '#1a1a2e' : '#eeeff1'
+
   // 必须包含 type/map 等完整 series 定义，否则 replaceMerge 会丢失坐标系
   const opt = {
+    backgroundColor: bgColor,
     series: [{
       name: 'china',
       type: 'map',
@@ -382,20 +426,20 @@ function updateRegion(region, province) {
       aspectScale: 1.0,
       data,
       label: {
-        show: isAll, color: '#475569',
+        show: isAll, color: labelColor,
         fontSize: isAll ? 11 : 10, fontWeight: 600
       },
       itemStyle: {
-        borderColor: '#c8d2dc',
+        borderColor: itemBorderColor,
         borderWidth: 0.8
       },
       emphasis: {
-        label: { show: true, color: '#0f172a', fontSize: 15, fontWeight: 800 },
+        label: { show: true, color: emphasisLabelColor, fontSize: 15, fontWeight: 800 },
         itemStyle: {
-          areaColor: isAll ? '#d0d7e0' : undefined,
-          borderColor: '#475569', borderWidth: 2,
+          areaColor: emphasisAreaColor,
+          borderColor: emphasisBorderColor, borderWidth: 2,
           shadowBlur: isAll ? 0 : 12,
-          shadowColor: isAll ? 'transparent' : 'rgba(0,0,0,0.25)',
+          shadowColor: isAll ? 'transparent' : (isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.25)'),
           shadowOffsetX: isAll ? 0 : 2,
           shadowOffsetY: isAll ? 0 : 3
         }
@@ -529,11 +573,17 @@ async function ensureMapLoaded() {
 }
 
 onMounted(() => {
+  isDark = checkDark()
+  watchDarkModeForChart()
   // 预加载地图数据，不初始化图表（面板折叠时 DOM 不存在）
   ensureMapLoaded()
 })
 
 onUnmounted(() => {
+  if (darkModeObserver) {
+    darkModeObserver.disconnect()
+    darkModeObserver = null
+  }
   pcChartInstance?.dispose()
   pcChartInstance = null
   mobileChartInstance?.dispose()
@@ -715,8 +765,11 @@ onUnmounted(() => {
   .legend-item { padding: 3px 8px; font-size: 11px; }
 }
 
+</style>
+
+<style lang="scss">
 // ==================== 夜间模式 ====================
-:global(html.dark-mode) {
+html.dark-mode {
   .float-backdrop {
     background: rgba(0,0,0,0.4);
   }

@@ -910,8 +910,11 @@ const dialogWidth = computed(() => {
   }
 }
 
-// ==================== 夜间模式 ====================
-:global(html.dark-mode) {
+</style>
+
+<style lang="scss">
+// ==================== 夜间模式（独立非 scoped 块） ====================
+html.dark-mode {
   // 入口卡片
   .weather-entry-card {
     background: linear-gradient(135deg, #14142e, #13132e);
@@ -929,8 +932,8 @@ const dialogWidth = computed(() => {
 
   // 弹窗
   .weather-dialog {
-    :deep(.el-dialog__header) { border-bottom-color: #2d2d4a; }
-    :deep(.el-dialog__close) { color: #64748b; &:hover { background: #252540; } }
+    .el-dialog__header { border-bottom-color: #2d2d4a; }
+    .el-dialog__close { color: #64748b; &:hover { background: #252540; } }
   }
   .weather-dialog-header-title { color: #e2dee9; }
   .weather-panel-body {

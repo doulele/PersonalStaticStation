@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="plan-page">
     <!-- 顶部导航 -->
     <div class="plan-topbar">
@@ -845,12 +845,15 @@ async function handleAiRecommend() {
   }
 }
 
-// ==================== 夜间模式 ====================
-:global(html.dark-mode .plan-page) {
+</style>
+
+<style lang="scss">
+// ==================== 夜间模式（独立非 scoped 块） ====================
+html.dark-mode .plan-page {
   background: #0f0f1a;
 }
 
-:global(html.dark-mode) {
+html.dark-mode {
   // 顶栏
   .plan-topbar {
     background: linear-gradient(135deg, #1a1a2e 0%, #14142e 100%);

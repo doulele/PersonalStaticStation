@@ -735,15 +735,24 @@ onMounted(() => {
   .hero-back { width: 30px; height: 30px; }
 }
 
-// ==================== 夜间模式 ====================
-:global(html.dark-mode .oil-price-page) {
+</style>
+
+<style lang="scss">
+// ==================== 夜间模式（独立非 scoped 块，避免 :global 嵌套作用域问题） ====================
+html.dark-mode .oil-price-page {
+  background: #0f0f1a !important;
+  color: #e2dee9 !important;
+
+  // ---------- 页面头部 ----------
   .hero-title { color: #e2dee9; }
   .hero-sub { color: #64748b; }
   .hero-back {
     background: #1a1a2e; border-color: #2d2d4a; color: #94a3b8;
+    svg { color: #94a3b8; }
     &:hover { border-color: #3b82f6; color: #3b82f6; background: #1a1a3e; }
   }
 
+  // ---------- 核心信息栏：调价 + 均价 ----------
   .info-strip { background: #1a1a2e; border-color: #2d2d4a; }
   .info-label { color: #64748b; }
   .info-highlight { color: #e2dee9; }
@@ -760,17 +769,95 @@ onMounted(() => {
     strong { color: #e2dee9; }
   }
 
+  // ---------- 省份选择栏 ----------
   .province-bar { background: #17172a; border-color: #2d2d4a; }
   .loc-tag {
     background: #1a2050; border-color: #2d3f8c; color: #93c5fd;
-    &.dim { color: #64748b; background: #1a1a2e; border-color: #2d2d4a; }
+    svg { color: #93c5fd; }
+    &.dim {
+      color: #64748b; background: #1a1a2e; border-color: #2d2d4a;
+      svg { color: #64748b; }
+    }
   }
   .update-tip { color: #64748b; }
 
+  // el-select 输入框
+  .province-select {
+    .el-input__wrapper {
+      background: #252540 !important;
+      border-color: #2d2d4a !important;
+      box-shadow: none !important;
+    }
+    .el-input__inner {
+      color: #e2dee9 !important;
+      &::placeholder { color: #64748b !important; }
+    }
+    .el-input__suffix, .el-input__suffix-inner, .el-icon {
+      color: #94a3b8 !important;
+    }
+    .el-select__caret { color: #94a3b8 !important; }
+  }
+
+  // el-select 下拉面板（popper-append-to-body=false，在组件内部）
+  .el-select-dropdown {
+    background: #1a1a2e !important;
+    border: 1px solid #2d2d4a !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55) !important;
+  }
+  .el-select-dropdown__item {
+    color: #c8d2e0 !important;
+    &.hover, &:hover { background: #252540 !important; color: #e2dee9 !important; }
+    &.selected {
+      color: #a78bfa !important;
+      background: #1e1e3c !important;
+      font-weight: 600;
+    }
+  }
+  .el-select-dropdown__empty { color: #64748b !important; }
+  .opt-count { color: #64748b !important; }
+
+  // el-popper 箭头
+  .el-popper__arrow::before {
+    background: #1a1a2e !important;
+    border-color: #2d2d4a !important;
+  }
+
+  // ---------- 按钮 ----------
+  .el-button.is-text {
+    color: #94a3b8 !important;
+    &:hover { color: #a78bfa !important; background: #1e1e3c !important; }
+  }
+  .el-button--primary {
+    background: #6366f1 !important;
+    border-color: #6366f1 !important;
+    &:hover { background: #818cf8 !important; border-color: #818cf8 !important; }
+  }
+
+  // ---------- el-tag ----------
+  .el-tag--info {
+    background: #1e1e3c !important;
+    border-color: #2d2d4a !important;
+    color: #94a3b8 !important;
+  }
+  .el-tag--primary {
+    background: #6366f1 !important;
+    border-color: #6366f1 !important;
+    color: #fff !important;
+  }
+  .el-tag--dark {
+    background: #6366f1 !important;
+    border-color: #6366f1 !important;
+    color: #fff !important;
+  }
+
+  // ---------- PC 表格 ----------
   .price-table {
     background: #1a1a2e; border-color: #2d2d4a;
     th, td { border-bottom-color: #252540; }
-    thead th { background: #17172a; color: #94a3b8; border-bottom-color: #2d2d4a; }
+    thead th {
+      background: #17172a; color: #94a3b8;
+      border-bottom-color: #2d2d4a;
+    }
     .col-city { color: #e2dee9; }
     .col-price {
       .pr-val { color: #e2dee9; }
@@ -781,29 +868,50 @@ onMounted(() => {
       .col-city { color: #93c5fd; }
     }
   }
+  .u-badge { background: #3b82f6; color: #fff; }
 
+  // ---------- 移动端卡片 ----------
   .oil-card {
     background: #1a1a2e; border-color: #2d2d4a;
-    &.is-user-city { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.2); }
+    &.is-user-city { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.25); }
   }
-  .card-header { background: linear-gradient(135deg, #1a1a0e, #1f1a0e); border-bottom-color: #3d3020; }
+  .card-header {
+    background: linear-gradient(135deg, #232310, #241e10);
+    border-bottom-color: #3d3020;
+  }
   .card-city { color: #e2dee9; }
   .card-price-row:not(:last-child) { border-bottom-color: #252540; }
   .c-bar { background: #252540; }
   .c-val { color: #e2dee9; }
 
+  // ---------- 走势图区域 ----------
   .chart-section { background: #1a1a2e; border-color: #2d2d4a; }
   .legend-title { color: #e2dee9; }
   .legend-range { color: #64748b; }
-  .legend-item { color: #94a3b8; &:hover { background: #252540; } }
-
-  .chart-svg {
-    line { stroke: #2d2d4a; }
-    text { fill: #64748b; }
+  .legend-item {
+    color: #94a3b8;
+    &:hover { background: #252540; color: #e2dee9; }
   }
 
+  // SVG 走势图内部元素
+  .chart-svg {
+    line { stroke: #2d2d4a !important; }
+    text {
+      fill: #94a3b8 !important;
+      stroke: #1a1a2e !important;
+    }
+    circle {
+      fill: #1a1a2e !important;
+    }
+  }
+
+  // ---------- 状态指示 ----------
   .loading-state p { color: #94a3b8; }
-  .empty-state p { color: #94a3b8; }
+  .loading-icon-pulse { filter: brightness(0.65); }
+  .empty-state {
+    p { color: #94a3b8; }
+    .empty-icon { filter: grayscale(30%); }
+  }
   .error-state {
     .error-title { color: #f87171; }
     .error-detail { color: #94a3b8; }

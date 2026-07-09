@@ -27,6 +27,27 @@ const hasKey = ref(!!import.meta.env.VITE_AMAP_KEY && import.meta.env.VITE_AMAP_
 let mapInstance = null
 let markerInstances = []
 let polylineInstance = null
+let darkModeObserver = null
+
+function isDarkMode() {
+  return document.documentElement.classList.contains('dark-mode')
+}
+
+function applyMapStyle() {
+  if (!mapInstance) return
+  mapInstance.setMapStyle(isDarkMode() ? 'amap://styles/dark' : 'amap://styles/light')
+}
+
+function watchDarkMode() {
+  // MutationObserver 监听 html.dark-mode 类的变化
+  darkModeObserver = new MutationObserver(() => {
+    applyMapStyle()
+  })
+  darkModeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['class']
+  })
+}
 
 // 标记颜色：路线=红, 美食=绿, 酒店=蓝
 const markerColors = {
@@ -144,7 +165,8 @@ function initMap() {
   mapInstance = new window.AMap.Map(mapRef.value, {
     center: props.center,
     zoom: 15,
-    resizeEnable: true
+    resizeEnable: true,
+    mapStyle: isDarkMode() ? 'amap://styles/dark' : 'amap://styles/light'
   })
 
   loaded.value = true
@@ -152,6 +174,8 @@ function initMap() {
   nextTick(() => {
     renderMarkers()
   })
+
+  watchDarkMode()
 }
 
 // 监听数据变化，重新渲染（仅当标记集合确实变化时才重绘）
@@ -185,6 +209,10 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (darkModeObserver) {
+    darkModeObserver.disconnect()
+    darkModeObserver = null
+  }
   if (mapInstance) {
     mapInstance.destroy()
     mapInstance = null

@@ -29,6 +29,27 @@ let mapInstance = null
 let markerInstances = []
 let polylineInstance = null
 let infoWindowInstance = null
+let darkModeObserver = null
+
+function isDarkMode() {
+  return document.documentElement.classList.contains('dark-mode')
+}
+
+function applyMapStyle() {
+  if (!mapInstance) return
+  mapInstance.setMapStyle(isDarkMode() ? 'amap://styles/dark' : 'amap://styles/light')
+}
+
+function watchDarkMode() {
+  // MutationObserver 监听 html.dark-mode 类的变化
+  darkModeObserver = new MutationObserver(() => {
+    applyMapStyle()
+  })
+  darkModeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['class']
+  })
+}
 
 // 编号图标 (1-9, 10+)
 const NUMBER_ICONS = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩',
@@ -217,7 +238,8 @@ function initMap() {
   mapInstance = new window.AMap.Map(mapRef.value, {
     center: props.center,
     zoom: 15,
-    resizeEnable: true
+    resizeEnable: true,
+    mapStyle: isDarkMode() ? 'amap://styles/dark' : 'amap://styles/light'
   })
 
   loaded.value = true
@@ -225,6 +247,8 @@ function initMap() {
   nextTick(() => {
     renderMarkers()
   })
+
+  watchDarkMode()
 }
 
 // 监听数据变化
@@ -256,6 +280,10 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (darkModeObserver) {
+    darkModeObserver.disconnect()
+    darkModeObserver = null
+  }
   if (mapInstance) {
     mapInstance.destroy()
     mapInstance = null
