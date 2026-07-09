@@ -274,6 +274,12 @@
 .price-up { color: #dc2626; font-weight: 700; }
 .price-down { color: #16a34a; font-weight: 700; }
 
+// 表格最新价
+.stock-price {
+  font-weight: 700;
+  color: #0f172a;
+}
+
 // ==================== 评分徽章 ====================
 .score-badge {
   display: inline-block;
@@ -1517,4 +1523,144 @@
 
   // 分页
   .dadao-footer { font-size: 0.58rem; gap: 3px; }
+}
+
+// ========== 深色模式 ==========
+html.dark-mode .dadao-qixian-page {
+  // ---- 筛选面板 ----
+  .filter-panel { border-color: var(--surface-border); }
+  .filter-title { color: var(--heading-color); }
+  .filter-collapse-btn { color: #a78bfa; background: rgba(167,139,250,0.12); }
+  .filter-hint-tag {
+    :deep(.el-tag) { background: rgba(167,139,250,0.12) !important; color: #a78bfa !important; border-color: transparent !important; }
+  }
+
+  // 筛选条件组
+  .filter-group {
+    background: var(--surface-bg); border-color: var(--surface-border);
+    &.important-group { background: rgba(59,130,246,0.08); border-color: rgba(59,130,246,0.2); }
+    &.risk-group { background: rgba(220,38,38,0.08); border-color: rgba(220,38,38,0.2);
+      .group-label { color: #f87171; background: rgba(239,68,68,0.12); }
+    }
+    &.reference-group { background: var(--surface-bg); border-color: var(--surface-border); opacity: 1;
+      .group-label { color: var(--muted-color); background: var(--surface-bg); }
+    }
+    .group-label { color: #60a5fa; background: rgba(59,130,246,0.12); }
+    .risk-label { color: #f87171; background: rgba(239,68,68,0.12); }
+  }
+
+  :deep(.el-checkbox .el-checkbox__label) { color: var(--text-regular); }
+  :deep(.el-checkbox.is-checked .el-checkbox__label) { color: var(--heading-color); }
+
+  .help-icon { background: #475569; &:hover { background: #3b82f6; } }
+
+  // ---- 板块选择 ----
+  .board-selection { border-top-color: var(--surface-border); }
+  .board-info { color: var(--muted-color-light); strong { color: #60a5fa; } }
+
+  :deep(.el-radio-button__inner) {
+    background: var(--surface-bg); border-color: var(--surface-border); color: var(--text-regular);
+    &:hover { color: var(--heading-color); }
+  }
+  :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
+    background: rgba(167,139,250,0.15) !important; border-color: #a78bfa !important; color: #a78bfa !important;
+    box-shadow: -1px 0 0 0 #a78bfa !important;
+  }
+
+  // ---- 个股股诊入口 ----
+  .diagnosis-bar { border-top-color: var(--surface-border); }
+  .diagnosis-label { color: var(--heading-color); }
+
+  :deep(.el-input .el-input__wrapper) {
+    box-shadow: 0 0 0 1px var(--surface-border) !important; background: var(--surface-bg) !important;
+  }
+
+  .stat-note { color: var(--muted-color); background: var(--surface-bg); }
+
+  // ---- 表格卡片 ----
+  .table-card { border-color: var(--surface-border); }
+
+  // 表格单元格内联色覆盖
+  :deep(.pc-table .el-table__body td) {
+    div[style*="color:#94a3b8"] { color: var(--muted-color-light) !important; }
+    span[style*="color:#0f172a"] { color: var(--heading-color) !important; }
+  }
+
+  // 表格 Tag 暗色
+  :deep(.pc-table .el-tag--success) { background: rgba(16,185,129,0.12) !important; color: #34d399 !important; border-color: transparent !important; }
+  :deep(.pc-table .el-tag--danger) { background: rgba(255,71,87,0.12) !important; color: #ff6b81 !important; border-color: transparent !important; }
+  :deep(.pc-table .el-tag--info) { background: rgba(148,163,184,0.12) !important; color: #94a3b8 !important; border-color: transparent !important; }
+  :deep(.pc-table .el-tag--warning) { background: rgba(230,162,60,0.12) !important; color: #f0c060 !important; border-color: transparent !important; }
+  :deep(.pc-table .el-tag--dark.el-tag--success) { background: rgba(16,185,129,0.22) !important; }
+  :deep(.pc-table .el-tag--dark.el-tag--danger) { background: rgba(255,71,87,0.22) !important; }
+  :deep(.pc-table .el-tag--plain) { background: rgba(148,163,184,0.08) !important; border-color: rgba(148,163,184,0.15) !important; }
+  :deep(.pc-table .el-tag--plain.el-tag--success) { background: rgba(16,185,129,0.08) !important; border-color: rgba(16,185,129,0.2) !important; color: #34d399 !important; }
+  :deep(.pc-table .el-tag--plain.el-tag--warning) { background: rgba(230,162,60,0.08) !important; border-color: rgba(230,162,60,0.2) !important; color: #f0c060 !important; }
+
+  .golden { background: rgba(16,185,129,0.12); color: #34d399; }
+  .dead-cell { background: rgba(255,71,87,0.12); color: #ff6b81; }
+  .rsi-overbought { color: #ff6b81; }
+  .rsi-oversold { color: #34d399; }
+  .price-up { color: #f87171; }
+  .price-down { color: #4ade80; }
+  .stock-price { color: #e2dee9; }
+
+  // 评分徽章
+  .score-strong-bull { background: rgba(22,163,74,0.15); color: #4ade80; }
+  .score-bull { background: rgba(22,163,74,0.12); color: #4ade80; }
+  .score-neutral-bull { background: rgba(234,179,8,0.12); color: #facc15; }
+  .score-neutral { background: var(--surface-bg); color: var(--muted-color); }
+  .score-bear { background: rgba(239,68,68,0.12); color: #f87171; }
+  .score-strong-bear { background: rgba(220,38,38,0.15); color: #ef4444; }
+
+  .score-level-text {
+    &.score-strong-bull, &.score-bull { color: #4ade80; }
+    &.score-neutral-bull { color: #facc15; }
+    &.score-neutral { color: var(--muted-color); }
+    &.score-bear, &.score-strong-bear { color: #f87171; }
+  }
+
+  // ---- 手机端卡片 ----
+  .dadao-card {
+    border-color: var(--surface-border);
+    &:hover { border-color: var(--muted-color-light); }
+  }
+  .card-code { color: var(--muted-color-light); }
+  .card-name { color: var(--heading-color); }
+  .card-price { color: var(--heading-color); }
+  .card-change { /* keep */ }
+  .card-turnover { color: var(--muted-color-light); }
+  .card-price-row { border-bottom-color: var(--surface-border); }
+  .metric-label { color: var(--muted-color-light); }
+  .metric-value { color: var(--text-regular); }
+  .card-footer { border-top-color: var(--surface-border); color: var(--muted-color); }
+  .card-detail-btn { color: #a78bfa; }
+
+  // 手机端卡片 tag
+  :deep(.dadao-card .el-tag--success) { background: rgba(16,185,129,0.12) !important; color: #34d399 !important; border-color: transparent !important; }
+  :deep(.dadao-card .el-tag--danger) { background: rgba(255,71,87,0.12) !important; color: #ff6b81 !important; border-color: transparent !important; }
+  :deep(.dadao-card .el-tag--info) { background: rgba(148,163,184,0.12) !important; color: #94a3b8 !important; border-color: transparent !important; }
+  :deep(.dadao-card .el-tag--dark.el-tag--success) { background: rgba(16,185,129,0.22) !important; }
+  :deep(.dadao-card .el-tag--dark.el-tag--danger) { background: rgba(255,71,87,0.22) !important; }
+  :deep(.dadao-card .el-tag--plain.el-tag--success) { background: rgba(16,185,129,0.08) !important; border-color: rgba(16,185,129,0.2) !important; color: #34d399 !important; }
+
+  // ---- 底部 ----
+  .dadao-footer { color: var(--muted-color); }
+
+  // ---- 空状态 ----
+  .empty-state { color: var(--muted-color); }
+  .empty-desc { color: var(--muted-color); }
+  .empty-hint { color: var(--muted-color-light); }
+
+  :deep(.el-empty__description) { color: var(--muted-color) !important; }
+  :deep(.el-loading-mask) { background: rgba(0,0,0,0.6) !important; }
+
+  // ---- 指标弹窗 ----
+  .metric-dialog-body {
+    color: var(--text-regular);
+    .suggestion { background: var(--surface-bg); border-left-color: #a78bfa; }
+  }
+
+  // ---- 表头 tag ----
+  :deep(.table-header-right .el-tag) { background: rgba(167,139,250,0.12) !important; color: #a78bfa !important; border-color: transparent !important; }
 }

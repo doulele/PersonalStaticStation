@@ -191,4 +191,26 @@ watch(() => props.count, (n, o) => {
     .drag-hint { right: 58px; font-size: 11px; }
   }
 }
+
+// ==================== 夜间模式 ====================
+:global(html.dark-mode) {
+  .collection-floating-btn {
+    background: rgba(26, 26, 46, 0.88);
+    border-color: rgba(45, 45, 74, 0.8);
+    box-shadow: 0 4px 24px rgba(124, 58, 237, 0.15), 0 1px 4px rgba(0, 0, 0, 0.3);
+
+    &.drag-over {
+      border-color: #a78bfa;
+      background: rgba(124, 58, 237, 0.12);
+    }
+
+    .btn-icon { color: #a78bfa; }
+    .drag-hint {
+      color: #64748b;
+      background: rgba(26, 26, 46, 0.9);
+      border-color: rgba(45, 45, 74, 0.6);
+      &.active { color: #a78bfa; border-color: #a78bfa; background: rgba(124, 58, 237, 0.08); }
+    }
+  }
+}
 </style>

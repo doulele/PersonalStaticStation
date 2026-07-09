@@ -1212,6 +1212,201 @@ function formatTime(seconds) {
   }
 }
 
+// ====== 深色模式 ======
+:global(html.dark-mode .novel-online-page) {
+    background: var(--bg-color, #0f0f1a);
+    transition: background 0.4s ease;
+
+    // ======== 页头 ========
+    .page-header {
+      .back-btn {
+        color: var(--text-secondary, #94a3b8);
+        &:hover { color: var(--text-primary, #e2dee9); }
+      }
+    }
+    .page-title { color: var(--heading-color, #e2dee9); }
+    .page-desc { color: var(--muted-color-light, #64748b); }
+
+    // ======== 搜索框 ========
+    .search-box {
+      background: var(--surface-hover-bg, #252540);
+      border-color: var(--border-color, #2d2d4a);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      &:focus-within {
+        border-color: var(--primary-color, #a78bfa);
+        box-shadow: 0 4px 20px rgba(124, 58, 237, 0.15);
+      }
+    }
+    .search-icon { color: var(--text-secondary, #6b7280); }
+    .search-input {
+      color: var(--text-primary, #e2dee9);
+      &::placeholder { color: #4b5563; }
+    }
+    .clear-icon {
+      color: var(--text-secondary, #6b7280);
+      &:hover { color: var(--text-regular, #cbd5e1); }
+    }
+    .search-btn {
+      background: linear-gradient(135deg, #7c3aed, #a78bfa);
+      &:hover:not(:disabled) {
+        box-shadow: 0 4px 16px rgba(124, 58, 237, 0.35);
+      }
+      &:disabled { opacity: 0.3; }
+    }
+
+    // ======== 分类标签 ========
+    .tags-label { color: var(--text-secondary, #6b7280); }
+    .tag-btn {
+      background: var(--bg-white, #1a1a2e);
+      border-color: var(--border-color, #2d2d4a);
+      color: var(--text-regular, #94a3b8);
+      &:hover {
+        border-color: var(--primary-color, #a78bfa);
+        color: var(--primary-color, #a78bfa);
+        background: rgba(124, 58, 237, 0.1);
+      }
+      &.active {
+        background: var(--primary-color, #7c3aed);
+        color: #fff;
+        border-color: var(--primary-color, #7c3aed);
+      }
+    }
+
+    // ======== 加载区域 ========
+    .loading-area {
+      color: var(--primary-color, #a78bfa);
+    }
+
+    // ======== 空状态 ========
+    .empty-area {
+      .empty-tip { color: var(--text-secondary, #6b7280); }
+    }
+
+    // ======== 结果计数 ========
+    .list-header .result-count { color: var(--text-regular, #94a3b8); }
+
+    // ======== 音频卡片 ========
+    .audio-card {
+      background: var(--bg-white, #1a1a2e);
+      border-color: var(--border-color, #2d2d4a);
+      box-shadow: none;
+      transition: all 0.25s ease, background 0.4s ease, border-color 0.4s ease;
+      &:hover {
+        border-color: var(--primary-color, #a78bfa);
+        box-shadow: 0 4px 20px rgba(124, 58, 237, 0.15);
+        transform: translateY(-1px);
+      }
+      &.playing {
+        border-color: var(--primary-color, #a78bfa);
+        background: rgba(124, 58, 237, 0.08);
+        box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.1);
+      }
+    }
+    .card-cover {
+      .cover-placeholder { background: linear-gradient(135deg, #2d2d4a, #3a3a5a); }
+    }
+    .play-btn {
+      background: rgba(0, 0, 0, 0.45);
+    }
+    .card-title { color: var(--heading-color, #e2dee9); }
+    .card-author, .card-narrator { color: var(--text-secondary, #6b7280); }
+    .meta-chapters { color: var(--text-regular, #94a3b8); }
+    .meta-rating { color: #fbbf24; }
+
+    // ======== 推荐区域 ========
+    .recommend-section .section-title { color: var(--heading-color, #e2dee9); }
+
+    // ======== 播放器面板 ========
+    .player-panel {
+      background: #0a0a14;
+      box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.5);
+    }
+    .panel-handle .handle-bar {
+      background: rgba(255, 255, 255, 0.12);
+    }
+    .player-main {
+      // 封面
+      .artwork-bg { box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5); }
+      .artwork-ring svg { filter: drop-shadow(0 0 6px rgba(167, 139, 250, 0.2)); }
+      // 曲目信息
+      .track-title { color: rgba(255, 255, 255, 0.92); }
+      .track-meta { color: rgba(255, 255, 255, 0.4); }
+      .track-tag {
+        --el-tag-bg-color: rgba(255, 255, 255, 0.06);
+        --el-tag-border-color: rgba(255, 255, 255, 0.08);
+        --el-tag-text-color: rgba(255, 255, 255, 0.5);
+      }
+    }
+    // 播放控制按钮
+    .action-btn {
+      color: rgba(255, 255, 255, 0.4);
+      &:hover { color: rgba(255, 255, 255, 0.85); background: rgba(255, 255, 255, 0.06); }
+      &.active { color: var(--primary-color, #a78bfa); }
+      .loop-icon.off { opacity: 0.25; }
+    }
+    .play-btn-main {
+      background: rgba(255, 255, 255, 0.92);
+      color: #0a0a14;
+      box-shadow: 0 4px 20px rgba(167, 139, 250, 0.15);
+      &:hover {
+        box-shadow: 0 6px 30px rgba(167, 139, 250, 0.25);
+      }
+      &.playing {
+        background: var(--primary-color, #a78bfa);
+        color: #fff;
+        box-shadow: 0 4px 24px rgba(167, 139, 250, 0.35);
+        &:hover { box-shadow: 0 6px 32px rgba(167, 139, 250, 0.45); }
+      }
+    }
+    // 进度条
+    .progress-track { background: rgba(255, 255, 255, 0.06); }
+    .progress-buffered { background: rgba(255, 255, 255, 0.06); }
+    .progress-active { background: linear-gradient(90deg, var(--primary-color, #a78bfa), #c084fc); }
+    .progress-thumb {
+      background: #e2dee9;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    }
+    .time-label { color: rgba(255, 255, 255, 0.3); }
+
+    // 播放列表区域
+    .playlist-section { border-top-color: rgba(255, 255, 255, 0.04); }
+    .playlist-title { color: rgba(255, 255, 255, 0.6); }
+    .playlist-mode {
+      color: rgba(255, 255, 255, 0.25);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .playlist-scroll {
+      &::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.06); }
+    }
+    .playlist-item {
+      &:hover { background: rgba(255, 255, 255, 0.03); }
+      &.active {
+        background: rgba(167, 139, 250, 0.1);
+        .pl-item-title { color: #c4b5fd; }
+        .pl-item-author { color: rgba(196, 181, 253, 0.6); }
+      }
+      &.active.playing { background: rgba(167, 139, 250, 0.15); }
+    }
+    .pl-num { color: rgba(255, 255, 255, 0.2); }
+    .pl-equalizer i { background: var(--primary-color, #a78bfa); }
+    .pl-cover-mini {
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .pl-item-title { color: rgba(255, 255, 255, 0.7); }
+    .pl-item-author { color: rgba(255, 255, 255, 0.25); }
+    .pl-item-chapters, .pl-item-duration { color: rgba(255, 255, 255, 0.22); }
+
+    // 播放器关闭按钮
+    .panel-close {
+      background: rgba(255, 255, 255, 0.04);
+      color: rgba(255, 255, 255, 0.3);
+      &:hover {
+        color: rgba(255, 255, 255, 0.8);
+        background: rgba(255, 255, 255, 0.08);
+      }
+    }
+}
+
 // ==================== RESPONSIVE ====================
 @media (max-width: 768px) {
   .novel-online-page {

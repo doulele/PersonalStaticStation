@@ -734,4 +734,79 @@ onMounted(() => {
 @media (max-width: 480px) {
   .hero-back { width: 30px; height: 30px; }
 }
+
+// ==================== 夜间模式 ====================
+:global(html.dark-mode .oil-price-page) {
+  .hero-title { color: #e2dee9; }
+  .hero-sub { color: #64748b; }
+  .hero-back {
+    background: #1a1a2e; border-color: #2d2d4a; color: #94a3b8;
+    &:hover { border-color: #3b82f6; color: #3b82f6; background: #1a1a3e; }
+  }
+
+  .info-strip { background: #1a1a2e; border-color: #2d2d4a; }
+  .info-label { color: #64748b; }
+  .info-highlight { color: #e2dee9; }
+  .info-meta { color: #64748b; b { color: #94a3b8; } }
+  .info-badge {
+    &.up { background: #3b1010; color: #f87171; }
+    &.down { background: #0a2e1a; color: #4ade80; }
+    &.flat { background: #1a1a2e; color: #94a3b8; }
+    &.unknown { background: #2e1f0a; color: #fbbf24; }
+  }
+  .info-divider { background: #2d2d4a; }
+  .avg-chip {
+    em { color: #64748b; }
+    strong { color: #e2dee9; }
+  }
+
+  .province-bar { background: #17172a; border-color: #2d2d4a; }
+  .loc-tag {
+    background: #1a2050; border-color: #2d3f8c; color: #93c5fd;
+    &.dim { color: #64748b; background: #1a1a2e; border-color: #2d2d4a; }
+  }
+  .update-tip { color: #64748b; }
+
+  .price-table {
+    background: #1a1a2e; border-color: #2d2d4a;
+    th, td { border-bottom-color: #252540; }
+    thead th { background: #17172a; color: #94a3b8; border-bottom-color: #2d2d4a; }
+    .col-city { color: #e2dee9; }
+    .col-price {
+      .pr-val { color: #e2dee9; }
+      .pr-unit { color: #64748b; }
+    }
+    .row-user {
+      background: #1a2050;
+      .col-city { color: #93c5fd; }
+    }
+  }
+
+  .oil-card {
+    background: #1a1a2e; border-color: #2d2d4a;
+    &.is-user-city { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.2); }
+  }
+  .card-header { background: linear-gradient(135deg, #1a1a0e, #1f1a0e); border-bottom-color: #3d3020; }
+  .card-city { color: #e2dee9; }
+  .card-price-row:not(:last-child) { border-bottom-color: #252540; }
+  .c-bar { background: #252540; }
+  .c-val { color: #e2dee9; }
+
+  .chart-section { background: #1a1a2e; border-color: #2d2d4a; }
+  .legend-title { color: #e2dee9; }
+  .legend-range { color: #64748b; }
+  .legend-item { color: #94a3b8; &:hover { background: #252540; } }
+
+  .chart-svg {
+    line { stroke: #2d2d4a; }
+    text { fill: #64748b; }
+  }
+
+  .loading-state p { color: #94a3b8; }
+  .empty-state p { color: #94a3b8; }
+  .error-state {
+    .error-title { color: #f87171; }
+    .error-detail { color: #94a3b8; }
+  }
+}
 </style>

@@ -525,4 +525,69 @@ function handleAutoSort() {
   .dialog-footer { padding: 10px 14px; gap: 6px; }
   .footer-btn { padding: 8px 12px; font-size: 12px; }
 }
+
+// ==================== 夜间模式 ====================
+:global(html.dark-mode) {
+  .dialog-overlay {
+    background: rgba(0, 0, 0, 0.6);
+  }
+
+  .dialog-panel {
+    background: rgba(19, 19, 42, 0.97);
+    border-color: rgba(45, 45, 74, 0.9);
+  }
+
+  .dialog-header {
+    border-bottom-color: rgba(45, 45, 74, 0.8);
+  }
+  .dialog-title-row {
+    color: #e2dee9;
+  }
+  .dialog-close {
+    background: rgba(26, 26, 46, 0.8);
+    svg { color: #64748b; }
+    &:hover { background: rgba(45, 45, 74, 0.8); svg { color: #e2dee9; } }
+  }
+
+  .dialog-empty { color: #64748b; }
+
+  .dialog-list {
+    &::-webkit-scrollbar-thumb { background: #3d3d5c; }
+  }
+
+  .dialog-item {
+    background: rgba(26, 26, 46, 0.8);
+    border-color: rgba(45, 45, 74, 0.7);
+    &:hover {
+      border-color: var(--card-color);
+      box-shadow: 0 4px 16px rgba(124, 58, 237, 0.15);
+    }
+  }
+  .drag-handle { color: #4a4a6a; &:active, &.active { color: #a78bfa; } }
+  .item-name { color: #e2dee9; }
+  .item-sub { color: #64748b; }
+  .item-remove {
+    svg { color: #64748b; }
+    &:hover { background: #3b1010; svg { color: #f87171; } }
+  }
+
+  .dialog-footer {
+    border-top-color: rgba(45, 45, 74, 0.8);
+  }
+
+  .footer-btn {
+    &.secondary {
+      background: rgba(26, 26, 46, 0.8);
+      color: #94a3b8;
+      border-color: rgba(45, 45, 74, 0.6);
+      &:hover { background: rgba(45, 45, 74, 0.6); color: #e2dee9; }
+    }
+    &.cancel {
+      background: rgba(26, 26, 46, 0.8);
+      color: #94a3b8;
+      border-color: rgba(45, 45, 74, 0.8);
+      &:hover { border-color: #64748b; color: #e2dee9; }
+    }
+  }
+}
 </style>

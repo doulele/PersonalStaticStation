@@ -2222,4 +2222,159 @@ const API_BASE = '/staticTool/api/travel'
   .spot-emoji { font-size: 24px; }
   .spot-desc { display: none; }
 }
+
+// ==================== 夜间模式 ====================
+:global(html.dark-mode .multi-plan-page) {
+  background: #0f0f1a;
+}
+
+:global(html.dark-mode) {
+  // 顶栏
+  .plan-topbar {
+    background: rgba(26, 26, 46, 0.9); border-bottom-color: rgba(45, 45, 74, 0.6);
+  }
+  .attraction-title { color: #e2dee9; }
+  .topbar-btn {
+    background: rgba(26,26,46,0.8); border-color: rgba(45,45,74,0.7); color: #94a3b8;
+    &:hover { border-color: #a78bfa; color: #a78bfa; background: rgba(124,58,237,0.08); }
+  }
+
+  // 交通 & 推荐切换
+  .transport-toggle, .recommend-toggle {
+    background: #1e1e3c; border-color: #2d2d4a;
+    .toggle-option {
+      color: #94a3b8;
+      &:hover { color: #e2dee9; background: rgba(255,255,255,0.06); }
+      &.active { background: #252540; }
+    }
+  }
+  .transport-toggle .toggle-option.active { color: #4ade80; }
+  .recommend-toggle .toggle-option.active { color: #a78bfa; &.ai.active { color: #fbbf24; } }
+
+  // 子标签
+  .sub-tab {
+    color: #64748b;
+    &:hover { color: #94a3b8; background: rgba(124,58,237,0.06); }
+    &.active { color: #a78bfa; background: rgba(124,58,237,0.1); }
+  }
+
+  // 景点卡片
+  .spots-header h3 { color: #e2dee9; }
+  .spots-hint { color: #64748b; }
+  .spots-list {
+    &::-webkit-scrollbar-thumb { background: #3d3d5c; }
+  }
+  .spot-card {
+    background: rgba(26,26,46,0.8); border-color: rgba(45,45,74,0.7);
+    &:hover { border-color: var(--card-color); }
+    &.active { background: rgba(26,26,46,0.95); border-color: var(--card-color); }
+  }
+  .drag-handle-spot { color: #4a4a6a; }
+  .spot-step { color: #a78bfa; }
+  .spot-name { color: #e2dee9; }
+  .spot-city { color: #64748b; }
+  .spot-level { background: #2e1f0a; color: #fbbf24; }
+  .spot-desc { color: #94a3b8; }
+  .spot-btn {
+    background: rgba(26,26,46,0.6); svg { color: #64748b; }
+    &:hover:not(:disabled) { background: rgba(124,58,237,0.1); svg { color: #a78bfa; } }
+    &.remove:hover:not(:disabled) { background: #2a1515; svg { color: #f87171; } }
+    &:disabled { opacity: 0.2; }
+  }
+  .sub-count-badge { background: #1e1e3c; color: #a78bfa; }
+  .spots-empty { color: #64748b; }
+
+  // 子景点面板
+  .sub-spot-panel {
+    background: #14142e; border-color: #2d2d4a;
+  }
+  .sub-spot-suggestions {
+    background: #1a1a2e; border-color: #2d2d4a; box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  }
+  .sub-suggest-item {
+    &:hover { background: #252540; }
+    .sug-name { color: #e2dee9; }
+    .sug-type { background: #1e1e3c; color: #a78bfa; }
+    .sug-dist { color: #64748b; }
+  }
+  .sub-section-title { color: #94a3b8; }
+  .sub-selected-count { background: #1e1e3c; color: #a78bfa; }
+  .sub-recommend-card {
+    background: #1a1a2e; border-color: #2d2d4a;
+    &:hover:not(.added) { border-color: #a78bfa; background: #1e1e3c; }
+    &.added { border-color: #1a5c3a; background: #0a2a1a; opacity: 0.6; }
+  }
+  .sub-rec-name { color: #e2dee9; }
+  .sub-rec-type { background: #1e1e3c; color: #a78bfa; }
+  .sub-rec-added { color: #4ade80; }
+  .sub-rec-click-hint { color: #64748b; }
+  .sub-selected-card { background: #1a1a2e; border-color: #2d2d4a; &:hover { border-color: #4a4a8a; } }
+  .sub-name { color: #e2dee9; }
+  .sub-highlight { color: #64748b; }
+  .sub-btn.edit { background: #1e1e3c; color: #a78bfa; &:hover { background: #7c3aed; color: #fff; } }
+  .sub-btn.remove { background: #2a1515; color: #f87171; &:hover { background: #ef4444; color: #fff; } }
+  .sub-empty-hint { color: #64748b; }
+  .sub-collapse-btn { border-top-color: #252540; &:hover { color: #a78bfa; } }
+
+  // 美食住宿区域
+  .fh-scroll {
+    &::-webkit-scrollbar-thumb { background: #3d3d5c; }
+  }
+  .fh-section { background: rgba(26,26,46,0.7); border-color: rgba(45,45,74,0.7); }
+  .fh-icon {
+    &.food-icon { background: #0a2a1a; color: #4ade80; }
+    &.hotel-icon { background: #0a1a3a; color: #60a5fa; }
+  }
+  .fh-title { color: #e2dee9; }
+  .fh-badge { background: #1e1e3c; color: #64748b; &.selected { color: #4ade80; background: #0a2a1a; } }
+
+  // 搜索建议
+  .fh-suggestions {
+    background: #1a1a2e; border-color: #2d2d4a; box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  }
+  .fh-suggest-item {
+    &:hover { background: #252540; }
+    .sug-name { color: #e2dee9; }
+    .sug-type { background: #0a2a1a; color: #4ade80; }
+    .sug-dist { color: #64748b; }
+  }
+
+  // 已选列表
+  .fh-selected-card {
+    background: #1a1a2e; border-color: #2d2d4a;
+    &.food { background: #0a2a1a; border-color: #1a5c3a; }
+    &.hotel { background: #0a1a3a; border-color: #1a3a6a; }
+  }
+  .fh-name { color: #e2dee9; }
+  .fh-price { color: #4ade80; }
+  .fh-price-range { background: #0a1a3a; color: #60a5fa; }
+  .fh-remove-btn { background: rgba(239,68,68,0.1); &:hover { background: #ef4444; } }
+
+  // 推荐区域
+  .fh-recommend-section { border-top-color: #252540; }
+  .fh-recommend-label { color: #94a3b8; }
+  .fh-recommend-count { background: #1e1e3c; color: #64748b; }
+  .fh-recommend-list {
+    &::-webkit-scrollbar-thumb { background: #3d3d5c; }
+  }
+  .fh-recommend-card {
+    background: #1a1a2e; border-color: #2d2d4a;
+    &:hover { background: #0a2a1a; border-color: #1a5c3a; }
+  }
+  .fh-rec-name-text { color: #e2dee9; }
+  .fh-rec-price { color: #4ade80; }
+  .fh-rec-rating { color: #fbbf24; }
+  .fh-rec-desc { color: #64748b; }
+  .fh-rec-meta { color: #64748b; }
+  .fh-rec-price-range { background: #0a1a3a; color: #60a5fa; }
+  .fh-empty { color: #64748b; }
+
+  // 底部悬浮栏
+  .floating-bar {
+    background: rgba(19, 19, 42, 0.97);
+    border-top-color: rgba(45, 45, 74, 0.7);
+  }
+  .route-preview { color: #94a3b8; }
+  .route-arrow { color: #a78bfa; }
+}
 </style>

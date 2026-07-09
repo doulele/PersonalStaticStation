@@ -1,6 +1,19 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 const routes = [
+  // ==================== 认证页面（独立布局，不带 Header/Footer） ====================
+  {
+    path: '/login',
+    name: 'Login',
+    component: () => import('@/views/auth/Login.vue'),
+    meta: { title: '登录', guest: true }
+  },
+  {
+    path: '/register',
+    name: 'Register',
+    component: () => import('@/views/auth/Register.vue'),
+    meta: { title: '注册', guest: true }
+  },
   {
     path: '/',
     redirect: '/home'
@@ -166,9 +179,25 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
+  // 设置页面标题
   if (to.meta.title) {
     document.title = `${to.meta.title} - ToolHub`
   }
+
+  // 获取认证状态
+  const token = localStorage.getItem('auth_token')
+  const isAuthenticated = !!token
+
+  // 已登录用户访问登录/注册页 → 重定向到首页
+  if (to.meta.guest && isAuthenticated) {
+    return next('/home')
+  }
+
+  // 需要认证的页面，未登录 → 重定向到登录页
+  if (to.meta.requiresAuth && !isAuthenticated) {
+    return next({ path: '/login', query: { redirect: to.fullPath } })
+  }
+
   next()
 })
 

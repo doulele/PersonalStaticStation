@@ -237,4 +237,42 @@ import { recordToolClick } from '@/api/stats'
     padding: 20px;
   }
 }
+
+// ==================== 夜间模式 ====================
+:global(html.dark-mode .life-services-page) {
+  .page-title {
+    color: #e2dee9;
+  }
+
+  .page-desc {
+    color: #94a3b8;
+  }
+
+  .tool-card-inner {
+    background: #1a1a2e;
+    border-color: #2d2d4a;
+
+    &::before {
+      background: linear-gradient(180deg, #7c3aed, #a78bfa);
+    }
+
+    &:hover {
+      background: #252540;
+      border-color: #7c3aed;
+      box-shadow: 0 8px 30px rgba(124, 58, 237, 0.2);
+    }
+  }
+
+  .tool-name {
+    color: #e2dee9;
+  }
+
+  .tool-desc {
+    color: #94a3b8;
+  }
+
+  .tool-arrow {
+    color: #64748b;
+  }
+}
 </style>

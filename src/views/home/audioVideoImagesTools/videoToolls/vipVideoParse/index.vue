@@ -2442,4 +2442,203 @@ onBeforeUnmount(() => {
   .card-title { font-size: 11px; }
   .card-duration { font-size: 10px; bottom: 4px; right: 4px; }
 }
+
+// ====== 深色模式 ======
+:global(html.dark-mode .vip-video-parse-page) {
+    // 页面根部
+    background: #0f0f1a;
+
+    // 页头
+    .page-header { border-bottom-color: #2d2d4a; }
+    .page-desc { color: #94a3b8; }
+
+    // 输入模式切换
+    .input-mode-switch { background: #1a1a2e; }
+    .input-mode-btn {
+      color: #6b7280;
+      &:hover { color: #a78bfa; }
+      &.active { background: #252540; color: #e2dee9; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+    }
+
+    // 输入框
+    .input-box {
+      background: #252540; border-color: #2d2d4a; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      &:focus-within { border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,0.08); }
+    }
+    .search-row {
+      background: #252540; border-color: #2d2d4a; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      &:focus-within { border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,0.08); }
+    }
+    .input-icon { color: #6b7280; }
+    .url-input { color: #e2dee9; &::placeholder { color: #4b5563; } }
+    .clear-icon { color: #6b7280; &:hover { color: #cbd5e1; } }
+
+    // 平台选择下拉
+    .platform-select {
+      background: #1a1a2e; border-color: #2d2d4a; color: #e2dee9;
+      &:focus { border-color: #7c3aed; }
+    }
+
+    // 平台搜索提示
+    .platform-search-hint {
+      background: rgba(251,191,36,0.08); border-color: rgba(251,191,36,0.2); color: #fbbf24;
+      .hint-action { color: #a78bfa; }
+    }
+
+    // 解析模式切换
+    .parse-mode-switch .mode-toggle { background: #1a1a2e; }
+    .mode-label { color: #94a3b8; }
+    .mode-btn {
+      color: #6b7280;
+      &.active { background: #252540; color: #a78bfa; }
+    }
+
+    // 解析路径选择
+    .line-select-label { color: #94a3b8; }
+    .line-select-trigger { background: #252540; border-color: #2d2d4a; color: #e2dee9;
+      &:hover, &.open { border-color: #7c3aed; background: #2d2d4a; }
+    }
+    .selected-line-name { color: #e2dee9; }
+    .dropdown-arrow { color: #6b7280; }
+    .line-select-options { background: #1a1a2e; border-color: #2d2d4a; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+    .line-option { &:hover { background: #252540; } &.active { background: #252040; .line-option-name { color: #a78bfa; } } }
+    .line-option-name { color: #e2dee9; }
+    .line-option-ping, .line-option-api { color: #6b7280; }
+    .dropdown-header { color: #6b7280; border-bottom-color: #2d2d4a; }
+    .manage-lines-btn { background: #252540; border-color: #2d2d4a; color: #94a3b8;
+      &:hover { border-color: #7c3aed; color: #a78bfa; background: #2d2d4a; }
+    }
+
+    // 搜索加载遮罩
+    .search-loading-overlay { background: rgba(0,0,0,0.8); }
+    .search-loading-card { background: #1a1a2e; box-shadow: 0 24px 80px rgba(0,0,0,0.5); }
+    .search-loading-title { color: #e2dee9; }
+    .search-loading-query { color: #a78bfa; }
+    .search-loading-platform { color: #6b7280; }
+    .search-loading-progress {
+      .progress-bar { background: #2d2d4a; }
+      .progress-text { color: #6b7280; }
+    }
+    .search-loading-hint { color: #4b5563; }
+
+    // 播放器
+    .player-container { background: #1a1a2e; border-color: #2d2d4a; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+    .player-header { background: #1e1e2e; border-bottom-color: #2d2d4a; }
+    .player-title { color: #e2dee9; }
+    .line-label { color: #6b7280; }
+    .line-btn {
+      background: #252540; border-color: #2d2d4a; color: #94a3b8;
+      &:hover { border-color: #7c3aed; color: #a78bfa; }
+      &.active { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+    }
+    .video-placeholder {
+      color: #94a3b8; p { color: #6b7280; }
+    }
+    .video-placeholder.extracting, .video-placeholder.error {
+      .extract-hint { color: #6b7280; }
+      .error-detail { color: #f87171; }
+    }
+
+    // 搜索结果头部
+    .search-results-header h3 { color: #e2dee9; }
+    .search-results-header .result-count { color: #6b7280; }
+    .search-platform-badge { background: #252040; color: #a78bfa; }
+
+    // 剧集分组卡片
+    .show-group-card {
+      background: #1a1a2e; border-color: #2d2d4a; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      &:hover { border-color: #7c3aed; box-shadow: 0 4px 20px rgba(124,58,237,0.15); }
+      &.expanded { border-color: #7c3aed; box-shadow: 0 6px 28px rgba(124,58,237,0.15); }
+    }
+    .show-group-header {
+      &:hover { background: #252540; }
+    }
+    .show-group-name { color: #e2dee9; }
+    .show-group-meta { color: #6b7280; }
+    .show-ep-count { color: #a78bfa; }
+    .show-uploader { color: #6b7280; }
+    .show-full-tag { color: #4ade80; }
+    .fetch-playlist-btn {
+      border-color: #7c3aed; color: #a78bfa;
+      &:hover:not(:disabled) { background: #7c3aed; color: #fff; }
+      &.loading { background: #7c3aed; color: #fff; }
+    }
+    .expand-icon { color: #6b7280; }
+
+    // 剧集展开面板
+    .show-episodes-panel { border-top-color: #2d2d4a; background: #141425; }
+
+    // 剧集卡片
+    .episode-card {
+      background: #1a1a2e; border-color: #2d2d4a;
+      &:hover { border-color: #7c3aed; box-shadow: 0 6px 18px rgba(124,58,237,0.2); }
+      &.playing { border-color: #22c55e; box-shadow: 0 0 0 2px rgba(34,197,94,0.3); }
+    }
+    .ep-title { color: #e2dee9; }
+
+    // 独立视频区域
+    .ungrouped-title { color: #94a3b8; }
+
+    // 搜索结果卡片
+    .search-result-card {
+      background: #1a1a2e; border-color: #2d2d4a; box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+      &:hover { border-color: #7c3aed; box-shadow: 0 12px 32px rgba(124,58,237,0.2); }
+    }
+    .card-title { color: #e2dee9; }
+    .card-uploader { color: #6b7280; }
+
+    // 无结果
+    .search-no-result p { color: #6b7280; }
+
+    // 历史记录
+    .history-header h3 { color: #e2dee9; }
+    .history-item {
+      background: #1a1a2e; border-color: #2d2d4a;
+      &:hover { background: #252540; border-color: #3d3d5a; }
+    }
+    .history-index { background: #2d2d4a; color: #94a3b8; }
+    .history-title { color: #e2dee9; }
+    .history-time { color: #6b7280; }
+    .history-play { color: #a78bfa; }
+
+    // 使用说明
+    .tips-section {
+      background: linear-gradient(135deg, #1a1a2e, #252040);
+      border-color: #2d2d4a;
+      h3 { color: #e2dee9; }
+    }
+    .tips-list li {
+      color: #94a3b8;
+      strong { color: #e2dee9; }
+      .tip-tag { background: #252040; color: #a78bfa; }
+    }
+
+    // 解析路径管理弹窗
+    .line-manage-panel {
+      .line-manage-add { background: #252540; border-color: #2d2d4a; }
+      .add-input { background: #1a1a2e; border-color: #2d2d4a; color: #e2dee9;
+        &:focus { border-color: #7c3aed; }
+        &::placeholder { color: #4b5563; }
+      }
+      .line-manage-list { border-color: #2d2d4a; }
+      .line-manage-header { background: #252540; border-bottom-color: #2d2d4a; color: #94a3b8; }
+      .line-manage-item {
+        border-bottom-color: #2d2d4a;
+        .lm-item-name { color: #e2dee9; }
+        .lm-item-api { color: #6b7280; }
+        .edit-input { background: #1a1a2e; border-color: #2d2d4a; color: #e2dee9;
+          &:focus { border-color: #7c3aed; }
+        }
+      }
+      .line-manage-empty p { color: #6b7280; }
+    }
+
+    // 平台标签
+    .platform-label { color: #6b7280; }
+    .platform-chip {
+      border-color: color-mix(in srgb, var(--pf-color) 20%, #2d2d4a);
+      background: color-mix(in srgb, var(--pf-color) 8%, #1a1a2e);
+      &:hover { background: color-mix(in srgb, var(--pf-color) 15%, #252540); }
+    }
+}
 </style>

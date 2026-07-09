@@ -173,7 +173,7 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: #0a0a0f;
+  background: var(--hero-bg);
 }
 
 .hero-bg {
@@ -212,12 +212,12 @@ onMounted(async () => {
 .hero-badge {
   display: inline-block;
   padding: 5px 14px;
-  background: rgba(99, 102, 241, 0.15);
-  border: 1px solid rgba(99, 102, 241, 0.3);
+  background: var(--badge-bg);
+  border: 1px solid var(--badge-border);
   border-radius: 20px;
   font-size: 12px;
   font-weight: 500;
-  color: #818cf8;
+  color: var(--badge-color);
   letter-spacing: 0.5px;
   margin-bottom: 16px;
 }
@@ -232,11 +232,11 @@ onMounted(async () => {
 
 .title-line {
   display: block;
-  color: #ffffff;
+  color: var(--hero-text);
 }
 
 .title-line.accent {
-  background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+  background: var(--gradient-accent);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -244,7 +244,7 @@ onMounted(async () => {
 
 .hero-subtitle {
   font-size: 15px;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--hero-text-muted);
   margin: 0 auto 24px;
   line-height: 1.6;
   white-space: nowrap;
@@ -266,25 +266,25 @@ onMounted(async () => {
   display: block;
   font-size: 24px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--hero-text);
 }
 
 .stat-label {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--hero-text-muted);
   letter-spacing: 1px;
 }
 
 .stat-divider {
   width: 1px;
   height: 32px;
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--hero-border);
 }
 
 // Tools Section
 .tools-section {
   padding: 40px 24px;
-  background: #ffffff;
+  background: var(--section-bg);
 }
 
 .section-header {
@@ -295,14 +295,14 @@ onMounted(async () => {
 .section-title {
   font-size: 32px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--heading-color);
   margin-bottom: 8px;
   letter-spacing: -0.02em;
 }
 
 .section-desc {
   font-size: 16px;
-  color: #64748b;
+  color: var(--muted-color);
 }
 
 .tools-grid {
@@ -324,8 +324,8 @@ onMounted(async () => {
   align-items: center;
   gap: 16px;
   padding: 20px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--surface-bg);
+  border: 1px solid var(--surface-border);
   border-radius: 16px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
@@ -338,15 +338,15 @@ onMounted(async () => {
     top: 0;
     bottom: 0;
     width: 3px;
-    background: linear-gradient(180deg, #6366f1, #a855f7);
+    background: var(--gradient-card-left);
     opacity: 0;
     transition: opacity 0.3s ease;
   }
 
   &:hover {
-    border-color: #6366f1;
-    background: #ffffff;
-    box-shadow: 0 8px 30px rgba(99, 102, 241, 0.1);
+    border-color: var(--surface-hover-border);
+    background: var(--surface-hover-bg);
+    box-shadow: var(--shadow-card);
     transform: translateY(-2px);
 
     &::before {
@@ -355,7 +355,7 @@ onMounted(async () => {
 
     .tool-arrow {
       transform: translateX(4px);
-      color: #6366f1;
+      color: var(--surface-hover-border);
     }
   }
 }
@@ -368,31 +368,31 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  color: #ffffff;
+  background: var(--gradient-icon-default);
+  color: var(--tool-icon-color);
 
   &.blue {
-    background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+    background: var(--gradient-icon-blue);
   }
 
   &.green {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    background: var(--gradient-icon-green);
   }
 
   &.orange {
-    background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+    background: var(--gradient-icon-orange);
   }
 
   &.purple {
-    background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+    background: var(--gradient-icon-purple);
   }
 
   &.red {
-    background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+    background: var(--gradient-icon-red);
   }
 
   &.yellow {
-    background: linear-gradient(135deg, #f59e0b 0%, #eab308 100%);
+    background: var(--gradient-icon-yellow);
   }
 }
 
@@ -404,7 +404,7 @@ onMounted(async () => {
 .tool-name {
   font-size: 16px;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--heading-color);
   margin-bottom: 3px;
   display: flex;
   align-items: center;
@@ -414,8 +414,8 @@ onMounted(async () => {
 .tool-clicks {
   font-size: 11px;
   font-weight: 600;
-  color: #f59e0b;
-  background: rgba(245, 158, 11, 0.1);
+  color: var(--tag-color);
+  background: var(--tag-bg);
   padding: 2px 8px;
   border-radius: 4px;
   white-space: nowrap;
@@ -424,12 +424,12 @@ onMounted(async () => {
 
 .tool-desc {
   font-size: 13px;
-  color: #64748b;
+  color: var(--muted-color);
   line-height: 1.4;
 }
 
 .tool-arrow {
-  color: #94a3b8;
+  color: var(--muted-color-light);
   transition: all 0.3s ease;
   font-size: 20px;
   flex-shrink: 0;
@@ -446,18 +446,18 @@ onMounted(async () => {
   align-items: center;
   gap: 6px;
   padding: 10px 24px;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
+  background: var(--toggle-bg);
+  border: 1px solid var(--toggle-border);
   border-radius: 12px;
   font-size: 14px;
   font-weight: 500;
-  color: #6366f1;
+  color: var(--toggle-color);
   cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover {
-    background: #eef2ff;
-    border-color: #6366f1;
+    background: var(--toggle-hover-bg);
+    border-color: var(--toggle-hover-border);
   }
 
   .el-icon {

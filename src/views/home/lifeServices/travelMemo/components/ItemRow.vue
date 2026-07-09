@@ -204,4 +204,71 @@ $text-muted: #94a3b8;
     opacity: 1;
   }
 }
+
+// ==================== 夜间模式 ====================
+:global(html.dark-mode .item-row) {
+  + .item-row {
+    border-top-color: #252540;
+  }
+
+  &:hover {
+    background: #1e1e3c;
+  }
+
+  &.checked {
+    .item-name {
+      color: #64748b;
+    }
+  }
+}
+
+:global(html.dark-mode) {
+  .item-check {
+    border-color: #3d3d5c;
+    background: transparent;
+
+    &:not(.done):hover {
+      border-color: #7c3aed;
+      background: #1e1e3c;
+    }
+  }
+
+  .item-name {
+    color: #e2dee9;
+
+    &:hover {
+      color: #a78bfa;
+    }
+  }
+
+  .item-qty {
+    background: #252540;
+  }
+
+  .qty-btn {
+    color: #94a3b8;
+
+    &:hover {
+      background: #3d3d5c;
+      color: #e2dee9;
+    }
+
+    &:active {
+      background: #4a4a6a;
+    }
+  }
+
+  .qty-val {
+    color: #e2dee9;
+  }
+
+  .item-action {
+    color: #64748b;
+
+    &.del:hover {
+      background: #3b1010;
+      color: #f87171;
+    }
+  }
+}
 </style>

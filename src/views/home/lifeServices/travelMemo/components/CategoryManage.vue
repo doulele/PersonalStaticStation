@@ -149,4 +149,26 @@ function save() {
 .add-cat-btn {
   border-style: dashed;
 }
+
+// ==================== 夜间模式 ====================
+:global(html.dark-mode) {
+  .cat-row {
+    background: #1a1a2e;
+  }
+
+  .cat-grip {
+    color: #3d3d5c;
+  }
+
+  .cat-arrow {
+    color: #94a3b8;
+    &:hover:not(.disabled) { background: #252540; }
+    &.disabled { color: #3d3d5c; }
+  }
+
+  .cat-delete {
+    color: #3d3d5c;
+    &:hover { color: #f87171; background: #3b1010; }
+  }
+}
 </style>

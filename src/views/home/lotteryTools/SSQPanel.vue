@@ -698,6 +698,24 @@ onUnmounted(() => {
   background: rgba(99, 102, 241, 0.08) !important;
 }
 
+// ========== 深色模式 ==========
+:global(html.dark-mode .ssq-panel) {
+  .pos-col {
+    background: #1e1e2e !important;
+    border-color: #2d2d4a !important;
+  }
+  .pos-col-title { color: #a78bfa !important; }
+  .pos-num { color: #94a3b8 !important; }
+  .pos-pct { color: #64748b !important; }
+  .pos-bar {
+    background: #252540 !important;
+    span { background: linear-gradient(90deg, #a78bfa, #c084fc); }
+  }
+  .rec-card.rec-selected {
+    background: rgba(99, 102, 241, 0.1) !important;
+  }
+}
+
 // 移动端额外适配
 @media (max-width: 768px) {
   .pos-top-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }

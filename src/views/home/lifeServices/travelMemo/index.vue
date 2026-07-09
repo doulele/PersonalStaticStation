@@ -2193,4 +2193,214 @@ $text-muted: #94a3b8;
     font-size: 11px;
   }
 }
+
+// ==================== 夜间模式全覆盖 ====================
+:global(html.dark-mode .memo-page) {
+  background: #0f0f1a !important;
+}
+
+:global(html.dark-mode) {
+  .memo-container {
+    background: #13132a !important;
+    box-shadow: 0 0 60px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  .nav-bar {
+    background: rgba(19, 19, 42, 0.92) !important;
+    border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+  }
+  .nav-back {
+    color: #94a3b8 !important;
+    &:hover { background: #1e1e3c !important; }
+  }
+  .nav-members {
+    background: #1e1e3c !important;
+    color: #a78bfa !important;
+    &:hover { background: #252545 !important; }
+  }
+  .nav-edit-btn {
+    color: #94a3b8 !important;
+    &:hover { background: #1e1e3c !important; }
+  }
+
+  // 进度卡片
+  .progress-card {
+    background: rgba(26, 26, 46, 0.75) !important;
+    border-color: rgba(45, 45, 74, 0.8) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+  }
+  .progress-toggle:hover {
+    background: rgba(124, 58, 237, 0.08) !important;
+  }
+  .toggle-icon { color: #64748b !important; }
+  .toggle-label { color: #e2dee9 !important; }
+  .toggle-badge { background: #1e1e3c !important; color: #a78bfa !important; }
+  .total-label { color: #e2dee9 !important; }
+  .total-count-num { color: #64748b !important; }
+  .total-sep { color: #3d3d5c !important; }
+  .progress-divider { background: linear-gradient(90deg, transparent, #2d2d4a, transparent) !important; }
+  .progress-bar-wrap, .total-bar-wrap { background: #2d2d4a !important; }
+  .mp-name { color: #e2dee9 !important; }
+  .mp-count { color: #64748b !important; }
+  .mp-bar-wrap { background: #2d2d4a !important; }
+  .mp-pct { color: #64748b !important; }
+
+  // 搜索
+  .search-wrap {
+    background: rgba(26, 26, 46, 0.75) !important;
+    border-color: rgba(45, 45, 74, 0.8) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+    &:focus-within { box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15) !important; }
+  }
+  .search-icon { color: #64748b !important; }
+  .search-input {
+    color: #e2dee9 !important;
+    &::placeholder { color: #64748b !important; }
+  }
+  .search-clear:hover { background: #252540 !important; color: #94a3b8 !important; }
+
+  // 筛选卡片
+  .filter-card {
+    background: rgba(26, 26, 46, 0.75) !important;
+    border-color: rgba(45, 45, 74, 0.8) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+  }
+  .filter-row + .filter-row {
+    border-top-color: #252540 !important;
+  }
+  .filter-tab {
+    color: #94a3b8 !important;
+    background: #1e1e3c !important;
+    &.active {
+      color: #fff !important;
+      background: linear-gradient(135deg, #6366f1, #818cf8) !important;
+      box-shadow: 0 2px 8px rgba(99,102,241,0.25) !important;
+    }
+    &:hover:not(.active) { background: #2d2d4a !important; color: #e2dee9 !important; }
+
+    &.member {
+      &:not(.active) {
+        background: #1e1e3c !important;
+        color: #a78bfa !important;
+        &:hover { background: #252545 !important; }
+      }
+      &.filter-tab-baby:not(.active) {
+        background: #2e1f0e !important;
+        color: #fbbf24 !important;
+        &:hover { background: #3d2a1a !important; }
+      }
+    }
+    &.status {
+      &.active {
+        color: #fbbf24 !important;
+        background: #2e1f0a !important;
+        box-shadow: 0 1px 4px rgba(251, 191, 36, 0.15) !important;
+      }
+    }
+  }
+  .add-member-tab {
+    color: #64748b !important;
+    border-color: #3d3d5c !important;
+    &:hover { color: #a78bfa !important; border-color: #a78bfa !important; background: #1e1e3c !important; }
+  }
+
+  // 新增分类
+  .add-category-btn {
+    background: rgba(26, 26, 46, 0.6) !important;
+    border-color: #3d3d5c !important;
+    color: #94a3b8 !important;
+    &:hover { border-color: #a78bfa !important; background: #1e1e3c !important; color: #a78bfa !important; }
+    .cat-icon { color: #64748b !important; }
+  }
+
+  // 分类卡片
+  .cat-card {
+    background: rgba(26, 26, 46, 0.75) !important;
+    border-color: rgba(45, 45, 74, 0.8) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+    &.expanded { border-color: rgba(124, 58, 237, 0.3) !important; box-shadow: 0 2px 12px rgba(124, 58, 237, 0.1) !important; }
+  }
+  .cat-header:hover { background: rgba(255, 255, 255, 0.03) !important; }
+  .cat-arrow { color: #64748b !important; &.open { color: #a78bfa !important; } }
+  .cat-name { color: #e2dee9 !important; }
+  .cat-name-input-inline { background: #1a1a2e !important; color: #e2dee9 !important; border-color: #2d2d4a !important; }
+  .cat-count-badge { background: #1e1e3c !important; color: #a78bfa !important; }
+  .cat-action-btn {
+    color: #64748b !important;
+    &:hover { background: #252540 !important; color: #a78bfa !important; }
+    &.cat-action-del:hover { background: #3b1010 !important; color: #f87171 !important; }
+  }
+  .cat-body { border-top-color: #252540 !important; }
+  .cat-card:not(.expanded) .cat-body { border-top-color: transparent !important; }
+
+  // 列表项
+  .item-row {
+    border-bottom-color: #252540 !important;
+    &:hover { background: rgba(255, 255, 255, 0.02) !important; }
+  }
+  .item-checkbox { border-color: #3d3d5c !important; }
+  .item-name { color: #e2dee9 !important; }
+  .item-note { color: #64748b !important; }
+  .item-members { color: #94a3b8 !important; }
+  .item-member-badge { background: #1e1e3c !important; color: #a78bfa !important; }
+  .item-delete { color: #64748b !important; &:hover { color: #f87171 !important; background: #3b1010 !important; } }
+
+  // 快速标签
+  .qa-toggle { color: #64748b !important; &:hover { color: #a78bfa !important; } }
+  .qa-toggle-arrow { color: #64748b !important; &.open { color: #a78bfa !important; } }
+  .qa-chip {
+    color: #a78bfa !important; background: #1e1e3c !important;
+    &:hover { background: #7c3aed !important; color: #fff !important; }
+  }
+  .cat-empty { color: #64748b !important; }
+  .cat-add-item-btn { color: #64748b !important; border-color: #3d3d5c !important; &:hover { border-color: #a78bfa !important; color: #a78bfa !important; background: #1e1e3c !important; } }
+
+  // 空状态
+  .no-results { color: #64748b !important; }
+  .empty-title { color: #e2dee9 !important; }
+  .empty-desc { color: #64748b !important; }
+  .empty-icon-wrap { background: #1e1e3c !important; }
+
+  .empty-action-btn {
+    &.secondary {
+      background: #1a1a2e !important; color: #a78bfa !important; border-color: #2d2d4a !important;
+      &:hover { background: #1e1e3c !important; border-color: #a78bfa !important; }
+    }
+  }
+
+  // 底部操作栏
+  .bottom-bar {
+    background: rgba(19, 19, 42, 0.92) !important;
+    border-top-color: rgba(255, 255, 255, 0.06) !important;
+  }
+  .reset-btn {
+    background: #1a1a2e !important;
+    border-color: #2d2d4a !important;
+    color: #e2dee9 !important;
+    &:hover { border-color: #f59e0b !important; color: #f59e0b !important; background: #2e1f0a !important; }
+  }
+  .copy-btn {
+    background: #1a1a2e !important;
+    border-color: #2d2d4a !important;
+    color: #e2dee9 !important;
+    &:hover { border-color: #a78bfa !important; color: #a78bfa !important; background: #1e1e3c !important; }
+  }
+  .more-btn {
+    background: #1a1a2e !important;
+    border-color: #2d2d4a !important;
+    color: #94a3b8 !important;
+    &:hover { border-color: #a78bfa !important; color: #a78bfa !important; background: #1e1e3c !important; }
+  }
+
+  // 模板
+  .template-item {
+    border-color: #2d2d4a !important;
+    background: #1a1a2e !important;
+    &:hover { background: #1e1e3c !important; border-color: #3d3d6c !important; }
+  }
+  .tpl-name { color: #e2dee9 !important; }
+  .tpl-meta { color: #64748b !important; }
+  .tpl-del { color: #64748b !important; &:hover { background: #3b1010 !important; color: #f87171 !important; } }
+  .template-empty { color: #64748b !important; }
+}
 </style>

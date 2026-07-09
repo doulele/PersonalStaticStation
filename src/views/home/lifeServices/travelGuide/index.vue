@@ -2337,4 +2337,253 @@ async function searchByAddress() {
   .card-cover { height: 90px; }
   .cover-emoji { font-size: 36px; }
 }
+
+// ==================== 夜间模式全覆盖 ====================
+:global(html.dark-mode .search-page) {
+  // ===== Hero 区域 =====
+  .hero-section .hero-bg {
+    background: linear-gradient(170deg, #0f0f2a 0%, #10102e 25%, #12122a 50%, #0e0e2e 75%, #0f0f2e 100%) !important;
+    .hero-mesh { background-image: none !important; }
+    .hero-gradient-orb {
+      &.orb-1 { background: rgba(99,102,241,0.08) !important; }
+      &.orb-2 { background: rgba(236,72,153,0.06) !important; }
+      &.orb-3 { background: rgba(168,85,247,0.05) !important; }
+    }
+    .hero-particles .particle {
+      background: linear-gradient(135deg, #6366f1, #a855f7) !important;
+    }
+  }
+  .hero-badge {
+    background: rgba(26,26,46,0.7) !important;
+    border-color: rgba(99,102,241,0.2) !important;
+    color: #a78bfa !important;
+    box-shadow: 0 2px 12px rgba(99,102,241,0.1) !important;
+    .badge-dot { background: #34d399 !important; box-shadow: 0 0 8px rgba(52,211,153,0.4) !important; }
+  }
+  .hero-title { color: #e2dee9 !important; }
+  .title-highlight {
+    background: linear-gradient(135deg, #818cf8 0%, #a78bfa 50%, #f472b6 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+  }
+  .hero-desc { color: #94a3b8 !important; }
+  .hero-subtitle { color: #6b7280 !important; }
+  .hero-stats {
+    background: rgba(19,19,42,0.8) !important;
+    border-color: rgba(45,45,74,0.6) !important;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3) !important;
+    .stat-num {
+      background: linear-gradient(135deg, #818cf8, #a78bfa) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      background-clip: text !important;
+    }
+    .stat-label { color: #6b7280 !important; }
+  }
+  .stat-divider { background: linear-gradient(to bottom, transparent, #2d2d4a, transparent) !important; }
+
+  // ===== Tabs 切换 =====
+  .search-tabs {
+    background: rgba(26,26,46,0.85) !important;
+    border-color: rgba(45,45,74,0.6) !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3) !important;
+  }
+  .tab-btn {
+    color: #94a3b8 !important;
+    &.active {
+      color: #fff !important;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+    }
+    &:hover:not(.active) { color: #a78bfa !important; background: rgba(124,58,237,0.08) !important; }
+  }
+
+  // ===== 搜索框 =====
+  .search-box {
+    background: rgba(26,26,46,0.85) !important;
+    border-color: rgba(45,45,74,0.7) !important;
+    box-shadow: 0 4px 16px rgba(99,102,241,0.08) !important;
+    &:focus-within, &.has-dropdown {
+      border-color: #6366f1 !important;
+      box-shadow: 0 6px 24px rgba(99,102,241,0.15) !important;
+    }
+    &.has-dropdown { border-radius: 16px 16px 0 0 !important; }
+  }
+  .search-icon { color: #64748b !important; }
+  .search-input {
+    color: #e2dee9 !important;
+    &::placeholder { color: #64748b !important; }
+  }
+  .clear-icon { color: #64748b !important; &:hover { color: #94a3b8 !important; } }
+
+  // ===== 搜索下拉 =====
+  .search-dropdown {
+    background: rgba(26,26,46,0.95) !important;
+    border-color: #6366f1 !important;
+    border-top-color: rgba(45,45,74,0.5) !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important;
+  }
+  .dropdown-loading { color: #a78bfa !important; }
+  .dropdown-item {
+    &:hover { background: rgba(124,58,237,0.08) !important; }
+    &:not(:last-child) { border-bottom-color: #252540 !important; }
+  }
+  .item-thumb { background: linear-gradient(135deg, #1a1a2e, #1e1e3c) !important; color: #a78bfa !important; }
+  .item-name { color: #e2dee9 !important; }
+  .item-level-mini { color: #f59e0b !important; background: #2e1f0a !important; border-color: #5c3d1a !important; }
+  .item-desc { color: #64748b !important; }
+  .item-arrow { color: #4a4a6a !important; }
+  .dropdown-footer {
+    background: rgba(19,19,42,0.8) !important;
+    border-top-color: rgba(45,45,74,0.5) !important;
+  }
+  .mock-tip { color: #fbbf24 !important; }
+  .real-tip { color: #93c5fd !important; }
+  .real-tip-sub { color: #64748b !important; }
+  .dropdown-empty { color: #94a3b8 !important; .mock-tip { color: #64748b !important; } }
+
+  // ===== Quick Tags =====
+  .quick-tags-label { color: #64748b !important; }
+  .quick-tag-btn {
+    background: rgba(26,26,46,0.7) !important;
+    border-color: rgba(45,45,74,0.6) !important;
+    color: #94a3b8 !important;
+    &:hover { border-color: #a78bfa !important; color: #a78bfa !important; background: rgba(124,58,237,0.1) !important; }
+  }
+
+  // ===== 热门推荐标题 & 区域筛选 =====
+  .section-title { color: #e2dee9 !important; }
+  .section-count { background: #1e1e3c !important; color: #a78bfa !important; }
+  .region-filter-btn {
+    background: rgba(26,26,46,0.7) !important;
+    border-color: rgba(45,45,74,0.6) !important;
+    color: #94a3b8 !important;
+    &:hover:not(.active) {
+      border-color: #a78bfa !important;
+      color: #a78bfa !important;
+      background: rgba(124,58,237,0.08) !important;
+    }
+    &.active {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+      color: #fff !important;
+      border-color: transparent !important;
+    }
+  }
+  .province-filter-bar {
+    background: rgba(26,26,46,0.7) !important;
+    border-color: rgba(45,45,74,0.6) !important;
+  }
+  .province-filter-label { color: #93c5fd !important; }
+  .province-filter-chip { background: #6366f1 !important; color: #fff !important; }
+  .province-filter-clear { background: rgba(255,255,255,0.25) !important; color: #fff !important; }
+  .province-filter-hint { color: #64748b !important; }
+
+  // ===== 热门卡片 =====
+  .popular-card {
+    background: rgba(26,26,46,0.8) !important;
+    border-color: rgba(45,45,74,0.7) !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
+    &:hover {
+      border-color: var(--card-color, #6366f1) !important;
+      box-shadow: 0 12px 40px rgba(99,102,241,0.18), 0 1px 3px rgba(0,0,0,0.2) !important;
+    }
+    &.dragging-source { opacity: 0.4 !important; }
+  }
+  .card-name { color: #e2dee9 !important; }
+  .card-desc { color: #94a3b8 !important; }
+  .card-city-text { color: #64748b !important; }
+  .card-rating { background: #2e1f0a !important; color: #fbbf24 !important; }
+  .feature-tag { background: #1e1e3c !important; color: #a78bfa !important; border-color: #2d2d4a !important; }
+  .card-region-tag { color: #fff !important; }
+  .card-footer { border-top-color: #252540 !important; }
+  .card-cost { color: #94a3b8 !important; }
+  .card-action { color: #64748b !important; }
+  .card-rank.card-rank-num { background: rgba(0,0,0,0.65) !important; }
+
+  // ===== 拖拽幽灵 =====
+  .drag-ghost-card {
+    background: rgba(99,102,241,0.2) !important;
+    border-color: #a78bfa !important;
+    .ghost-name { color: #a78bfa !important; }
+  }
+
+  // ===== Skeleton =====
+  .skeleton-bg, .skeleton-line {
+    background: linear-gradient(90deg, #252540 25%, #2d2d4a 50%, #252540 75%) !important;
+  }
+
+  // ===== 排序栏 =====
+  .sort-bar {
+    background: rgba(26,26,46,0.7) !important;
+    border-color: rgba(45,45,74,0.6) !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+  }
+  .sort-count { color: #94a3b8 !important; }
+  .sort-pills { background: rgba(19,19,42,0.5) !important; border-color: rgba(45,45,74,0.4) !important; }
+  .sort-pill {
+    color: #94a3b8 !important;
+    &:hover:not(.active) { color: #a78bfa !important; background: rgba(124,58,237,0.08) !important; }
+    &.active {
+      color: #fff !important;
+      background: linear-gradient(135deg, #6366f1, #818cf8) !important;
+    }
+  }
+
+  // ===== 附近搜索控制面板 =====
+  .nearby-controls {
+    background: rgba(26,26,46,0.75) !important;
+    border-color: rgba(45,45,74,0.7) !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2) !important;
+  }
+  .controls-label { color: #94a3b8 !important; }
+  .controls-divider { background: #2d2d4a !important; }
+  .radius-pills { background: rgba(19,19,42,0.5) !important; border-color: rgba(45,45,74,0.4) !important; }
+  .radius-pill {
+    color: #94a3b8 !important;
+    &:hover:not(.active):not(:disabled) { color: #a78bfa !important; background: rgba(124,58,237,0.08) !important; }
+    &.active {
+      color: #fff !important;
+      background: linear-gradient(135deg, #6366f1, #818cf8) !important;
+    }
+  }
+
+  // ===== 附近景点卡片 =====
+  .nearby-card {
+    background: rgba(26,26,46,0.8) !important;
+    border-color: rgba(45,45,74,0.7) !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
+    &:hover {
+      border-color: #6366f1 !important;
+      box-shadow: 0 8px 28px rgba(99,102,241,0.15), 0 1px 3px rgba(0,0,0,0.2) !important;
+    }
+    &.dragging-source { opacity: 0.4 !important; }
+  }
+  .nb-cover { background: #1a1a2e !important; }
+  .nb-name { color: #e2dee9 !important; }
+  .nb-addr { color: #64748b !important; }
+
+  // ===== 精确定位搜索框 =====
+  .refine-search-box {
+    background: rgba(26,26,46,0.85) !important;
+    border-color: rgba(45,45,74,0.7) !important;
+    box-shadow: 0 4px 16px rgba(99,102,241,0.08) !important;
+    &:focus-within {
+      border-color: #6366f1 !important;
+      box-shadow: 0 6px 24px rgba(99,102,241,0.15) !important;
+    }
+  }
+  .refine-search-icon { color: #64748b !important; }
+  .refine-search-input {
+    color: #e2dee9 !important;
+    &::placeholder { color: #64748b !important; }
+  }
+
+  // ===== 定位提示 =====
+  .locate-hint-row { color: #64748b !important; .el-icon { color: #64748b !important; } }
+  .locate-hint-relocate { color: #64748b !important; &:hover { color: #a78bfa !important; } }
+  .locate-error { color: #f87171 !important; }
+
+  // ===== 幽灵元素 =====
+  .drag-ghost { background: rgba(124,58,237,0.92) !important; }
+}
 </style>

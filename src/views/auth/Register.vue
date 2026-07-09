@@ -1,0 +1,367 @@
+<template>
+  <div class="auth-page">
+    <div class="auth-card">
+      <div class="auth-header">
+        <router-link to="/home" class="auth-logo">
+          <img src="/favicon.svg" alt="ToolHub" />
+          <span>Utility<span class="highlight">Tool</span></span>
+        </router-link>
+        <h2>创建账号</h2>
+        <p class="auth-subtitle">注册后享受个性化功能和数据同步</p>
+      </div>
+
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-position="top"
+        @submit.prevent="handleRegister"
+      >
+        <el-form-item label="昵称" prop="nickname">
+          <el-input
+            v-model="form.nickname"
+            placeholder="请输入昵称（2-20个字符）"
+            :prefix-icon="User"
+            size="large"
+            clearable
+          />
+        </el-form-item>
+
+        <el-form-item label="邮箱" prop="email">
+          <el-input
+            v-model="form.email"
+            placeholder="请输入邮箱地址"
+            :prefix-icon="Message"
+            size="large"
+            clearable
+          />
+        </el-form-item>
+
+        <el-form-item label="密码" prop="password">
+          <el-input
+            v-model="form.password"
+            type="password"
+            placeholder="至少6位密码"
+            :prefix-icon="Lock"
+            size="large"
+            show-password
+          />
+        </el-form-item>
+
+        <el-form-item label="确认密码" prop="confirmPassword">
+          <el-input
+            v-model="form.confirmPassword"
+            type="password"
+            placeholder="请再次输入密码"
+            :prefix-icon="Lock"
+            size="large"
+            show-password
+            @keyup.enter="handleRegister"
+          />
+        </el-form-item>
+
+        <el-form-item>
+          <el-button
+            type="primary"
+            size="large"
+            :loading="loading"
+            class="submit-btn"
+            @click="handleRegister"
+          >
+            {{ loading ? '注册中...' : '注册' }}
+          </el-button>
+        </el-form-item>
+
+        <div v-if="errorMsg" class="error-msg">
+          <el-icon><WarningFilled /></el-icon>
+          {{ errorMsg }}
+        </div>
+      </el-form>
+
+      <div class="auth-footer">
+        <span>已有账号？</span>
+        <router-link to="/login" class="link">立即登录</router-link>
+      </div>
+
+      <div class="auth-back">
+        <router-link to="/home" class="back-link">
+          <el-icon><ArrowLeft /></el-icon> 返回首页
+        </router-link>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, reactive, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useStore } from 'vuex'
+import { User, Message, Lock, WarningFilled, ArrowLeft } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+
+const router = useRouter()
+const route = useRoute()
+const store = useStore()
+
+const formRef = ref(null)
+const loading = computed(() => store.getters['auth/isLoading'])
+const errorMsg = computed(() => store.getters['auth/authError'])
+
+const form = reactive({
+  nickname: '',
+  email: '',
+  password: '',
+  confirmPassword: ''
+})
+
+const validateConfirmPassword = (rule, value, callback) => {
+  if (value !== form.password) {
+    callback(new Error('两次输入的密码不一致'))
+  } else {
+    callback()
+  }
+}
+
+const rules = {
+  nickname: [
+    { required: true, message: '请输入昵称', trigger: 'blur' },
+    { min: 2, max: 20, message: '昵称长度应为2-20个字符', trigger: 'blur' }
+  ],
+  email: [
+    { required: true, message: '请输入邮箱地址', trigger: 'blur' },
+    { type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, message: '请再次输入密码', trigger: 'blur' },
+    { validator: validateConfirmPassword, trigger: 'blur' }
+  ]
+}
+
+async function handleRegister() {
+  const valid = await formRef.value.validate().catch(() => false)
+  if (!valid) return
+
+  const result = await store.dispatch('auth/register', {
+    email: form.email.trim(),
+    password: form.password,
+    nickname: form.nickname.trim()
+  })
+
+  if (result.success) {
+    ElMessage.success('注册成功')
+    const redirect = route.query.redirect || '/home'
+    router.push(redirect)
+  }
+}
+</script>
+
+<style lang="scss" scoped>
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-color);
+  padding: 24px;
+  transition: background 0.4s ease;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--bg-white);
+  border-radius: 16px;
+  padding: 40px 36px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border-color);
+  transition: background 0.4s ease, border-color 0.4s ease;
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.auth-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--heading-color);
+  margin-bottom: 16px;
+
+  img {
+    width: 28px;
+    height: 28px;
+  }
+
+  .highlight {
+    color: var(--primary-color);
+  }
+}
+
+.auth-header h2 {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--heading-color);
+  margin: 0 0 8px;
+}
+
+.auth-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.auth-card :deep(.el-form-item__label) {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.submit-btn {
+  width: 100%;
+  height: 44px;
+  font-size: 16px;
+  font-weight: 500;
+  border-radius: 8px;
+}
+
+.error-msg {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: #fef0f0;
+  border: 1px solid #fde2e2;
+  border-radius: 8px;
+  color: #f56c6c;
+  font-size: 13px;
+  margin-top: -8px;
+}
+
+.auth-footer {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 14px;
+  color: var(--text-secondary);
+
+  .link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    margin-left: 4px;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.auth-back {
+  text-align: center;
+  margin-top: 16px;
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--primary-color);
+    }
+  }
+}
+</style>
+
+<style lang="scss">
+/* ===== 深色模式（非 scoped，确保覆盖 Element Plus 内部样式） ===== */
+html.dark-mode .auth-page {
+  // 关键：设置 Element Plus CSS 变量来覆盖输入框背景/边框/文字
+  --el-input-bg-color: #1a1a2e;
+  --el-fill-color-blank: #1a1a2e;
+  --el-fill-color-light: #252540;
+  --el-border-color: #2d2d4a;
+  --el-border-color-light: #2d2d4a;
+  --el-text-color-regular: #94a3b8;
+  --el-text-color-primary: #e2dee9;
+  --el-text-color-secondary: #64748b;
+  --el-color-white: #1e1e2e;
+  --el-bg-color: #1e1e2e;
+
+  .auth-card {
+    background: #1e1e2e;
+    border-color: #2d2d4a;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  }
+
+  .auth-logo {
+    color: #e2dee9;
+    .highlight { color: #a78bfa; }
+  }
+
+  .auth-header h2 {
+    color: #e2dee9;
+  }
+
+  .auth-subtitle {
+    color: #64748b;
+  }
+
+  .el-form-item__label {
+    color: #94a3b8;
+  }
+
+  // Element Plus 输入框深色覆盖（双重保险：CSS变量 + 直接样式）
+  .el-input__wrapper {
+    background-color: #1a1a2e !important;
+    box-shadow: 0 0 0 1px #2d2d4a inset !important;
+
+    &:hover {
+      box-shadow: 0 0 0 1px #4c3d8f inset !important;
+    }
+
+    &.is-focus {
+      box-shadow: 0 0 0 1px #7c3aed inset !important;
+    }
+  }
+
+  .el-input__inner {
+    color: #e2dee9 !important;
+
+    &::placeholder {
+      color: #4b5563;
+    }
+  }
+
+  // 图标颜色
+  .el-input__suffix,
+  .el-input__prefix,
+  .el-input__clear {
+    color: #6b7280;
+  }
+
+  .error-msg {
+    background: rgba(245, 108, 108, 0.1);
+    border-color: rgba(245, 108, 108, 0.2);
+  }
+
+  .auth-footer {
+    color: #64748b;
+    .link { color: #a78bfa; }
+  }
+
+  .auth-back .back-link {
+    color: #64748b;
+    &:hover { color: #a78bfa; }
+  }
+}
+</style>

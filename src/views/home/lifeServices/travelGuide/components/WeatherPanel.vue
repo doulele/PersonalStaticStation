@@ -909,4 +909,117 @@ const dialogWidth = computed(() => {
     font-size: 15px;
   }
 }
+
+// ==================== 夜间模式 ====================
+:global(html.dark-mode) {
+  // 入口卡片
+  .weather-entry-card {
+    background: linear-gradient(135deg, #14142e, #13132e);
+    border-color: #2d3f8c;
+    &:hover:not(.loading) {
+      border-color: #4a6bd4;
+      box-shadow: 0 4px 18px rgba(59,130,246,0.15);
+    }
+  }
+  .weather-entry-left { background: rgba(59,130,246,0.12); }
+  .weather-entry-title { color: #93c5fd; }
+  .weather-entry-desc { color: #94a3b8; }
+  .weather-entry-arrow { color: #4a6bd4; }
+  .weather-entry-warn { }
+
+  // 弹窗
+  .weather-dialog {
+    :deep(.el-dialog__header) { border-bottom-color: #2d2d4a; }
+    :deep(.el-dialog__close) { color: #64748b; &:hover { background: #252540; } }
+  }
+  .weather-dialog-header-title { color: #e2dee9; }
+  .weather-panel-body {
+    &.loading { color: #94a3b8; }
+  }
+
+  // 大号概览
+  .weather-hero {
+    background: linear-gradient(135deg, #14142e, #1a1a3e);
+  }
+  .weather-hero-temp { color: #93c5fd; }
+  .weather-hero-desc { color: #94a3b8; }
+  .extra-label { color: #94a3b8; }
+  .extra-value { color: #e2dee9; }
+
+  // 降雨警示
+  .weather-warning { background: #3b1010; border-color: #5c2020; }
+  .warning-title { color: #f87171; }
+  .warning-text { color: #fca5a5; }
+
+  // 出行建议
+  .advice-item {
+    &.good { background: #0a2e1a; border-color: #1a5c3a; color: #4ade80; }
+    &.caution { background: #2e1f0a; border-color: #5c3d1a; color: #fbbf24; }
+    &.neutral { background: #1a1a2e; border-color: #2d2d4a; color: #94a3b8; }
+  }
+
+  // 未来预报
+  .weather-forecast { border-top-color: #2d2d4a; }
+  .forecast-title { color: #94a3b8; }
+  .forecast-hint { color: #64748b; }
+  .forecast-item {
+    background: #1a1a2e;
+    &.today { background: #14142e; border-color: #2d3f8c; }
+    &.expanded { background: #1a1a3e; border-color: #4a6bd4; }
+    &:hover { background: #1e1e3c; }
+    &.today:hover { background: #1a2040; }
+  }
+  .forecast-date { color: #94a3b8; }
+  .today-badge { background: #1a2050; color: #93c5fd; }
+  .forecast-weather { color: #e2dee9; }
+  .forecast-expand-icon { color: #64748b; &.rotated { color: #93c5fd; } }
+  .temp-track { background: #2d2d4a; }
+  .temp-low { color: #93c5fd; }
+  .temp-high { color: #f87171; }
+
+  // 逐小时
+  .weather-hourly { border-top-color: #2d2d4a; }
+  .hourly-title { color: #94a3b8; }
+  .hourly-scroll {
+    &::-webkit-scrollbar-track { background: #1a1a2e; }
+    &::-webkit-scrollbar-thumb { background: #3d3d5c; }
+  }
+  .hourly-item {
+    background: #1a1a2e;
+    &.now { background: #14142e; border-color: #4a6bd4; .hourly-time { color: #93c5fd; } .hourly-temp { color: #93c5fd; } }
+  }
+  .hourly-time { color: #94a3b8; }
+  .hourly-temp { color: #e2dee9; }
+  .hourly-wind { color: #64748b; }
+
+  // 展开详情
+  .forecast-detail { background: #1a1a2e; border-color: #2d2d4a; }
+  .detail-subtitle { color: #94a3b8; }
+  .detail-hourly-chip { background: #13132a; border-color: #252540; }
+  .chip-time { color: #94a3b8; }
+  .chip-temp { color: #e2dee9; }
+  .detail-card {
+    &.day { background: linear-gradient(135deg, #1a1a0e, #1f1a0e); border-color: #5c3d1a; }
+    &.night { background: linear-gradient(135deg, #14142e, #13132e); border-color: #2d3f8c; }
+  }
+  .detail-card-header { color: #94a3b8; }
+  .detail-card-temp { color: #e2dee9; }
+  .detail-card-desc { color: #94a3b8; }
+  .detail-card-wind { color: #64748b; }
+  .detail-meta { color: #64748b; }
+
+  // 底部
+  .weather-footer { border-top-color: #2d2d4a; color: #64748b; }
+
+  // Direct 模式
+  .weather-direct-panel {
+    background: #1a1a2e;
+    border-color: #2d2d4a;
+  }
+  .weather-direct-header {
+    background: linear-gradient(135deg, #14142e, #13132e);
+    border-bottom-color: #2d3f8c;
+  }
+  .weather-direct-header-title { color: #e2dee9; }
+}
 </style>

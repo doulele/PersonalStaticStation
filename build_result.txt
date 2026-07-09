@@ -1,0 +1,12 @@
+file:///f:/personal/%E4%B8%AA%E4%BA%BA%E7%BD%91%E7%AB%99%E9%A1%B9%E7%9B%AE/PersonalStaticStation/node_modules/vite/dist/node/cli.js:443
+          throw new CACError(`Unknown option \`${name.length > 1 ? `--${name}` : `-${name}`}\``);
+                ^
+
+CACError: Unknown option `-S`
+    at Command.checkUnknownOptions (file:///f:/personal/%E4%B8%AA%E4%BA%BA%E7%BD%91%E7%AB%99%E9%A1%B9%E7%9B%AE/PersonalStaticStation/node_modules/vite/dist/node/cli.js:443:17)
+    at CAC.runMatchedCommand (file:///f:/personal/%E4%B8%AA%E4%BA%BA%E7%BD%91%E7%AB%99%E9%A1%B9%E7%9B%AE/PersonalStaticStation/node_modules/vite/dist/node/cli.js:641:13)
+    at CAC.parse (file:///f:/personal/%E4%B8%AA%E4%BA%BA%E7%BD%91%E7%AB%99%E9%A1%B9%E7%9B%AE/PersonalStaticStation/node_modules/vite/dist/node/cli.js:580:12)
+    at file:///f:/personal/%E4%B8%AA%E4%BA%BA%E7%BD%91%E7%AB%99%E9%A1%B9%E7%9B%AE/PersonalStaticStation/node_modules/vite/dist/node/cli.js:927:5
+    at ModuleJob.run (node:internal/modules/esm/module_job:185:25)
+    at async Promise.all (index 0)
+    at async ESMLoader.import (node:internal/modules/esm/loader:281:24)

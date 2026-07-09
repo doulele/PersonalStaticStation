@@ -844,4 +844,68 @@ async function handleAiRecommend() {
     min-height: 180px;
   }
 }
+
+// ==================== 夜间模式 ====================
+:global(html.dark-mode .plan-page) {
+  background: #0f0f1a;
+}
+
+:global(html.dark-mode) {
+  // 顶栏
+  .plan-topbar {
+    background: linear-gradient(135deg, #1a1a2e 0%, #14142e 100%);
+    border-bottom-color: rgba(45, 45, 74, 0.8);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  }
+  .back-btn {
+    color: #94a3b8;
+    &:hover { color: #a78bfa; background: #1e1e3c; }
+  }
+  .topbar-divider { background: #2d2d4a; }
+  .attraction-title {
+    .title-name { color: #e2dee9; }
+    .title-subtitle { color: #64748b; }
+  }
+  .info-pill { background: #1e1e3c; color: #94a3b8; }
+
+  // 交通切换
+  .transport-toggle {
+    background: #1e1e3c; border-color: #2d2d4a;
+    .toggle-option {
+      color: #94a3b8;
+      &:hover { color: #e2dee9; background: rgba(255,255,255,0.06); }
+      &.active { background: #252540; color: #4ade80; }
+    }
+  }
+
+  // 推荐切换
+  .recommend-toggle {
+    background: #1e1e3c; border-color: #2d2d4a;
+    .toggle-option {
+      color: #94a3b8;
+      &:hover:not(:disabled) { color: #e2dee9; background: rgba(255,255,255,0.06); }
+      &.active { background: #252540; color: #a78bfa; }
+      &.ai.active { color: #fbbf24; }
+      &:disabled { opacity: 0.3; }
+    }
+  }
+
+  // 地图
+  .map-section { background: #0f0f1a; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+
+  // 滚动条
+  .panels-area {
+    &::-webkit-scrollbar-thumb { background: #3d3d5c; }
+  }
+
+  // 底部悬浮栏
+  .floating-bar {
+    background: rgba(19, 19, 42, 0.97);
+    border-top-color: rgba(45, 45, 74, 0.7);
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.2);
+  }
+  .stat-item { color: #94a3b8; }
+  .stat-label strong { color: #e2dee9; }
+  .stat-divider { background: #2d2d4a; }
+}
 </style>

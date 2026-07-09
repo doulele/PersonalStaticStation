@@ -65,6 +65,41 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --footer-beian: #5a6478;
   --footer-beian-hover: #8892a6;
 
+  // 页面组件通用变量（浅色）
+  --surface-bg: #f8fafc;
+  --surface-border: #e2e8f0;
+  --surface-hover-bg: #ffffff;
+  --surface-hover-border: #6366f1;
+  --heading-color: #0f172a;
+  --muted-color: #64748b;
+  --muted-color-light: #94a3b8;
+  --hero-bg: #0a0a0f;
+  --hero-text: #ffffff;
+  --hero-text-muted: rgba(255, 255, 255, 0.6);
+  --hero-border: rgba(255, 255, 255, 0.15);
+  --section-bg: #ffffff;
+  --tool-icon-color: #ffffff;
+  --tag-bg: rgba(245, 158, 11, 0.1);
+  --tag-color: #f59e0b;
+  --toggle-bg: #f1f5f9;
+  --toggle-border: #e2e8f0;
+  --toggle-color: #6366f1;
+  --toggle-hover-bg: #eef2ff;
+  --toggle-hover-border: #6366f1;
+  --badge-bg: rgba(99, 102, 241, 0.15);
+  --badge-border: rgba(99, 102, 241, 0.3);
+  --badge-color: #818cf8;
+  --shadow-card: 0 8px 30px rgba(99, 102, 241, 0.1);
+  --gradient-accent: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+  --gradient-card-left: linear-gradient(180deg, #6366f1, #a855f7);
+  --gradient-icon-default: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  --gradient-icon-blue: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  --gradient-icon-green: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  --gradient-icon-orange: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+  --gradient-icon-purple: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+  --gradient-icon-red: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+  --gradient-icon-yellow: linear-gradient(135deg, #f59e0b 0%, #eab308 100%);
+
   // Element Plus 浅色模式变量
   --el-bg-color: #ffffff;
   --el-bg-color-overlay: #ffffff;
@@ -80,7 +115,7 @@ $transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 // ===== 深色模式覆盖 =====
 html.dark-mode {
   --primary-color: #a78bfa;
-  --bg-color: #0f0f1a;
+  --bg-color: #000000;
   --bg-white: #1e1e2e;
   --text-primary: #e2dee9;
   --text-regular: #94a3b8;
@@ -107,6 +142,41 @@ html.dark-mode {
   --footer-divider: #3a3a5a;
   --footer-beian: #4a5568;
   --footer-beian-hover: #64748b;
+
+  // 页面组件通用变量（深色）
+  --surface-bg: #1e1e2e;
+  --surface-border: #2d2d4a;
+  --surface-hover-bg: #252540;
+  --surface-hover-border: #a78bfa;
+  --heading-color: #e2dee9;
+  --muted-color: #94a3b8;
+  --muted-color-light: #64748b;
+  --hero-bg: #0a0a14;
+  --hero-text: #e2dee9;
+  --hero-text-muted: rgba(226, 222, 233, 0.5);
+  --hero-border: rgba(255, 255, 255, 0.08);
+  --section-bg: #0f0f1a;
+  --tool-icon-color: #ffffff;
+  --tag-bg: rgba(245, 158, 11, 0.15);
+  --tag-color: #fbbf24;
+  --toggle-bg: #252540;
+  --toggle-border: #2d2d4a;
+  --toggle-color: #a78bfa;
+  --toggle-hover-bg: #2d2d4a;
+  --toggle-hover-border: #a78bfa;
+  --badge-bg: rgba(167, 139, 250, 0.15);
+  --badge-border: rgba(167, 139, 250, 0.25);
+  --badge-color: #a78bfa;
+  --shadow-card: 0 8px 30px rgba(0, 0, 0, 0.2);
+  --gradient-accent: linear-gradient(135deg, #a78bfa 0%, #c084fc 50%, #f472b6 100%);
+  --gradient-card-left: linear-gradient(180deg, #a78bfa, #c084fc);
+  --gradient-icon-default: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+  --gradient-icon-blue: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  --gradient-icon-green: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  --gradient-icon-orange: linear-gradient(135deg, #f59e0b 0%, #fb923c 100%);
+  --gradient-icon-purple: linear-gradient(135deg, #8b5cf6 0%, #c084fc 100%);
+  --gradient-icon-red: linear-gradient(135deg, #ef4444 0%, #fb923c 100%);
+  --gradient-icon-yellow: linear-gradient(135deg, #f59e0b 0%, #facc15 100%);
 
   // Element Plus 深色模式变量
   --el-bg-color: #1e1e2e;
@@ -156,23 +226,44 @@ html.dark-mode {
     border-color: #2d2d4a !important;
   }
 
+  // ===== el-tag 暗色 CSS 变量（Element Plus 组件级变量） =====
+  --el-tag-bg-color: #252540;
+  --el-tag-border-color: #2d2d4a;
+  --el-tag-text-color: #94a3b8;
+  --el-tag-close-hover-color: #a78bfa;
+
   .el-tag--plain {
     background: #252540;
     border-color: #2d2d4a;
     color: #94a3b8;
   }
 
+  // 直接覆盖 el-tag（确保所有类型生效）
+  .el-tag {
+    background-color: #252540 !important;
+    border-color: #2d2d4a !important;
+    color: #94a3b8 !important;
+  }
+  .el-tag.el-tag--info {
+    background-color: rgba(124, 58, 237, 0.12) !important;
+    border-color: rgba(124, 58, 237, 0.22) !important;
+    color: #a78bfa !important;
+  }
+
   .el-input__wrapper {
-    background: #252540;
-    box-shadow: 0 0 0 1px #2d2d4a inset;
+    background-color: #252540 !important;
+    box-shadow: 0 0 0 1px #2d2d4a inset !important;
+    &:hover { box-shadow: 0 0 0 1px #4c3d8f inset !important; }
+    &.is-focus { box-shadow: 0 0 0 1px #7c3aed inset !important; }
   }
 
   .el-input__inner {
-    color: #e2dee9;
+    color: #e2dee9 !important;
+    &::placeholder { color: #4b5563; }
   }
 
   .el-select .el-input .el-input__wrapper {
-    background: #252540;
+    background-color: #252540 !important;
   }
 
   // 表格
@@ -183,6 +274,51 @@ html.dark-mode {
     --el-table-border-color: #2d2d4a;
     --el-table-text-color: #e2dee9;
     --el-table-row-hover-bg-color: #252540;
+    --el-table-striped-row-bg-color: #222236;
+    --el-table-current-row-bg-color: #252540;
+    --el-fill-color-lighter: #252540;
+  }
+
+  // 直接覆盖表头（适配所有表格）
+  .el-table__header-wrapper th,
+  .el-table__header th {
+    background-color: #252540 !important;
+    color: #e2dee9 !important;
+    border-bottom-color: #2d2d4a !important;
+  }
+
+  // 排序图标颜色
+  .el-table th.el-table__cell .cell .caret-wrapper {
+    color: #94a3b8;
+  }
+
+  // 直接覆盖表格行背景（防止 CSS 变量继承失败）
+  .el-table__body tr,
+  .el-table__body tr.el-table__row {
+    background-color: #1e1e2e;
+  }
+
+  .el-table--striped .el-table__body tr.el-table__row--striped td {
+    background-color: #222236;
+  }
+
+  .el-table__body tr:hover > td {
+    background-color: #252540 !important;
+  }
+
+  // pc-table 组件 dark mode 覆盖（覆盖组件 scoped 硬编码浅色）
+  .pc-table {
+    .el-table__header th {
+      background: #252540 !important;
+      color: #e2dee9 !important;
+      border-bottom-color: #2d2d4a !important;
+    }
+    .el-table__body td {
+      border-bottom-color: #2d2d4a !important;
+    }
+    .el-table__body tr:hover > td {
+      background: #252540 !important;
+    }
   }
 
   // 分页
@@ -202,6 +338,1872 @@ html.dark-mode {
     &.is-active {
       color: #a78bfa;
     }
+  }
+
+  // ===== 彩票/工具面板通用组件暗色适配 =====
+  // 卡片（panelCommon）
+  .card {
+    background: var(--bg-white) !important;
+    border-color: var(--surface-border) !important;
+    box-shadow: var(--box-shadow) !important;
+    &:hover { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important; }
+  }
+  .card-title {
+    color: var(--heading-color) !important;
+  }
+  .collapse-icon {
+    color: var(--muted-color-light) !important;
+  }
+  .card-header {
+    .header-dot { /* keep original gradient */ }
+  }
+
+  // 控制面板
+  .control-panel {
+    background: var(--bg-white) !important;
+    border-color: var(--surface-border) !important;
+    box-shadow: var(--box-shadow) !important;
+  }
+  .form-item label {
+    color: var(--muted-color) !important;
+  }
+
+  // 概率热力图
+  .prob-cell {
+    background: var(--surface-bg) !important;
+    border-color: var(--surface-border) !important;
+    color: var(--muted-color-light) !important;
+    strong, small { /* inherit from parent */ }
+    &.hot {
+      background: rgba(254, 68, 68, 0.12) !important;
+      border-color: rgba(252, 165, 165, 0.4) !important;
+      color: #fca5a5 !important;
+      strong { color: #f87171 !important; }
+      small { color: #f87171 !important; }
+    }
+    &.warm {
+      background: rgba(251, 191, 36, 0.12) !important;
+      border-color: rgba(252, 211, 77, 0.4) !important;
+      color: #fcd34d !important;
+      strong { color: #fbbf24 !important; }
+      small { color: #f59e0b !important; }
+    }
+  }
+
+  // 推荐 Tab 切换
+  .rec-tabs {
+    background: var(--surface-bg) !important;
+  }
+  .rec-tab {
+    color: var(--muted-color) !important;
+    &:hover { color: var(--text-regular) !important; background: rgba(255, 255, 255, 0.06) !important; }
+    &.active {
+      background: var(--bg-white) !important;
+      color: var(--heading-color) !important;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2) !important;
+    }
+  }
+
+  // 推荐方案区域
+  .rec-section-header {
+    border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+  }
+  .rec-section-icon {
+    background: rgba(255, 255, 255, 0.06) !important;
+  }
+  .rec-label {
+    color: var(--heading-color) !important;
+  }
+  .rec-desc {
+    color: var(--muted-color-light) !important;
+  }
+
+  // 高级筛选面板
+  .advanced-toggle {
+    color: var(--nav-active-color) !important;
+    background: var(--nav-active-bg) !important;
+    &:hover { background: rgba(124, 58, 237, 0.1) !important; }
+  }
+  .advanced-panel {
+    background: var(--surface-bg) !important;
+    border-color: var(--surface-border) !important;
+  }
+  .adv-item label {
+    color: var(--text-regular) !important;
+    .adv-hint { color: var(--muted-color-light) !important; }
+  }
+  .adv-slider-val {
+    color: var(--nav-active-color) !important;
+  }
+  .adv-toggle-item {
+    color: var(--text-regular) !important;
+  }
+  .adv-range span {
+    color: var(--muted-color-light) !important;
+  }
+
+  // 骨架屏
+  .skeleton {
+    background: linear-gradient(90deg, #252540 25%, #2d2d4a 50%, #252540 75%) !important;
+  }
+
+  // 空状态
+  .empty-state {
+    color: var(--muted-color-light) !important;
+  }
+
+  // ===== WinQueryPanel 暗色适配 =====
+  .win-query-panel {
+    // 输入模式切换
+    .mode-tab {
+      background: var(--bg-white) !important;
+      border-color: var(--surface-border) !important;
+      color: var(--text-regular) !important;
+      &:hover {
+        border-color: var(--muted-color-light) !important;
+        background: var(--surface-bg) !important;
+      }
+      &.active {
+        background: linear-gradient(135deg, #7c3aed, #a78bfa) !important;
+        color: #fff !important;
+      }
+    }
+
+    // 手动输入区
+    .manual-section,
+    .camera-section,
+    .ocr-edit-panel {
+      background: var(--bg-white) !important;
+      border-color: var(--surface-border) !important;
+    }
+    .input-label,
+    .camera-label {
+      color: var(--text-regular) !important;
+    }
+    .draw-date-tag,
+    .group-hint {
+      color: var(--muted-color-light) !important;
+    }
+    .group-title {
+      color: var(--heading-color) !important;
+    }
+
+    // 号码选择球
+    .picker-ball {
+      background: var(--bg-white) !important;
+      border-color: var(--surface-border) !important;
+      color: var(--text-regular) !important;
+      &:hover {
+        border-color: var(--muted-color-light) !important;
+      }
+    }
+
+    // 彩种切换
+    .type-btn {
+      background: var(--bg-white) !important;
+      border-color: var(--surface-border) !important;
+      color: var(--text-regular) !important;
+      &:hover { border-color: var(--muted-color-light) !important; }
+      &.active {
+        border-color: var(--nav-active-color) !important;
+        color: var(--nav-active-color) !important;
+        background: var(--nav-active-bg) !important;
+      }
+    }
+
+    // 拍照按钮
+    .camera-btn {
+      background: var(--surface-bg) !important;
+      border-color: var(--surface-border) !important;
+      color: var(--text-regular) !important;
+      &:hover {
+        border-color: var(--nav-active-color) !important;
+        color: var(--nav-active-color) !important;
+        background: var(--nav-active-bg) !important;
+      }
+    }
+
+    // 解析模式
+    .parse-mode-pills {
+      background: var(--surface-bg) !important;
+    }
+    .parse-pill {
+      color: var(--muted-color-light) !important;
+      &:hover:not(.active) { color: var(--text-regular) !important; }
+      &.active {
+        background: var(--bg-white) !important;
+        color: var(--heading-color) !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+      }
+    }
+
+    // OCR 结果
+    .ocr-result-card {
+      background: var(--surface-bg) !important;
+      border-color: var(--surface-border) !important;
+    }
+    .ocr-result-header {
+      color: var(--heading-color) !important;
+    }
+    .ocr-issue,
+    .ocr-group-count {
+      color: var(--muted-color-light) !important;
+    }
+    .ocr-group-count {
+      background: var(--surface-hover-bg) !important;
+    }
+    .ocr-result-balls.clickable:hover {
+      background: var(--surface-bg) !important;
+    }
+
+    // OCR 准确度提示
+    .ocr-accuracy-hint {
+      background: rgba(59, 130, 246, 0.1) !important;
+      border-color: rgba(59, 130, 246, 0.2) !important;
+      color: #93c5fd !important;
+      &.ocr-only-warn {
+        background: rgba(251, 191, 36, 0.1) !important;
+        border-color: rgba(251, 191, 36, 0.2) !important;
+        color: #fcd34d !important;
+      }
+    }
+
+    // 编辑面板
+    .edit-section-title {
+      color: var(--text-regular) !important;
+    }
+    .edit-count {
+      color: var(--muted-color-light) !important;
+    }
+    .edit-cell {
+      background: var(--surface-bg) !important;
+      border-color: var(--surface-border) !important;
+      color: var(--muted-color-light) !important;
+      &:hover:not(:disabled) {
+        border-color: var(--muted-color) !important;
+        background: var(--surface-hover-bg) !important;
+        color: var(--text-regular) !important;
+      }
+      &:disabled {
+        background: var(--surface-hover-bg) !important;
+      }
+    }
+    .edit-action-btn.cancel {
+      background: var(--surface-bg) !important;
+      color: var(--muted-color) !important;
+      border-color: var(--surface-border) !important;
+      &:hover { background: var(--surface-hover-bg) !important; }
+    }
+
+    // 中奖规则
+    .rules-row {
+      background: var(--surface-bg) !important;
+    }
+    .rules-level {
+      color: var(--text-regular) !important;
+    }
+    .rules-desc {
+      color: var(--muted-color) !important;
+    }
+    .rules-link-btn {
+      color: var(--muted-color-light) !important;
+      &:hover { color: var(--nav-active-color) !important; }
+    }
+
+    // 开奖号码卡片
+    .draw-result-card,
+    .your-numbers-card {
+      background: var(--bg-white) !important;
+      border-color: var(--surface-border) !important;
+    }
+    .card-title {
+      color: var(--heading-color) !important;
+      .card-date { color: var(--muted-color-light) !important; }
+    }
+    .draw-sep,
+    .your-sep,
+    .ball-sep {
+      color: var(--muted-color-light) !important;
+    }
+    .your-numbers-card .card-title {
+      color: var(--text-regular) !important;
+    }
+    .match-count {
+      color: var(--heading-color) !important;
+    }
+
+    // 中奖详情
+    .prize-detail-row {
+      background: var(--surface-bg) !important;
+    }
+    .prize-detail-label {
+      color: var(--muted-color-light) !important;
+    }
+
+    // 奖级背景
+    .prize-level-0 { background: #252540 !important; }
+    .prize-level-7, .prize-level-8, .prize-level-9 { background: #252540 !important; }
+
+    // OCR 组标签
+    .ocr-group-prize-tag.level-0 {
+      background: var(--surface-bg) !important;
+      .prize-tag-detail { color: var(--muted-color-light) !important; }
+    }
+
+    // 错误信息
+    .error-msg {
+      background: rgba(254, 68, 68, 0.1) !important;
+      border-color: rgba(254, 68, 68, 0.2) !important;
+      color: #fca5a5 !important;
+    }
+
+    // 重新选择按钮
+    .reset-select-btn {
+      background: var(--surface-bg) !important;
+      border-color: var(--surface-border) !important;
+      color: var(--muted-color) !important;
+      &:hover {
+        border-color: #f87171 !important;
+        color: #f87171 !important;
+        background: rgba(254, 68, 68, 0.1) !important;
+      }
+    }
+
+    // 拍照跳过等按钮
+    .crop-action-btn.skip {
+      background: var(--surface-hover-bg) !important;
+      color: var(--text-regular) !important;
+      &:hover { background: var(--surface-border) !important; }
+    }
+    .crop-action-btn.reset {
+      color: var(--muted-color-light) !important;
+      border-color: var(--surface-border) !important;
+      &:hover { color: var(--text-regular) !important; border-color: var(--muted-color) !important; }
+    }
+  }
+
+  // ===== 基金/股票工具搜索页暗色适配 =====
+  .fund-drawdown {
+    .search-toolbar {
+      background: var(--bg-white) !important;
+      border-color: var(--surface-border) !important;
+      box-shadow: var(--box-shadow) !important;
+    }
+    .toolbar-label {
+      color: var(--text-regular) !important;
+    }
+    .toolbar-code-input .el-input__wrapper {
+      background: var(--surface-bg) !important;
+      border-color: var(--surface-border) !important;
+      &:hover { background: var(--surface-hover-bg) !important; border-color: var(--muted-color) !important; }
+      &.is-focus { background: var(--bg-white) !important; border-color: var(--nav-active-color) !important; }
+    }
+    .toolbar-date-picker .el-input__wrapper {
+      background: var(--surface-bg) !important;
+      border-color: var(--surface-border) !important;
+      &:hover { border-color: var(--muted-color) !important; }
+    }
+  }
+
+  // ===== 股票筛选页暗色适配 =====
+  .stock-filter-page {
+    .search-toolbar,
+    .filter-card,
+    .result-card {
+      background: var(--bg-white) !important;
+      border-color: var(--surface-border) !important;
+    }
+  }
+
+  // ===== 通用白底容器（安全覆盖，低优先级） =====
+  // 只覆盖最外层直接子元素，避免影响嵌套组件
+  .page-header {
+    .page-title { color: var(--heading-color) !important; }
+    .page-desc { color: var(--text-secondary) !important; }
+  }
+
+  // ===== 工具列表页面卡片 hover 状态 =====
+  .tool-card-inner {
+    background: var(--surface-bg) !important;
+    border-color: var(--surface-border) !important;
+    &:hover {
+      background: var(--surface-hover-bg) !important;
+      border-color: var(--nav-active-color) !important;
+      box-shadow: 0 8px 30px rgba(99, 102, 241, 0.08) !important;
+    }
+  }
+  .tool-info h3 { color: var(--heading-color) !important; }
+  .tool-info p { color: var(--muted-color) !important; }
+  .tool-arrow { color: var(--muted-color-light) !important; }
+
+  // ===== 基金/股票详情页 =====
+  .fund-detail-card, .stock-detail-card {
+    background: var(--bg-white) !important;
+    border-color: var(--surface-border) !important;
+  }
+
+  // ===== 基金筛选面板 =====
+  .filter-card, .fund-card, .bond-filter-card {
+    background: var(--bg-white) !important;
+    border-color: var(--surface-border) !important;
+  }
+
+  // ===== 股票详情页 (stockDetail.vue) 暗色模式 =====
+  .stock-detail-page {
+    // 返回按钮
+    .back-btn { color: var(--muted-color-light) !important; &:hover { color: var(--heading-color) !important; } }
+    // 错误/空状态
+    .error-desc { color: var(--muted-color) !important; }
+
+    // 卡片容器
+    .el-card { background: var(--bg-white) !important; border-color: var(--surface-border) !important; }
+    .detail-section { background: var(--bg-white) !important; border-color: var(--surface-border) !important; }
+    .detail-panel {
+      border-color: var(--surface-border) !important;
+      .el-card__header { background: var(--surface-bg) !important; border-bottom-color: var(--surface-border) !important; }
+    }
+
+    // 阶段标签（暗色模式保持原有配色，略降饱和度）
+    .stage-tag {
+      &.tag-pre { background: rgba(254,243,199,0.15); color: #fbbf24; }
+      &.tag-early { background: rgba(219,234,254,0.15); color: #60a5fa; }
+      &.tag-mid { background: rgba(254,249,195,0.15); color: #facc15; }
+      &.tag-risk { background: rgba(254,226,226,0.15); color: #f87171; }
+    }
+
+    // 指标卡片行
+    .metric-card {
+      background: var(--bg-white) !important;
+      border-color: var(--surface-border) !important;
+      &:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.15) !important; }
+      .metric-value { color: var(--text-primary) !important; }
+      .metric-label { color: var(--muted-color) !important; }
+      .metric-desc { color: var(--muted-color) !important; }
+    }
+
+    // 因子评分明细
+    .factor-head { span:first-child { color: var(--text-regular) !important; } }
+    .bonus-row {
+      border-left-color: var(--surface-border) !important;
+      .factor-head span:first-child { color: var(--muted-color) !important; }
+    }
+    .el-progress-bar__outer { background: #252540 !important; }
+
+    // 阶段研判
+    .stage-desc { color: var(--muted-color) !important; }
+    .target-label { color: var(--muted-color) !important; }
+    .target-unit { color: var(--muted-color) !important; }
+    .target-note { color: var(--muted-color) !important; }
+
+    // 介入 & 止损止盈
+    .es-item {
+      background: var(--surface-bg) !important;
+      border-color: var(--surface-border) !important;
+      .es-value { color: var(--text-primary) !important; }
+      &.es-entry {
+        background: rgba(14,165,233,0.08) !important; border-color: rgba(14,165,233,0.2) !important;
+        .es-value { color: #38bdf8 !important; }
+      }
+      &.es-stop {
+        background: rgba(22,163,74,0.08) !important; border-color: rgba(22,163,74,0.2) !important;
+        .es-value { color: #4ade80 !important; }
+      }
+      &.es-tp1 {
+        background: rgba(239,68,68,0.08) !important; border-color: rgba(239,68,68,0.2) !important;
+        .es-value { color: #f87171 !important; }
+      }
+      &.es-tp2 {
+        background: rgba(220,38,38,0.08) !important; border-color: rgba(220,38,38,0.2) !important;
+        .es-value { color: #f87171 !important; }
+      }
+    }
+    .es-rr { color: var(--muted-color) !important; }
+    .launch-info { color: var(--muted-color) !important; }
+
+    // 特征列表
+    .feature-list li {
+      color: var(--text-regular) !important;
+      border-bottom-color: var(--surface-border) !important;
+      &:hover { background: var(--surface-hover-bg) !important; }
+    }
+
+    // 辅助指标
+    .aux-item { border-bottom-color: var(--surface-border) !important; }
+    .aux-label { color: var(--muted-color) !important; }
+    .aux-value { color: var(--text-primary) !important; }
+
+    // 策略面板
+    .strategy-panel {
+      border-color: var(--surface-border) !important;
+      .el-card__header { background: var(--surface-bg) !important; border-bottom-color: var(--surface-border) !important; }
+    }
+    .strategy-card {
+      background: var(--surface-bg) !important; border-color: var(--surface-border) !important;
+      &:hover { background: var(--surface-hover-bg) !important; }
+      .sc-value { color: var(--text-primary) !important; }
+      .sc-icon-position { background: rgba(59,130,246,0.12) !important; }
+      .sc-icon-cycle { background: rgba(34,197,94,0.12) !important; }
+      .sc-icon-rule { background: rgba(239,68,68,0.12) !important; }
+      .sc-icon-focus { background: rgba(234,179,8,0.12) !important; }
+    }
+
+    // 操作要点清单
+    .strategy-checklist {
+      background: linear-gradient(135deg, rgba(254,252,232,0.08) 0%, rgba(255,251,235,0.06) 100%) !important;
+      border-color: rgba(253,230,138,0.2) !important;
+      .checklist-title { color: #fbbf24 !important; }
+      .checklist-item {
+        color: var(--text-regular) !important;
+        border-bottom-color: rgba(253,230,138,0.15) !important;
+      }
+    }
+
+    // 风险提醒
+    .risk-reminder { color: var(--muted-color) !important; }
+
+    // 底部说明
+    .footer-note { color: var(--muted-color) !important; }
+  }
+
+  // ===== 大道七线详情页 (DaDaoQiXianDetail.vue) 暗色模式 =====
+  .dadao-detail-page {
+    // 返回栏
+    .detail-back-bar .back-title { color: var(--muted-color) !important; }
+    // 错误状态
+    .error-desc { color: var(--muted-color) !important; }
+
+    // section 卡片
+    .detail-section-card {
+      background: var(--bg-white) !important;
+      border-color: var(--surface-border) !important;
+    }
+    .section-title {
+      color: var(--heading-color) !important;
+      border-bottom-color: var(--surface-border) !important;
+    }
+
+    // 综合评估
+    .assessment-card {
+      &.assessment-strong-bull {
+        background: rgba(22,163,74,0.08) !important; border-color: rgba(22,163,74,0.25) !important;
+        .assessment-label { color: #4ade80 !important; }
+      }
+      &.assessment-bull {
+        background: rgba(34,197,94,0.08) !important; border-color: rgba(34,197,94,0.25) !important;
+        .assessment-label { color: #4ade80 !important; }
+      }
+      &.assessment-neutral-bull {
+        background: rgba(234,179,8,0.08) !important; border-color: rgba(234,179,8,0.25) !important;
+        .assessment-label { color: #facc15 !important; }
+      }
+      &.assessment-neutral {
+        background: var(--surface-bg) !important; border-color: var(--surface-border) !important;
+        .assessment-label { color: var(--muted-color) !important; }
+      }
+      &.assessment-bear {
+        background: rgba(248,113,113,0.08) !important; border-color: rgba(248,113,113,0.25) !important;
+        .assessment-label { color: #f87171 !important; }
+      }
+      &.assessment-strong-bear {
+        background: rgba(220,38,38,0.08) !important; border-color: rgba(220,38,38,0.25) !important;
+        .assessment-label { color: #ef4444 !important; }
+      }
+    }
+    .assessment-score { color: var(--text-primary) !important; }
+    .assessment-bar-bg { background: #252540 !important; }
+    .assessment-text { color: var(--muted-color) !important; }
+
+    // 信号标签 — 全部用半透明暗色覆盖
+    .signal-tags .el-tag {
+      &.el-tag--success { background: rgba(16,185,129,0.12) !important; color: #34d399 !important; border-color: transparent !important; }
+      &.el-tag--warning { background: rgba(230,162,60,0.12) !important; color: #f0c060 !important; border-color: transparent !important; }
+      &.el-tag--danger { background: rgba(255,71,87,0.12) !important; color: #ff6b81 !important; border-color: transparent !important; }
+      &.el-tag--info { background: rgba(148,163,184,0.12) !important; color: #94a3b8 !important; border-color: transparent !important; }
+      &.el-tag--dark.el-tag--success { background: rgba(16,185,129,0.2) !important; }
+      &.el-tag--dark.el-tag--danger { background: rgba(255,71,87,0.2) !important; }
+      &.el-tag--dark.el-tag--warning { background: rgba(230,162,60,0.2) !important; }
+      &.el-tag--plain.el-tag--success { background: rgba(16,185,129,0.08) !important; border-color: rgba(16,185,129,0.2) !important; color: #34d399 !important; }
+    }
+
+    // 七线位置图
+    .ma-position-track::before { background: var(--surface-border) !important; }
+    .track-row:hover { background: var(--surface-hover-bg) !important; }
+    .track-dot.dot-price {
+      background: #e2e8f0 !important;
+      box-shadow: 0 0 0 3px rgba(226,232,240,0.15) !important;
+    }
+    .track-name { color: var(--muted-color) !important; }
+    .track-name.name-price { color: var(--heading-color) !important; }
+    .track-val { color: var(--muted-color) !important; }
+    .track-val.val-price { color: var(--heading-color) !important; }
+    .track-tag.tag-resist { background: rgba(248,113,113,0.12) !important; color: #f87171 !important; }
+    .track-tag.tag-suppt { background: rgba(34,197,94,0.12) !important; color: #4ade80 !important; }
+    .track-price-row {
+      background: linear-gradient(90deg, rgba(99,102,241,0.06) 0%, var(--surface-bg) 100%) !important;
+    }
+
+    // 七线详情表
+    .ma-detail-table { border-color: var(--surface-border) !important; }
+    .ma-detail-header {
+      background: var(--surface-bg) !important; color: var(--muted-color) !important;
+      border-bottom-color: var(--surface-border) !important;
+    }
+    .ma-detail-row {
+      border-bottom-color: var(--surface-border) !important;
+      &:hover { background: var(--surface-hover-bg) !important; }
+    }
+    .ma-col-name { color: var(--heading-color) !important; }
+    .ma-col-value { color: var(--text-regular) !important; }
+
+    // 技术指标区块
+    .indicator-block {
+      background: var(--surface-bg) !important; border-color: var(--surface-border) !important;
+    }
+    .indicator-label { color: var(--heading-color) !important; }
+    .indicator-num { color: var(--text-primary) !important; }
+    .rsi-bar-bg { background: #252540 !important; }
+    .rsi-zone-oversold { background: rgba(34,197,94,0.1) !important; }
+    .rsi-zone-neutral { background: rgba(148,163,184,0.08) !important; }
+    .rsi-zone-overbought { background: rgba(239,68,68,0.1) !important; }
+    .rsi-marker { background: #e2e8f0 !important; }
+    .rsi-labels { color: var(--muted-color) !important; }
+    .macd-key { color: var(--muted-color-light) !important; }
+    .vol-key { color: var(--muted-color-light) !important; }
+    .vol-val { color: var(--text-primary) !important; }
+
+    // 涨跌趋势
+    .trend-item {
+      background: var(--surface-bg) !important; border-color: var(--surface-border) !important;
+    }
+    .trend-label { color: var(--muted-color-light) !important; }
+
+    // 指标弹窗
+    .metric-dialog-body { color: var(--text-regular) !important; }
+    .metric-dialog-body .suggestion { background: var(--surface-bg) !important; }
+
+    // 底部
+    .detail-footer {
+      background: var(--bg-white) !important; color: var(--muted-color) !important;
+      box-shadow: none !important;
+    }
+  }
+
+  // ===== 天气页面全局 =====
+  .weather-page {
+    input, .search-box { background: var(--surface-bg) !important; border-color: var(--surface-border) !important; color: var(--text-primary) !important; }
+    .weather-detail-card { background: var(--bg-white) !important; border-color: var(--surface-border) !important; }
+  }
+
+  // ===== 油价页面卡片 =====
+  .oil-price-page {
+    .price-card { background: var(--bg-white) !important; border-color: var(--surface-border) !important; }
+  }
+
+  // ===== 小说在线听页面 =====
+  .novel-online-page {
+    // 页面背景
+    background: #0f0f1a !important;
+    // 页头
+    .page-title { color: #e2dee9 !important; }
+    .page-desc { color: #94a3b8 !important; }
+    // 搜索框
+    .search-box {
+      background: #252540 !important; border-color: #2d2d4a !important; box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+      &:focus-within { border-color: #7c3aed !important; box-shadow: 0 4px 20px rgba(124,58,237,0.12) !important; }
+    }
+    .search-icon { color: #6b7280 !important; }
+    .search-input { color: #e2dee9 !important; &::placeholder { color: #4b5563 !important; } }
+    .clear-icon { color: #6b7280 !important; &:hover { color: #cbd5e1 !important; } }
+    // 分类标签
+    .tags-label { color: #6b7280 !important; }
+    .tag-btn {
+      background: #1a1a2e !important; border-color: #2d2d4a !important; color: #94a3b8 !important;
+      &:hover { border-color: #7c3aed !important; color: #a78bfa !important; background: #252040 !important; }
+      &.active { background: #7c3aed !important; color: #fff !important; border-color: #7c3aed !important; }
+    }
+    // 加载/空状态
+    .loading-area { color: #a78bfa !important; }
+    .empty-area .empty-tip { color: #6b7280 !important; }
+    // 结果计数
+    .list-header .result-count { color: #94a3b8 !important; }
+    // 音频卡片
+    .audio-card {
+      background: #1a1a2e !important; border-color: #2d2d4a !important;
+      &:hover { border-color: #7c3aed !important; box-shadow: 0 4px 16px rgba(124,58,237,0.12) !important; }
+      &.playing { border-color: #7c3aed !important; background: #252040 !important; }
+    }
+    .card-cover { background: var(--surface-bg) !important; }
+    .card-info { color: var(--text-primary) !important; }
+    .card-title { color: var(--heading-color) !important; }
+    .card-author, .card-narrator { color: #6b7280 !important; }
+    .meta-chapters { color: #94a3b8 !important; }
+    // 推荐区域
+    .section-title { color: #e2dee9 !important; }
+    // 播放器面板按钮（白底）
+    .play-btn-main { background: #818cf8 !important; color: #fff !important; box-shadow: 0 4px 20px rgba(129,140,248,0.4) !important;
+      &:hover { box-shadow: 0 6px 30px rgba(129,140,248,0.5) !important; }
+      &.playing { background: #6366f1 !important; }
+    }
+    // Element Plus 组件
+    .el-tag { background: #252540 !important; border-color: #2d2d4a !important; color: #94a3b8 !important; }
+    .el-button { --el-button-bg-color: #252540 !important; --el-button-border-color: #2d2d4a !important; --el-button-text-color: #cbd5e1 !important;
+      --el-button-hover-bg-color: #2d2d4a !important; --el-button-hover-border-color: #7c3aed !important;
+      & + .el-button { margin-left: 0 !important; }
+    }
+    .el-button--primary { --el-button-bg-color: #7c3aed !important; --el-button-border-color: #7c3aed !important; --el-button-text-color: #fff !important;
+      --el-button-hover-bg-color: #6d5acf !important; }
+    .el-empty__description p { color: #6b7280 !important; }
+  }
+
+  // ===== 视频解析页面 =====
+  .vip-video-parse-page {
+    // 页面背景
+    background: #0f0f1a !important;
+    // 页头
+    .page-title { color: #e2dee9 !important; }
+    .page-desc { color: #94a3b8 !important; }
+    .page-header { border-bottom-color: #2d2d4a !important; }
+    // 输入模式切换
+    .input-mode-switch { background: #1a1a2e !important; }
+    .input-mode-btn {
+      color: #6b7280 !important;
+      &:hover { color: #a78bfa !important; }
+      &.active { background: #252540 !important; color: #e2dee9 !important; box-shadow: 0 1px 4px rgba(0,0,0,0.2) !important; }
+    }
+    // URL输入框
+    .input-box {
+      background: #252540 !important; border-color: #2d2d4a !important; box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+      &:focus-within { border-color: #7c3aed !important; box-shadow: 0 0 0 3px rgba(124,58,237,0.08) !important; }
+    }
+    // 搜索行
+    .search-row {
+      background: #252540 !important; border-color: #2d2d4a !important; box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+      &:focus-within { border-color: #7c3aed !important; box-shadow: 0 0 0 3px rgba(124,58,237,0.08) !important; }
+    }
+    .input-icon { color: #6b7280 !important; }
+    .url-input { color: #e2dee9 !important; &::placeholder { color: #4b5563 !important; } }
+    .clear-icon { color: #6b7280 !important; &:hover { color: #cbd5e1 !important; } }
+    // 平台选择下拉
+    .platform-select {
+      background: #1a1a2e !important; border-color: #2d2d4a !important; color: #e2dee9 !important;
+      &:focus { border-color: #7c3aed !important; }
+    }
+    // 平台搜索提示
+    .platform-search-hint {
+      background: rgba(251,191,36,0.08) !important; border-color: rgba(251,191,36,0.2) !important; color: #fbbf24 !important;
+      .hint-action { color: #a78bfa !important; }
+    }
+    // 解析模式切换
+    .parse-mode-switch .mode-toggle { background: #1a1a2e !important; }
+    .mode-label { color: #94a3b8 !important; }
+    .mode-btn {
+      color: #6b7280 !important;
+      &.active { background: #252540 !important; color: #a78bfa !important; }
+    }
+    // 解析路径选择
+    .line-select-label { color: #94a3b8 !important; }
+    .line-select-trigger { background: #252540 !important; border-color: #2d2d4a !important; color: #e2dee9 !important;
+      &:hover, &.open { border-color: #7c3aed !important; background: #2d2d4a !important; }
+    }
+    .selected-line-name { color: #e2dee9 !important; }
+    .dropdown-arrow { color: #6b7280 !important; }
+    .line-select-options { background: #1a1a2e !important; border-color: #2d2d4a !important; box-shadow: 0 8px 24px rgba(0,0,0,0.4) !important; }
+    .line-option { &:hover { background: #252540 !important; } &.active { background: #252040 !important; .line-option-name { color: #a78bfa !important; } } }
+    .line-option-name { color: #e2dee9 !important; }
+    .line-option-ping, .line-option-api { color: #6b7280 !important; }
+    .dropdown-header { color: #6b7280 !important; border-bottom-color: #2d2d4a !important; }
+    .manage-lines-btn { background: #252540 !important; border-color: #2d2d4a !important; color: #94a3b8 !important;
+      &:hover { border-color: #7c3aed !important; color: #a78bfa !important; background: #2d2d4a !important; }
+    }
+    // 搜索加载遮罩
+    .search-loading-overlay { background: rgba(0,0,0,0.8) !important; }
+    .search-loading-card { background: #1a1a2e !important; box-shadow: 0 24px 80px rgba(0,0,0,0.5) !important; }
+    .search-loading-title { color: #e2dee9 !important; }
+    .search-loading-query { color: #a78bfa !important; }
+    .search-loading-platform { color: #6b7280 !important; }
+    .search-loading-progress {
+      .progress-bar { background: #2d2d4a !important; }
+      .progress-text { color: #6b7280 !important; }
+    }
+    .search-loading-hint { color: #4b5563 !important; }
+    // 播放器
+    .player-container { background: #1a1a2e !important; border-color: #2d2d4a !important; box-shadow: 0 4px 20px rgba(0,0,0,0.2) !important; }
+    .player-header { background: #1e1e2e !important; border-bottom-color: #2d2d4a !important; }
+    .player-title { color: #e2dee9 !important; }
+    .line-label { color: #6b7280 !important; }
+    .line-btn {
+      background: #252540 !important; border-color: #2d2d4a !important; color: #94a3b8 !important;
+      &:hover { border-color: #7c3aed !important; color: #a78bfa !important; }
+      &.active { background: #7c3aed !important; color: #fff !important; border-color: #7c3aed !important; }
+    }
+    .video-placeholder {
+      color: #94a3b8 !important; p { color: #6b7280 !important; }
+    }
+    .video-placeholder.extracting, .video-placeholder.error {
+      .extract-hint { color: #6b7280 !important; }
+      .error-detail { color: #f87171 !important; }
+    }
+    // 搜索结果头部
+    .search-results-header h3 { color: #e2dee9 !important; }
+    .search-results-header .result-count { color: #6b7280 !important; }
+    .search-platform-badge { background: #252040 !important; color: #a78bfa !important; }
+    // 剧集分组卡片
+    .show-group-card {
+      background: #1a1a2e !important; border-color: #2d2d4a !important; box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+      &:hover { border-color: #7c3aed !important; box-shadow: 0 4px 20px rgba(124,58,237,0.15) !important; }
+      &.expanded { border-color: #7c3aed !important; box-shadow: 0 6px 28px rgba(124,58,237,0.15) !important; }
+    }
+    .show-group-header {
+      &:hover { background: #252540 !important; }
+    }
+    .show-group-name { color: #e2dee9 !important; }
+    .show-group-meta { color: #6b7280 !important; }
+    .show-ep-count { color: #a78bfa !important; }
+    .show-uploader { color: #6b7280 !important; }
+    .show-full-tag { color: #4ade80 !important; }
+    .fetch-playlist-btn {
+      border-color: #7c3aed !important; color: #a78bfa !important;
+      &:hover:not(:disabled) { background: #7c3aed !important; color: #fff !important; }
+      &.loading { background: #7c3aed !important; color: #fff !important; }
+    }
+    .expand-icon { color: #6b7280 !important; }
+    // 剧集展开面板
+    .show-episodes-panel { border-top-color: #2d2d4a !important; background: #141425 !important; }
+    // 剧集卡片
+    .episode-card {
+      background: #1a1a2e !important; border-color: #2d2d4a !important;
+      &:hover { border-color: #7c3aed !important; box-shadow: 0 6px 18px rgba(124,58,237,0.2) !important; }
+      &.playing { border-color: #22c55e !important; box-shadow: 0 0 0 2px rgba(34,197,94,0.3) !important; }
+    }
+    .ep-title { color: #e2dee9 !important; }
+    // 独立视频区域
+    .ungrouped-title { color: #94a3b8 !important; }
+    // 搜索结果卡片
+    .search-result-card {
+      background: #1a1a2e !important; border-color: #2d2d4a !important; box-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
+      &:hover { border-color: #7c3aed !important; box-shadow: 0 12px 32px rgba(124,58,237,0.2) !important; }
+    }
+    .card-cover { background: var(--surface-bg) !important; }
+    .card-info { color: var(--text-primary) !important; }
+    .card-title { color: var(--heading-color) !important; }
+    .card-uploader { color: #6b7280 !important; }
+    // 无结果
+    .search-no-result p { color: #6b7280 !important; }
+    // 历史记录
+    .history-header h3 { color: #e2dee9 !important; }
+    .history-item {
+      background: #1a1a2e !important; border-color: #2d2d4a !important;
+      &:hover { background: #252540 !important; border-color: #3d3d5a !important; }
+    }
+    .history-index { background: #2d2d4a !important; color: #94a3b8 !important; }
+    .history-title { color: #e2dee9 !important; }
+    .history-play { color: #a78bfa !important; }
+    // 使用说明
+    .tips-section {
+      background: linear-gradient(135deg, #1a1a2e, #252040) !important;
+      border-color: #2d2d4a !important;
+      h3 { color: #e2dee9 !important; }
+    }
+    .tips-list li {
+      color: #94a3b8 !important;
+      strong { color: #e2dee9 !important; }
+      .tip-tag { background: #252040 !important; color: #a78bfa !important; }
+    }
+    // 解析路径管理弹窗
+    .line-manage-panel {
+      .line-manage-add { background: #252540 !important; border-color: #2d2d4a !important; }
+      .add-input { background: #1a1a2e !important; border-color: #2d2d4a !important; color: #e2dee9 !important;
+        &:focus { border-color: #7c3aed !important; }
+        &::placeholder { color: #4b5563 !important; }
+      }
+      .line-manage-list { border-color: #2d2d4a !important; }
+      .line-manage-header { background: #252540 !important; border-bottom-color: #2d2d4a !important; color: #94a3b8 !important; }
+      .line-manage-item {
+        border-bottom-color: #2d2d4a !important;
+        .lm-item-name { color: #e2dee9 !important; }
+        .lm-item-api { color: #6b7280 !important; }
+        .edit-input { background: #1a1a2e !important; border-color: #2d2d4a !important; color: #e2dee9 !important;
+          &:focus { border-color: #7c3aed !important; }
+        }
+      }
+      .line-manage-empty p { color: #6b7280 !important; }
+    }
+    // 平台标签 + 搜索按钮 + 解析按钮
+    .platform-label { color: #6b7280 !important; }
+    .platform-chip { background: #252040 !important; color: #a78bfa !important; border-color: #3d3d5a !important; }
+    .search-btn { background: #7c3aed !important; color: #fff !important; }
+    .parse-btn { background: linear-gradient(135deg, #7c3aed, #a78bfa) !important; color: #fff !important;
+      &:disabled { opacity: 0.4 !important; }
+    }
+    .ytdlp-icon { color: #a78bfa !important; }
+    .ytdlp-badge { background: #252040 !important; color: #a78bfa !important; }
+    .ytdlp-duration { color: #6b7280 !important; }
+    .fallback-btn { background: #252540 !important; border-color: #7c3aed !important; color: #a78bfa !important; }
+    // Element Plus 组件
+    .el-button { --el-button-bg-color: #252540 !important; --el-button-border-color: #2d2d4a !important; --el-button-text-color: #cbd5e1 !important;
+      --el-button-hover-bg-color: #2d2d4a !important; --el-button-hover-border-color: #7c3aed !important;
+      & + .el-button { margin-left: 0 !important; }
+    }
+    .el-button--primary { --el-button-bg-color: #7c3aed !important; --el-button-border-color: #7c3aed !important; --el-button-text-color: #fff !important; }
+    .el-icon { color: inherit !important; }
+  }
+
+  // ===== 宝宝睡眠页面（全局深色模式覆盖） =====
+  .baby-sleep-page {
+    background: #0f0f1a !important;
+    .page-title { color: #e2dee9 !important; .el-icon { color: #a78bfa !important; } }
+    .page-desc { color: #94a3b8 !important; }
+    // 分类 Tab
+    .tab-btn { border-color: #2d2d4a !important; background: #1e1e2e !important; color: #94a3b8 !important;
+      &:hover { border-color: #6d5acf !important; color: #a78bfa !important; background: #252540 !important; }
+    }
+    // 白噪音卡片
+    .sound-card { border-color: #2d2d4a !important; background: #1e1e2e !important;
+      &:hover { border-color: #6d5acf !important; }
+      &.active { border-color: #6d5acf !important; background: #252040 !important; }
+    }
+    .sound-label { color: #cbd5e1 !important; }
+    // 内容卡片
+    .content-card { border-color: #2d2d4a !important; background: #1e1e2e !important;
+      &:hover { border-color: #6d5acf !important; }
+      &.active { border-color: #6d5acf !important; background: #252040 !important; }
+    }
+    .content-title { color: #e2dee9 !important; }
+    .content-meta { color: #6b7280 !important; }
+    // 排序按钮
+    .sort-btn { border-color: #2d2d4a !important; background: #1e1e2e !important; color: #94a3b8 !important;
+      &:hover { border-color: #6d5acf !important; color: #a78bfa !important; }
+    }
+    // 搜索区域
+    .search-input-wrap { background: #1a1a2e !important; border-color: #2d2d4a !important;
+      &:focus-within { border-color: #7c3aed !important; background: #1e1e2e !important; }
+    }
+    .search-input { color: #e2dee9 !important; &::placeholder { color: #4b5563 !important; } }
+    .platform-select { border-color: #2d2d4a !important; color: #cbd5e1 !important; background: #1e1e2e !important; }
+    // 声音列表项
+    .voice-list-item { border-color: #2d2d4a !important; background: #1a1a2e !important;
+      &:hover { background: #1e1e32 !important; border-color: #4c3d8f !important; }
+    }
+    .vli-name { color: #e2dee9 !important; }
+    .vli-meta { color: #6b7280 !important; }
+    // 添加按钮
+    .add-item-btn { background: #1e1e2e !important; border-color: #4c3d8f !important; color: #a78bfa !important; }
+    // 待保存预览
+    .pending-voice { background: #1e1e2e !important; border-color: #4c3d8f !important; }
+    .pv-name-input { background: #1a1a2e !important; border-color: #2d2d4a !important; color: #e2dee9 !important;
+      &:focus { border-color: #7c3aed !important; }
+      &::placeholder { color: #4b5563 !important; }
+    }
+    // 移动端 tabs
+    .mobile-tabs :deep(.el-tabs__header) { border-bottom-color: #2d2d4a !important; }
+    .mobile-tabs :deep(.el-tabs__nav-wrap::after) { background: #2d2d4a !important; }
+  }
+
+  // ===== 家庭教育页面（父级） =====
+  .family-education-page {
+    .tool-card-inner {
+      background: var(--surface-bg) !important; border-color: var(--surface-border) !important;
+      &:hover { background: var(--surface-hover-bg) !important; }
+    }
+  }
+
+  // ===== 基金筛选页 (fundFilter/index.vue + 3个子面板) =====
+  .fund-selector {
+    background: #0f0f1a !important;
+    .footer-note { background: var(--bg-white) !important; color: var(--muted-color) !important; box-shadow: none !important; }
+  }
+
+  // 筛选卡片（三个面板共用）
+  .filter-card {
+    background: var(--bg-white) !important;
+    border-color: var(--surface-border) !important;
+    box-shadow: none !important;
+    .el-card__header {
+      background: var(--surface-bg) !important;
+      border-bottom-color: var(--surface-border) !important;
+    }
+    .el-card__body { background: var(--bg-white) !important; }
+  }
+  .filter-title { color: var(--heading-color) !important; }
+  .filter-header { color: var(--heading-color) !important; }
+  .filter-grid .el-form-item__label { color: var(--text-regular) !important; }
+  .filter-grid .el-input-number .el-input__wrapper,
+  .filter-grid .el-select .el-input__wrapper {
+    box-shadow: 0 0 0 1px var(--surface-border) !important;
+    background: var(--surface-bg) !important;
+    &:hover { box-shadow: 0 0 0 1px var(--muted-color) !important; }
+  }
+  // el-input-number 右侧加减按钮（controls-position="right" 时消除白线）
+  .filter-grid .el-input-number .el-input-number__increase,
+  .filter-grid .el-input-number .el-input-number__decrease {
+    background: var(--surface-bg) !important;
+    border-color: var(--surface-border) !important;
+    color: var(--text-regular) !important;
+    &:hover { background: var(--surface-hover-bg) !important; color: var(--heading-color) !important; }
+    &.is-disabled { color: var(--muted-color) !important; background: var(--surface-bg) !important; }
+  }
+  // 顶部"符合条件"标签
+  .filter-header .el-tag--info {
+    background: rgba(148,163,184,0.15) !important;
+    color: #94a3b8 !important;
+    border-color: transparent !important;
+  }
+  .filter-actions .el-button {
+    background: var(--surface-bg) !important;
+    border-color: var(--surface-border) !important;
+    color: var(--text-regular) !important;
+    &:hover { background: var(--surface-hover-bg) !important; border-color: var(--muted-color) !important; }
+  }
+  // 各面板的 primary 按钮保留各自的主题色
+  .filter-actions .el-button--primary {
+    &.stable-btn { background: #10b981 !important; border-color: #10b981 !important; color: #fff !important; }
+    &.bond-btn { background: #e6a23c !important; border-color: #e6a23c !important; color: #fff !important; }
+    &.aggressive-btn { background: #ff4757 !important; border-color: #ff4757 !important; color: #fff !important; }
+  }
+
+  // 移动端卡片列表
+  .mobile-card-list {
+    .fund-card {
+      background: var(--bg-white) !important;
+      border-color: var(--surface-border) !important;
+      box-shadow: none !important;
+      &:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.2) !important; }
+      .el-card__body { background: var(--bg-white) !important; }
+    }
+  }
+  .card-code { color: var(--muted-color-light) !important; }
+  .card-name { color: var(--text-primary) !important; }
+  .fund-name { color: var(--text-primary) !important; }
+  .card-label { color: var(--muted-color-light) !important; }
+  .card-value { color: var(--text-primary) !important; }
+  .quote-row { border-bottom-color: var(--surface-border) !important; }
+
+  // PC端表格（覆盖 scoped 硬编码颜色）
+  .pc-table.el-table {
+    .el-table__header th {
+      background: #252540 !important;
+      color: var(--heading-color) !important;
+      border-bottom-color: var(--surface-border) !important;
+    }
+    .el-table__body tr { background: var(--bg-white) !important; }
+    .el-table__body td { border-bottom-color: var(--surface-border) !important; color: var(--text-primary) !important; }
+    // 各面板的 hover 色不同，用更柔和的暗色
+    .el-table__body tr:hover > td { background: #252540 !important; }
+    // 标签覆盖
+    .el-tag--danger.el-tag--dark { background: rgba(255,71,87,0.2) !important; color: #ff6b81 !important; }
+    .el-tag--success.el-tag--dark { background: rgba(16,185,129,0.2) !important; color: #34d399 !important; }
+    .el-tag--warning.el-tag--dark { background: rgba(230,162,60,0.2) !important; color: #f0c060 !important; }
+    .el-tag--danger:not(.el-tag--dark) { background: rgba(255,71,87,0.12) !important; color: #ff6b81 !important; border-color: transparent !important; }
+    .el-tag--success:not(.el-tag--dark) { background: rgba(16,185,129,0.12) !important; color: #34d399 !important; border-color: transparent !important; }
+    .el-tag--warning:not(.el-tag--dark) { background: rgba(230,162,60,0.12) !important; color: #f0c060 !important; border-color: transparent !important; }
+  }
+
+  // El-table loading 文字
+  .el-loading-mask { background-color: rgba(0,0,0,0.5) !important; }
+  .el-loading-text { color: var(--text-primary) !important; }
+
+  // 债券基金面板专属
+  .bond-fund-panel {
+    .filter-card { background: var(--bg-white) !important; border-color: var(--surface-border) !important; }
+    .fund-card { background: var(--bg-white) !important; border-color: var(--surface-border) !important; }
+  }
+
+  // ===== 股票详情页 =====
+  .stock-detail-page {
+    .metric-card { background: var(--bg-white) !important; border-color: var(--surface-border) !important;
+      &:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.15) !important; }
+    }
+    .metric-label { color: var(--muted-color-light) !important; }
+    .metric-value { color: var(--text-primary) !important; }
+  }
+
+  // ===== 大道七线详情 =====
+  .da-dao-detail-page {
+    .detail-footer { background: var(--surface-bg) !important; color: var(--muted-color) !important; box-shadow: none !important; }
+  }
+
+  // ===== 小说在线听页面 =====
+  .novel-online-page {
+    .search-bar, .search-input-wrapper { background: var(--surface-bg) !important; border-color: var(--surface-border) !important; }
+    .search-input { color: var(--text-primary) !important; background: transparent !important; }
+    .filter-tag { background: var(--surface-bg) !important; color: var(--muted-color) !important; border-color: var(--surface-border) !important;
+      &:hover, &.active { background: var(--nav-active-bg) !important; color: var(--nav-active-color) !important; }
+    }
+    .novel-card { background: var(--bg-white) !important; border-color: var(--surface-border) !important; }
+    .novel-card:hover { border-color: var(--nav-active-color) !important; }
+    .card-title { color: var(--heading-color) !important; }
+    .card-author, .card-narrator { color: var(--muted-color) !important; }
+  }
+
+  // ===== 全局 el-input-number 暗色（消除白线） =====
+  .el-input-number .el-input__wrapper {
+    box-shadow: 0 0 0 1px var(--surface-border) !important;
+    background: var(--surface-bg) !important;
+  }
+  .el-input-number .el-input-number__increase,
+  .el-input-number .el-input-number__decrease {
+    background: var(--surface-bg) !important;
+    border-color: var(--surface-border) !important;
+    color: var(--text-regular) !important;
+    &:hover { background: var(--surface-hover-bg) !important; color: var(--heading-color) !important; }
+    &.is-disabled { color: var(--muted-color) !important; background: var(--surface-bg) !important; }
+  }
+
+  // ===== 彩票 SSQPanel / DLTPanel — pos-col / pos-row =====
+  .ssq-panel, .dlt-panel {
+    .pos-col {
+      background: #1e1e2e !important;
+      border-color: #2d2d4a !important;
+    }
+    .pos-col-title { color: #a78bfa !important; }
+    .pos-row { background: transparent !important; }
+    .pos-num { color: #94a3b8 !important; }
+    .pos-pct { color: #64748b !important; }
+    .pos-bar {
+      background: #252540 !important;
+      span { background: linear-gradient(90deg, #a78bfa, #c084fc) !important; }
+    }
+  }
+
+  // ===== 彩票推荐方案区域 — 覆盖 JS 内联 style 背景 =====
+  .rec-section {
+    background: #1a1a2e !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15) !important;
+  }
+  .rec-card {
+    background: rgba(255, 255, 255, 0.04) !important;
+    &:hover { background: rgba(255, 255, 255, 0.06) !important; }
+  }
+  .rec-card.rec-selected {
+    background: rgba(99, 102, 241, 0.1) !important;
+  }
+  .dlt-panel .rec-card.rec-selected {
+    background: rgba(245, 158, 11, 0.1) !important;
+  }
+
+  // ===== 彩票 index.vue — purchase-tip / footer-note =====
+  .lottery-selector {
+    .purchase-tip {
+      background: #252540 !important;
+      color: #94a3b8 !important;
+    }
+    .footer-note {
+      background: #1e1e2e !important;
+      border-color: #2d2d4a !important;
+      color: #94a3b8 !important;
+    }
+  }
+
+  // ===== 彩票 mgmt-danger（el-dialog teleport 后脱离 .lottery-selector，需全局覆盖） =====
+  .mgmt-danger {
+    background: rgba(254, 68, 68, 0.06) !important;
+    border-color: rgba(254, 68, 68, 0.15) !important;
+    h4 { color: #e2dee9 !important; }
+    .mgmt-desc {
+      color: #94a3b8 !important;
+      strong { color: #f87171 !important; }
+    }
+    .verify-ok { color: #34d399 !important; }
+  }
+
+  // ===== 彩票 TicketDialog =====
+  .ticket-dialog-content {
+    .card { background: var(--bg-white) !important; border-color: var(--surface-border) !important; }
+    .card-title { color: var(--heading-color) !important; }
+  }
+
+  // ===== SSQ 双色球票面暗色（TicketDialog scoped 样式无 dark-mode 覆盖） =====
+  .ticket-container-ssq {
+    background: #1a1414 !important;
+    border-color: #4a3030 !important;
+    // 文字颜色
+    .ticket-game-title { color: #e2dee9 !important; }
+    .ticket-id,
+    .ticket-verify,
+    .barcode-num { color: #9ca3af !important; }
+    .ticket-contrib-ssq { color: #fca5a5 !important; }
+    .ticket-issuer { color: #fca5a5 !important; }
+    .ticket-index-ssq { color: #fca5a5 !important; }
+    // 站点信息网格
+    .ticket-info-grid-ssq {
+      color: #9ca3af !important;
+      span { color: #9ca3af !important; }
+    }
+    // 底部
+    .ticket-bottom-info-ssq {
+      color: #9ca3af !important;
+    }
+    .ticket-bottom-row span { color: #9ca3af !important; }
+    // Logo
+    .ticket-logo-text {
+      .logo-main { color: #fca5a5 !important; }
+      .logo-sub { color: #fca5a5 !important; }
+    }
+    // 加倍控件
+    .ticket-multiplier-bar-ssq {
+      border-color: #4a3030 !important;
+      .multiplier-label { color: #fca5a5 !important; }
+      .multiplier-btn { color: #fca5a5 !important; border-color: #4a3030 !important;
+        &:hover { background: #fca5a5 !important; color: #fff !important; }
+      }
+      .multiplier-val { color: #fca5a5 !important; }
+      .multiplier-unit { color: #fca5a5 !important; }
+    }
+    // 每行加倍
+    .ticket-row-ssq .ticket-row-multiplier {
+      .row-mult-btn { color: #fca5a5 !important; border-color: #4a3030 !important;
+        &:hover { background: #fca5a5 !important; color: #fff !important; }
+      }
+      .row-mult-val { color: #fca5a5 !important; }
+      .row-mult-unit { color: #9ca3af !important; }
+    }
+    // 分隔边框
+    .ticket-top-ssq { border-color: #3a2020 !important; }
+    .ticket-info-grid-ssq { border-color: #3a2020 !important; }
+    .ticket-row-ssq { border-color: #2a1818 !important; }
+    .ticket-bottom-info-ssq { border-color: #3a2020 !important; }
+    // 条形码线条
+    .ticket-barcode .barcode-line { background: #9ca3af !important; }
+  }
+
+  // ===== DLT 大乐透票面暗色 =====
+  .ticket-container-dlt {
+    background: #1a1a2e !important;
+    border-color: #2d2d4a !important;
+    // 文字颜色
+    .ticket-issue-line { color: #e2dee9 !important;
+      span { color: #e2dee9 !important; }
+    }
+    .ticket-serial-line { color: #9ca3af !important; }
+    .ticket-play-info { color: #e2dee9 !important;
+      span { color: #e2dee9 !important; }
+    }
+    .ticket-index-dlt { color: #e2dee9 !important; }
+    .ticket-plus { color: #e2dee9 !important; }
+    .ticket-ball-dlt { color: #a5b4cc !important; border-color: #a5b4cc !important; }
+    // 票头
+    .ticket-top-dlt {
+      border-color: #2d2d4a !important;
+      .dlt-prefix { color: #e2dee9 !important; }
+      .dlt-name { color: #e2dee9 !important; }
+      .dlt-badge { color: #fca5a5 !important; border-color: #fca5a5 !important; }
+    }
+    // 加倍控件
+    .ticket-multiplier-bar-dlt {
+      border-color: #4a4a6a !important;
+      .multiplier-label { color: #9ca3af !important; }
+      .multiplier-btn { color: #9ca3af !important; border-color: #4a4a6a !important;
+        &:hover { background: #c41e3a !important; color: #fff !important; border-color: #c41e3a !important; }
+      }
+      .multiplier-val { color: #e2dee9 !important; }
+      .multiplier-unit { color: #9ca3af !important; }
+    }
+    // 分隔虚线
+    .ticket-dashed-line { border-color: #4a4a6a !important; }
+    // DLT 每行加倍
+    .ticket-row-dlt .ticket-row-multiplier {
+      .row-mult-btn { color: #9ca3af !important; border-color: #4a4a6a !important;
+        &:hover { background: #c41e3a !important; color: #fff !important; border-color: #c41e3a !important; }
+      }
+      .row-mult-val { color: #e2dee9 !important; }
+      .row-mult-unit { color: #9ca3af !important; }
+    }
+    // 底部
+    .ticket-bottom-dlt {
+      .ticket-contrib-dlt { color: #e2dee9 !important; }
+      .ticket-slogan { color: #9ca3af !important; }
+      .ticket-addr { color: #e2dee9 !important; }
+      .ticket-meta-dlt { color: #9ca3af !important;
+        span { color: #9ca3af !important; }
+      }
+    }
+    // 条形码
+    .ticket-barcode-dlt .barcode-strip .barcode-line-dlt { background: #a5b4cc !important; }
+  }
+
+  // ===== 股票筛选页（index.vue 父页） =====
+  .stock-filter-container {
+    .search-bar { background: var(--bg-white) !important; border-color: var(--surface-border) !important; }
+  }
+
+  // ===== 债券基金面板 =====
+  .bond-fund-panel {
+    .filter-card { background: var(--bg-white) !important; border-color: var(--surface-border) !important; }
+    .fund-card { background: var(--bg-white) !important; border-color: var(--surface-border) !important; }
+    .card-title-row { color: var(--heading-color) !important; }
+    .card-name { color: var(--text-primary) !important; }
+    .card-body .card-label { color: var(--muted-color-light) !important; }
+    .card-body .card-value { color: var(--text-primary) !important; }
+  }
+
+  // ===================================================
+  // 旅行攻略 (travelGuide) 全局暗色
+  // ===================================================
+
+  // --- 搜索页 index.vue 暗色全覆盖 ---
+  .search-page {
+    // ========== Hero 区域 ==========
+    .hero-section {
+      .hero-bg {
+        background: linear-gradient(170deg, #1a1020 0%, #1a1025 25%, #1a1220 50%, #0f142a 75%, #14102a 100%) !important;
+      }
+    }
+    .hero-title { color: #e2dee9 !important; }
+    .hero-desc { color: #94a3b8 !important; }
+    .hero-subtitle { color: #6b7280 !important; }
+    .hero-badge {
+      background: rgba(26, 26, 46, 0.7) !important;
+      border-color: rgba(99, 102, 241, 0.2) !important;
+      color: #a78bfa !important;
+      .badge-dot { background: #34d399 !important; }
+    }
+    .hero-stats {
+      background: rgba(15, 15, 42, 0.65) !important;
+      border-color: rgba(45, 45, 74, 0.6) !important;
+    }
+    .stat-label { color: #6b7280 !important; }
+    .stat-divider { background: linear-gradient(to bottom, transparent, #2d2d4a, transparent) !important; }
+
+    // ========== Tabs 切换 ==========
+    .search-tabs {
+      background: rgba(15, 15, 42, 0.6) !important;
+      border-color: rgba(45, 45, 74, 0.5) !important;
+    }
+    .tab-btn {
+      color: #94a3b8 !important;
+      &.active {
+        color: #fff !important;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+      }
+      &:hover:not(.active) {
+        color: #a78bfa !important;
+        background: rgba(99, 102, 241, 0.1) !important;
+      }
+    }
+
+    // ========== 搜索框 ==========
+    .search-box {
+      background: rgba(15, 15, 42, 0.8) !important;
+      border-color: rgba(45, 45, 74, 0.6) !important;
+      &:focus-within, &.has-dropdown { border-color: #a78bfa !important; }
+    }
+    .search-icon { color: #6b7280 !important; }
+    .search-input {
+      color: #e2dee9 !important;
+      &::placeholder { color: #6b7280 !important; }
+    }
+    .clear-icon { color: #6b7280 !important; &:hover { color: #94a3b8 !important; } }
+
+    // ========== 搜索下拉 ==========
+    .search-dropdown {
+      background: rgba(15, 15, 42, 0.95) !important;
+      border-color: #a78bfa !important;
+      border-top-color: rgba(45, 45, 74, 0.4) !important;
+    }
+    .dropdown-item {
+      &:not(:last-child) { border-bottom-color: rgba(45, 45, 74, 0.4) !important; }
+      &:hover { background: rgba(99, 102, 241, 0.08) !important; }
+    }
+    .item-thumb { background: linear-gradient(135deg, #1a1a2e, #14142e) !important; color: #a78bfa !important; }
+    .item-name { color: #e2dee9 !important; }
+    .item-desc { color: #6b7280 !important; }
+    .item-level-mini {
+      color: #fbbf24 !important;
+      background: #2a1f10 !important;
+      border-color: #5c3d15 !important;
+    }
+    .item-arrow { color: #4a4a6a !important; }
+    .dropdown-footer {
+      background: rgba(15, 15, 42, 0.7) !important;
+      border-top-color: rgba(45, 45, 74, 0.5) !important;
+    }
+    .mock-tip { color: #fbbf24 !important; }
+    .real-tip-sub { color: #6b7280 !important; }
+    .dropdown-empty { color: #6b7280 !important; }
+
+    // ========== Quick Tags ==========
+    .quick-tags-label { color: #6b7280 !important; }
+    .quick-tag-btn {
+      background: rgba(15, 15, 42, 0.5) !important;
+      border-color: rgba(45, 45, 74, 0.5) !important;
+      color: #94a3b8 !important;
+      &:hover {
+        border-color: #a78bfa !important;
+        color: #a78bfa !important;
+        background: rgba(99, 102, 241, 0.1) !important;
+      }
+    }
+
+    // ========== 热门推荐标题 ==========
+    .section-title { color: #e2dee9 !important; }
+    .section-count {
+      color: #a78bfa !important;
+      background: #1e1e3c !important;
+    }
+
+    // ========== 区域筛选 ==========
+    .region-filter-btn {
+      background: rgba(15, 15, 42, 0.5) !important;
+      border-color: rgba(45, 45, 74, 0.5) !important;
+      color: #94a3b8 !important;
+      &:hover:not(.active) {
+        border-color: #a78bfa !important;
+        color: #a78bfa !important;
+        background: rgba(99, 102, 241, 0.08) !important;
+      }
+      &.active {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+        color: #fff !important;
+        border-color: transparent !important;
+      }
+    }
+
+    // ========== 省份筛选条 ==========
+    .province-filter-bar {
+      background: rgba(15, 20, 40, 0.7) !important;
+      border-color: rgba(45, 55, 80, 0.5) !important;
+    }
+    .province-filter-label { color: #60a5fa !important; }
+    .province-filter-chip { background: #6366f1 !important; color: #fff !important; }
+    .province-filter-clear { background: rgba(255,255,255,0.25) !important; color: #fff !important; }
+    .province-filter-hint { color: #6b7280 !important; }
+
+    // ========== 热门卡片 ==========
+    .popular-card {
+      background: rgba(15, 15, 42, 0.7) !important;
+      border-color: rgba(45, 45, 74, 0.5) !important;
+      box-shadow: 0 1px 3px rgba(0,0,0,.2) !important;
+      &:hover {
+        border-color: var(--card-color, #a78bfa) !important;
+        box-shadow: 0 12px 40px rgba(99,102,241,0.18), 0 1px 3px rgba(0,0,0,0.2) !important;
+      }
+    }
+    .card-name { color: #e2dee9 !important; }
+    .card-desc { color: #94a3b8 !important; }
+    .card-city-text { color: #6b7280 !important; }
+    .card-rating {
+      color: #fbbf24 !important;
+      background: #2a1f10 !important;
+    }
+    .feature-tag {
+      background: #1e1e3c !important;
+      color: #a78bfa !important;
+      border-color: #2d2d4a !important;
+    }
+    .card-region-tag { color: #fff !important; }
+    .card-footer { border-top-color: #1e1e3c !important; }
+    .card-cost { color: #94a3b8 !important; }
+    .card-action { color: #6b7280 !important; }
+    // 拖拽幽灵卡片
+    .drag-ghost-card {
+      background: rgba(99, 102, 241, 0.2) !important;
+      border-color: #a78bfa !important;
+      .ghost-name { color: #a78bfa !important; }
+    }
+
+    // ========== 排序栏 ==========
+    .sort-bar {
+      background: rgba(15, 15, 42, 0.5) !important;
+      border-color: rgba(45, 45, 74, 0.5) !important;
+    }
+    .sort-count { color: #94a3b8 !important; }
+    .sort-pills { background: rgba(30, 30, 60, 0.5) !important; border-color: rgba(45, 45, 74, 0.3) !important; }
+    .sort-pill {
+      color: #94a3b8 !important;
+      &:hover:not(.active) {
+        color: #a78bfa !important;
+        background: rgba(99, 102, 241, 0.1) !important;
+      }
+      &.active {
+        color: #fff !important;
+        background: linear-gradient(135deg, #6366f1, #818cf8) !important;
+      }
+    }
+
+    // ========== 附近搜索控制面板 ==========
+    .nearby-controls {
+      background: rgba(15, 15, 42, 0.6) !important;
+      border-color: rgba(45, 45, 74, 0.5) !important;
+    }
+    .controls-label { color: #94a3b8 !important; }
+    .controls-divider { background: #2d2d4a !important; }
+    .radius-pills { background: rgba(30, 30, 60, 0.5) !important; border-color: rgba(45, 45, 74, 0.3) !important; }
+    .radius-pill {
+      color: #94a3b8 !important;
+      &:hover:not(.active):not(:disabled) {
+        color: #a78bfa !important;
+        background: rgba(99, 102, 241, 0.07) !important;
+      }
+      &.active {
+        color: #fff !important;
+        background: linear-gradient(135deg, #6366f1, #818cf8) !important;
+      }
+    }
+
+    // ========== 附近景点卡片 ==========
+    .nearby-card {
+      background: rgba(15, 15, 42, 0.7) !important;
+      border-color: rgba(45, 45, 74, 0.5) !important;
+      box-shadow: 0 1px 3px rgba(0,0,0,.2) !important;
+      &:hover {
+        border-color: #a78bfa !important;
+        box-shadow: 0 8px 28px rgba(99,102,241,0.15), 0 1px 3px rgba(0,0,0,.2) !important;
+      }
+    }
+    .nb-cover { background: #0f0f2a !important; }
+    .nb-name { color: #e2dee9 !important; }
+    .nb-addr { color: #6b7280 !important; }
+
+    // ========== 精确定位搜索框 ==========
+    .refine-search-box {
+      background: rgba(15, 15, 42, 0.8) !important;
+      border-color: rgba(45, 45, 74, 0.6) !important;
+      &:focus-within { border-color: #a78bfa !important; }
+    }
+    .refine-search-icon { color: #6b7280 !important; }
+    .refine-search-input {
+      color: #e2dee9 !important;
+      &::placeholder { color: #6b7280 !important; }
+    }
+
+    // ========== 定位提示 ==========
+    .locate-hint-row {
+      color: #6b7280 !important;
+      .el-icon { color: #6b7280 !important; }
+    }
+    .locate-hint-relocate { color: #6b7280 !important; &:hover { color: #a78bfa !important; } }
+    .locate-error { color: #fca5a5 !important; }
+
+    // ========== Skeleton 骨架屏 ==========
+    .skeleton-line {
+      background: linear-gradient(90deg, #2d2d4a 25%, #3d3d5a 50%, #2d2d4a 75%) !important;
+    }
+    .skeleton-bg {
+      background: linear-gradient(90deg, #2d2d4a 25%, #3d3d5a 50%, #2d2d4a 75%) !important;
+    }
+  }
+
+  // --- Plan 单景点页 plan/index.vue 补漏 ---
+  .plan-page {
+    // 面板通用
+    .panel-wrapper { background: #1a1a2e !important; border-color: #2d2d4a !important; }
+  }
+
+  // --- Plan Multi 多景点页 plan-multi/index.vue 补漏 ---
+  .multi-plan-page {
+    // 顶栏未覆盖的
+    .attraction-title svg { color: #a78bfa !important; }
+    // 子标签已有的补漏
+    .spot-region { color: #fff !important; } // 彩色背景
+    .spot-emoji { color: #e2dee9 !important; }
+    // 各面板
+    .panel-wrapper { background: #1a1a2e !important; border-color: #2d2d4a !important; }
+  }
+
+  // --- 搜索页/结果页 空状态 ---
+  .empty-search,
+  .empty-result {
+    color: #94a3b8 !important;
+    .el-icon { color: #64748b !important; }
+  }
+
+  // ===== Plan 页组件 =====
+
+  // --- FoodPanel ---
+  .food-panel {
+    background: #1a1a2e !important;
+    border-color: #2d2d4a !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
+    h3, .panel-title, .food-name { color: #e2dee9 !important; }
+    .panel-badge { background: #1e1e3c !important; color: #94a3b8 !important; }
+    .panel-icon.food-icon { background: #0a2a1a !important; color: #4ade80 !important; }
+    .food-highlight, .food-dish, .food-desc { color: #94a3b8 !important; }
+    .food-card, .food-recommend-card {
+      background: #0f0f2a !important;
+      border-color: #252540 !important;
+      &:hover { background: #14142e !important; border-color: #4ade80 !important; }
+      &.selected { background: #0a2a1a !important; border-color: #1a5c3a !important; }
+    }
+    .food-index { background: #1a3a2a !important; color: #4ade80 !important; }
+    .food-price, .food-addr, .food-rating { color: #94a3b8 !important; }
+    .drag-handle { color: #4a4a6a !important; &:hover { color: #a78bfa !important; } }
+    .ai-badge { background: #2e1f0a !important; color: #fbbf24 !important; }
+    .ghost-card { background: rgba(74, 222, 128, 0.12) !important; border-color: #4ade80 !important; }
+    .empty-icon-wrap { background: #1a1a2e !important; }
+    .empty-title { color: #e2dee9 !important; }
+    .empty-hint { color: #64748b !important; }
+    .swipe-container .swipe-delete-bg { background: #ef4444 !important; }
+    .food-edit-btn { color: #94a3b8 !important; &:hover { background: #1e1e3c !important; color: #a78bfa !important; } }
+  }
+
+  // --- HotelPanel ---
+  .hotel-panel {
+    background: #1a1a2e !important;
+    border-color: #2d2d4a !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
+    h3, .panel-title, .hotel-name { color: #e2dee9 !important; }
+    .panel-badge { background: #1e1e3c !important; color: #94a3b8 !important; }
+    .panel-icon.hotel-icon { background: #0a1a3a !important; color: #60a5fa !important; }
+    .hotel-highlight, .hotel-meta, .hotel-desc, .hotel-addr, .hotel-price, .hotel-rating { color: #94a3b8 !important; }
+    .hotel-card, .hotel-recommend-card {
+      background: #0f0f2a !important;
+      border-color: #252540 !important;
+      &:hover { background: #14142e !important; border-color: #60a5fa !important; }
+      &.selected { background: #0a1a3a !important; border-color: #1a3a6a !important; }
+    }
+    .check-dot.checked { background: #60a5fa !important; color: #fff !important; }
+    .ai-badge { background: #2e1f0a !important; color: #fbbf24 !important; }
+    .ghost-card { background: rgba(96, 165, 250, 0.12) !important; border-color: #60a5fa !important; }
+    .empty-icon-wrap { background: #1a1a2e !important; }
+    .empty-title { color: #e2dee9 !important; }
+    .empty-hint { color: #64748b !important; }
+    .swipe-container .swipe-delete-bg { background: #ef4444 !important; }
+    .hotel-edit-btn { color: #94a3b8 !important; &:hover { background: #1e1e3c !important; color: #a78bfa !important; } }
+  }
+
+  // --- RoutePanel ---
+  .route-panel {
+    background: #1a1a2e !important;
+    border-color: #2d2d4a !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
+    h3, .panel-title, .spot-name { color: #e2dee9 !important; }
+    .panel-badge { background: #1e1e3c !important; color: #94a3b8 !important; }
+    .panel-icon.route-icon { background: #2a1515 !important; color: #f87171 !important; }
+    .spot-highlight, .spot-desc, .spot-addr, .spot-meta { color: #94a3b8 !important; }
+    .spot-card, .spot-recommend-card {
+      background: #0f0f2a !important;
+      border-color: #252540 !important;
+      &:hover { background: #14142e !important; border-color: #f87171 !important; }
+      &.selected { background: #2a1515 !important; border-color: #4a3030 !important; }
+    }
+    .spot-index { background: #4a3030 !important; color: #fca5a5 !important; }
+    .drag-handle { color: #4a4a6a !important; &:hover { color: #a78bfa !important; } }
+    .ai-badge { background: #2e1f0a !important; color: #fbbf24 !important; }
+    .ghost-card { background: rgba(248, 113, 113, 0.12) !important; border-color: #f87171 !important; }
+    .empty-icon-wrap { background: #1a1a2e !important; }
+    .empty-title { color: #e2dee9 !important; }
+    .empty-hint { color: #64748b !important; }
+    .swipe-container .swipe-delete-bg { background: #ef4444 !important; }
+  }
+
+  // --- TimelinePanel ---
+  .timeline-panel {
+    background: #1a1a2e !important;
+    border-color: #2d2d4a !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
+    h3, .panel-title, .preview-name { color: #e2dee9 !important; }
+    .panel-hint, .preview-time, .panel-subtitle { color: #94a3b8 !important; }
+    .panel-badge { background: #1e1e3c !important; color: #94a3b8 !important; }
+    .panel-icon.timeline-icon { background: #1e1e3c !important; color: #a78bfa !important; }
+    .empty-state {
+      color: #94a3b8 !important;
+      border-color: #2d2d4a !important;
+    }
+    .preview-item {
+      background: #0f0f2a !important;
+      border-color: #252540 !important;
+      &.preview-spot { border-left-color: #f87171 !important; background: #1a1414 !important; }
+      &.preview-food { border-left-color: #4ade80 !important; background: #0a1a1a !important; }
+      &.preview-hotel { border-left-color: #60a5fa !important; background: #0a1a2a !important; }
+    }
+    .preview-index {
+      &.index-spot { background: #4a3030 !important; color: #fca5a5 !important; }
+      &.index-food { background: #1a3a2a !important; color: #4ade80 !important; }
+      &.index-hotel { background: #1a2a4a !important; color: #60a5fa !important; }
+    }
+    .preview-drag-handle { color: #4a4a6a !important; &:hover { color: #a78bfa !important; } }
+    .preview-type-tag {
+      &.tag-spot { background: #4a3030 !important; color: #fca5a5 !important; }
+      &.tag-food { background: #1a3a2a !important; color: #4ade80 !important; }
+      &.tag-hotel { background: #1a2a4a !important; color: #60a5fa !important; }
+    }
+    .preview-summary {
+      background: #0f0f2a !important;
+      border-color: #252540 !important;
+      .summary-label { color: #94a3b8 !important; }
+      .summary-value { color: #e2dee9 !important; &.price { color: #fbbf24 !important; } }
+    }
+    .preview-remove-btn { color: #94a3b8 !important; &:hover { background: #3b1010 !important; color: #f87171 !important; } }
+    .preview-ghost { background: rgba(124,58,237,0.15) !important; border-color: #a78bfa !important; }
+    .preview-meal-tag {
+      &.meal-lunch { background: #2e1f0a !important; color: #fbbf24 !important; }
+      &.meal-dinner { background: #1a2a3a !important; color: #60a5fa !important; }
+    }
+    .empty-icon-wrap { background: #1a1a2e !important; }
+  }
+
+  // --- MapView (plan & result) ---
+  .map-container {
+    background: #0f0f1a !important;
+    .map-placeholder, .map-loading { color: #94a3b8 !important; background: #1a1a2e !important; }
+    .map-note { color: #fbbf24 !important; } // 从 #92400e 改为高对比度
+  }
+
+  // ===== Result 页组件 =====
+
+  // --- AdjustDialog ---
+  .adjust-body {
+    background: #1a1a2e !important;
+    .adjust-warning {
+      background: #2e1f0a !important;
+      border-color: #5c3d1a !important;
+      color: #fbbf24 !important;
+    }
+    .adjust-warning-item {
+      background: #2a1515 !important;
+      border-color: #4a3030 !important;
+      color: #fca5a5 !important;
+    }
+    .adjust-section-title, .adjust-label { color: #e2dee9 !important; }
+    .adjust-hint { color: #94a3b8 !important; }
+  }
+
+  // --- BudgetOverview ---
+  .budget-overview {
+    background: #1a1a2e !important;
+    border-color: #2d2d4a !important;
+    h3, .budget-title { color: #e2dee9 !important; }
+    .budget-item {
+      background: #0f0f2a !important;
+      border-color: #252540 !important;
+      &.total-item {
+        background: linear-gradient(135deg, #1e1e3c 0%, #14142e 100%) !important;
+      }
+    }
+    .budget-label { color: #94a3b8 !important; }
+    .budget-value { color: #e2dee9 !important; }
+    .per-person { color: #64748b !important; }
+    .budget-icon {
+      background: #1e1e3c !important;
+    }
+    .traveler-label { color: #94a3b8 !important; }
+    .traveler-count { color: #a78bfa !important; }
+  }
+
+  // --- ExportDialog ---
+  .export-dialog {
+    .dialog-title { color: #e2dee9 !important; }
+    .dialog-desc { color: #94a3b8 !important; }
+  }
+  .export-option {
+    background: #1a1a2e !important;
+    border-color: #2d2d4a !important;
+    &:hover { background: #14142e !important; border-color: #a78bfa !important; }
+    &.active { background: #1e1e3c !important; border-color: #a78bfa !important; }
+    .option-title { color: #e2dee9 !important; }
+    .option-desc { color: #94a3b8 !important; }
+  }
+  .export-preview-panel {
+    background: #1a1a2e !important;
+    border-color: #2d2d4a !important;
+    color: #e2dee9 !important;
+    .preview-header, .preview-title { color: #e2dee9 !important; }
+    .preview-item { color: #94a3b8 !important; border-color: #252540 !important; }
+  }
+  .export-close-btn {
+    background: #1e1e3c !important;
+    color: #94a3b8 !important;
+    &:hover { background: #2d2d4a !important; color: #e2dee9 !important; }
+  }
+  .export-copy-success { background: #0a2a1a !important; color: #4ade80 !important; }
+  .export-wechat-tip { background: #2e1f0a !important; color: #fbbf24 !important; border-color: #5c3d1a !important; }
+  .export-preview-tips {
+    background: #0a1a3a !important;
+    color: #93c5fd !important;
+    border-color: #1a3a6a !important;
+  }
+
+  // --- TideTable ---
+  .tide-card {
+    background: #1a1a2e !important;
+    border-color: #2d2d4a !important;
+    h3, .tide-title, .tide-current-state, .tide-time { color: #e2dee9 !important; }
+    .tide-meta, .tide-legend, .tide-empty { color: #94a3b8 !important; }
+    .tide-high-card { background: #2a1515 !important; border-color: #4a3030 !important;
+      .tide-dot { background: #f87171 !important; }
+    }
+    .tide-low-card { background: #0a1a3a !important; border-color: #1a3a6a !important;
+      .tide-dot { background: #60a5fa !important; }
+    }
+    .tide-advice-card {
+      background: #2e1f0a !important;
+      border-color: #5c3d1a !important;
+      .tide-advice-title { color: #fbbf24 !important; }
+      .tide-advice-text { color: #94a3b8 !important; }
+    }
+    .tide-high-label { color: #fca5a5 !important; }
+    .tide-chart-svg { background: #0f0f2a !important; }
+    .tide-note { background: #0f0f2a !important; color: #64748b !important; }
+  }
+
+  // --- WeatherBar ---
+  .weather-bar {
+    background: linear-gradient(135deg, #0f0f2a 0%, #111a30 100%) !important;
+    border-color: #252540 !important;
+    &.rainy { background: linear-gradient(135deg, #2a1515 0%, #1a1a25 100%) !important; border-color: #4a3030 !important; }
+    &.dialog-mode { background: #1a1a2e !important; border: none !important; }
+    .weather-hero {
+      background: linear-gradient(135deg, #0f0f2a 0%, #111a30 100%) !important;
+    }
+    .weather-hero-temp { color: #93c5fd !important; }
+    .weather-hero-desc { color: #94a3b8 !important; }
+    .extra-label { color: #94a3b8 !important; }
+    .extra-value { color: #e2dee9 !important; }
+    .weather-temp { color: #e2dee9 !important; }
+    .weather-desc { color: #94a3b8 !important; }
+    .weather-wind { color: #64748b !important; }
+    .weather-warning {
+      background: #2a1515 !important;
+      border-color: #4a3030 !important;
+      .warning-title { color: #fca5a5 !important; }
+      .warning-text { color: #94a3b8 !important; }
+    }
+    .weather-advice .advice-item {
+      &.good { background: #0a2a1a !important; border-color: #1a5c3a !important; color: #4ade80 !important; }
+      &.caution { background: #2e1f0a !important; border-color: #5c3d1a !important; color: #fbbf24 !important; }
+      &.neutral { background: #1a1a2e !important; border-color: #2d2d4a !important; color: #94a3b8 !important; }
+    }
+    .weather-forecast {
+      border-top-color: #2d2d4a !important;
+      .forecast-title { color: #94a3b8 !important; }
+      .forecast-hint { color: #64748b !important; }
+    }
+    .forecast-item {
+      background: #1a1a2e !important;
+      &:hover { background: #14142e !important; }
+      &.today { background: #14142e !important; border-color: #2d3f8c !important; }
+      &.expanded { background: #1a1a3e !important; border-color: #4a6bd4 !important; }
+    }
+    .forecast-date { color: #94a3b8 !important; }
+    .today-badge { background: #1a2050 !important; color: #93c5fd !important; }
+    .forecast-weather { color: #e2dee9 !important; }
+    .temp-low { color: #93c5fd !important; }
+    .temp-high { color: #f87171 !important; }
+    .temp-track { background: #2d2d4a !important; }
+    .forecast-expand-icon { color: #64748b !important; &.rotated { color: #93c5fd !important; } }
+    .forecast-detail { background: #1a1a2e !important; border-color: #2d2d4a !important; }
+    .detail-subtitle { color: #94a3b8 !important; }
+    .detail-hourly-chip { background: #13132a !important; border-color: #252540 !important; }
+    .chip-time { color: #94a3b8 !important; }
+    .chip-temp { color: #e2dee9 !important; }
+    .detail-card {
+      &.day { background: linear-gradient(135deg, #1a1a0e, #1f1a0e) !important; border-color: #5c3d1a !important; }
+      &.night { background: linear-gradient(135deg, #14142e, #13132e) !important; border-color: #2d3f8c !important; }
+    }
+    .detail-card-header { color: #94a3b8 !important; }
+    .detail-card-temp { color: #e2dee9 !important; }
+    .detail-card-desc { color: #94a3b8 !important; }
+    .detail-card-wind { color: #64748b !important; }
+    .weather-footer { border-top-color: #2d2d4a !important; color: #64748b !important; }
+  }
+
+  // --- TidePanel ---
+  .tide-entry-card {
+    background: linear-gradient(135deg, #0f0f2a 0%, #111a30 100%) !important;
+    border-color: #2d2d4a !important;
+    .tide-entry-title { color: #a78bfa !important; }
+    .tide-entry-desc { color: #94a3b8 !important; }
+    .tide-wave-icon-wrap { background: rgba(167, 139, 250, 0.1) !important; color: #a78bfa !important; }
   }
 }
 

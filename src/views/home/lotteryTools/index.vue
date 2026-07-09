@@ -1126,6 +1126,77 @@ $radius-lg: 28px;
   width: 100%;
 }
 
+// ========== 深色模式 ==========
+:global(html.dark-mode .lottery-selector) {
+    background: var(--bg-color, #0f0f1a);
+    transition: background 0.4s ease;
+
+    // Hero — 深色模式下微调渐变使其融入暗色背景
+    .hero {
+      &.hero-dlt {
+        background: linear-gradient(160deg, #0a081a 0%, #141230 30%, #1e1b4b 60%, #2d2472 100%);
+      }
+    }
+
+    // 提示条
+    .hero-tip {
+      color: rgba(255, 255, 255, 0.7);
+      &.tip-dlt { color: rgba(255, 255, 255, 0.7); }
+    }
+
+    // 可买入小提示
+    .purchase-tip {
+      background: #252540 !important;
+      color: #94a3b8;
+      transition: background 0.4s ease, color 0.4s ease;
+    }
+
+    // 底部提示
+    .footer-note {
+      background: #1e1e2e !important;
+      border-color: #2d2d4a;
+      color: #94a3b8 !important;
+      transition: background 0.4s ease, border-color 0.4s ease, color 0.4s ease;
+    }
+
+    // 隐蔽数据管理入口
+    .mgmt-hint {
+      color: var(--text-regular, #94a3b8);
+      background: rgba(30, 30, 46, 0.95);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    .data-mgmt-trigger {
+      background: rgba(30, 30, 46, 0.7);
+      color: #4a4a6a;
+      &:hover, &.trigger-visible {
+        color: var(--text-regular, #94a3b8);
+        background: rgba(30, 30, 46, 0.95);
+        border-color: var(--border-color, #2d2d4a);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+      }
+    }
+
+    // 数据管理弹窗内容
+    .mgmt-section h4 { color: var(--heading-color, #e2dee9); }
+    .mgmt-desc {
+      color: var(--text-regular, #94a3b8);
+      strong { color: #f87171; }
+    }
+    .mgmt-stats .stat-label { color: var(--text-regular, #94a3b8); }
+    .mgmt-stats .stat-date { color: var(--text-secondary, #64748b); }
+    .mgmt-actions .count-unit { color: var(--text-regular, #94a3b8); }
+    .mgmt-result { color: #34d399;
+      &.result-error { color: #f87171; }
+    }
+    .mgmt-danger {
+      background: rgba(254, 68, 68, 0.06);
+      border-color: rgba(254, 68, 68, 0.15);
+    }
+    .last-crawl-time { color: var(--text-secondary, #64748b); }
+    .verify-ok { color: #34d399; }
+    .confirm-hint { color: #fbbf24; }
+}
+
 // ========== 移动端适配 ==========
 // 注意：el-dialog 通过 teleport 渲染到 body，必须用 :global() 才能命中
 @media (max-width: 768px) {

@@ -1,10 +1,10 @@
 // ========== 变量 ==========
-$bg: #f1f5f9;
-$card-bg: #ffffff;
-$text-primary: #0f172a;
-$text-secondary: #475569;
-$text-muted: #94a3b8;
-$border: #e2e8f0;
+$bg: var(--surface-bg, #f1f5f9);
+$card-bg: var(--bg-white, #ffffff);
+$text-primary: var(--heading-color, #0f172a);
+$text-secondary: var(--text-regular, #475569);
+$text-muted: var(--muted-color-light, #94a3b8);
+$border: var(--surface-border, #e2e8f0);
 $radius-sm: 12px;
 $radius-md: 16px;
 $radius-lg: 20px;
@@ -1228,4 +1228,182 @@ $radius-lg: 20px;
   .match-count { font-size: 13px; }
   .mini-ball { width: 28px; height: 28px; font-size: 10px; }
   .ocr-group-prize-tag { flex-wrap: wrap; }
+}
+
+// ========== 深色模式全局覆盖 ==========
+html.dark-mode .win-query-panel {
+  // 输入模式切换
+  .mode-tab {
+    &:hover { background: var(--surface-bg); }
+    &.active {
+      background: linear-gradient(135deg, #7c3aed, #a78bfa);
+      box-shadow: 0 4px 15px rgba(124, 58, 237, 0.35);
+    }
+  }
+  // 彩种切换按钮
+  .type-btn {
+    background: var(--bg-white);
+    border-color: var(--surface-border);
+    color: var(--text-regular);
+    &:hover { border-color: var(--muted-color-light); }
+    &.active {
+      border-color: var(--primary-color, #a78bfa);
+      color: var(--primary-color, #a78bfa);
+      background: var(--nav-active-bg, rgba(124, 58, 237, 0.1));
+    }
+  }
+  .type-hint { color: var(--text-regular); }
+  .input-label { color: var(--text-regular); }
+  .draw-date-tag, .group-hint { color: var(--muted-color-light); }
+
+  // 号码选择器
+  .picker-ball {
+    background: var(--bg-white);
+    border-color: var(--surface-border);
+    color: var(--text-regular);
+    &:hover { border-color: var(--muted-color-light); }
+  }
+
+  // 重新选择按钮
+  .reset-select-btn {
+    background: var(--surface-bg);
+    border-color: var(--surface-border);
+    color: var(--muted-color);
+    &:hover { border-color: #f87171; color: #f87171; background: rgba(254, 68, 68, 0.08); }
+    &:active { background: rgba(254, 68, 68, 0.12); }
+  }
+
+  // 拍照按钮
+  .camera-btn {
+    background: var(--surface-bg);
+    border-color: var(--surface-border);
+    color: var(--text-regular);
+    &:hover {
+      border-color: var(--primary-color, #a78bfa);
+      color: var(--primary-color, #a78bfa);
+      background: var(--nav-active-bg, rgba(124, 58, 237, 0.08));
+    }
+  }
+  .camera-label { color: var(--text-regular); }
+  .preview-area { background: var(--surface-bg); }
+
+  // 裁剪按钮
+  .crop-action-btn {
+    &.skip {
+      background: var(--surface-hover-bg);
+      color: var(--text-regular);
+      &:hover { background: var(--surface-border); }
+    }
+    &.reset {
+      color: var(--muted-color-light);
+      border-color: var(--surface-border);
+      &:hover { color: var(--text-regular); border-color: var(--muted-color); }
+    }
+  }
+
+  // 解析模式 pills
+  .parse-mode-pills { background: var(--surface-bg); }
+  .parse-pill.active { background: var(--bg-white); color: var(--heading-color); }
+
+  // OCR 结果卡片
+  .ocr-result-card {
+    background: var(--surface-bg);
+    border-color: var(--surface-border);
+  }
+  .ocr-group-count { background: var(--surface-hover-bg); }
+  .ocr-accuracy-hint {
+    background: rgba(59, 130, 246, 0.08);
+    border-color: rgba(59, 130, 246, 0.18);
+    color: #93c5fd;
+    &.ocr-only-warn { background: rgba(251, 191, 36, 0.08); border-color: rgba(251, 191, 36, 0.18); color: #fcd34d; }
+  }
+  .ocr-result-balls.clickable:hover { background: var(--surface-bg); }
+  .ocr-result-group-wrapper.ocr-group-editing {
+    background: var(--surface-hover-bg);
+    border-color: rgba(167, 139, 250, 0.3);
+  }
+
+  // 编辑面板
+  .ocr-edit-panel {
+    background: var(--bg-white);
+    border-color: var(--surface-border);
+  }
+  .edit-cell {
+    background: var(--surface-bg);
+    border-color: var(--surface-border);
+    color: var(--muted-color-light);
+    &:hover:not(:disabled) { border-color: var(--muted-color); background: var(--surface-hover-bg); color: var(--text-regular); }
+    &:disabled { background: var(--surface-hover-bg); }
+  }
+  .edit-action-btn {
+    &.cancel {
+      background: var(--surface-bg);
+      color: var(--muted-color);
+      border-color: var(--surface-border);
+      &:hover { background: var(--surface-hover-bg); }
+    }
+  }
+
+  // 中奖规则
+  .rules-row { background: var(--surface-bg); }
+  .rules-level { color: var(--text-regular); }
+  .rules-desc { color: var(--muted-color); }
+  .rules-link-btn { color: var(--muted-color-light); &:hover { color: var(--primary-color, #a78bfa); } }
+
+  // 查询按钮
+  .query-btn {
+    background: linear-gradient(135deg, #7c3aed, #a78bfa);
+    box-shadow: 0 4px 20px rgba(124, 58, 237, 0.3);
+    &:hover:not(:disabled) { box-shadow: 0 6px 30px rgba(124, 58, 237, 0.45); }
+    &:disabled { opacity: 0.4; }
+  }
+
+  // 中奖奖级背景
+  .prize-banner {
+    &.prize-level-1 { background: rgba(230, 0, 18, 0.08); }
+    &.prize-level-2 { background: rgba(230, 126, 34, 0.08); }
+    &.prize-level-3 { background: rgba(243, 156, 18, 0.08); }
+    &.prize-level-4, &.prize-level-5, &.prize-level-6 { background: rgba(59, 130, 246, 0.06); }
+    &.prize-level-7, &.prize-level-8, &.prize-level-9 {
+      background: var(--surface-bg);
+      .prize-badge { background: linear-gradient(135deg, #64748b, #475569); }
+    }
+    &.prize-level-0 {
+      background: var(--surface-bg);
+      .prize-badge { background: #475569; color: #94a3b8; }
+    }
+  }
+  .prize-sorry { color: var(--text-regular); }
+
+  // 开奖号码分隔
+  .draw-sep { color: var(--muted-color); }
+  .your-sep { color: var(--muted-color); }
+  .ball-sep { color: var(--muted-color); }
+  .match-count { color: var(--heading-color); }
+
+  // 中奖详情行
+  .prize-detail-row { background: var(--surface-bg); }
+  .prize-detail-label { color: var(--muted-color-light); }
+
+  // 您的号码卡片 + 中奖详情 match-count
+  .your-numbers-card .match-count { color: var(--heading-color); }
+  .your-result .match-count { color: var(--heading-color); }
+
+  // OCR 组内中奖标签
+  .ocr-group-prize-tag {
+    &.level-0 { background: var(--surface-bg); .prize-tag-detail { color: var(--muted-color); } }
+    &.level-1 { background: rgba(230, 0, 18, 0.08); }
+    &.level-2 { background: rgba(230, 126, 34, 0.08); }
+    &.level-3 { background: rgba(243, 156, 18, 0.08); }
+    &.level-4, &.level-5, &.level-6 { background: rgba(59, 130, 246, 0.06); }
+    &.level-7, &.level-8, &.level-9 { background: var(--surface-bg); }
+    .prize-tag-detail { color: var(--text-regular); }
+  }
+
+  // 错误信息
+  .error-msg {
+    background: rgba(254, 68, 68, 0.08);
+    border-color: rgba(254, 68, 68, 0.18);
+    color: #fca5a5;
+  }
 }

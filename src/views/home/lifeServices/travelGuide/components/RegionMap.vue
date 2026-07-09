@@ -714,4 +714,64 @@ onUnmounted(() => {
   .map-legend { gap: 3px; }
   .legend-item { padding: 3px 8px; font-size: 11px; }
 }
+
+// ==================== 夜间模式 ====================
+:global(html.dark-mode) {
+  .float-backdrop {
+    background: rgba(0,0,0,0.4);
+  }
+
+  .map-panel {
+    background: rgba(19, 19, 42, 0.98);
+    border-color: #2d2d4a;
+    box-shadow: 0 12px 50px rgba(0,0,0,0.4);
+  }
+
+  .panel-header {
+    background: linear-gradient(135deg, #1a1a36, #181830);
+    border-bottom-color: #2d2d4a;
+  }
+  .panel-title { color: #e2dee9; }
+  .panel-close-btn {
+    background: #1a1a2e; border-color: #2d2d4a; color: #64748b;
+    &:hover { background: #3b1010; color: #f87171; border-color: #5c2020; }
+  }
+  .action-btn {
+    background: #1a1a2e; border-color: #2d2d4a; color: #94a3b8;
+    &:hover { background: #252540; color: #e2dee9; }
+  }
+
+  .map-body {
+    &::-webkit-scrollbar-thumb { background: #3d3d5c; }
+  }
+
+  .echarts-map {
+    border: 1px solid #2d2d4a;
+  }
+
+  .map-legend { border-top-color: #2d2d4a; }
+
+  .legend-item {
+    color: #94a3b8;
+    &:hover { background: #1a1a2e; border-color: #3d3d5c; }
+    &.active { background: #1e1e3c; border-color: #3d3d6c; color: #a78bfa; }
+  }
+
+  .all-item {
+    &.active { background: #1a1a2e; border-color: #3d3d5c; color: #e2dee9; }
+  }
+
+  .map-error-tip { color: #64748b; }
+
+  .mobile-toggle-bar {
+    background: linear-gradient(135deg, #1a1a2e, #17172a);
+    border-color: #3d3d5c;
+    color: #a78bfa;
+    &:hover { background: #1e1e3c; border-color: #5c4db8; }
+  }
+
+  .float-toggle-btn {
+    border-color: rgba(255,255,255,0.1);
+  }
+}
 </style>

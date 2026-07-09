@@ -181,7 +181,7 @@
         </el-table-column>
         <el-table-column prop="close" label="最新价" width="85" sortable>
           <template #default="{ row }">
-            <span style="font-weight:700;color:#0f172a;">{{ row.close?.toFixed(2) }}</span>
+            <span class="stock-price">{{ row.close?.toFixed(2) }}</span>
           </template>
         </el-table-column>
         <el-table-column label="涨跌幅(%)" width="95" sortable sort-by="changePctVal">

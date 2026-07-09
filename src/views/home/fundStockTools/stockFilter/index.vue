@@ -58,6 +58,18 @@ const activeModel = ref('yaogu')
   background: #f0f4f8;
 }
 
+/* 夜间模式 */
+:global(html.dark-mode) {
+  .stock-selector {
+    background: #000000;
+  }
+  .footer-note {
+    background: #1e1e2e;
+    color: #94a3b8;
+    box-shadow: none;
+  }
+}
+
 /* ========== Hero 头部 ========== */
 .hero {
   background: linear-gradient(135deg, #141b2b 0%, #1f2a3e 100%);

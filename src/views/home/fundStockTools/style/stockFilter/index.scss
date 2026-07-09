@@ -653,3 +653,92 @@
   .metric-value { font-size: 0.72rem; }
   .card-rec { font-size: 0.72rem; }
 }
+
+// ========== 深色模式 ==========
+html.dark-mode .stock-filter-page {
+  .quick-eval-inner {
+    background: var(--bg-white); border-color: var(--surface-border);
+  }
+  .quick-eval-title { color: var(--heading-color); }
+  .quick-eval-desc { color: var(--muted-color-light); }
+  .filter-card {
+    background: var(--bg-white); border-color: var(--surface-border);
+  }
+  .filter-item label { color: var(--text-regular); }
+  .table-card { border-color: var(--surface-border); }
+  .table-title { color: var(--heading-color); }
+  .quick-label { color: var(--muted-color); }
+  .board-info { color: var(--muted-color-light); strong { color: #f97316; } }
+  .quick-stocks { border-top-color: var(--surface-border); }
+  // 新增：el-input-number 两侧按钮 + wrapper（消除白线）
+  :deep(.el-input-number .el-input-number__increase),
+  :deep(.el-input-number .el-input-number__decrease) {
+    background: var(--surface-bg) !important;
+    border-color: var(--surface-border) !important;
+    color: var(--text-regular) !important;
+    &:hover { background: var(--surface-hover-bg) !important; color: var(--heading-color) !important; }
+    &.is-disabled { color: var(--muted-color) !important; background: var(--surface-bg) !important; }
+  }
+  :deep(.el-input-number .el-input__wrapper) {
+    box-shadow: 0 0 0 1px var(--surface-border) !important;
+    background: var(--surface-bg) !important;
+  }
+
+  // 新增：快捷输入框 + 筛选模式选择器
+  :deep(.el-input .el-input__wrapper) {
+    box-shadow: 0 0 0 1px var(--surface-border) !important;
+    background: var(--surface-bg) !important;
+  }
+  :deep(.el-select .el-input__wrapper) {
+    box-shadow: 0 0 0 1px var(--surface-border) !important;
+    background: var(--surface-bg) !important;
+  }
+
+  // 新增：radio-button（板块选择）
+  :deep(.el-radio-button__inner) {
+    background: var(--surface-bg) !important;
+    border-color: var(--surface-border) !important;
+    color: var(--text-regular) !important;
+    &:hover { color: var(--heading-color) !important; }
+  }
+  :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
+    background: rgba(167,139,250,0.15) !important;
+    border-color: #a78bfa !important;
+    color: #a78bfa !important;
+    box-shadow: -1px 0 0 0 #a78bfa !important;
+  }
+
+  // 新增：表格 header tag
+  :deep(.el-tag.el-tag--warning) {
+    background: rgba(230,162,60,0.12) !important;
+    color: #f0c060 !important;
+    border-color: transparent !important;
+  }
+
+  // 新增：loading 遮罩（覆盖默认白色半透明）
+  :deep(.el-loading-mask) {
+    background: rgba(0,0,0,0.6) !important;
+  }
+
+  // 新增：空状态描述文字
+  :deep(.el-empty__description) {
+    color: var(--muted-color) !important;
+  }
+
+  // 移动端卡片
+  .stock-card {
+    border-color: var(--surface-border);
+    &:hover { border-color: var(--muted-color-light); }
+  }
+  .card-name { color: var(--heading-color); }
+  .card-price { color: var(--heading-color); }
+  .card-price-row { border-bottom-color: var(--surface-border); }
+  .metric-label { color: var(--muted-color-light); }
+  .metric-value { color: var(--text-regular); }
+  .card-cap { color: var(--muted-color-light); }
+  .card-footer { border-top-color: var(--surface-border); }
+  .empty-state { color: var(--muted-color); }
+  .empty-desc { color: var(--muted-color); }
+  .empty-hint { color: var(--muted-color-light); }
+  .footer-note { color: var(--muted-color-light); }
+}

@@ -209,4 +209,43 @@ function save() {
     background: #fffbeb;
   }
 }
+
+// ==================== 夜间模式 ====================
+:global(html.dark-mode) {
+  .member-row {
+    background: #1a1a2e;
+  }
+
+  .member-emoji:hover {
+    background: #252540;
+  }
+
+  .member-delete {
+    color: #4a4a6a;
+    &:hover { color: #f87171; background: #3b1010; }
+  }
+
+  .emoji-picker-popup {
+    background: #1a1a2e;
+    border-color: #2d2d4a;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+  }
+
+  .emoji-popup-header {
+    color: #94a3b8;
+  }
+
+  .emoji-popup-close {
+    color: #64748b;
+    &:hover { color: #e2dee9; }
+  }
+
+  .emoji-cell {
+    &:hover { background: #252540; }
+    &.active {
+      border-color: #f59e0b;
+      background: #2e1f0a;
+    }
+  }
+}
 </style>

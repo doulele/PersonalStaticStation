@@ -1338,4 +1338,103 @@ function handleReplan() {
   .card-name { font-size: 12px; }
   .state-btns .el-button { font-size: 10px; padding: 5px 6px; min-height: 28px; }
 }
+
+// ==================== 夜间模式 ====================
+:global(html.dark-mode .result-page) {
+  background: #0f0f1a;
+}
+
+:global(html.dark-mode) {
+  // 顶栏
+  .result-topbar { background: #1a1a2e; border-bottom-color: #2d2d4a; }
+  .topbar-title { color: #e2dee9; }
+
+  // 地图
+  .result-map-section { border-right-color: #2d2d4a; background: #0f0f1a; }
+  .result-timeline-area {
+    &::-webkit-scrollbar-thumb { background: #3d3d5c; }
+  }
+
+  // 概览卡片
+  .overview-card { background: #1a1a2e; border-color: #2d2d4a; box-shadow: 0 1px 8px rgba(0,0,0,0.15); }
+  .overview-item.total { border-left-color: #2d2d4a; }
+  .overview-icon {
+    &.spot-bg { background: #2a1515; color: #f87171; }
+    &.food-bg { background: #0a2a1a; color: #4ade80; }
+    &.hotel-bg { background: #0a1a3a; color: #60a5fa; }
+    &.total-bg { background: #1a1a3e; color: #a78bfa; }
+  }
+  .overview-label { color: #64748b; }
+  .overview-value { color: #e2dee9; &.price { color: #a78bfa; } }
+
+  // 时间线
+  .section-title { color: #e2dee9; }
+  .timeline-section-header h3 { color: #a78bfa; }
+  .section-dot { box-shadow: 0 0 0 3px rgba(167,139,250,0.2); }
+
+  // 备忘录按钮
+  .memo-redirect-btn {
+    background: linear-gradient(135deg, #2e1f0a 0%, #3d2a1a 100%);
+    border-color: #5c3d1a; color: #fbbf24;
+    &:hover { background: linear-gradient(135deg, #3d2a1a 0%, #4a3018 100%); border-color: #7c4d1a; color: #f59e0b; }
+  }
+
+  // 交通过渡
+  .transport-line { background: #4a4a6a; }
+  .transport-info { color: #64748b; }
+
+  // 时间线条目
+  .timeline-item {
+    &.state-checked .timeline-card { background: #0a2a1a; border-color: #1a5c3a; }
+    &.state-ignored .timeline-card { opacity: 0.4; }
+  }
+  .timeline-drag-handle { color: #4a4a6a; &:hover { color: #a78bfa; background: #1e1e3c; } }
+  .time-badge {
+    &.spot-badge { background: #2a1515; color: #f87171; }
+    &.food-badge { background: #0a2a1a; color: #4ade80; }
+    &.hotel-badge { background: #0a1a3a; color: #60a5fa; }
+  }
+  .time-end { color: #64748b; }
+  .timeline-card { background: #1a1a2e; border-color: #2d2d4a; }
+  .card-body { padding: 12px 14px; }
+  .card-type-badge {
+    &.spot-type { background: #2a1515; color: #fca5a5; }
+    &.food-type { background: #0a2a1a; color: #6ee7b7; }
+    &.hotel-type { background: #0a1a3a; color: #93c5fd; }
+  }
+  .card-name { color: #e2dee9; }
+  .text-line-through { color: #64748b; }
+  .meal-warning { background: #3b1010; color: #fca5a5; }
+  .meal-info { background: #2e1f0a; color: #fbbf24; }
+  .card-desc { color: #94a3b8; }
+  .card-meta { color: #64748b; .price-tag { color: #4ade80; } }
+
+  // 备注
+  .note-display { background: #2e1f0a; border-color: #5c3d1a; color: #fbbf24; }
+
+  // 底部操作
+  .result-actions {
+    border-top-color: #2d2d4a; background: #14142e;
+  }
+
+  // 高亮
+  .highlight-flash {
+    animation: highlightPulseDark 1.5s ease-out;
+  }
+  @keyframes highlightPulseDark {
+    0%, 100% { box-shadow: none; }
+    50% { box-shadow: 0 0 0 4px rgba(167,139,250,0.3); background: #1e1e3c; }
+  }
+
+  // 移动端底部操作栏
+  @media (max-width: 768px) {
+    .result-actions {
+      background: rgba(19,19,42,0.94);
+      border-top-color: #2d2d4a;
+    }
+  }
+
+  // 空状态
+  .empty-result { background: #0f0f1a; }
+}
 </style>

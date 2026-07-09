@@ -1508,10 +1508,11 @@ const volume = ref(50)
 const isDarkMode = ref(false)
 let darkModeTimer = null
 
-/** 根据当前时间判断是否应该开启深色模式 */
+/** 根据当前时间 + 全局深色模式开关判断是否应该开启深色模式 */
 function checkDarkMode() {
   const hour = new Date().getHours()
-  const shouldDark = hour >= 20 || hour < 7
+  const isGlobalDark = document.documentElement.classList.contains('dark-mode')
+  const shouldDark = isGlobalDark || hour >= 20 || hour < 7
   if (isDarkMode.value !== shouldDark) {
     isDarkMode.value = shouldDark
   }
@@ -2883,9 +2884,13 @@ function clearTimer() {
 }
 
 // ==================== 生命周期 ====================
+let darkModeObserver = null
 onMounted(() => {
   checkDarkMode()  // 进入页面立即判断
   darkModeTimer = setInterval(checkDarkMode, 60000)  // 每分钟检查一次
+  // 监听全局深色模式切换（实时同步）
+  darkModeObserver = new MutationObserver(checkDarkMode)
+  darkModeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
   fetchSleepContent()
   fetchVoices()
   fetchMyVoices()
@@ -2898,6 +2903,7 @@ onUnmounted(() => {
   stopAllSounds()
   clearTimer()
   if (darkModeTimer) { clearInterval(darkModeTimer); darkModeTimer = null }
+  if (darkModeObserver) { darkModeObserver.disconnect(); darkModeObserver = null }
   if (previewAudio) { previewAudio.pause(); previewAudio = null }
   if (songAudio) { songAudio.pause(); songAudio = null }
   if (noiseAudio) { noiseAudio.pause(); noiseAudio = null }
@@ -3101,8 +3107,7 @@ onUnmounted(() => {
 
 // ====== 我的声音 ======
 .voice-toolbar {
-  display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 14px;
-  @media (max-width: 768px) { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 10px; }
+  display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; margin-bottom: 14px;
   @media (max-width: 480px) { gap: 6px; }
 }
 .voice-act-btn {
@@ -3120,7 +3125,7 @@ onUnmounted(() => {
 }
 @keyframes pulseRec { 0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); } 50% { box-shadow: 0 0 0 6px rgba(239,68,68,0); } }
 .voice-tip {
-  font-size: 12px; color: #94a3b8; text-align: center;
+  width: 100%; font-size: 12px; color: #94a3b8; text-align: center;
   @media (max-width: 768px) { flex: 1 1 100%; text-align: center; }
 }
 
@@ -3884,6 +3889,7 @@ onUnmounted(() => {
   .pending-voice {
     background: #1e1e2e; border-color: #4c3d8f;
     .pv-title { color: #a78bfa; }
+    .pv-audio { filter: invert(0.85) hue-rotate(180deg); border-radius: 8px; }
     .pv-name-input { border-color: #2d2d4a; background: #1a1a2e; color: #e2dee9; &:focus { border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,0.15); } }
     .pv-cancel { color: #6b7280; &:hover { color: #f87171; background: rgba(239,68,68,0.1); } }
   }

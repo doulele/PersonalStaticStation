@@ -25,7 +25,7 @@
 .page-title {
   font-size: 32px;
   font-weight: 600;
-  color: #303133;
+  color: var(--text-primary);
   margin-bottom: 12px;
   
   &::after {
@@ -41,6 +41,6 @@
 
 .page-desc {
   font-size: 16px;
-  color: #909399;
+  color: var(--text-secondary);
 }
 </style>

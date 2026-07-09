@@ -2,8 +2,8 @@
 
 // 卡片
 .card {
-  background: #fff;
-  border: 1.5px solid #e2e8f0;
+  background: var(--bg-white);
+  border: 1.5px solid var(--surface-border);
   border-radius: 16px;
   padding: 20px;
   margin-bottom: 16px;
@@ -24,7 +24,7 @@
 .card-title {
   font-size: 16px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--heading-color);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -37,7 +37,7 @@
 }
 .collapse-icon {
   font-size: 18px;
-  color: #94a3b8;
+  color: var(--muted-color-light);
   transition: transform 0.25s ease;
   &.flipped { transform: rotate(180deg); }
 }
@@ -48,8 +48,8 @@
 
 // 控制面板
 .control-panel {
-  background: #fff;
-  border: 1.5px solid #e2e8f0;
+  background: var(--bg-white);
+  border: 1.5px solid var(--surface-border);
   border-radius: 16px;
   padding: 18px 20px;
   margin-bottom: 16px;
@@ -68,7 +68,7 @@
   label {
     font-size: 12px;
     font-weight: 600;
-    color: #64748b;
+    color: var(--muted-color);
     white-space: nowrap;
   }
 }
@@ -130,9 +130,9 @@
   width: 46px; height: 46px;
   border-radius: 8px;
   font-size: 11px;
-  background: #f8fafc;
-  border: 1.5px solid #f1f5f9;
-  color: #94a3b8;
+  background: var(--surface-bg);
+  border: 1.5px solid var(--surface-border);
+  color: var(--muted-color-light);
   transition: all 0.2s;
   cursor: default;
   strong { font-size: 15px; font-weight: 800; line-height: 1.1; }
@@ -160,7 +160,7 @@
   flex-wrap: wrap;
   margin-bottom: 16px;
   padding: 4px;
-  background: #f1f5f9;
+  background: var(--surface-bg);
   border-radius: 12px;
 }
 .rec-tab {
@@ -173,14 +173,14 @@
   background: transparent;
   font-size: 13px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--muted-color);
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
-  &:hover { color: #334155; background: rgba(255,255,255,0.6); }
+  &:hover { color: var(--text-regular); background: rgba(255,255,255,0.06); }
   &.active {
-    background: #fff;
-    color: #0f172a;
+    background: var(--bg-white);
+    color: var(--heading-color);
     box-shadow: 0 1px 4px rgba(0,0,0,0.08);
   }
   .rec-tab-icon { font-size: 15px; line-height: 1; }
@@ -200,7 +200,7 @@
   gap: 12px;
   margin-bottom: 16px;
   padding-bottom: 12px;
-  border-bottom: 2px solid rgba(0,0,0,0.04);
+  border-bottom: 2px solid transparent;
 }
 .rec-section-icon {
   display: flex;
@@ -215,12 +215,12 @@
 .rec-label {
   font-size: 15px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--heading-color);
   margin: 0 0 2px;
 }
 .rec-desc {
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--muted-color-light);
   margin: 0;
 }
 .rec-group {
@@ -287,7 +287,7 @@
 
 // 加载骨架屏
 .skeleton {
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background: linear-gradient(90deg, var(--surface-bg, #f1f5f9) 25%, var(--surface-border, #e2e8f0) 50%, var(--surface-bg, #f1f5f9) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 8px;
@@ -303,15 +303,15 @@
   align-items: center;
   gap: 4px;
   font-size: 12px;
-  color: #6366f1;
+  color: var(--nav-active-color);
   cursor: pointer;
   font-weight: 600;
   padding: 4px 10px;
   border-radius: 6px;
-  background: #eef2ff;
+  background: var(--nav-active-bg);
   border: none;
   transition: all 0.2s;
-  &:hover { background: #e0e7ff; }
+  &:hover { background: rgba(124, 58, 237, 0.1); }
   .toggle-arrow {
     font-size: 10px;
     transition: transform 0.25s;
@@ -321,9 +321,9 @@
 .advanced-panel {
   margin-top: 14px;
   padding: 16px 18px;
-  background: #fafbfc;
+  background: var(--surface-bg);
   border-radius: 12px;
-  border: 1px dashed #e2e8f0;
+  border: 1px dashed var(--surface-border);
   overflow: hidden;
   transition: max-height 0.35s ease, opacity 0.25s ease, padding 0.35s ease;
 }
@@ -339,14 +339,14 @@
   label {
     font-size: 12px;
     font-weight: 700;
-    color: #475569;
+    color: var(--text-regular);
     display: flex;
     align-items: center;
     gap: 4px;
     .adv-hint {
       font-weight: 400;
       font-size: 10px;
-      color: #94a3b8;
+      color: var(--muted-color-light);
       margin-left: 2px;
     }
   }
@@ -363,7 +363,7 @@
     text-align: right;
     font-size: 12px;
     font-weight: 700;
-    color: #6366f1;
+    color: var(--nav-active-color);
     flex-shrink: 0;
   }
 }
@@ -371,7 +371,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  span { color: #94a3b8; font-size: 12px; }
+  span { color: var(--muted-color-light); font-size: 12px; }
 }
 .adv-toggle-row {
   display: flex;
@@ -383,7 +383,7 @@
     align-items: center;
     gap: 5px;
     font-size: 12px;
-    color: #475569;
+    color: var(--text-regular);
     cursor: pointer;
     label { font-size: 12px; margin: 0; cursor: pointer; }
   }
@@ -393,7 +393,7 @@
 .empty-state {
   text-align: center;
   padding: 32px 16px;
-  color: #94a3b8;
+  color: var(--muted-color-light);
   font-size: 13px;
   .empty-icon { font-size: 36px; margin-bottom: 8px; display: block; }
 }
@@ -404,6 +404,88 @@
   to { opacity: 1; transform: translateY(0); }
 }
 .panel-enter { animation: fadeIn 0.35s ease-out; }
+
+// ============ 深色模式 ============
+// 注意：panelCommon 通过 @use 引入在 scoped 样式中，必须用 :global() 才能命中 html 元素
+:global(html.dark-mode) {
+  // 卡片阴影
+  .card {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    &:hover { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); }
+  }
+  .control-panel {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  }
+
+  // ======== Element Plus el-tag 暗色覆盖 ========
+  .el-tag {
+    --el-tag-bg-color: var(--surface-bg, #1e1e2e);
+    --el-tag-border-color: var(--surface-border, #2d2d4a);
+    --el-tag-text-color: var(--text-regular, #94a3b8);
+    &.el-tag--info {
+      --el-tag-bg-color: rgba(124, 58, 237, 0.12);
+      --el-tag-border-color: rgba(124, 58, 237, 0.22);
+      --el-tag-text-color: #a78bfa;
+    }
+  }
+
+  // ======== 推荐方案区域 — 覆盖 JS 内联浅色背景 ========
+  .rec-section {
+    background: var(--surface-bg, #1a1a2e) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  }
+  .rec-section-header {
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+  }
+  .rec-tab.active {
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  }
+  .rec-section-icon {
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  // 方案标题/描述颜色覆盖（tabMeta 中的 JS 内联色）
+  .rec-label { color: var(--heading-color, #e2dee9) !important; }
+  .rec-desc { color: var(--text-regular, #94a3b8) !important; }
+
+  // 推荐卡片背景调整（覆盖 JS 内联 white 背景）
+  .rec-card {
+    background: rgba(255, 255, 255, 0.04) !important;
+    &:hover { background: rgba(255, 255, 255, 0.06) !important; }
+  }
+
+  // 骨架屏
+  .skeleton {
+    background: linear-gradient(90deg, var(--surface-bg, #1e1e2e) 25%, var(--surface-hover-bg, #252540) 50%, var(--surface-bg, #1e1e2e) 75%);
+  }
+
+  // ======== 概率格子 — hot/warm ========
+  .prob-cell {
+    &.hot {
+      border-color: rgba(252, 165, 165, 0.35);
+      background: linear-gradient(135deg, rgba(254, 68, 68, 0.12), rgba(220, 38, 38, 0.08));
+      color: #fca5a5;
+      strong { color: #f87171; }
+      small { color: #fca5a5; }
+    }
+    &.warm {
+      border-color: rgba(252, 211, 77, 0.35);
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(245, 158, 11, 0.07));
+      color: #fcd34d;
+      strong { color: #fbbf24; }
+      small { color: #fcd34d; }
+    }
+  }
+
+  // ======== pos-col / pos-row 位置概率列（组件内暗色覆盖的兜底） ========
+  .pos-col {
+    background: #1e1e2e !important;
+    border-color: #2d2d4a !important;
+  }
+  .pos-row {
+    background: transparent !important;
+  }
+}
 
 // ============ 响应式 ============
 @media (max-width: 768px) {
