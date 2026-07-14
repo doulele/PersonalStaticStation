@@ -19,7 +19,7 @@
         </div>
       </router-link>
 
-      <router-link to="/home/familyEducation/familyMeeting" class="tool-card" @click="recordToolClick('/home/familyEducation/familyMeeting')">
+      <div class="tool-card" @click="handleFamilyMeetingClick">
         <div class="tool-card-inner">
           <div class="tool-icon green">
             <el-icon :size="32"><ChatDotRound /></el-icon>
@@ -30,7 +30,7 @@
           </div>
           <el-icon class="tool-arrow"><ArrowRight /></el-icon>
         </div>
-      </router-link>
+      </div>
     </div>
   </div>
 </template>
@@ -38,6 +38,31 @@
 <script setup>
 import { ArrowRight, Moon, ChatDotRound } from '@element-plus/icons-vue'
 import { recordToolClick } from '@/api/stats'
+import { useAuthGuard } from '@/composables/useAuthGuard'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+const { requireAuth } = useAuthGuard()
+
+const familyMeetingPath = '/home/familyEducation/familyMeeting'
+
+async function handleFamilyMeetingClick() {
+  recordToolClick(familyMeetingPath)
+  const ok = await requireAuth({
+    redirectPath: familyMeetingPath,
+    message: '当前功能需要登录后才能使用',
+    confirmText: '前往登录',
+    cancelText: '取消'
+  })
+  if (ok) {
+    // 已登录会自动返回 true 并跳转；未登录点确定也会跳转登录页
+    // 如果已登录（token 存在），requireAuth 返回 true 但不会自动跳转，需要手动导航
+    const token = localStorage.getItem('auth_token')
+    if (token) {
+      router.push(familyMeetingPath)
+    }
+  }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -86,6 +111,7 @@ import { recordToolClick } from '@/api/stats'
 .tool-card {
   display: block;
   text-decoration: none;
+  cursor: pointer;
 }
 
 .tool-card-inner {

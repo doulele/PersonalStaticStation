@@ -4,7 +4,7 @@
       <div class="setup-head">
         <el-icon :size="40" color="#6366f1"><ChatDotRound /></el-icon>
         <h1>搭建你的家庭会议空间</h1>
-        <p>私密、安全、支持语音转写。所有数据仅保存在本机浏览器，不上传任何服务器。</p>
+        <p>私密、安全、支持语音转写。数据与你的账号绑定，仅自己可见。</p>
       </div>
 
       <el-steps :active="step" align-center finish-status="success" class="setup-steps">
@@ -20,7 +20,7 @@
             <el-input v-model="familyName" placeholder="如：野生小猿园一家" maxlength="20" />
           </el-form-item>
           <el-form-item label="你的称呼（家庭管理员）">
-            <el-input v-model="adminName" placeholder="如：爸爸" maxlength="10" />
+            <el-input v-model="adminName" :placeholder="authUserNickname || '如：爸爸'" maxlength="10" />
           </el-form-item>
         </el-form>
         <el-button
@@ -83,7 +83,10 @@ import { ElMessage } from 'element-plus'
 const store = useStore()
 const step = ref(0)
 const familyName = ref('')
-const adminName = ref('')
+
+const authUserNickname = computed(() => store.state.auth?.user?.nickname || '')
+// 🔒 管理员名称默认使用站点用户昵称
+const adminName = ref(authUserNickname.value || '')
 const newMember = ref('')
 const newRole = ref('member')
 
@@ -93,7 +96,7 @@ const family = computed(() => store.state.familyMeeting.family)
 function onCreateFamily() {
   store.dispatch('familyMeeting/initFamily', {
     name: familyName.value.trim(),
-    adminName: adminName.value.trim()
+    adminName: adminName.value.trim() || authUserNickname.value || '管理员'
   })
   step.value = 1
 }

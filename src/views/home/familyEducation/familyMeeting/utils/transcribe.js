@@ -99,10 +99,20 @@ export async function transcribeViaBackend(audioBlob, options = {}) {
     fd.append('hotwords', hotwords.join(','))
   }
 
+  // 🔒 携带认证 token
+  const headers = {}
+  try {
+    const token = localStorage.getItem('auth_token')
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+  } catch { /* ignore */ }
+
   // 使用相对路径，通过 vite proxy 转发到后端
   const baseUrl = import.meta.env.VITE_API_BASE || '/staticTool/api'
   const res = await fetch(`${baseUrl}/family-meeting/transcribe`, {
     method: 'POST',
+    headers,
     body: fd
   })
 

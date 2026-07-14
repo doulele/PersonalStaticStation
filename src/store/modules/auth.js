@@ -115,11 +115,11 @@ export default {
     /**
      * 注册
      */
-    async register({ commit }, { email, password, nickname }) {
+    async register({ commit }, { email, password, nickname, inviteCode }) {
       commit('SET_LOADING', true)
       commit('SET_ERROR', null)
       try {
-        const res = await registerApi(email, password, nickname)
+        const res = await registerApi(email, password, nickname, inviteCode)
         if (res.success) {
           const { token, userId, email: userEmail, nickname: name, createdAt } = res.data
           const user = { userId, email: userEmail, nickname: name, createdAt }

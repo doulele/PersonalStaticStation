@@ -1012,7 +1012,7 @@ async function locateUser() {
   let lng, lat
   let located = false
 
-  // 第一步：浏览器 GPS（在 HTTPS 下可用，HTTP 下直接失败 → 很快）
+  // 第一步：浏览器 GPS 定位
   try {
     const pos = await getCurrentPosition(3000)
     lng = pos.lng
@@ -1090,7 +1090,7 @@ function getCurrentPosition(timeout = 3000) {
       (pos) => resolve({ lng: pos.coords.longitude, lat: pos.coords.latitude }),
       (err) => {
         const msg = err.code === 1
-          ? '用户拒绝了位置请求（非 HTTPS 环境也可能触发此错误）'
+          ? '用户拒绝了位置请求'
           : (err.message || '浏览器定位不可用')
         reject(new Error(msg))
       },

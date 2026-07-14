@@ -219,8 +219,19 @@ export function transcribeAudio(formData) {
   // formData 应包含: audio(Blob), language(string), hotwords(string)
   // 不使用 request.js 包装，因为需要 multipart/form-data
   const baseUrl = import.meta.env.VITE_API_BASE || '/staticTool/api'
+
+  // 🔒 携带认证 token
+  const headers = {}
+  try {
+    const token = localStorage.getItem('auth_token')
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+  } catch { /* ignore */ }
+
   return fetch(`${baseUrl}${BASE}/transcribe`, {
     method: 'POST',
+    headers,
     body: formData
   }).then(res => {
     if (!res.ok) throw new Error(`HTTP ${res.status}`)

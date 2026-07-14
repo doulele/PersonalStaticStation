@@ -249,7 +249,7 @@ const meetingId = ref(store.getters['familyMeeting/visibleMeetings'][0]?.id || '
 
 const mode = ref('text')
 const textInput = ref('')
-const textSpeaker = ref(store.state.familyMeeting.currentUserId)
+const textSpeaker = ref(store.state.auth?.user?.userId || store.state.familyMeeting.currentUserId)
 
 // 录音相关 - 支持暂停/继续 + 自动分段 + 后端转写
 const isRecording = ref(false)         // 是否正在录音（含暂停状态）
@@ -335,21 +335,9 @@ async function startNewRecording() {
   try {
     transcribeError.value = ''
 
-    // 预先检测：非 HTTPS 环境（localhost 除外）提示用户
-    const isSecure = window.location.protocol === 'https:' ||
-                     window.location.hostname === 'localhost' ||
-                     window.location.hostname === '127.0.0.1'
-    if (!isSecure) {
-      ElMessage.warning('当前非安全环境（HTTP），移动端可能无法访问麦克风，请使用 HTTPS 访问')
-    }
-
-    // 预先检测 MediaRecorder 支持性
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      ElMessage.error('当前浏览器不支持麦克风访问，请使用 Chrome / Edge / Safari 最新版')
-      return
-    }
-    if (typeof MediaRecorder === 'undefined') {
-      ElMessage.error('当前浏览器不支持录音功能，请更换浏览器')
+    // 检测浏览器录音能力（线上已全站 HTTPS，无需额外安全上下文检测）
+    if (typeof MediaRecorder === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+      ElMessage.error('当前浏览器不支持录音功能，请使用 Chrome / Edge / Safari 最新版，或避免在微信内置浏览器中打开')
       return
     }
 
@@ -613,9 +601,10 @@ function onSaveChunk(idx) {
   const seg = segments.value[idx]
   if (!seg || !seg.text.trim()) return
   const tags = autoTag(seg.text, [])
+  const speakerId = store.state.auth?.user?.userId || store.state.familyMeeting.currentUserId
   store.dispatch('familyMeeting/addRecord', {
     meetingId: meetingId.value,
-    speakerId: store.state.familyMeeting.currentUserId,
+    speakerId,
     timestamp: `${seg.startTime} - ${seg.endTime}`,
     duration: seg.duration,
     content: seg.text.trim(),

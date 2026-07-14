@@ -149,7 +149,7 @@ const routes = [
       {
         path: 'familyEducation/familyMeeting',
         component: () => import('@/views/home/familyEducation/familyMeeting/index.vue'),
-        meta: { title: '家庭会议', icon: 'ChatDotRound' }
+        meta: { title: '家庭会议', icon: 'ChatDotRound', requiresAuth: true }
       },
       /**家庭/教育end */
     ]

@@ -26,7 +26,7 @@ export default defineConfig({
       // 语音转写请求转发到阿里云（阿里云上有 faster-whisper）
       // 注意：不带 rewrite，保留 /staticTool/api/ 前缀，由 Nginx 转发到 3001 后端
       '/staticTool/api/family-meeting/transcribe': {
-        target: 'http://wellwin.top',
+        target: 'https://wellwin.top',
         changeOrigin: true,
         secure: false,
         timeout: 300000  // 转写可能需要较长时间（5分钟）

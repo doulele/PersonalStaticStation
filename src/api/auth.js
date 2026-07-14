@@ -17,9 +17,10 @@ export function loginApi(email, password) {
  * @param {string} email
  * @param {string} password
  * @param {string} nickname
+ * @param {string} inviteCode
  */
-export function registerApi(email, password, nickname) {
-  return post('/auth/register', { email, password, nickname })
+export function registerApi(email, password, nickname, inviteCode) {
+  return post('/auth/register', { email, password, nickname, inviteCode })
 }
 
 /**

@@ -56,6 +56,16 @@
             :prefix-icon="Lock"
             size="large"
             show-password
+          />
+        </el-form-item>
+
+        <el-form-item label="邀请码" prop="inviteCode">
+          <el-input
+            v-model="form.inviteCode"
+            placeholder="请输入邀请码"
+            :prefix-icon="Key"
+            size="large"
+            clearable
             @keyup.enter="handleRegister"
           />
         </el-form-item>
@@ -96,7 +106,7 @@
 import { ref, reactive, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useStore } from 'vuex'
-import { User, Message, Lock, WarningFilled, ArrowLeft } from '@element-plus/icons-vue'
+import { User, Message, Lock, Key, WarningFilled, ArrowLeft } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
@@ -111,7 +121,8 @@ const form = reactive({
   nickname: '',
   email: '',
   password: '',
-  confirmPassword: ''
+  confirmPassword: '',
+  inviteCode: ''
 })
 
 const validateConfirmPassword = (rule, value, callback) => {
@@ -138,6 +149,9 @@ const rules = {
   confirmPassword: [
     { required: true, message: '请再次输入密码', trigger: 'blur' },
     { validator: validateConfirmPassword, trigger: 'blur' }
+  ],
+  inviteCode: [
+    { required: true, message: '请输入邀请码', trigger: 'blur' }
   ]
 }
 
@@ -148,7 +162,8 @@ async function handleRegister() {
   const result = await store.dispatch('auth/register', {
     email: form.email.trim(),
     password: form.password,
-    nickname: form.nickname.trim()
+    nickname: form.nickname.trim(),
+    inviteCode: form.inviteCode.trim()
   })
 
   if (result.success) {

@@ -87,24 +87,9 @@
           </div>
           <div class="fm-user">
             <span class="fm-user-label">当前身份</span>
-            <el-dropdown trigger="click" @command="onSwitchUser">
-              <el-button size="small" type="primary" plain>
-                {{ currentUser?.name }}
-                <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-              </el-button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item
-                    v-for="m in members"
-                    :key="m.id"
-                    :command="m.id"
-                  >
-                    {{ m.name }}
-                    <el-tag v-if="m.role === 'admin'" size="small" type="warning" effect="plain">管理员</el-tag>
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
+            <el-tag size="small" type="primary" effect="plain">
+              {{ authUserName }}
+            </el-tag>
           </div>
         </el-header>
 
@@ -139,7 +124,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useStore } from 'vuex'
 import {
-  ChatDotRound, EditPen, Microphone, Picture, List, DataLine, Setting, ArrowDown, Loading, Expand
+  ChatDotRound, EditPen, Microphone, Picture, List, DataLine, Setting, Loading, Expand
 } from '@element-plus/icons-vue'
 import SpaceSetup from './components/SpaceSetup.vue'
 import AgendaBoard from './components/AgendaBoard.vue'
@@ -163,8 +148,10 @@ const bottomTabs = [
 
 const hasFamily = computed(() => store.getters['familyMeeting/hasFamily'])
 const family = computed(() => store.state.familyMeeting.family)
-const members = computed(() => store.state.familyMeeting.members)
-const currentUser = computed(() => store.getters['familyMeeting/currentUser'])
+const authUserName = computed(() => {
+  const authUser = store.state.auth?.user
+  return authUser?.nickname || authUser?.email || '未登录'
+})
 
 const syncStatus = computed(() => store.getters['familyMeeting/syncStatus'])
 const syncLabel = computed(() => {
@@ -188,12 +175,13 @@ const syncTagType = computed(() => {
 
 onMounted(async () => {
   await store.dispatch('familyMeeting/initFromBackend')
+  // 🔒 确保 currentUserId 与站点登录用户同步
+  const authUserId = store.state.auth?.user?.userId
+  if (authUserId && store.state.familyMeeting.currentUserId !== authUserId) {
+    store.dispatch('familyMeeting/switchUser', authUserId)
+  }
   loading.value = false
 })
-
-function onSwitchUser(id) {
-  store.dispatch('familyMeeting/switchUser', id)
-}
 
 function onNav(key) {
   active.value = key

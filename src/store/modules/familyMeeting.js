@@ -1,12 +1,17 @@
 /**
  * 家庭会议 数据状态管理
  * --------------------------------------------------------------
- * 主存储：后端 API（/staticTool/api/family-meeting/*）
- * 缓存层：localStorage（快速读取 + 离线回退）
+ * 🔒 数据隔离机制（v2.0）：
+ *   1. 路由层面：requiresAuth = true，未登录用户无法访问
+ *   2. 身份绑定：currentUserId 自动与站点 auth.user.userId 绑定，不可手动切换
+ *   3. 可见性过滤：visibleMeetings getter 基于 rootState.auth.user.userId 过滤
+ *   4. 加密会议：需输入正确密码解锁，state.unlockedMeetings 记录已解锁的会议
+ *   5. 后端隔离：所有 API 请求携带 auth_token，后端按用户隔离数据
+ *   6. 本地缓存：localStorage key 不再使用固定 key（前端仅做缓存，后端为主存储）
  *
  * 数据模型（对应需求文档第 8 节）：
  *   families      : { id, name, adminId }
- *   members(users): { id, name, role: 'admin' | 'member' }
+ *   members(users): { id, name, role: 'admin' | 'member' }   // id 必须与 auth.user.userId 一致（管理员）
  *   meetings      : { id, familyId, title, date, status, participants, visibility, encrypted, encryptPass, agendaLocked }
  *   agenda_items  : { id, meetingId, authorId, title, category, desc, priority, resonance:[uid], emotionLevel, createdAt }
  *   meeting_records:{ id, meetingId, seq, timestamp, speakerId, content, autoTags, manualTags, createdAt }
@@ -40,6 +45,7 @@ function cacheSet(state) {
       patches: state.patches,
       tasks: state.tasks,
       emotionLogs: state.emotionLogs,
+      unlockedMeetings: state.unlockedMeetings,
       settings: state.settings
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot))
@@ -75,6 +81,7 @@ function getSnapshot(state) {
     patches: state.patches,
     tasks: state.tasks,
     emotionLogs: state.emotionLogs,
+    unlockedMeetings: state.unlockedMeetings,
     settings: state.settings
   }
 }
@@ -195,6 +202,7 @@ export default {
       patches: cached?.patches || [],
       tasks: cached?.tasks || [],
       emotionLogs: cached?.emotionLogs || [],
+      unlockedMeetings: cached?.unlockedMeetings || [],  // 🔒 已解锁的加密会议 ID 列表
       settings: cached?.settings || {
         autoDeleteAudio: true,
         hotwords: '决定,结论,先搁置,行动项,待定',
@@ -207,9 +215,19 @@ export default {
   },
 
   getters: {
-    currentUser: (state) => state.members.find(m => m.id === state.currentUserId) || null,
-    isAdmin: (state) => {
-      const u = state.members.find(m => m.id === state.currentUserId)
+    /** 🔒 当前站点登录用户 ID（来自 auth 模块） */
+    authUserId: (state, getters, rootState) => rootState.auth?.user?.userId || null,
+
+    /** 🔒 当前站点登录用户的家庭成员身份 */
+    currentUser: (state, getters) => {
+      const authUid = getters.authUserId
+      if (!authUid) return null
+      return state.members.find(m => m.id === authUid) || null
+    },
+    isAdmin: (state, getters) => {
+      const authUid = getters.authUserId
+      if (!authUid) return false
+      const u = state.members.find(m => m.id === authUid)
       return u?.role === 'admin'
     },
     hasFamily: (state) => !!state.family,
@@ -217,15 +235,20 @@ export default {
     memberName: (state) => (id) => state.members.find(m => m.id === id)?.name || '未知成员',
 
     /**
-     * 当前成员可见的会议列表（数据隔离核心）
+     * 🔒 当前登录用户可见的会议列表（数据隔离核心）
+     *   - 未登录 → 返回空
+     *   - 非参与者 → 不可见
+     *   - 加密会议 + 未解锁 → 不可见（需先输入密码）
      */
     visibleMeetings: (state, getters) => {
-      const uid = state.currentUserId
+      const uid = getters.authUserId
       if (!uid) return []
       return state.meetings.filter(m => {
-        if (m.visibility === 'private') return m.participants.includes(uid)
-        if (m.encrypted) return getters.isAdmin || m.participants.includes(uid)
-        return getters.isAdmin || m.participants.includes(uid)
+        // 非参与者 → 完全不可见
+        if (!m.participants.includes(uid)) return false
+        // 加密会议 → 需要已解锁
+        if (m.encrypted && !state.unlockedMeetings.includes(m.id)) return false
+        return true
       })
     },
 
@@ -364,6 +387,14 @@ export default {
       scheduleSync(state)
     },
 
+    /** 🔒 记录已解锁的加密会议（密码验证通过） */
+    UNLOCK_MEETING(state, meetingId) {
+      if (!state.unlockedMeetings.includes(meetingId)) {
+        state.unlockedMeetings.push(meetingId)
+      }
+      scheduleSync(state)
+    },
+
     RESET_ALL(state) {
       state.family = null
       state.members = []
@@ -374,6 +405,7 @@ export default {
       state.patches = []
       state.tasks = []
       state.emotionLogs = []
+      state.unlockedMeetings = []
       scheduleSync(state)
     }
   },
@@ -392,11 +424,18 @@ export default {
     },
 
     // ===== 家庭空间 / 成员 =====
-    initFamily({ commit, state }, { name, adminName }) {
-      const adminId = uid('u')
+    /** 🔒 创建家庭空间，管理员自动绑定当前站点登录用户 */
+    initFamily({ commit, state, rootState }, { name, adminName }) {
+      const authUser = rootState.auth?.user
+      if (!authUser) {
+        console.warn('[familyMeeting] 未登录，无法创建家庭空间')
+        return
+      }
+      // 管理员 ID 使用站点用户的 userId，确保身份绑定
+      const adminId = authUser.userId
       const family = { id: uid('f'), name, adminId }
       commit('SET_FAMILY', family)
-      commit('ADD_MEMBER', { id: adminId, name: adminName, role: 'admin' })
+      commit('ADD_MEMBER', { id: adminId, name: adminName || authUser.nickname || '管理员', role: 'admin' })
       commit('SET_CURRENT_USER', adminId)
     },
     addMember({ commit }, { name, role }) {
@@ -405,19 +444,36 @@ export default {
     removeMember({ commit }, id) {
       commit('REMOVE_MEMBER', id)
     },
-    switchUser({ commit }, id) {
+    /** 🔒 用户身份强制绑定站点登录用户，不可随意切换 */
+    switchUser({ commit, rootState }, id) {
+      const authUserId = rootState.auth?.user?.userId
+      if (!authUserId) {
+        console.warn('[familyMeeting] 未登录，不允许切换用户')
+        return
+      }
+      // 只允许切换到与站点用户匹配的成员
+      if (id !== authUserId) {
+        console.warn('[familyMeeting] 不允许切换到非本站点登录用户的身份')
+        return
+      }
       commit('SET_CURRENT_USER', id)
     },
 
     // ===== 会议 =====
-    createMeeting({ commit, state }, payload) {
+    /** 🔒 创建会议，参与者必须包含当前登录用户 */
+    createMeeting({ commit, state, rootState }, payload) {
+      const authUserId = rootState.auth?.user?.userId
+      const parts = payload.participants || []
+      if (authUserId && !parts.includes(authUserId)) {
+        parts.push(authUserId)
+      }
       const meeting = {
         id: uid('m'),
         familyId: state.family?.id || null,
         title: payload.title,
         date: payload.date || nowISO().slice(0, 10),
         status: 'pre',
-        participants: payload.participants || [],
+        participants: parts,
         visibility: payload.visibility || 'normal',
         encrypted: !!payload.encrypted,
         encryptPass: payload.encryptPass || '',
@@ -444,11 +500,12 @@ export default {
     },
 
     // ===== 议题 =====
-    addAgenda({ commit, state }, payload) {
+    addAgenda({ commit, state, rootState }, payload) {
+      const authUserId = rootState.auth?.user?.userId
       const item = {
         id: uid('a'),
         meetingId: payload.meetingId,
-        authorId: payload.authorId || state.currentUserId,
+        authorId: payload.authorId || authUserId || state.currentUserId,
         title: payload.title,
         category: payload.category || '其他',
         desc: payload.desc || '',
@@ -466,19 +523,22 @@ export default {
     removeAgenda({ commit }, id) {
       commit('REMOVE_AGENDA', id)
     },
-    toggleResonance({ commit, state }, agendaId) {
-      commit('TOGGLE_RESONANCE', { id: agendaId, userId: state.currentUserId })
+    toggleResonance({ commit, rootState }, agendaId) {
+      const authUserId = rootState.auth?.user?.userId
+      if (!authUserId) return
+      commit('TOGGLE_RESONANCE', { id: agendaId, userId: authUserId })
     },
 
     // ===== 会议记录 / 转写 =====
-    addRecord({ commit, state }, payload) {
+    addRecord({ commit, state, rootState }, payload) {
+      const authUserId = rootState.auth?.user?.userId
       const meetingRecords = state.records.filter(r => r.meetingId === payload.meetingId)
       const record = {
         id: uid('r'),
         meetingId: payload.meetingId,
         seq: meetingRecords.length + 1,
         timestamp: payload.timestamp || new Date().toLocaleTimeString('zh-CN', { hour12: false }),
-        speakerId: payload.speakerId || state.currentUserId,
+        speakerId: payload.speakerId || authUserId || state.currentUserId,
         content: payload.content || '',
         autoTags: payload.autoTags || [],
         manualTags: payload.manualTags || [],
@@ -495,7 +555,8 @@ export default {
     },
 
     // ===== 补丁 =====
-    addPatch({ commit, state }, payload) {
+    addPatch({ commit, state, rootState }, payload) {
+      const authUserId = rootState.auth?.user?.userId
       const patch = {
         id: uid('p'),
         targetType: payload.targetType,
@@ -503,7 +564,7 @@ export default {
         meetingId: payload.meetingId,
         content: payload.content,
         patchType: payload.patchType || '补充',
-        authorId: payload.authorId || state.currentUserId,
+        authorId: payload.authorId || authUserId || state.currentUserId,
         createdAt: nowISO()
       }
       commit('ADD_PATCH', patch)
@@ -533,10 +594,11 @@ export default {
     },
 
     // ===== 情绪 =====
-    addEmotion({ commit, state }, payload) {
+    addEmotion({ commit, state, rootState }, payload) {
+      const authUserId = rootState.auth?.user?.userId
       const log = {
         id: uid('e'),
-        userId: payload.userId || state.currentUserId,
+        userId: payload.userId || authUserId || state.currentUserId,
         meetingId: payload.meetingId || null,
         level: payload.level,
         note: payload.note || '',
@@ -544,6 +606,17 @@ export default {
       }
       commit('ADD_EMOTION', log)
       return log
+    },
+
+    /** 🔒 解锁加密会议（密码验证通过后调用） */
+    unlockMeeting({ commit, state }, { meetingId, password }) {
+      const meeting = state.meetings.find(m => m.id === meetingId)
+      if (!meeting || !meeting.encrypted) return false
+      if (meeting.encryptPass === password) {
+        commit('UNLOCK_MEETING', meetingId)
+        return true
+      }
+      return false
     },
 
     updateSettings({ commit }, patch) {
