@@ -37,6 +37,9 @@
             show-password
             @keyup.enter="handleLogin"
           />
+          <div class="forgot-pwd-row">
+            <router-link to="/forgot-password" class="forgot-link">忘记密码？</router-link>
+          </div>
         </el-form-item>
 
         <el-form-item>
@@ -185,6 +188,21 @@ async function handleLogin() {
   font-weight: 500;
 }
 
+.forgot-pwd-row {
+  text-align: right;
+  margin-top: -2px;
+
+  .forgot-link {
+    font-size: 13px;
+    color: var(--primary-color);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
 .submit-btn {
   width: 100%;
   height: 44px;
@@ -318,6 +336,10 @@ html.dark-mode .auth-page {
   .auth-footer {
     color: #64748b;
     .link { color: #a78bfa; }
+  }
+
+  .forgot-pwd-row .forgot-link {
+    color: #a78bfa;
   }
 
   .auth-back .back-link {

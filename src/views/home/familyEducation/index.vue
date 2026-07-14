@@ -18,12 +18,25 @@
           <el-icon class="tool-arrow"><ArrowRight /></el-icon>
         </div>
       </router-link>
+
+      <router-link to="/home/familyEducation/familyMeeting" class="tool-card" @click="recordToolClick('/home/familyEducation/familyMeeting')">
+        <div class="tool-card-inner">
+          <div class="tool-icon green">
+            <el-icon :size="32"><ChatDotRound /></el-icon>
+          </div>
+          <div class="tool-info">
+            <h3 class="tool-name">家庭会议</h3>
+            <p class="tool-desc">私密安全的家庭会议：议题收集、语音转写、记忆墙与决策追踪</p>
+          </div>
+          <el-icon class="tool-arrow"><ArrowRight /></el-icon>
+        </div>
+      </router-link>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ArrowRight, Moon } from '@element-plus/icons-vue'
+import { ArrowRight, Moon, ChatDotRound } from '@element-plus/icons-vue'
 import { recordToolClick } from '@/api/stats'
 </script>
 
@@ -129,6 +142,10 @@ import { recordToolClick } from '@/api/stats'
 
   &.purple {
     background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+  }
+
+  &.green {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   }
 }
 

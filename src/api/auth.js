@@ -38,3 +38,21 @@ export function fetchProfileApi(token) {
 export function changePasswordApi(oldPassword, newPassword) {
   return post('/auth/change-password', { oldPassword, newPassword })
 }
+
+/**
+ * 忘记密码 - 发送验证码到邮箱
+ * @param {string} email
+ */
+export function forgotPasswordApi(email) {
+  return post('/auth/forgot-password', { email })
+}
+
+/**
+ * 重置密码 - 使用验证码重置
+ * @param {string} email
+ * @param {string} code
+ * @param {string} newPassword
+ */
+export function resetPasswordApi(email, code, newPassword) {
+  return post('/auth/reset-password', { email, code, newPassword })
+}

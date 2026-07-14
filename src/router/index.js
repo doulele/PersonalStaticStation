@@ -15,6 +15,12 @@ const routes = [
     meta: { title: '注册', guest: true }
   },
   {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    component: () => import('@/views/auth/ForgotPassword.vue'),
+    meta: { title: '忘记密码', guest: true }
+  },
+  {
     path: '/',
     redirect: '/home'
   },
@@ -139,6 +145,11 @@ const routes = [
         path: 'familyEducation/babySleep',
         component: () => import('@/views/home/familyEducation/babySleep/index.vue'),
         meta: { title: '宝宝哄睡', icon: 'Moon' }
+      },
+      {
+        path: 'familyEducation/familyMeeting',
+        component: () => import('@/views/home/familyEducation/familyMeeting/index.vue'),
+        meta: { title: '家庭会议', icon: 'ChatDotRound' }
       },
       /**家庭/教育end */
     ]

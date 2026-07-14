@@ -160,5 +160,14 @@ export const ALL_TOOLS = [
     path: '/home/familyEducation/babySleep',
     icon: 'Moon',
     color: 'purple'
+  },
+  {
+    id: 'family-meeting',
+    name: '家庭会议',
+    desc: '私密安全的家庭会议：议题收集、语音转写、记忆墙与决策追踪',
+    category: 'family',
+    path: '/home/familyEducation/familyMeeting',
+    icon: 'ChatDotRound',
+    color: 'green'
   }
 ]
