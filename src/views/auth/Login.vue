@@ -17,11 +17,11 @@
         label-position="top"
         @submit.prevent="handleLogin"
       >
-        <el-form-item label="邮箱" prop="email">
+        <el-form-item label="邮箱 / 用户名" prop="account">
           <el-input
-            v-model="form.email"
-            placeholder="请输入邮箱地址"
-            :prefix-icon="Message"
+            v-model="form.account"
+            placeholder="输入邮箱或用户名"
+            :prefix-icon="User"
             size="large"
             clearable
           />
@@ -78,7 +78,7 @@
 import { ref, reactive, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useStore } from 'vuex'
-import { Message, Lock, WarningFilled, ArrowLeft } from '@element-plus/icons-vue'
+import { Message, Lock, WarningFilled, ArrowLeft, User } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
@@ -90,14 +90,13 @@ const loading = computed(() => store.getters['auth/isLoading'])
 const errorMsg = computed(() => store.getters['auth/authError'])
 
 const form = reactive({
-  email: '',
+  account: '',
   password: ''
 })
 
 const rules = {
-  email: [
-    { required: true, message: '请输入邮箱地址', trigger: 'blur' },
-    { type: 'email', message: '请输入有效的邮箱地址', trigger: 'blur' }
+  account: [
+    { required: true, message: '请输入邮箱或用户名', trigger: 'blur' }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
@@ -109,14 +108,18 @@ async function handleLogin() {
   const valid = await formRef.value.validate().catch(() => false)
   if (!valid) return
 
+  const account = form.account.trim()
+  // 判断是否为邮箱（包含 @）
+  const isEmail = /@/.test(account)
+
   const result = await store.dispatch('auth/login', {
-    email: form.email.trim(),
-    password: form.password
+    account,
+    password: form.password,
+    isUsername: !isEmail
   })
 
   if (result.success) {
     ElMessage.success('登录成功')
-    // 跳转到之前想访问的页面，或首页
     const redirect = route.query.redirect || '/home'
     router.push(redirect)
   }
@@ -259,6 +262,58 @@ async function handleLogin() {
     }
   }
 }
+
+// ==================== 移动端适配 ====================
+@media (max-width: 768px) {
+  .auth-page {
+    padding: 16px;
+    align-items: flex-start;
+    padding-top: 60px;
+  }
+
+  .auth-card {
+    max-width: 100%;
+    padding: 28px 20px 32px;
+    border-radius: 12px;
+  }
+
+  .auth-header {
+    margin-bottom: 24px;
+  }
+
+  .auth-logo {
+    font-size: 18px;
+    img { width: 24px; height: 24px; }
+  }
+
+  .auth-header h2 {
+    font-size: 20px;
+  }
+
+  .auth-subtitle {
+    font-size: 13px;
+  }
+
+  .auth-card :deep(.el-form-item__label) {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 400px) {
+  .auth-page {
+    padding: 12px;
+    padding-top: 40px;
+  }
+
+  .auth-card {
+    padding: 22px 16px 28px;
+  }
+
+  .submit-btn {
+    height: 42px;
+    font-size: 15px;
+  }
+}
 </style>
 
 <style lang="scss">
@@ -328,6 +383,12 @@ html.dark-mode .auth-page {
     color: #6b7280;
   }
 
+  // 密码切换按钮（show-password）
+  .el-input__password {
+    color: #6b7280;
+    &:hover { color: #94a3b8; }
+  }
+
   .error-msg {
     background: rgba(245, 108, 108, 0.1);
     border-color: rgba(245, 108, 108, 0.2);
@@ -345,6 +406,15 @@ html.dark-mode .auth-page {
   .auth-back .back-link {
     color: #64748b;
     &:hover { color: #a78bfa; }
+  }
+}
+
+// ==================== 移动端暗色模式 ====================
+@media (max-width: 768px) {
+  html.dark-mode .auth-page {
+    .auth-card {
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+    }
   }
 }
 </style>

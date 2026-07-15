@@ -222,47 +222,89 @@ function onExport() {
 
 <style lang="scss" scoped>
 .ar-root { max-width: 900px; margin: 0 auto; }
-.ar-title { font-size: 22px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
-.ar-sub { font-size: 13px; color: #64748b; margin-bottom: 16px; }
-.ar-overview { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
-.ov-card { background: #fff; border-radius: 12px; padding: 16px; text-align: center; border: 1px solid #e2e8f0; font-size: 14px; color: #475569;
-  .ov-num { font-size: 26px; font-weight: 800; color: #0f172a; display: block; }
+.ar-title { font-size: 24px; font-weight: 700; color: #0f172a; margin-bottom: 6px; letter-spacing: -0.01em; }
+.ar-sub { font-size: 14px; color: #94a3b8; margin-bottom: 20px; line-height: 1.6; }
+.ar-overview { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+.ov-card {
+  background: #fff; border-radius: 14px; padding: 20px 16px; text-align: center;
+  border: 1px solid #e8ecf4; font-size: 14px; color: #64748b;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  transition: all 0.25s;
+  &:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+  .ov-num { font-size: 32px; font-weight: 800; color: #0f172a; display: block; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 }
-.ar-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
-.chart-card { border-radius: 14px; }
-.chart-container { height: 280px; }
+.ar-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.chart-card {
+  border-radius: 16px;
+  border: 1px solid #e8ecf4;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  :deep(.el-card__header) {
+    padding: 16px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    background: #fafbfd;
+    border-radius: 16px 16px 0 0;
+    font-weight: 700; font-size: 14px; color: #0f172a;
+  }
+}
+.chart-container { height: 300px; }
 .insights { display: flex; flex-direction: column; gap: 10px; }
-.insight { padding: 12px; border-radius: 10px; font-size: 14px;
-  &.con { background: #ecfdf5; color: #065f46; }
-  &.pen { background: #fffbeb; color: #92400e; }
-  &.act { background: #eef2ff; color: #3730a3; }
+.insight {
+  padding: 14px 16px; border-radius: 12px; font-size: 14px;
+  line-height: 1.6;
+  border-left: 4px solid transparent;
+  &.con { background: #ecfdf5; color: #065f46; border-left-color: #10b981; }
+  &.pen { background: #fffbeb; color: #92400e; border-left-color: #f59e0b; }
+  &.act { background: #eef2ff; color: #3730a3; border-left-color: #6366f1; }
 }
 
 // ===== 响应式 =====
 @media (max-width: 1024px) {
-  .ar-overview { grid-template-columns: repeat(4, 1fr); gap: 8px; }
-  .ov-card { padding: 12px 8px; .ov-num { font-size: 22px; } }
+  .ar-overview { grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .ov-card { padding: 16px 10px; .ov-num { font-size: 26px; } }
 }
 
 @media (max-width: 768px) {
   .ar-root { max-width: 100%; }
-  .ar-title { font-size: 20px; }
-  .ar-overview { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-  .ar-charts { grid-template-columns: 1fr; gap: 10px; }
-  .chart-container { height: 240px; }
-  .ov-card { padding: 14px; border-radius: 10px;
-    .ov-num { font-size: 24px; }
+  .ar-title { font-size: 22px; }
+  .ar-sub { font-size: 13px; margin-bottom: 16px; }
+  .ar-overview { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .ar-charts { grid-template-columns: 1fr; gap: 12px; }
+  .chart-container { height: 260px; }
+  .ov-card { padding: 16px; border-radius: 12px;
+    .ov-num { font-size: 26px; }
   }
 }
 
 @media (max-width: 480px) {
-  .ar-title { font-size: 18px; }
+  .ar-title { font-size: 20px; }
   .ar-sub { font-size: 12px; }
-  .ov-card { padding: 12px; font-size: 12px;
-    .ov-num { font-size: 22px; }
+  .ov-card { padding: 14px; font-size: 12px;
+    .ov-num { font-size: 24px; }
   }
-  .chart-card { border-radius: 12px; }
-  .chart-container { height: 200px; }
-  .insight { padding: 10px; font-size: 13px; }
+  .chart-card { border-radius: 14px; }
+  .chart-container { height: 220px; }
+  .insight { padding: 12px 14px; font-size: 13px; border-radius: 10px; }
+}
+</style>
+
+<style lang="scss">
+html.dark-mode {
+  .ar-title { color: #e2dee9; }
+  .ar-sub { color: #64748b; }
+  .ov-card {
+    background: #1e1e2e; border-color: #2d2d4a; color: #94a3b8;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    &:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+    .ov-num { color: #e2dee9; }
+  }
+  .chart-card {
+    background: #1e1e2e; border-color: #2d2d4a; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    .el-card__header { border-bottom-color: #252540; background: #212136; color: #e2dee9; }
+  }
+  .insight {
+    &.con { background: rgba(16, 185, 129, 0.08); color: #6ee7b7; border-left-color: #10b981; }
+    &.pen { background: rgba(245, 158, 11, 0.08); color: #fcd34d; border-left-color: #f59e0b; }
+    &.act { background: rgba(167, 139, 250, 0.08); color: #c4b5fd; border-left-color: #a78bfa; }
+  }
 }
 </style>

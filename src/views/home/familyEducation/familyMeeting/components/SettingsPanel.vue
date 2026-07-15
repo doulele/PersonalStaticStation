@@ -18,6 +18,53 @@
     </el-card>
 
     <el-card shadow="never" class="sp-card">
+      <template #header><span class="card-h">👥 邀请成员</span></template>
+      <div class="invite-section">
+        <p>分享邀请码给家人，让他们加入你的家庭空间。邀请码可用于创建家庭空间时的「加入已有家庭」入口。</p>
+        <div class="invite-code-box" v-if="inviteCode">
+          <span class="invite-code">{{ inviteCode }}</span>
+          <el-button size="small" type="primary" plain @click="onCopyInvite">📋 复制</el-button>
+          <el-button size="small" text @click="onRegenerateInvite">🔄 刷新</el-button>
+        </div>
+        <div v-else class="invite-empty">
+          <p style="color:#94a3b8;">还没有邀请码，点击下方按钮生成</p>
+          <el-button type="primary" :loading="inviteLoading" @click="onGenerateInvite">生成邀请码</el-button>
+        </div>
+        <p v-if="copySuccess" class="copy-tip">✅ 已复制到剪贴板，快分享给家人吧！</p>
+      </div>
+    </el-card>
+
+    <el-card shadow="never" class="sp-card">
+      <template #header><span class="card-h">🔀 加入其他家庭空间</span></template>
+      <div class="invite-section">
+        <p style="color:#f59e0b; font-weight:600;">⚠️ 注意：加入新空间将删除当前空间的所有数据</p>
+        <el-form label-position="top" @submit.prevent="onJoinOtherFamily">
+          <el-form-item label="邀请码">
+            <el-input
+              v-model="joinOtherCode"
+              placeholder="如：FAM-ABC123"
+              maxlength="12"
+              style="text-transform: uppercase; letter-spacing: 2px; font-family: monospace; font-weight: 700; font-size: 15px;"
+            />
+          </el-form-item>
+          <el-form-item label="你的称呼">
+            <el-input
+              v-model="joinOtherName"
+              :placeholder="store.state.auth?.user?.nickname || '你的名字'"
+              maxlength="10"
+            />
+          </el-form-item>
+          <el-button
+            type="warning"
+            :loading="joinOtherLoading"
+            :disabled="!joinOtherCode"
+            @click="onJoinOtherFamily"
+          >加入新家庭空间</el-button>
+        </el-form>
+      </div>
+    </el-card>
+
+    <el-card shadow="never" class="sp-card">
       <template #header><span class="card-h">📦 数据管理</span></template>
       <el-form label-position="top">
         <el-form-item label="导出加密备份（JSON）">
@@ -44,9 +91,9 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useStore } from 'vuex'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const store = useStore()
 const settings = computed({
@@ -54,8 +101,69 @@ const settings = computed({
   set: () => {}
 })
 
+// 🔗 邀请码
+const inviteLoading = ref(false)
+const copySuccess = ref(false)
+const inviteCode = computed(() => store.state.familyMeeting.family?.inviteCode || '')
+
+// 🔀 加入其他家庭空间
+const joinOtherCode = ref('')
+const joinOtherName = ref('')
+const joinOtherLoading = ref(false)
+const family = computed(() => store.state.familyMeeting.family)
+
 function save() {
   store.dispatch('familyMeeting/updateSettings', { ...settings.value })
+}
+
+async function onGenerateInvite() {
+  inviteLoading.value = true
+  try {
+    const res = await store.dispatch('familyMeeting/generateInviteCode')
+    if (res.success) {
+      ElMessage.success('邀请码已生成')
+    } else {
+      ElMessage.error(res.error || '生成失败')
+    }
+  } catch (e) {
+    ElMessage.error('生成失败')
+  } finally {
+    inviteLoading.value = false
+  }
+}
+
+async function onRegenerateInvite() {
+  inviteLoading.value = true
+  try {
+    const res = await store.dispatch('familyMeeting/generateInviteCode')
+    if (res.success) {
+      ElMessage.success('邀请码已刷新')
+    } else {
+      ElMessage.error(res.error || '刷新失败')
+    }
+  } catch (e) {
+    ElMessage.error('刷新失败')
+  } finally {
+    inviteLoading.value = false
+  }
+}
+
+async function onCopyInvite() {
+  try {
+    await navigator.clipboard.writeText(inviteCode.value)
+    copySuccess.value = true
+    setTimeout(() => { copySuccess.value = false }, 3000)
+  } catch {
+    // 降级方案
+    const input = document.createElement('input')
+    input.value = inviteCode.value
+    document.body.appendChild(input)
+    input.select()
+    document.execCommand('copy')
+    document.body.removeChild(input)
+    copySuccess.value = true
+    setTimeout(() => { copySuccess.value = false }, 3000)
+  }
 }
 
 function onExportBackup() {
@@ -79,22 +187,130 @@ function onResetAll() {
   ElMessage.success('所有数据已清除')
   window.location.reload()
 }
+
+// 🔀 加入其他家庭空间
+async function onJoinOtherFamily() {
+  const code = joinOtherCode.value.trim().toUpperCase()
+  const name = joinOtherName.value.trim() || (store.state.auth?.user?.nickname || '')
+  if (!code) {
+    ElMessage.warning('请输入邀请码')
+    return
+  }
+  if (!name) {
+    ElMessage.warning('请输入你的称呼')
+    return
+  }
+
+  // ⚠️ 提醒用户：加入新空间将删除当前空间
+  const currentFamilyName = family.value?.name || '当前'
+  try {
+    await ElMessageBox.confirm(
+      `你当前已有家庭空间「${currentFamilyName}」。<br/>加入新空间将<b>删除当前空间及所有数据</b>（会议、议题、记录、任务等），<br/>确定要继续吗？`,
+      '⚠️ 更换家庭空间',
+      {
+        confirmButtonText: '确定加入新空间',
+        cancelButtonText: '取消',
+        type: 'warning',
+        dangerouslyUseHTMLString: true
+      }
+    )
+  } catch {
+    return // 用户取消
+  }
+
+  joinOtherLoading.value = true
+  try {
+    const res = await store.dispatch('familyMeeting/joinFamily', {
+      inviteCode: code,
+      userName: name,
+      deleteExisting: true
+    })
+    if (res.success) {
+      ElMessage.success(res.message || '成功加入新家庭！')
+      joinOtherCode.value = ''
+      joinOtherName.value = ''
+      // 刷新页面以加载新空间数据
+      setTimeout(() => { window.location.reload() }, 800)
+    } else {
+      ElMessage.error(res.error || '加入失败，请检查邀请码')
+    }
+  } catch (e) {
+    ElMessage.error('网络错误，请重试')
+  } finally {
+    joinOtherLoading.value = false
+  }
+}
 </script>
 
 <style lang="scss" scoped>
-.sp-root { max-width: 640px; }
-.sp-title { font-size: 22px; font-weight: 700; color: #0f172a; margin-bottom: 16px; }
-.sp-card { border-radius: 14px; margin-bottom: 14px; }
-.card-h { font-weight: 700; }
+.sp-root { max-width: 680px; }
+.sp-title { font-size: 24px; font-weight: 700; color: #0f172a; margin-bottom: 20px; letter-spacing: -0.01em; }
+.sp-card {
+  border-radius: 16px;
+  margin-bottom: 16px;
+  border: 1px solid #e8ecf4;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  :deep(.el-card__header) {
+    padding: 18px 22px;
+    border-bottom: 1px solid #f1f5f9;
+    background: #fafbfd;
+    border-radius: 16px 16px 0 0;
+  }
+  :deep(.el-card__body) {
+    padding: 20px 22px 22px;
+  }
+  p { color: #475569; font-size: 14px; line-height: 1.7; margin: 0 0 8px; }
+}
+.card-h { font-weight: 700; font-size: 15px; color: #0f172a; }
+
+.invite-section {
+  p { margin: 0 0 12px; }
+}
+.invite-code-box {
+  display: flex; align-items: center; gap: 10px;
+  background: linear-gradient(135deg, #eef2ff 0%, #faf5ff 100%);
+  border: 1px dashed #a5b4fc; border-radius: 12px; padding: 16px 18px;
+}
+.invite-code {
+  font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+  font-size: 22px; font-weight: 800; letter-spacing: 3px;
+  color: #4f46e5; flex: 1; user-select: all;
+}
+.invite-empty { text-align: center; padding: 12px 0; p { margin-bottom: 12px; } }
+.copy-tip { color: #10b981; font-weight: 600; margin-top: 8px; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 @media (max-width: 768px) {
   .sp-root { max-width: 100%; }
-  .sp-title { font-size: 20px; }
-  .sp-card { border-radius: 12px; margin-bottom: 12px; }
+  .sp-title { font-size: 22px; }
+  .sp-card {
+    border-radius: 14px; margin-bottom: 14px;
+    :deep(.el-card__header) { padding: 14px 16px; }
+    :deep(.el-card__body) { padding: 16px; }
+  }
 }
 
 @media (max-width: 480px) {
-  .sp-title { font-size: 18px; margin-bottom: 12px; }
-  .sp-card { border-radius: 10px; }
+  .sp-title { font-size: 20px; margin-bottom: 14px; }
+  .sp-card {
+    border-radius: 12px;
+    :deep(.el-card__header) { padding: 12px 14px; }
+    :deep(.el-card__body) { padding: 14px; }
+    p { font-size: 13px; }
+  }
+}
+</style>
+
+<style lang="scss">
+html.dark-mode {
+  .sp-title { color: #e2dee9; }
+  .sp-card {
+    background: #1e1e2e; border-color: #2d2d4a; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    .el-card__header { border-bottom-color: #252540; background: #212136; }
+    p { color: #94a3b8; }
+  }
+  .card-h { color: #e2dee9; }
+  .invite-code-box { background: linear-gradient(135deg, #1e1a2e 0%, #1e1e2e 100%); border-color: #5b4bcf; }
+  .invite-code { color: #a78bfa; }
 }
 </style>

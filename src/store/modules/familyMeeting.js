@@ -21,7 +21,17 @@
  */
 import * as fmApi from '@/api/familyMeeting'
 
-const STORAGE_KEY = 'fm_state_v1'
+/** 🔒 按用户隔离的 localStorage key */
+function getStorageKey() {
+  try {
+    const token = localStorage.getItem('auth_token')
+    if (token) {
+      // 取 token 后 8 位做简单标识，避免 key 中包含敏感信息
+      return `fm_state_v1_${token.slice(-8)}`
+    }
+  } catch { /* ignore */ }
+  return 'fm_state_v1'
+}
 
 // ---- ID / 时间工具 ----
 function uid(prefix = 'id') {
@@ -48,7 +58,7 @@ function cacheSet(state) {
       unlockedMeetings: state.unlockedMeetings,
       settings: state.settings
     }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot))
+    localStorage.setItem(getStorageKey(), JSON.stringify(snapshot))
   } catch (e) {
     console.warn('[familyMeeting] 本地缓存写入失败:', e)
   }
@@ -56,7 +66,7 @@ function cacheSet(state) {
 
 function cacheGet() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = localStorage.getItem(getStorageKey())
     if (!raw) return null
     return JSON.parse(raw)
   } catch {
@@ -209,6 +219,7 @@ export default {
         transcribeMode: 'mock',
         backendUrl: ''
       },
+      _initialized: false,     // 🔒 防止 initFromBackend 被重复调用覆盖数据
       _syncStatus: 'idle',    // idle | syncing | saved | error
       _hasPendingSync: false
     }
@@ -241,15 +252,23 @@ export default {
      *   - 加密会议 + 未解锁 → 不可见（需先输入密码）
      */
     visibleMeetings: (state, getters) => {
-      const uid = getters.authUserId
-      if (!uid) return []
-      return state.meetings.filter(m => {
+      // authUserId 可能因初始化时序问题暂时为 null，退回到 currentUserId
+      const uid = getters.authUserId || state.currentUserId
+      if (!uid) {
+        console.log('[familyMeeting] visibleMeetings: uid为空, authUserId=', getters.authUserId, 'currentUserId=', state.currentUserId)
+        return []
+      }
+      const result = state.meetings.filter(m => {
         // 非参与者 → 完全不可见
         if (!m.participants.includes(uid)) return false
         // 加密会议 → 需要已解锁
         if (m.encrypted && !state.unlockedMeetings.includes(m.id)) return false
         return true
       })
+      if (result.length !== state.meetings.length) {
+        console.log(`[familyMeeting] visibleMeetings: ${result.length}/${state.meetings.length} 个可见, uid=${uid}`)
+      }
+      return result
     },
 
     meetingById: (state) => (id) => state.meetings.find(m => m.id === id) || null,
@@ -276,7 +295,21 @@ export default {
     _sync(state) { scheduleSync(state) },
 
     SET_STATE(state, remoteState) {
+      // 保留本地可能更新的 currentUserId / unlockedMeetings，避免远端旧数据覆盖
+      const preserve = {
+        currentUserId: state.currentUserId,
+        unlockedMeetings: state.unlockedMeetings,
+        settings: state.settings
+      }
       Object.assign(state, remoteState)
+      // 恢复保护字段（若远端未传入有效值）
+      if (!state.currentUserId) state.currentUserId = preserve.currentUserId
+      if (!state.unlockedMeetings || state.unlockedMeetings.length === 0) {
+        state.unlockedMeetings = preserve.unlockedMeetings || []
+      }
+      if (Object.keys(state.settings || {}).length === 0) {
+        state.settings = preserve.settings
+      }
       state._syncStatus = 'saved'
     },
 
@@ -286,6 +319,11 @@ export default {
     },
     ADD_MEMBER(state, member) {
       state.members.push(member)
+      scheduleSync(state)
+    },
+    UPDATE_MEMBER(state, { id, patch }) {
+      const m = state.members.find(x => x.id === id)
+      if (m) Object.assign(m, patch)
       scheduleSync(state)
     },
     REMOVE_MEMBER(state, id) {
@@ -406,18 +444,26 @@ export default {
       state.tasks = []
       state.emotionLogs = []
       state.unlockedMeetings = []
+      state._initialized = false  // 重置后允许重新初始化
       scheduleSync(state)
     }
   },
 
   actions: {
     // ---- 初始化：从后端加载状态 ----
-    async initFromBackend({ commit }) {
+    async initFromBackend({ commit, state }) {
+      // 🔒 防止重复初始化覆盖用户已创建的数据
+      if (state._initialized) {
+        console.log('[familyMeeting] 已初始化，跳过重复加载')
+        return
+      }
       try {
         const remote = await loadInitialState()
         if (remote) {
+          console.log('[familyMeeting] 从后端/缓存加载状态，会议数:', remote.meetings?.length || 0)
           commit('SET_STATE', remote)
         }
+        state._initialized = true
       } catch (e) {
         console.warn('[familyMeeting] 初始化加载失败:', e.message)
       }
@@ -441,6 +487,9 @@ export default {
     addMember({ commit }, { name, role }) {
       commit('ADD_MEMBER', { id: uid('u'), name, role: role || 'member' })
     },
+    updateMember({ commit }, { id, patch }) {
+      commit('UPDATE_MEMBER', { id, patch })
+    },
     removeMember({ commit }, id) {
       commit('REMOVE_MEMBER', id)
     },
@@ -463,7 +512,8 @@ export default {
     /** 🔒 创建会议，参与者必须包含当前登录用户 */
     createMeeting({ commit, state, rootState }, payload) {
       const authUserId = rootState.auth?.user?.userId
-      const parts = payload.participants || []
+      // 🔧 避免变异外部传入的数组
+      const parts = [...(payload.participants || [])]
       if (authUserId && !parts.includes(authUserId)) {
         parts.push(authUserId)
       }
@@ -474,13 +524,19 @@ export default {
         date: payload.date || nowISO().slice(0, 10),
         status: 'pre',
         participants: parts,
-        visibility: payload.visibility || 'normal',
+        visibility: payload.visibility || 'all', // 已废弃，仅保留兼容旧数据
         encrypted: !!payload.encrypted,
         encryptPass: payload.encryptPass || '',
         agendaLocked: false,
         createdAt: nowISO()
       }
+      console.log('[familyMeeting] 创建会议:', { id: meeting.id, title: meeting.title, participants: meeting.participants, currentUserId: state.currentUserId, authUserId })
       commit('ADD_MEETING', meeting)
+      // 🔒 加密会议创建后自动解锁给创建者
+      if (meeting.encrypted) {
+        commit('UNLOCK_MEETING', meeting.id)
+      }
+      console.log('[familyMeeting] 当前会议总数:', state.meetings.length)
       return meeting
     },
     updateMeeting({ commit }, { id, patch }) {
@@ -626,7 +682,63 @@ export default {
     resetAll({ commit }) {
       commit('RESET_ALL')
       // 同时清除本地缓存
-      try { localStorage.removeItem(STORAGE_KEY) } catch {}
+      try { localStorage.removeItem(getStorageKey()) } catch {}
+    },
+
+    // ===== 🔗 邀请 =====
+    /** 生成/刷新邀请码 */
+    async generateInviteCode({ commit, state }) {
+      try {
+        const res = await fmApi.generateInviteCode()
+        if (res.success && res.data) {
+          // 更新本地 family 对象，确保界面可用
+          if (state.family) {
+            state.family.inviteCode = res.data.inviteCode
+            state.family.inviteCreatedAt = new Date().toISOString()
+          }
+          scheduleSync(state)
+          return { success: true, data: res.data }
+        }
+        return { success: false, error: res.error || '生成失败' }
+      } catch (e) {
+        console.error('[familyMeeting] 生成邀请码失败:', e)
+        return { success: false, error: e.message }
+      }
+    },
+
+    /** 通过邀请码加入家庭（返回 { success, data, error, message, needConfirm, existingFamily }） */
+    async joinFamily({ commit, state }, { inviteCode, userName, deleteExisting = false }) {
+      try {
+        const res = await fmApi.joinFamily(inviteCode, userName, deleteExisting)
+        if (res.success && res.data) {
+          if (deleteExisting) {
+            // 🔥 删旧换新：先清空本地状态，再加载新空间数据
+            commit('RESET_ALL')
+          }
+          // 更新本地状态：设置 family + 成员列表
+          commit('SET_FAMILY', res.data.family)
+          if (res.data.members) {
+            state.members = res.data.members
+          }
+          if (res.data.existingMember) {
+            return { success: true, data: res.data, message: '你已经是该家庭的成员' }
+          }
+          return { success: true, data: res.data }
+        }
+        // 后端返回 409 → 需要确认删除现有空间
+        if (res.needConfirm) {
+          return {
+            success: false,
+            needConfirm: true,
+            existingFamily: res.existingFamily,
+            error: res.error || '你已有家庭空间'
+          }
+        }
+        return { success: false, error: res.error || '加入失败' }
+      } catch (e) {
+        console.error('[familyMeeting] 加入家庭失败:', e)
+        return { success: false, error: e.message }
+      }
     }
   }
 }

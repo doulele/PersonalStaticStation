@@ -2,7 +2,7 @@
  * 用户认证状态管理
  * 管理登录/注册/登出/个人信息
  */
-import { loginApi, registerApi, fetchProfileApi } from '@/api/auth'
+import { loginApi, registerApi, registerByUsernameApi, fetchProfileApi, updateProfileApi, changePasswordApi } from '@/api/auth'
 
 const TOKEN_KEY = 'auth_token'
 const USER_KEY = 'auth_user'
@@ -88,16 +88,16 @@ export default {
 
   actions: {
     /**
-     * 登录
+     * 登录（支持邮箱或用户名）
      */
-    async login({ commit }, { email, password }) {
+    async login({ commit }, { account, password, isUsername = false }) {
       commit('SET_LOADING', true)
       commit('SET_ERROR', null)
       try {
-        const res = await loginApi(email, password)
+        const res = await loginApi(account, password, isUsername)
         if (res.success) {
-          const { token, userId, email: userEmail, nickname, createdAt } = res.data
-          const user = { userId, email: userEmail, nickname, createdAt }
+          const { token, userId, email, username, nickname, createdAt } = res.data
+          const user = { userId, email: email || null, username: username || null, nickname, createdAt }
           commit('SET_AUTH', { token, user })
           return { success: true }
         }
@@ -113,9 +113,9 @@ export default {
     },
 
     /**
-     * 注册
+     * 邮箱注册
      */
-    async register({ commit }, { email, password, nickname, inviteCode }) {
+    async registerEmail({ commit }, { email, password, nickname, inviteCode }) {
       commit('SET_LOADING', true)
       commit('SET_ERROR', null)
       try {
@@ -123,6 +123,31 @@ export default {
         if (res.success) {
           const { token, userId, email: userEmail, nickname: name, createdAt } = res.data
           const user = { userId, email: userEmail, nickname: name, createdAt }
+          commit('SET_AUTH', { token, user })
+          return { success: true }
+        }
+        commit('SET_ERROR', res.error || '注册失败')
+        return { success: false, error: res.error }
+      } catch (err) {
+        const msg = err.message || '注册失败，请稍后重试'
+        commit('SET_ERROR', msg)
+        return { success: false, error: msg }
+      } finally {
+        commit('SET_LOADING', false)
+      }
+    },
+
+    /**
+     * 用户名注册
+     */
+    async registerUsername({ commit }, { username, password, nickname, securityQuestion, securityAnswer, inviteCode }) {
+      commit('SET_LOADING', true)
+      commit('SET_ERROR', null)
+      try {
+        const res = await registerByUsernameApi(username, password, nickname, securityQuestion, securityAnswer, inviteCode)
+        if (res.success) {
+          const { token, userId, username: name, nickname: nick, createdAt } = res.data
+          const user = { userId, email: null, username: name, nickname: nick, createdAt }
           commit('SET_AUTH', { token, user })
           return { success: true }
         }
@@ -164,6 +189,50 @@ export default {
       if (state.isAuthenticated && state.token) {
         // 尝试验证 token 是否有效
         await dispatch('fetchProfile')
+      }
+    },
+
+    /**
+     * 更新个人资料（昵称）
+     */
+    async updateProfile({ commit, state }, { nickname }) {
+      commit('SET_LOADING', true)
+      commit('SET_ERROR', null)
+      try {
+        const res = await updateProfileApi(nickname)
+        if (res.success) {
+          commit('SET_USER', { ...state.user, nickname: res.data.nickname })
+          return { success: true, message: res.message || '更新成功' }
+        }
+        commit('SET_ERROR', res.error || '更新失败')
+        return { success: false, error: res.error }
+      } catch (err) {
+        const msg = err.message || '更新失败，请稍后重试'
+        commit('SET_ERROR', msg)
+        return { success: false, error: msg }
+      } finally {
+        commit('SET_LOADING', false)
+      }
+    },
+
+    /**
+     * 修改密码
+     */
+    async changePassword({ commit }, { oldPassword, newPassword }) {
+      commit('SET_LOADING', true)
+      commit('SET_ERROR', null)
+      try {
+        const res = await changePasswordApi(oldPassword, newPassword)
+        if (res.success) {
+          return { success: true, message: res.message || '密码修改成功' }
+        }
+        return { success: false, error: res.error || '修改密码失败' }
+      } catch (err) {
+        const msg = err.message || '修改密码失败，请稍后重试'
+        commit('SET_ERROR', msg)
+        return { success: false, error: msg }
+      } finally {
+        commit('SET_LOADING', false)
       }
     }
   }

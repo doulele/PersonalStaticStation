@@ -6,17 +6,15 @@ const API_BASE = '/staticTool/api/stats'
  * 记录一次工具页面点击
  * @param {string} toolPath - 工具路由路径，如 "/home/lifeServices/lottery"
  */
-export async function recordToolClick(toolPath) {
-  try {
-    await fetch(`${API_BASE}/tool-click`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path: toolPath })
-    })
-  } catch (e) {
-    // 静默失败，不影响导航
+export function recordToolClick(toolPath) {
+  // 纯 fire-and-forget：不阻塞导航
+  fetch(`${API_BASE}/tool-click`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path: toolPath })
+  }).catch(e => {
     console.warn('[recordToolClick] 上报失败:', e.message)
-  }
+  })
 }
 
 /**

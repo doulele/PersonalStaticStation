@@ -207,6 +207,22 @@ export function importBackup(data) {
   return post(`${BASE}/import`, data)
 }
 
+// ==================== 🔗 邀请机制 ====================
+
+/** 生成/刷新家庭邀请码 */
+export function generateInviteCode() {
+  return post(`${BASE}/invite/generate`)
+}
+
+/** 通过邀请码加入家庭
+ * @param {string} inviteCode - 邀请码
+ * @param {string} userName - 用户称呼
+ * @param {boolean} [deleteExisting=false] - 是否删除当前已有空间后加入
+ */
+export function joinFamily(inviteCode, userName, deleteExisting = false) {
+  return post(`${BASE}/invite/join`, { inviteCode, userName, deleteExisting })
+}
+
 // ==================== 语音转写 ====================
 
 /** 检测可用转写引擎 */

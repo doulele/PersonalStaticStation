@@ -48,11 +48,15 @@
               <el-dropdown-item disabled>
                 <div class="dropdown-user-info">
                   <el-avatar :size="40">{{ userInitial }}</el-avatar>
-                  <div>
+                  <div class="dropdown-user-info-text">
                     <div class="dropdown-nickname">{{ currentUser?.nickname }}</div>
                     <div class="dropdown-email">{{ currentUser?.email }}</div>
                   </div>
                 </div>
+              </el-dropdown-item>
+              <el-dropdown-item divided @click="handleGoProfile">
+                <el-icon><Setting /></el-icon>
+                个人设置
               </el-dropdown-item>
               <el-dropdown-item divided @click="handleLogout">
                 <el-icon><SwitchButton /></el-icon>
@@ -138,7 +142,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import {
   HomeFilled, DataLine, VideoCamera, Service, School,
-  User, ArrowDown, SwitchButton, Sunny, Moon
+  User, ArrowDown, SwitchButton, Sunny, Moon, Setting
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { TOOL_CATEGORIES } from '@/config/toolsRegistry'
@@ -244,6 +248,10 @@ async function handleLogout() {
     ElMessage.success('已退出登录')
     router.push('/home')
   } catch { /* 用户取消 */ }
+}
+
+function handleGoProfile() {
+  router.push('/profile')
 }
 </script>
 
@@ -461,14 +469,21 @@ $drawer-width: 270px;
   min-width: 200px;
 
   .dropdown-user-info {
-    display: flex;
-    align-items: center;
+    display: flex !important;
+    align-items: center !important;
     gap: 12px;
-    padding: 4px 0;
+    width: 100%;
+
+    .dropdown-user-info-text {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
 
     .dropdown-nickname {
-      font-size: 15px;
-      font-weight: 600;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-color, #303133);
     }
 
     .dropdown-email {
@@ -743,5 +758,68 @@ $drawer-width: 270px;
   .btn-register { font-size: 11px; padding: 4px 8px; }
   .btn-login { padding: 4px 6px; }
   .theme-toggle { width: 30px; height: 30px; }
+}
+</style>
+
+<!-- 全局样式：覆盖 Element Plus dropdown 内部布局 -->
+<style lang="scss">
+.user-dropdown-popper {
+  min-width: 200px;
+
+  .dropdown-user-info {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px;
+    width: 100%;
+
+    .dropdown-user-info-text {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .dropdown-nickname {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .dropdown-email {
+      font-size: 12px;
+      color: #909399;
+      margin-top: 2px;
+    }
+  }
+
+  .el-dropdown-menu__item {
+    padding: 8px 16px;
+  }
+}
+
+// 暗色模式
+html.dark-mode .user-dropdown-popper {
+  background-color: #1e1e2e !important;
+  border-color: #2d2d4a !important;
+
+  .dropdown-nickname {
+    color: #e2dee9;
+  }
+
+  .dropdown-email {
+    color: #64748b;
+  }
+
+  .el-dropdown-menu__item {
+    color: #94a3b8 !important;
+
+    &:hover:not(.is-disabled) {
+      background-color: #252540 !important;
+      color: #e2dee9 !important;
+    }
+  }
+
+  .el-popper__arrow::before {
+    background: #1e1e2e !important;
+    border-color: #2d2d4a !important;
+  }
 }
 </style>

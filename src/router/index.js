@@ -21,6 +21,19 @@ const routes = [
     meta: { title: '忘记密码', guest: true }
   },
   {
+    path: '/profile',
+    name: 'Profile',
+    component: () => import('@/components/layout/AppLayout.vue'),
+    meta: { title: '个人设置', requiresAuth: true },
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/auth/Profile.vue'),
+        meta: { title: '个人设置', requiresAuth: true }
+      }
+    ]
+  },
+  {
     path: '/',
     redirect: '/home'
   },
@@ -150,6 +163,11 @@ const routes = [
         path: 'familyEducation/familyMeeting',
         component: () => import('@/views/home/familyEducation/familyMeeting/index.vue'),
         meta: { title: '家庭会议', icon: 'ChatDotRound', requiresAuth: true }
+      },
+      {
+        path: 'familyEducation/members',
+        component: () => import('@/views/home/familyEducation/members/index.vue'),
+        meta: { title: '家庭成员管理', icon: 'UserFilled', requiresAuth: true }
       },
       /**家庭/教育end */
     ]

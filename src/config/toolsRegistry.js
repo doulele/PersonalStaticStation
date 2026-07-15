@@ -169,5 +169,14 @@ export const ALL_TOOLS = [
     path: '/home/familyEducation/familyMeeting',
     icon: 'ChatDotRound',
     color: 'green'
+  },
+  {
+    id: 'family-members',
+    name: '家庭成员管理',
+    desc: '管理家庭成员信息、角色权限与邀请码',
+    category: 'family',
+    path: '/home/familyEducation/members',
+    icon: 'UserFilled',
+    color: 'blue'
   }
 ]

@@ -77,11 +77,14 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useStore } from 'vuex'
+import { ElMessageBox } from 'element-plus'
 import { ArrowRight, ArrowDown, DataLine, Present, Document, Service, Lock, Connection, Timer, Filter, TrendCharts, Headset, Picture, VideoPlay, MapLocation, Coin, Memo, Sunny, VideoCamera, Moon, School } from '@element-plus/icons-vue'
 import { ALL_TOOLS } from '@/config/toolsRegistry'
 import { fetchToolRanking, recordToolClick } from '@/api/stats'
 
 const router = useRouter()
+const store = useStore()
 
 const showCollapsed = ref(true)
 const ranking = ref([])
@@ -135,9 +138,34 @@ function formatClicks(num) {
   return (num / 1000).toFixed(1) + 'K'
 }
 
+// 需要登录的工具路径列表
+const AUTH_REQUIRED_PATHS = ['/home/familyEducation/familyMeeting']
+
 async function handleToolClick(tool) {
-  // 先上报点击，不等待响应直接导航
   recordToolClick(tool.path)
+
+  // 需要登录的工具
+  if (AUTH_REQUIRED_PATHS.includes(tool.path)) {
+    // 已登录 → 直接跳转
+    if (store.getters['auth/isLoggedIn']) {
+      router.push(tool.path)
+      return
+    }
+    // 未登录 → 弹出提示框
+    try {
+      await ElMessageBox.confirm('当前功能需要登录后才能使用', '提示', {
+        confirmButtonText: '前往登录',
+        cancelButtonText: '取消',
+        type: 'warning',
+        center: true
+      })
+      router.push({ path: '/login', query: { redirect: tool.path } })
+    } catch {
+      // 用户取消
+    }
+    return
+  }
+
   router.push(tool.path)
 }
 
