@@ -35,36 +35,6 @@
     </el-card>
 
     <el-card shadow="never" class="sp-card">
-      <template #header><span class="card-h">🔀 加入其他家庭空间</span></template>
-      <div class="invite-section">
-        <p style="color:#f59e0b; font-weight:600;">⚠️ 注意：加入新空间将删除当前空间的所有数据</p>
-        <el-form label-position="top" @submit.prevent="onJoinOtherFamily">
-          <el-form-item label="邀请码">
-            <el-input
-              v-model="joinOtherCode"
-              placeholder="如：FAM-ABC123"
-              maxlength="12"
-              style="text-transform: uppercase; letter-spacing: 2px; font-family: monospace; font-weight: 700; font-size: 15px;"
-            />
-          </el-form-item>
-          <el-form-item label="你的称呼">
-            <el-input
-              v-model="joinOtherName"
-              :placeholder="store.state.auth?.user?.nickname || '你的名字'"
-              maxlength="10"
-            />
-          </el-form-item>
-          <el-button
-            type="warning"
-            :loading="joinOtherLoading"
-            :disabled="!joinOtherCode"
-            @click="onJoinOtherFamily"
-          >加入新家庭空间</el-button>
-        </el-form>
-      </div>
-    </el-card>
-
-    <el-card shadow="never" class="sp-card">
       <template #header><span class="card-h">📦 数据管理</span></template>
       <el-form label-position="top">
         <el-form-item label="导出加密备份（JSON）">
@@ -93,7 +63,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useStore } from 'vuex'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 
 const store = useStore()
 const settings = computed({
@@ -105,12 +75,6 @@ const settings = computed({
 const inviteLoading = ref(false)
 const copySuccess = ref(false)
 const inviteCode = computed(() => store.state.familyMeeting.family?.inviteCode || '')
-
-// 🔀 加入其他家庭空间
-const joinOtherCode = ref('')
-const joinOtherName = ref('')
-const joinOtherLoading = ref(false)
-const family = computed(() => store.state.familyMeeting.family)
 
 function save() {
   store.dispatch('familyMeeting/updateSettings', { ...settings.value })
@@ -187,59 +151,6 @@ function onResetAll() {
   ElMessage.success('所有数据已清除')
   window.location.reload()
 }
-
-// 🔀 加入其他家庭空间
-async function onJoinOtherFamily() {
-  const code = joinOtherCode.value.trim().toUpperCase()
-  const name = joinOtherName.value.trim() || (store.state.auth?.user?.nickname || '')
-  if (!code) {
-    ElMessage.warning('请输入邀请码')
-    return
-  }
-  if (!name) {
-    ElMessage.warning('请输入你的称呼')
-    return
-  }
-
-  // ⚠️ 提醒用户：加入新空间将删除当前空间
-  const currentFamilyName = family.value?.name || '当前'
-  try {
-    await ElMessageBox.confirm(
-      `你当前已有家庭空间「${currentFamilyName}」。<br/>加入新空间将<b>删除当前空间及所有数据</b>（会议、议题、记录、任务等），<br/>确定要继续吗？`,
-      '⚠️ 更换家庭空间',
-      {
-        confirmButtonText: '确定加入新空间',
-        cancelButtonText: '取消',
-        type: 'warning',
-        dangerouslyUseHTMLString: true
-      }
-    )
-  } catch {
-    return // 用户取消
-  }
-
-  joinOtherLoading.value = true
-  try {
-    const res = await store.dispatch('familyMeeting/joinFamily', {
-      inviteCode: code,
-      userName: name,
-      deleteExisting: true
-    })
-    if (res.success) {
-      ElMessage.success(res.message || '成功加入新家庭！')
-      joinOtherCode.value = ''
-      joinOtherName.value = ''
-      // 刷新页面以加载新空间数据
-      setTimeout(() => { window.location.reload() }, 800)
-    } else {
-      ElMessage.error(res.error || '加入失败，请检查邀请码')
-    }
-  } catch (e) {
-    ElMessage.error('网络错误，请重试')
-  } finally {
-    joinOtherLoading.value = false
-  }
-}
 </script>
 
 <style lang="scss" scoped>
@@ -278,6 +189,7 @@ async function onJoinOtherFamily() {
 }
 .invite-empty { text-align: center; padding: 12px 0; p { margin-bottom: 12px; } }
 .copy-tip { color: #10b981; font-weight: 600; margin-top: 8px; animation: fadeIn 0.3s ease; }
+.leave-hint { color: #94a3b8; font-size: 12px; margin: 6px 0 0; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 @media (max-width: 768px) {

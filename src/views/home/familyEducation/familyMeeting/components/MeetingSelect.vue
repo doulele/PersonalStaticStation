@@ -671,8 +671,30 @@ function onUnlock() {
 
   &.ms-card--active {
     border-color: #6366f1;
-    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.18);
-    background: linear-gradient(135deg, #fafbff, #eef2ff);
+    border-width: 2px;
+    margin: -1px;
+    box-shadow: 0 4px 24px rgba(99, 102, 241, 0.25);
+    background: linear-gradient(135deg, #f5f3ff, #eef2ff);
+    position: relative;
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(99,102,241,0.06), rgba(139,92,246,0.04));
+      border-radius: 16px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .ms-card-stripe {
+      height: 5px;
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
+    }
+    .ms-card-title {
+      color: #4f46e5;
+    }
   }
 }
 
@@ -863,7 +885,25 @@ function onUnlock() {
   word-break: break-word;
 }
 
-// ==================== 响应式 ====================
+  // ==================== 暗色模式 PC 横向布局选中态 ====================
+  html.dark-mode & {
+    @media (min-width: 769px) {
+      .ms-card--active {
+        border-color: #a78bfa !important;
+        border-width: 2px !important;
+        margin: 0 !important;
+        box-shadow: 0 4px 24px rgba(167, 139, 250, 0.25) !important;
+        background: linear-gradient(135deg, #242045, #1e1e3a) !important;
+        .ms-card-stripe {
+          width: 5px;
+          box-shadow: 2px 0 12px rgba(167, 139, 250, 0.4);
+        }
+        .ms-card-title { color: #c4b5fd; }
+      }
+    }
+  }
+
+  // ==================== 响应式 ====================
 @media (max-width: 768px) {
   .ms-grid {
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -892,6 +932,20 @@ function onUnlock() {
     &:hover {
       transform: translateX(4px);
     }
+  }
+
+  .ms-card--active {
+    border-color: #6366f1 !important;
+    border-width: 2px !important;
+    margin: 0;
+    box-shadow: 0 4px 24px rgba(99, 102, 241, 0.25) !important;
+    background: linear-gradient(135deg, #f5f3ff, #eef2ff) !important;
+    transform: translateX(2px);
+    .ms-card-stripe {
+      width: 5px;
+      box-shadow: 2px 0 10px rgba(99, 102, 241, 0.4);
+    }
+    .ms-card-title { color: #4f46e5; }
   }
 
   .ms-card-stripe {
@@ -1004,8 +1058,23 @@ html.dark-mode {
 
     &.ms-card--active {
       border-color: #a78bfa;
-      box-shadow: 0 4px 20px rgba(167, 139, 250, 0.15);
-      background: linear-gradient(135deg, #212136, #1e1e36);
+      border-width: 2px;
+      margin: -1px;
+      box-shadow: 0 4px 24px rgba(167, 139, 250, 0.25);
+      background: linear-gradient(135deg, #242045, #1e1e3a);
+      position: relative;
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: linear-gradient(135deg, rgba(167,139,250,0.08), rgba(139,92,246,0.05));
+        border-radius: 16px;
+        pointer-events: none;
+        z-index: 0;
+      }
+      .ms-card-title { color: #c4b5fd; }
+      .ms-card-stripe { height: 5px; box-shadow: 0 0 12px rgba(167, 139, 250, 0.4); }
     }
   }
 

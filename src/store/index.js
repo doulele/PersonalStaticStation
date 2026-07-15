@@ -2,6 +2,7 @@ import { createStore } from 'vuex'
 import plan from './modules/plan'
 import auth from './modules/auth'
 import familyMeeting from './modules/familyMeeting'
+import wishTreeHole from './modules/wishTreeHole'
 
 const THEME_MODE_KEY = 'theme_mode'
 
@@ -97,6 +98,7 @@ export default createStore({
   modules: {
     plan,
     auth,
-    familyMeeting
+    familyMeeting,
+    wishTreeHole
   }
 })

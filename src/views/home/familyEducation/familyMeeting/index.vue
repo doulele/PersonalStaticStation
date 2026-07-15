@@ -6,8 +6,8 @@
       <p>正在加载家庭会议数据…</p>
     </div>
 
-    <!-- 未初始化家庭空间：引导创建 -->
-    <SpaceSetup v-else-if="!hasFamily" />
+    <!-- 未加入家庭空间：引导前往家庭成员管理 -->
+    <EmptyFamilyState v-else-if="!hasFamily" feature-name="家庭会议" />
 
     <!-- 已初始化：主面板 -->
     <el-container v-else class="fm-shell">
@@ -139,13 +139,13 @@ import { ElMessage } from 'element-plus'
 import {
   ChatDotRound, EditPen, Microphone, Picture, List, DataLine, Setting, Loading, Expand, CopyDocument
 } from '@element-plus/icons-vue'
-import SpaceSetup from './components/SpaceSetup.vue'
 import AgendaBoard from './components/AgendaBoard.vue'
 import MeetingRoom from './components/MeetingRoom.vue'
 import MemoryWall from './components/MemoryWall.vue'
 import DecisionBoard from './components/DecisionBoard.vue'
 import AnnualReport from './components/AnnualReport.vue'
 import SettingsPanel from './components/SettingsPanel.vue'
+import EmptyFamilyState from '../components/EmptyFamilyState.vue'
 
 const store = useStore()
 const active = ref('agenda')
@@ -160,6 +160,7 @@ const bottomTabs = [
 ]
 
 const hasFamily = computed(() => store.getters['familyMeeting/hasFamily'])
+const currentUser = computed(() => store.getters['familyMeeting/currentUser'])
 const family = computed(() => store.state.familyMeeting.family)
 const inviteCode = computed(() => store.state.familyMeeting.family?.inviteCode || '')
 const inviteLoading = ref(false)
@@ -192,6 +193,12 @@ const syncTagType = computed(() => {
 onMounted(async () => {
   console.log('[familyMeeting index] onMounted, 开始初始化...')
   await store.dispatch('familyMeeting/initFromBackend')
+  // 🔒 安全校验：如果存在家庭数据，但当前用户不在成员列表中，说明数据异常
+  if (hasFamily.value && !currentUser.value) {
+    console.warn('[familyMeeting] 数据异常：当前用户不在家庭成员列表中，强制重置')
+    await store.dispatch('familyMeeting/resetAll')
+    location.reload()
+  }
   // 🔒 确保 currentUserId 与站点登录用户同步
   const authUserId = store.state.auth?.user?.userId
   console.log('[familyMeeting index] init完成, authUserId=', authUserId, 'currentUserId=', store.state.familyMeeting.currentUserId)
@@ -253,7 +260,7 @@ async function onGenerateInviteCode() {
   to { transform: rotate(360deg); }
 }
 
-// ===== 主布局 =====
+
 .fm-shell {
   height: calc(100vh - 64px);
 }

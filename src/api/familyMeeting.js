@@ -30,6 +30,11 @@ export function createFamily(name, adminName) {
   return post(`${BASE}/family`, { name, adminName })
 }
 
+/** 🚪 退出家庭空间 */
+export function leaveFamily() {
+  return post(`${BASE}/family/leave`)
+}
+
 // ==================== 成员管理 ====================
 
 /** 添加成员 */

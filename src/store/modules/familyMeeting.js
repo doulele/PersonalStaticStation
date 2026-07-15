@@ -250,6 +250,7 @@ export default {
      *   - 未登录 → 返回空
      *   - 非参与者 → 不可见
      *   - 加密会议 + 未解锁 → 不可见（需先输入密码）
+     *   - 🔧 v2.1: 同时匹配 authUserId 和 member.id（兼容旧数据）
      */
     visibleMeetings: (state, getters) => {
       // authUserId 可能因初始化时序问题暂时为 null，退回到 currentUserId
@@ -258,15 +259,23 @@ export default {
         console.log('[familyMeeting] visibleMeetings: uid为空, authUserId=', getters.authUserId, 'currentUserId=', state.currentUserId)
         return []
       }
+      // 🔧 构建该用户的所有可能身份 ID（authUserId + 对应成员的 member.id）
+      const myMemberIds = new Set([uid])
+      const myMember = state.members.find(m => m.id === uid)
+      if (myMember) {
+        myMemberIds.add(myMember.id)
+      }
+      // 也尝试通过 members.name 匹配（auth user nickname 作为 fallback）
       const result = state.meetings.filter(m => {
-        // 非参与者 → 完全不可见
-        if (!m.participants.includes(uid)) return false
+        // 检查参与者列表中是否包含该用户的任一身份 ID
+        const isParticipant = m.participants.some(p => myMemberIds.has(p))
+        if (!isParticipant) return false
         // 加密会议 → 需要已解锁
         if (m.encrypted && !state.unlockedMeetings.includes(m.id)) return false
         return true
       })
       if (result.length !== state.meetings.length) {
-        console.log(`[familyMeeting] visibleMeetings: ${result.length}/${state.meetings.length} 个可见, uid=${uid}`)
+        console.log(`[familyMeeting] visibleMeetings: ${result.length}/${state.meetings.length} 个可见, uid=${uid}, memberIds=[${[...myMemberIds].join(',')}]`)
       }
       return result
     },
@@ -451,7 +460,7 @@ export default {
 
   actions: {
     // ---- 初始化：从后端加载状态 ----
-    async initFromBackend({ commit, state }) {
+    async initFromBackend({ commit, state, rootState }) {
       // 🔒 防止重复初始化覆盖用户已创建的数据
       if (state._initialized) {
         console.log('[familyMeeting] 已初始化，跳过重复加载')
@@ -460,12 +469,25 @@ export default {
       try {
         const remote = await loadInitialState()
         if (remote) {
-          console.log('[familyMeeting] 从后端/缓存加载状态，会议数:', remote.meetings?.length || 0)
+          // 🔒 安全校验：后端返回的数据必须包含当前登录用户，否则视为脏数据/缓存泄漏
+          const authUserId = rootState.auth?.user?.userId
+          if (remote.family && authUserId) {
+            const isMember = remote.members?.some(m => m.id === authUserId)
+            if (!isMember) {
+              console.warn(`[familyMeeting] 数据隔离异常：后端返回的家庭 ${remote.family.id} 不包含当前用户 ${authUserId}，拒绝加载`)
+              try { localStorage.removeItem(getStorageKey()) } catch {}
+              commit('RESET_ALL')
+              state._initialized = true
+              return
+            }
+          }
+          console.log('[familyMeeting] 从后端/缓存加载状态成功，会议数:', remote.meetings?.length || 0)
           commit('SET_STATE', remote)
         }
         state._initialized = true
       } catch (e) {
         console.warn('[familyMeeting] 初始化加载失败:', e.message)
+        state._initialized = true
       }
     },
 
@@ -737,6 +759,24 @@ export default {
         return { success: false, error: res.error || '加入失败' }
       } catch (e) {
         console.error('[familyMeeting] 加入家庭失败:', e)
+        return { success: false, error: e.message }
+      }
+    },
+
+    /** 🚪 退出家庭空间 */
+    async leaveFamily({ commit }) {
+      try {
+        const res = await fmApi.leaveFamily()
+        if (res.success) {
+          // 清空本地状态
+          commit('RESET_ALL')
+          // 清除本地缓存
+          try { localStorage.removeItem(getStorageKey()) } catch {}
+          return { success: true, message: res.message || '已退出家庭空间' }
+        }
+        return { success: false, error: res.error || '退出失败' }
+      } catch (e) {
+        console.error('[familyMeeting] 退出家庭失败:', e)
         return { success: false, error: e.message }
       }
     }

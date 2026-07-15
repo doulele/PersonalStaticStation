@@ -169,6 +169,11 @@ const routes = [
         component: () => import('@/views/home/familyEducation/members/index.vue'),
         meta: { title: '家庭成员管理', icon: 'UserFilled', requiresAuth: true }
       },
+      {
+        path: 'familyEducation/wishTreeHole',
+        component: () => import('@/views/home/familyEducation/wishTreeHole/index.vue'),
+        meta: { title: '愿望清单 & 家庭树洞', icon: 'MagicStick', requiresAuth: true }
+      },
       /**家庭/教育end */
     ]
   },
