@@ -243,6 +243,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useStore } from 'vuex'
 import { User, Message, Lock, Key, WarningFilled, ArrowLeft } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { checkNicknameApi } from '@/api/auth'
 
 const router = useRouter()
 const route = useRoute()
@@ -291,6 +292,23 @@ const validateSecurityAnswer = (rule, value, callback) => {
   }
 }
 
+const validateNicknameUnique = async (rule, value, callback) => {
+  if (!value || value.trim().length < 2) {
+    callback()
+    return
+  }
+  try {
+    const res = await checkNicknameApi(value.trim())
+    if (res.success && !res.available) {
+      callback(new Error('该昵称已被使用'))
+    } else {
+      callback()
+    }
+  } catch {
+    callback()
+  }
+}
+
 const usernameRules = {
   username: [
     { required: true, message: '请输入用户名', trigger: 'blur' },
@@ -299,7 +317,8 @@ const usernameRules = {
   ],
   nickname: [
     { required: true, message: '请输入昵称', trigger: 'blur' },
-    { min: 2, max: 20, message: '昵称长度应为2-20个字符', trigger: 'blur' }
+    { min: 2, max: 20, message: '昵称长度应为2-20个字符', trigger: 'blur' },
+    { validator: validateNicknameUnique, trigger: 'blur' }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
@@ -372,7 +391,8 @@ const validateEmailConfirmPassword = (rule, value, callback) => {
 const emailRules = {
   nickname: [
     { required: true, message: '请输入昵称', trigger: 'blur' },
-    { min: 2, max: 20, message: '昵称长度应为2-20个字符', trigger: 'blur' }
+    { min: 2, max: 20, message: '昵称长度应为2-20个字符', trigger: 'blur' },
+    { validator: validateNicknameUnique, trigger: 'blur' }
   ],
   email: [
     { required: true, message: '请输入邮箱地址', trigger: 'blur' },

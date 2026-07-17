@@ -4,16 +4,17 @@
       <h1 class="page-title">家庭/教育</h1>
       <p class="page-desc">陪伴成长每一步</p>
     </div>
-
+    
     <div class="tools-grid">
-      <router-link to="/home/familyEducation/babySleep" class="tool-card" @click="recordToolClick('/home/familyEducation/babySleep')">
+
+      <router-link to="/home/familyEducation/members" class="tool-card" @click="recordToolClick('/home/familyEducation/members')">
         <div class="tool-card-inner">
-          <div class="tool-icon purple">
-            <el-icon :size="32"><Moon /></el-icon>
+          <div class="tool-icon blue">
+            <el-icon :size="32"><UserFilled /></el-icon>
           </div>
           <div class="tool-info">
-            <h3 class="tool-name">宝宝哄睡</h3>
-            <p class="tool-desc">白噪音、摇篮曲、自然音效，帮助宝宝安心入睡</p>
+            <h3 class="tool-name">家庭成员管理</h3>
+            <p class="tool-desc">统一管理中心：创建/加入家庭空间、管理成员信息、邀请码，数据在家庭会议和愿望清单中共享</p>
           </div>
           <el-icon class="tool-arrow"><ArrowRight /></el-icon>
         </div>
@@ -32,19 +33,6 @@
         </div>
       </div>
 
-      <router-link to="/home/familyEducation/members" class="tool-card" @click="recordToolClick('/home/familyEducation/members')">
-        <div class="tool-card-inner">
-          <div class="tool-icon blue">
-            <el-icon :size="32"><UserFilled /></el-icon>
-          </div>
-          <div class="tool-info">
-            <h3 class="tool-name">家庭成员管理</h3>
-            <p class="tool-desc">统一管理中心：创建/加入家庭空间、管理成员信息、邀请码，数据在家庭会议和愿望清单中共享</p>
-          </div>
-          <el-icon class="tool-arrow"><ArrowRight /></el-icon>
-        </div>
-      </router-link>
-
       <div class="tool-card" @click="handleWishTreeHoleClick">
         <div class="tool-card-inner">
           <div class="tool-icon orange">
@@ -57,6 +45,20 @@
           <el-icon class="tool-arrow"><ArrowRight /></el-icon>
         </div>
       </div>
+
+      <router-link to="/home/familyEducation/babySleep" class="tool-card" @click="recordToolClick('/home/familyEducation/babySleep')">
+        <div class="tool-card-inner">
+          <div class="tool-icon purple">
+            <el-icon :size="32"><Moon /></el-icon>
+          </div>
+          <div class="tool-info">
+            <h3 class="tool-name">宝宝哄睡</h3>
+            <p class="tool-desc">白噪音、摇篮曲、自然音效，帮助宝宝安心入睡</p>
+          </div>
+          <el-icon class="tool-arrow"><ArrowRight /></el-icon>
+        </div>
+      </router-link>
+      
     </div>
   </div>
 </template>

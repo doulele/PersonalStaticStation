@@ -3,10 +3,13 @@
     <h2 class="ar-title">年度家庭情感报告</h2>
     <p class="ar-sub">全年度情绪温度计、会议参与度、决议完成率、待定转化率综合分析</p>
 
-    <!-- 年份选择 -->
-    <el-select v-model="year" style="width:140px; margin-bottom:16px">
-      <el-option v-for="y in years" :key="y" :label="`${y} 年`" :value="y" />
-    </el-select>
+    <!-- 年份选择 + 导出按钮 -->
+    <div class="ar-toolbar">
+      <el-select v-model="year" style="width:140px">
+        <el-option v-for="y in years" :key="y" :label="`${y} 年`" :value="y" />
+      </el-select>
+      <el-button type="primary" @click="onExport">导出年度报告(PDF)</el-button>
+    </div>
 
     <!-- Overview -->
     <div class="ar-overview">
@@ -49,10 +52,7 @@
       </el-card>
     </div>
 
-    <!-- 导出 PDF -->
-    <el-button type="primary" @click="onExport" style="margin-top:16px">
-      📄 导出年度报告 (PDF)
-    </el-button>
+
   </div>
 </template>
 
@@ -224,6 +224,7 @@ function onExport() {
 .ar-root { max-width: 900px; margin: 0 auto; }
 .ar-title { font-size: 24px; font-weight: 700; color: #0f172a; margin-bottom: 6px; letter-spacing: -0.01em; }
 .ar-sub { font-size: 14px; color: #94a3b8; margin-bottom: 20px; line-height: 1.6; }
+.ar-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 .ar-overview { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
 .ov-card {
   background: #fff; border-radius: 14px; padding: 20px 16px; text-align: center;

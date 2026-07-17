@@ -8,9 +8,12 @@ const BASE = '/family-meeting'
 
 // ==================== 全量状态 ====================
 
-/** 获取完整状态 */
-export function fetchState() {
-  return get(`${BASE}/state`)
+/** 获取完整状态
+ * @param {string} [familyId] - 可选，指定加载哪个家庭的状态
+ */
+export function fetchState(familyId) {
+  const params = familyId ? `?familyId=${encodeURIComponent(familyId)}` : ''
+  return get(`${BASE}/state${params}`)
 }
 
 /** 保存完整状态 */
@@ -35,6 +38,23 @@ export function leaveFamily() {
   return post(`${BASE}/family/leave`)
 }
 
+/** 💣 解散家庭空间（仅管理员）
+ * @param {string} familyId - 要解散的家庭ID
+ */
+export function dissolveFamily(familyId) {
+  return del(`${BASE}/family?familyId=${encodeURIComponent(familyId)}`)
+}
+
+/** 🚪 退出指定家庭空间（多家庭场景） */
+export function leaveSpecificFamily(familyId) {
+  return del(`${BASE}/family/${familyId}/leave`)
+}
+
+/** 📋 获取用户参与的所有家庭列表 */
+export function fetchMyFamilies() {
+  return get(`${BASE}/families`)
+}
+
 // ==================== 成员管理 ====================
 
 /** 添加成员 */
@@ -45,6 +65,11 @@ export function addMember(name, role) {
 /** 删除成员 */
 export function removeMember(id) {
   return del(`${BASE}/members/${id}`)
+}
+
+/** 🚫 踢出成员（仅管理员，同时清除 membership） */
+export function kickMember(id) {
+  return del(`${BASE}/members/${id}/kick`)
 }
 
 /** 更新成员 */
@@ -235,9 +260,40 @@ export function getTranscribeEngines() {
   return get(`${BASE}/transcribe/engines`)
 }
 
+// ==================== 🎤 声纹识别 ====================
+
+/** 获取家庭所有成员的声纹状态 */
+export function getVoiceprints(familyId) {
+  return get(`${BASE}/voiceprints?familyId=${familyId}`)
+}
+
+/** 查询某成员的声纹状态 */
+export function getVoiceprintStatus(memberId, familyId) {
+  return get(`${BASE}/members/${memberId}/voiceprint/status?familyId=${familyId}`)
+}
+
+/** 注册声纹（上传音频） */
+export function enrollVoiceprint(memberId, formData) {
+  // formData: { audio: Blob, familyId: string, memberName: string }
+  const baseUrl = import.meta.env.VITE_API_BASE || '/staticTool/api'
+  const headers = {}
+  try {
+    const token = localStorage.getItem('auth_token')
+    if (token) headers['Authorization'] = `Bearer ${token}`
+  } catch { /* ignore */ }
+  return fetch(`${baseUrl}${BASE}/members/${memberId}/voiceprint/enroll`, {
+    method: 'POST', headers, body: formData
+  }).then(res => res.json())
+}
+
+/** 删除成员声纹 */
+export function deleteVoiceprint(memberId, familyId) {
+  return del(`${BASE}/members/${memberId}/voiceprint?familyId=${familyId}`)
+}
+
 /** 上传音频并转写（使用 FormData） */
 export function transcribeAudio(formData) {
-  // formData 应包含: audio(Blob), language(string), hotwords(string)
+  // formData 应包含: audio(Blob), language(string), hotwords(string), withDiarization(string), familyId(string)
   // 不使用 request.js 包装，因为需要 multipart/form-data
   const baseUrl = import.meta.env.VITE_API_BASE || '/staticTool/api'
 

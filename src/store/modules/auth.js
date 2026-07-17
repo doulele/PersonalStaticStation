@@ -167,6 +167,9 @@ export default {
      */
     logout({ commit }) {
       commit('CLEAR_AUTH')
+      // 登出时清空家庭会议状态，防止下一个用户看到残留数据
+      commit('familyMeeting/RESET_ALL', null, { root: true })
+      try { localStorage.removeItem('fm_last_active_family') } catch {}
     },
 
     /**

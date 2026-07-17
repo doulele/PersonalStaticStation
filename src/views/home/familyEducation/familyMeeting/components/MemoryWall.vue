@@ -193,20 +193,15 @@ function formatDate(iso) {
   to { opacity: 1; transform: translateX(0); }
 }
 .mw-dot {
-  position: absolute; left: -34px; top: 14px;
+  position: absolute; left: -34px; top: 50%; transform: translateY(-50%);
   width: 20px; height: 20px; border-radius: 50%; background: #cbd5e1;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   box-shadow: 0 0 0 4px rgba(203,213,225,0.25);
   .dot-core { width: 8px; height: 8px; border-radius: 50%; background: #fff; }
   &.latest {
     background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    box-shadow: 0 0 0 6px rgba(99,102,241,0.2);
-    animation: dotGlow 2s ease-in-out infinite;
+    box-shadow: 0 0 0 4px rgba(99,102,241,0.15);
   }
-}
-@keyframes dotGlow {
-  0%, 100% { box-shadow: 0 0 0 6px rgba(99,102,241,0.2); }
-  50% { box-shadow: 0 0 0 10px rgba(99,102,241,0.1); }
 }
 .mw-body {
   background: #fff; border: 1px solid #e8ecf4; border-radius: 16px; padding: 20px;

@@ -147,6 +147,7 @@ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useStore } from 'vuex'
 import { UserFilled, Edit, Lock, CircleCheckFilled, WarningFilled } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { checkNicknameApi } from '@/api/auth'
 
 const store = useStore()
 
@@ -181,8 +182,24 @@ const nicknameForm = reactive({
 const nicknameRules = {
   nickname: [
     { required: true, message: '请输入昵称', trigger: 'blur' },
-    { min: 2, max: 20, message: '昵称长度应为2-20个字符', trigger: 'blur' }
+    { min: 2, max: 20, message: '昵称长度应为2-20个字符', trigger: 'blur' },
+    { validator: validateNicknameUnique, trigger: 'blur' }
   ]
+}
+
+const validateNicknameUnique = async (rule, value, callback) => {
+  const trimmed = (value || '').trim()
+  if (!trimmed || trimmed.length < 2) { callback(); return }
+  // 如果昵称和当前一样，跳过检查
+  if (trimmed === (currentUser.value?.nickname || '')) { callback(); return }
+  try {
+    const res = await checkNicknameApi(trimmed)
+    if (res.success && !res.available) {
+      callback(new Error('该昵称已被其他用户使用'))
+    } else {
+      callback()
+    }
+  } catch { callback() }
 }
 
 onMounted(() => {

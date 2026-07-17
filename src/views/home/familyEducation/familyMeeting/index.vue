@@ -240,6 +240,9 @@ async function onGenerateInviteCode() {
 <style lang="scss" scoped>
 .fm-root {
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 .fm-loading {
   display: flex;
@@ -262,7 +265,9 @@ async function onGenerateInviteCode() {
 
 
 .fm-shell {
-  height: calc(100vh - 64px);
+  height: 100%;
+  flex: 1;
+  min-height: 0;
 }
 
 // ===== 桌面侧边栏 =====
@@ -501,7 +506,7 @@ async function onGenerateInviteCode() {
     padding-bottom: calc(16px + 60px + env(safe-area-inset-bottom, 0px));
   }
   .fm-shell {
-    height: calc(100vh - 56px);
+    height: 100%;
   }
   .fm-header { height: 52px; padding: 0 14px; }
   .fm-fam-name { font-size: 15px; max-width: 140px; }

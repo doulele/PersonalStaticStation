@@ -2,68 +2,109 @@
   <div class="sp-root">
     <h2 class="sp-title">设置</h2>
 
+    <!-- 录音偏好 -->
     <el-card shadow="never" class="sp-card">
-      <template #header><span class="card-h">🔐 语音转写设置</span></template>
-      <el-form label-position="top">
-        <el-form-item label="转写完成后自动删除原始音频">
-          <el-switch v-model="settings.autoDeleteAudio" @change="save" />
-        </el-form-item>
-        <el-form-item label="自定义热词（逗号分隔，用于触发「结论」标签,也用作方言热词表）">
-          <el-input v-model="settings.hotwords" type="textarea" :rows="2" placeholder="决定,结论,先搁置,行动项,待定" @input="save" />
-        </el-form-item>
-        <el-form-item label="转写后端地址（真实部署 faster-whisper 时填写）">
-          <el-input v-model="settings.backendUrl" placeholder="http://localhost:8000/whisper" @input="save" />
-        </el-form-item>
-      </el-form>
-    </el-card>
-
-    <el-card shadow="never" class="sp-card">
-      <template #header><span class="card-h">👥 邀请成员</span></template>
-      <div class="invite-section">
-        <p>分享邀请码给家人，让他们加入你的家庭空间。邀请码可用于创建家庭空间时的「加入已有家庭」入口。</p>
-        <div class="invite-code-box" v-if="inviteCode">
-          <span class="invite-code">{{ inviteCode }}</span>
-          <el-button size="small" type="primary" plain @click="onCopyInvite">📋 复制</el-button>
-          <el-button size="small" text @click="onRegenerateInvite">🔄 刷新</el-button>
+      <template #header>
+        <div class="card-head-row">
+          <span class="card-h">🎙️ 录音偏好</span>
+          <span class="card-desc">影响智能会议室中的默认行为</span>
         </div>
-        <div v-else class="invite-empty">
-          <p style="color:#94a3b8;">还没有邀请码，点击下方按钮生成</p>
-          <el-button type="primary" :loading="inviteLoading" @click="onGenerateInvite">生成邀请码</el-button>
+      </template>
+      <div class="sp-form">
+        <div class="sp-field">
+          <div class="sp-field-label">默认分段间隔</div>
+          <div class="sp-field-desc">录音时每隔此时间自动创建新分段并转写</div>
+          <el-select v-model="settings.defaultSegmentDuration" @change="save" style="width: 100%">
+            <el-option :value="300" label="5 分钟" />
+            <el-option :value="600" label="10 分钟" />
+            <el-option :value="900" label="15 分钟" />
+            <el-option :value="1800" label="30 分钟" />
+          </el-select>
         </div>
-        <p v-if="copySuccess" class="copy-tip">✅ 已复制到剪贴板，快分享给家人吧！</p>
+        <div class="sp-field">
+          <div class="sp-field-label">默认录音模式</div>
+          <div class="sp-field-desc">进入会议室时默认选中的记录方式</div>
+          <div class="mode-options">
+            <label class="mode-option" :class="{ active: settings.defaultMode === 'text' }">
+              <input type="radio" v-model="settings.defaultMode" value="text" @change="save" />
+              <span class="mode-option-icon">✏️</span>
+              <span class="mode-option-text">文本记录</span>
+            </label>
+            <label class="mode-option" :class="{ active: settings.defaultMode === 'voice' }">
+              <input type="radio" v-model="settings.defaultMode" value="voice" @change="save" />
+              <span class="mode-option-icon">🎤</span>
+              <span class="mode-option-text">语音录音</span>
+            </label>
+          </div>
+        </div>
       </div>
     </el-card>
 
+    <!-- 转写设置 -->
     <el-card shadow="never" class="sp-card">
-      <template #header><span class="card-h">📦 数据管理</span></template>
-      <el-form label-position="top">
-        <el-form-item label="导出加密备份（JSON）">
-          <el-button @click="onExportBackup">导出备份文件</el-button>
-        </el-form-item>
-        <el-divider />
-        <el-form-item label="危险操作">
-          <el-popconfirm title="⚠️ 此操作将永久删除所有家庭会议数据（含音频记录），确定继续？" @confirm="onResetAll">
-            <template #reference>
-              <el-button type="danger">重置全部数据</el-button>
-            </template>
-          </el-popconfirm>
-        </el-form-item>
-      </el-form>
+      <template #header>
+        <div class="card-head-row">
+          <span class="card-h">📝 转写设置</span>
+          <span class="card-desc">优化语音转文字的识别效果</span>
+        </div>
+      </template>
+      <div class="sp-form">
+        <div class="sp-field">
+          <div class="sp-field-label">自定义热词</div>
+          <div class="sp-field-desc">逗号分隔的关键词，用于提升方言识别准确率及自动触发「结论」标签</div>
+          <el-input
+            v-model="settings.hotwords"
+            type="textarea"
+            :rows="2"
+            placeholder="决定,结论,先搁置,行动项,待定"
+            @input="save"
+          />
+        </div>
+      </div>
     </el-card>
 
+    <!-- 数据管理 -->
     <el-card shadow="never" class="sp-card">
-      <template #header><span class="card-h">ℹ️ 关于数据安全</span></template>
-      <p>所有数据仅保存在本机浏览器的 localStorage 中，不会上传任何外部服务器。</p>
-      <p>语音转写依赖本地部署的 <b>faster-whisper</b>（支持近普通话的河南方言 + 自定义热词表），保证音频数据不出域。</p>
-      <p>版本: v1.0 | 数据模型版本: v1</p>
+      <template #header>
+        <div class="card-head-row">
+          <span class="card-h">📦 数据管理</span>
+          <span class="card-desc">备份与重置</span>
+        </div>
+      </template>
+      <div class="sp-form">
+        <div class="sp-field">
+          <div class="sp-field-label">导出数据备份</div>
+          <div class="sp-field-desc">将所有家庭会议数据导出为 JSON 文件，可用于迁移或存档</div>
+          <el-button @click="onExportBackup" class="sp-action-btn">
+            <el-icon><Download /></el-icon> 导出备份文件
+          </el-button>
+        </div>
+        <div class="sp-divider"></div>
+        <div class="sp-field sp-field-danger">
+          <div class="sp-field-label">重置全部数据</div>
+          <div class="sp-field-desc">此操作将永久删除所有家庭会议数据（会议记录、议题、任务等），不可恢复</div>
+          <el-popconfirm
+            title="确定要删除所有家庭会议数据吗？此操作不可恢复！"
+            confirm-button-text="确认删除"
+            cancel-button-text="取消"
+            confirm-button-type="danger"
+            @confirm="onResetAll"
+          >
+            <template #reference>
+              <el-button type="danger" plain class="sp-action-btn">重置全部数据</el-button>
+            </template>
+          </el-popconfirm>
+        </div>
+      </div>
     </el-card>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { useStore } from 'vuex'
 import { ElMessage } from 'element-plus'
+import { Download } from '@element-plus/icons-vue'
 
 const store = useStore()
 const settings = computed({
@@ -71,69 +112,21 @@ const settings = computed({
   set: () => {}
 })
 
-// 🔗 邀请码
-const inviteLoading = ref(false)
-const copySuccess = ref(false)
-const inviteCode = computed(() => store.state.familyMeeting.family?.inviteCode || '')
-
 function save() {
   store.dispatch('familyMeeting/updateSettings', { ...settings.value })
 }
 
-async function onGenerateInvite() {
-  inviteLoading.value = true
-  try {
-    const res = await store.dispatch('familyMeeting/generateInviteCode')
-    if (res.success) {
-      ElMessage.success('邀请码已生成')
-    } else {
-      ElMessage.error(res.error || '生成失败')
-    }
-  } catch (e) {
-    ElMessage.error('生成失败')
-  } finally {
-    inviteLoading.value = false
-  }
-}
-
-async function onRegenerateInvite() {
-  inviteLoading.value = true
-  try {
-    const res = await store.dispatch('familyMeeting/generateInviteCode')
-    if (res.success) {
-      ElMessage.success('邀请码已刷新')
-    } else {
-      ElMessage.error(res.error || '刷新失败')
-    }
-  } catch (e) {
-    ElMessage.error('刷新失败')
-  } finally {
-    inviteLoading.value = false
-  }
-}
-
-async function onCopyInvite() {
-  try {
-    await navigator.clipboard.writeText(inviteCode.value)
-    copySuccess.value = true
-    setTimeout(() => { copySuccess.value = false }, 3000)
-  } catch {
-    // 降级方案
-    const input = document.createElement('input')
-    input.value = inviteCode.value
-    document.body.appendChild(input)
-    input.select()
-    document.execCommand('copy')
-    document.body.removeChild(input)
-    copySuccess.value = true
-    setTimeout(() => { copySuccess.value = false }, 3000)
-  }
-}
-
 function onExportBackup() {
   try {
-    const raw = localStorage.getItem('fm_state_v1')
-    const blob = new Blob([raw], { type: 'application/json' })
+    // 导出完整的快照数据（含所有 localStorage 中的家庭会议数据）
+    const fmKeys = Object.keys(localStorage).filter(k => k.startsWith('fm_state_v1'))
+    if (!fmKeys.length) {
+      ElMessage.warning('暂无数据可导出')
+      return
+    }
+    const backup = {}
+    fmKeys.forEach(k => { backup[k] = JSON.parse(localStorage.getItem(k)) })
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -149,80 +142,184 @@ function onExportBackup() {
 function onResetAll() {
   store.dispatch('familyMeeting/resetAll')
   ElMessage.success('所有数据已清除')
-  window.location.reload()
+  setTimeout(() => { window.location.reload() }, 500)
 }
 </script>
 
 <style lang="scss" scoped>
-.sp-root { max-width: 680px; }
-.sp-title { font-size: 24px; font-weight: 700; color: #0f172a; margin-bottom: 20px; letter-spacing: -0.01em; }
+.sp-root { max-width: 640px; }
+
+.sp-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 24px;
+  letter-spacing: -0.01em;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+// ==================== 卡片 ====================
 .sp-card {
   border-radius: 16px;
   margin-bottom: 16px;
   border: 1px solid #e8ecf4;
   box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  transition: box-shadow 0.25s;
+  &:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.05); }
   :deep(.el-card__header) {
-    padding: 18px 22px;
+    padding: 18px 24px;
     border-bottom: 1px solid #f1f5f9;
     background: #fafbfd;
     border-radius: 16px 16px 0 0;
   }
   :deep(.el-card__body) {
-    padding: 20px 22px 22px;
+    padding: 20px 24px 24px;
   }
-  p { color: #475569; font-size: 14px; line-height: 1.7; margin: 0 0 8px; }
 }
-.card-h { font-weight: 700; font-size: 15px; color: #0f172a; }
 
-.invite-section {
-  p { margin: 0 0 12px; }
+.card-head-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
 }
-.invite-code-box {
-  display: flex; align-items: center; gap: 10px;
-  background: linear-gradient(135deg, #eef2ff 0%, #faf5ff 100%);
-  border: 1px dashed #a5b4fc; border-radius: 12px; padding: 16px 18px;
+.card-h {
+  font-weight: 700;
+  font-size: 15px;
+  color: #0f172a;
+  white-space: nowrap;
 }
-.invite-code {
-  font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
-  font-size: 22px; font-weight: 800; letter-spacing: 3px;
-  color: #4f46e5; flex: 1; user-select: all;
+.card-desc {
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 400;
 }
-.invite-empty { text-align: center; padding: 12px 0; p { margin-bottom: 12px; } }
-.copy-tip { color: #10b981; font-weight: 600; margin-top: 8px; animation: fadeIn 0.3s ease; }
-.leave-hint { color: #94a3b8; font-size: 12px; margin: 6px 0 0; }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
+// ==================== 表单字段 ====================
+.sp-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.sp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0 18px;
+  &:last-child { padding-bottom: 0; }
+}
+.sp-field-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+}
+.sp-field-desc {
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+.sp-field-danger {
+  .sp-field-label { color: #dc2626; }
+  .sp-field-desc { color: #94a3b8; }
+}
+.sp-divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 4px 0 18px;
+}
+
+// ==================== 模式选择器 ====================
+.mode-options {
+  display: flex;
+  gap: 10px;
+}
+.mode-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 2px solid #e8ecf4;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  input { display: none; }
+  .mode-option-icon { font-size: 20px; flex-shrink: 0; }
+  .mode-option-text { font-size: 13px; font-weight: 600; color: #64748b; }
+  &:hover {
+    border-color: #c7d2fe;
+    background: #fafbff;
+    .mode-option-text { color: #475569; }
+  }
+  &.active {
+    border-color: #6366f1;
+    background: linear-gradient(135deg, #eef2ff, #f5f3ff);
+    box-shadow: 0 2px 12px rgba(99, 102, 241, 0.12);
+    .mode-option-text { color: #4f46e5; }
+  }
+}
+
+.sp-action-btn {
+  width: fit-content;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+// ==================== 响应式 ====================
 @media (max-width: 768px) {
   .sp-root { max-width: 100%; }
-  .sp-title { font-size: 22px; }
+  .sp-title { font-size: 22px; margin-bottom: 20px; }
   .sp-card {
     border-radius: 14px; margin-bottom: 14px;
     :deep(.el-card__header) { padding: 14px 16px; }
     :deep(.el-card__body) { padding: 16px; }
   }
+  .mode-options { flex-direction: column; }
 }
 
 @media (max-width: 480px) {
-  .sp-title { font-size: 20px; margin-bottom: 14px; }
+  .sp-title { font-size: 20px; margin-bottom: 16px; }
   .sp-card {
     border-radius: 12px;
     :deep(.el-card__header) { padding: 12px 14px; }
     :deep(.el-card__body) { padding: 14px; }
-    p { font-size: 13px; }
   }
+  .card-head-row { flex-direction: column; gap: 2px; }
 }
 </style>
 
 <style lang="scss">
 html.dark-mode {
-  .sp-title { color: #e2dee9; }
+  .sp-title {
+    background: linear-gradient(135deg, #a78bfa, #c4b5fd);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
   .sp-card {
     background: #1e1e2e; border-color: #2d2d4a; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    &:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.25); }
     .el-card__header { border-bottom-color: #252540; background: #212136; }
-    p { color: #94a3b8; }
   }
   .card-h { color: #e2dee9; }
-  .invite-code-box { background: linear-gradient(135deg, #1e1a2e 0%, #1e1e2e 100%); border-color: #5b4bcf; }
-  .invite-code { color: #a78bfa; }
+  .card-desc { color: #64748b; }
+  .sp-field-label { color: #cbd5e1; }
+  .sp-field-desc { color: #64748b; }
+  .sp-field-danger .sp-field-label { color: #f87171; }
+  .sp-divider { background: #252540; }
+  .mode-option {
+    background: #252540; border-color: #2d2d4a;
+    .mode-option-text { color: #94a3b8; }
+    &:hover { border-color: #5b4bcf; background: #212145; .mode-option-text { color: #cbd5e1; } }
+    &.active {
+      border-color: #a78bfa;
+      background: linear-gradient(135deg, #1e1a2e, #242045);
+      .mode-option-text { color: #c4b5fd; }
+    }
+  }
 }
 </style>

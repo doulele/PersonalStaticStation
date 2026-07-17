@@ -227,7 +227,7 @@ html.dark-mode {
   .stat-num { color: #e2dee9; }
   .stat-label { color: #64748b; }
   .db-col { background: #1e1e2e; border-color: #2d2d4a; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
-  .db-col-hd { color: #e2dee9; }
+  .db-col-hd { color: #e2dee9; background: #212136 !important; }
   .task-card {
     background: #252540; border-color: #2d2d4a;
     &:hover { background: #2a2a45; border-color: #3a3a5a; box-shadow: 0 2px 10px rgba(0,0,0,0.15); }

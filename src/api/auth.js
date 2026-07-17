@@ -74,6 +74,14 @@ export function updateProfileApi(nickname) {
 }
 
 /**
+ * 检查昵称是否可用
+ * @param {string} nickname
+ */
+export function checkNicknameApi(nickname) {
+  return post('/auth/check-nickname', { nickname })
+}
+
+/**
  * 重置密码 - 使用邮箱验证码重置
  * @param {string} email
  * @param {string} code
@@ -99,4 +107,12 @@ export function getSecurityQuestionApi(username) {
  */
 export function resetPasswordByUsernameApi(username, securityAnswer, newPassword) {
   return post('/auth/reset-password-username', { username, securityAnswer, newPassword })
+}
+
+/**
+ * 搜索已注册用户（用于添加家庭成员）
+ * @param {string} keyword - 搜索关键词（匹配昵称或用户名）
+ */
+export function searchUsersApi(keyword) {
+  return get(`/auth/users/search?q=${encodeURIComponent(keyword)}`)
 }

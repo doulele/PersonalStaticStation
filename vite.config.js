@@ -23,13 +23,24 @@ export default defineConfig({
         secure: false,
         rewrite: (path) => path.replace(/^\/staticTool\/api/, '')
       },
-      // 语音转写请求转发到阿里云（阿里云上有 faster-whisper）
+      // 语音转写 & 声纹识别请求转发到线上服务器（线上有 Python + faster-whisper + speechbrain）
       // 注意：不带 rewrite，保留 /staticTool/api/ 前缀，由 Nginx 转发到 3001 后端
       '/staticTool/api/family-meeting/transcribe': {
         target: 'https://wellwin.top',
         changeOrigin: true,
         secure: false,
-        timeout: 300000  // 转写可能需要较长时间（5分钟）
+        timeout: 300000
+      },
+      // 声纹相关接口
+      '/staticTool/api/family-meeting/voiceprints': {
+        target: 'https://wellwin.top',
+        changeOrigin: true,
+        secure: false
+      },
+      '/staticTool/api/family-meeting/members/(.*)/voiceprint': {
+        target: 'https://wellwin.top',
+        changeOrigin: true,
+        secure: false
       },
       // 其他 API 转发到本地后端
       '/staticTool/api': {

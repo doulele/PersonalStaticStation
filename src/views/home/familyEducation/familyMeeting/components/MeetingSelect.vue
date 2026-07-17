@@ -43,9 +43,9 @@
 
           <!-- 统计 -->
           <div class="ms-card-stats">
-            <span>📋 记录 {{ recordCount(m.id) }}</span>
-            <span>📝 议题 {{ agendaCount(m.id) }}</span>
-            <span>✅ 任务 {{ taskCount(m.id) }}</span>
+            <span>记录 {{ recordCount(m.id) }}</span>
+            <span>议题 {{ agendaCount(m.id) }}</span>
+            <span>任务 {{ taskCount(m.id) }}</span>
           </div>
         </div>
 
@@ -155,41 +155,53 @@
     <!-- ==================== 详情弹窗 ==================== -->
     <el-dialog
       v-model="detailDialog.visible"
-      :title="detailDialog.data?.title || '会议详情'"
-      width="560px"
+      width="520px"
       :close-on-click-modal="false"
       append-to-body
+      class="detail-dialog"
     >
+      <template #header>
+        <div class="detail-title-row">
+          <span class="detail-title-text">{{ detailDialog.data?.title || '会议详情' }}</span>
+          <el-tag
+            v-if="detailDialog.data"
+            :type="statusTagType(detailDialog.data.status)"
+            size="small"
+            effect="dark"
+          >{{ statusText(detailDialog.data.status) }}</el-tag>
+        </div>
+      </template>
       <template v-if="detailDialog.data">
         <div class="detail-body">
-          <!-- 基本信息 -->
+          <!-- 基本信息卡片 -->
           <div class="detail-section">
-            <h4>📋 基本信息</h4>
-            <div class="detail-grid">
-              <div class="detail-item">
-                <span class="d-label">状态</span>
-                <el-tag :type="statusTagType(detailDialog.data.status)" size="small">
-                  {{ statusText(detailDialog.data.status) }}
-                </el-tag>
+            <div class="detail-info-cards">
+              <div class="d-info-card">
+                <span class="d-info-icon">📅</span>
+                <div class="d-info-content">
+                  <span class="d-info-label">日期</span>
+                  <span class="d-info-value">{{ detailDialog.data.date }}</span>
+                </div>
               </div>
-              <div class="detail-item">
-                <span class="d-label">日期</span>
-                <span>{{ detailDialog.data.date }}</span>
+              <div class="d-info-card">
+                <span class="d-info-icon">👥</span>
+                <div class="d-info-content">
+                  <span class="d-info-label">参与者</span>
+                  <span class="d-info-value">{{ detailPtNames || '所有人' }}</span>
+                </div>
               </div>
-              <div class="detail-item">
-                <span class="d-label">加密</span>
-                <span>{{ detailDialog.data.encrypted ? '是' : '否' }}</span>
-              </div>
-              <div class="detail-item full">
-                <span class="d-label">参与者</span>
-                <span>{{ detailPtNames }}</span>
+              <div class="d-info-card" v-if="detailDialog.data.encrypted">
+                <span class="d-info-icon">🔒</span>
+                <div class="d-info-content">
+                  <span class="d-info-label">加密</span>
+                  <span class="d-info-value">已加密</span>
+                </div>
               </div>
             </div>
           </div>
 
           <!-- 数据统计 -->
           <div class="detail-section">
-            <h4>📊 数据统计</h4>
             <div class="detail-stats">
               <div class="d-stat-card">
                 <strong>{{ detailRecordCount }}</strong>
@@ -201,37 +213,36 @@
               </div>
               <div class="d-stat-card">
                 <strong>{{ detailTaskCount }}</strong>
-                <span>任务数</span>
+                <span>决策任务</span>
               </div>
               <div class="d-stat-card">
-                <strong>{{ detailPatchCount }}</strong>
-                <span>补丁数</span>
+                <strong>{{ detailConclusionCount }}</strong>
+                <span>结论数</span>
               </div>
             </div>
           </div>
 
-          <!-- 任务完成率 -->
-          <div class="detail-section" v-if="detailTaskCount > 0">
-            <h4>🎯 任务进度</h4>
-            <div class="d-progress">
-              <el-progress
-                :percentage="detailTaskDoneRate"
-                :color="'#6366f1'"
-                :stroke-width="8"
-              >
-                <span class="d-progress-text">{{ detailTaskDone }} / {{ detailTaskCount }} 已完成</span>
-              </el-progress>
-            </div>
-          </div>
-
-          <!-- 最近记录 -->
-          <div class="detail-section" v-if="detailRecentRecords.length">
-            <h4>📝 最近记录</h4>
-            <div class="d-record-list">
-              <div v-for="r in detailRecentRecords" :key="r.id" class="d-record-item">
-                <span class="d-rec-tag" v-for="t in r.autoTags" :key="t" :style="{ background: tagColor(t), color: '#fff', padding: '1px 6px', borderRadius: '4px', fontSize: '11px', marginRight: '4px' }">{{ t }}</span>
-                <span class="d-rec-tag" v-for="t in r.manualTags" :key="'m'+t" :style="{ background: '#6366f1', color: '#fff', padding: '1px 6px', borderRadius: '4px', fontSize: '11px', marginRight: '4px' }">{{ t }}</span>
-                <span class="d-rec-text">{{ r.content?.slice(0, 80) }}{{ r.content?.length > 80 ? '…' : '' }}</span>
+          <!-- 任务进度 + 标签摘要 -->
+          <div class="detail-section">
+            <div class="detail-summary-row">
+              <!-- 任务进度 -->
+              <div class="d-progress-card" v-if="detailTaskCount > 0">
+                <span class="d-progress-label">任务完成进度</span>
+                <el-progress
+                  :percentage="detailTaskDoneRate"
+                  :color="detailTaskDoneRate === 100 ? '#10b981' : '#6366f1'"
+                  :stroke-width="10"
+                />
+                <span class="d-progress-num">{{ detailTaskDone }} / {{ detailTaskCount }}</span>
+              </div>
+              <!-- 标签分布 -->
+              <div class="d-tag-summary" v-if="detailTagSummary.length">
+                <span class="d-progress-label">标签分布</span>
+                <div class="d-tag-row">
+                  <span v-for="t in detailTagSummary" :key="t.name" class="d-tag-chip" :style="{ background: t.color }">
+                    {{ t.name }} {{ t.count }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -239,7 +250,7 @@
       </template>
       <template #footer>
         <el-button @click="detailDialog.visible = false">关闭</el-button>
-        <el-button type="primary" @click="goToMeeting(detailDialog.data?.id)">进入会议室 →</el-button>
+        <el-button type="primary" @click="goToMeeting(detailDialog.data?.id)">进入会议室</el-button>
       </template>
     </el-dialog>
 
@@ -308,7 +319,6 @@ const members = computed(() => store.state.familyMeeting.members)
 const allRecords = computed(() => store.state.familyMeeting.records)
 const allAgendaItems = computed(() => store.state.familyMeeting.agendaItems)
 const allTasks = computed(() => store.state.familyMeeting.tasks)
-const allPatches = computed(() => store.state.familyMeeting.patches)
 
 const canSubmitForm = computed(() => {
   if (!formDialog.title) return false
@@ -335,9 +345,21 @@ const detailTaskCount = computed(() => {
   if (!detailDialog.data) return 0
   return allTasks.value.filter(t => t.meetingId === detailDialog.data.id).length
 })
-const detailPatchCount = computed(() => {
+const detailConclusionCount = computed(() => {
   if (!detailDialog.data) return 0
-  return allPatches.value.filter(p => p.meetingId === detailDialog.data.id).length
+  return allRecords.value.filter(r => r.meetingId === detailDialog.data.id && r.manualTags.includes('结论')).length
+})
+const detailTagSummary = computed(() => {
+  if (!detailDialog.data) return []
+  const records = allRecords.value.filter(r => r.meetingId === detailDialog.data.id)
+  const counts = { 结论: 0, 待定: 0, 行动项: 0 }
+  records.forEach(r => {
+    r.manualTags.forEach(t => { if (counts[t] !== undefined) counts[t]++ })
+  })
+  const colors = { 结论: '#10b981', 待定: '#f59e0b', 行动项: '#6366f1' }
+  return Object.entries(counts)
+    .filter(([, c]) => c > 0)
+    .map(([name, count]) => ({ name, count, color: colors[name] }))
 })
 const detailTaskDone = computed(() => {
   if (!detailDialog.data) return 0
@@ -347,14 +369,6 @@ const detailTaskDoneRate = computed(() => {
   if (detailTaskCount.value === 0) return 0
   return Math.round((detailTaskDone.value / detailTaskCount.value) * 100)
 })
-const detailRecentRecords = computed(() => {
-  if (!detailDialog.data) return []
-  return allRecords.value
-    .filter(r => r.meetingId === detailDialog.data.id)
-    .sort((a, b) => b.seq - a.seq)
-    .slice(0, 5)
-})
-
 // ---- 工具函数 ----
 function isUnlocked(id) {
   return store.state.familyMeeting.unlockedMeetings.includes(id)
@@ -369,10 +383,6 @@ function statusTagType(s) {
 function stripeClass(s) {
   return { pre: 'stripe-warn', active: 'stripe-success', closed: 'stripe-info' }[s] || 'stripe-info'
 }
-function tagColor(t) {
-  return { 结论: '#10b981', 待定: '#f59e0b', 行动项: '#6366f1', 情感记录: '#94a3b8' }[t] || '#6366f1'
-}
-
 function recordCount(meetingId) {
   return allRecords.value.filter(r => r.meetingId === meetingId).length
 }
@@ -676,6 +686,7 @@ function onUnlock() {
     box-shadow: 0 4px 24px rgba(99, 102, 241, 0.25);
     background: linear-gradient(135deg, #f5f3ff, #eef2ff);
     position: relative;
+    z-index: 1;
     &::before {
       content: '';
       position: absolute;
@@ -691,10 +702,11 @@ function onUnlock() {
     .ms-card-stripe {
       height: 5px;
       box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
+      position: relative;
+      z-index: 1;
     }
-    .ms-card-title {
-      color: #4f46e5;
-    }
+    .ms-card-body, .ms-card-stats, .ms-card-actions { position: relative; z-index: 1; }
+    .ms-card-title { color: #4338ca; }
   }
 }
 
@@ -806,35 +818,52 @@ function onUnlock() {
 }
 
 // ==================== 详情弹窗 ====================
+.detail-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.detail-title-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.3;
+  word-break: break-word;
+}
+.detail-dialog :deep(.el-dialog__header) { padding: 20px 24px 12px; }
+.detail-dialog :deep(.el-dialog__body) { padding: 8px 24px 20px; }
 .detail-body {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
 }
-.detail-section {
-  h4 {
-    font-size: 14px;
-    font-weight: 700;
-    color: #0f172a;
-    margin: 0 0 12px;
-  }
-}
-.detail-grid {
+
+// 信息卡片
+.detail-info-cards {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
-.detail-item {
+.d-info-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e8ecf4;
+}
+.d-info-icon { font-size: 18px; flex-shrink: 0; line-height: 1; }
+.d-info-content {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 10px 12px;
-  background: #f8fafc;
-  border-radius: 10px;
-  &.full { grid-column: 1 / -1; }
-  .d-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.03em; }
-  span:not(.d-label) { font-size: 13px; color: #334155; font-weight: 500; }
+  gap: 2px;
+  min-width: 0;
 }
+.d-info-label { font-size: 11px; color: #94a3b8; letter-spacing: 0.03em; }
+.d-info-value { font-size: 13px; color: #334155; font-weight: 500; word-break: break-word; }
+
+// 统计卡片
 .detail-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -845,44 +874,48 @@ function onUnlock() {
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  padding: 14px 8px;
+  padding: 16px 8px;
   background: linear-gradient(135deg, #f8fafc, #f1f5f9);
   border-radius: 12px;
   border: 1px solid #e8ecf4;
-  strong { font-size: 22px; color: #6366f1; font-weight: 700; }
+  strong { font-size: 24px; color: #6366f1; font-weight: 700; }
   span { font-size: 11px; color: #94a3b8; }
 }
-.d-progress {
-  padding: 4px 0;
-}
-.d-progress-text {
-  font-size: 12px;
-  color: #64748b;
-}
-.d-record-list {
+
+// 进度 + 标签
+.detail-summary-row {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  max-height: 180px;
-  overflow-y: auto;
-  padding-right: 4px;
-  &::-webkit-scrollbar { width: 4px; }
-  &::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 2px; }
+  gap: 14px;
 }
-.d-record-item {
+.d-progress-card {
   display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  padding: 8px 10px;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
   background: #f8fafc;
-  border-radius: 8px;
+  border-radius: 12px;
+  border: 1px solid #e8ecf4;
+}
+.d-progress-label { font-size: 12px; color: #64748b; font-weight: 500; }
+.d-progress-num { font-size: 12px; color: #64748b; text-align: right; }
+.d-tag-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.d-tag-row {
+  display: flex;
+  gap: 8px;
   flex-wrap: wrap;
 }
-.d-rec-text {
+.d-tag-chip {
+  padding: 4px 12px;
+  border-radius: 20px;
+  color: #fff;
   font-size: 12px;
-  color: #64748b;
+  font-weight: 500;
   line-height: 1.5;
-  word-break: break-word;
 }
 
   // ==================== 暗色模式 PC 横向布局选中态 ====================
@@ -912,9 +945,15 @@ function onUnlock() {
   .detail-stats {
     grid-template-columns: repeat(2, 1fr);
   }
-  .detail-grid {
+  .detail-info-cards {
     grid-template-columns: 1fr;
   }
+  .detail-title-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .detail-title-text { font-size: 16px; }
 }
 
 // ==================== PC 端：横向长条卡片 ====================
@@ -1047,35 +1086,41 @@ html.dark-mode {
   .meeting-form .el-form-item__label { color: #94a3b8; }
 
   .ms-card {
-    background: #1e1e2e;
-    border-color: #2d2d4a;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    background: #1e1e2e !important;
+    border-color: #2d2d4a !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15) !important;
 
     &:hover {
-      box-shadow: 0 8px 30px rgba(0,0,0,0.25);
-      border-color: #5b4bcf;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.25) !important;
+      border-color: #5b4bcf !important;
     }
 
     &.ms-card--active {
-      border-color: #a78bfa;
-      border-width: 2px;
-      margin: -1px;
-      box-shadow: 0 4px 24px rgba(167, 139, 250, 0.25);
-      background: linear-gradient(135deg, #242045, #1e1e3a);
+      border-color: #a78bfa !important;
+      border-width: 2px !important;
+      margin: -1px !important;
+      box-shadow: 0 4px 24px rgba(167, 139, 250, 0.25) !important;
+      background: linear-gradient(135deg, #242045, #1e1e3a) !important;
       position: relative;
       &::before {
         content: '';
         position: absolute;
         top: 0; left: 0;
         width: 100%; height: 100%;
-        background: linear-gradient(135deg, rgba(167,139,250,0.08), rgba(139,92,246,0.05));
+        background: linear-gradient(135deg, rgba(167,139,250,0.08), rgba(139,92,246,0.05)) !important;
         border-radius: 16px;
         pointer-events: none;
         z-index: 0;
       }
-      .ms-card-title { color: #c4b5fd; }
-      .ms-card-stripe { height: 5px; box-shadow: 0 0 12px rgba(167, 139, 250, 0.4); }
+      .ms-card-title { color: #c4b5fd !important; }
+      .ms-card-stripe { height: 5px; box-shadow: 0 0 12px rgba(167, 139, 250, 0.4) !important; }
+      .ms-card-stats { border-top-color: rgba(167,139,250,0.15) !important; color: #94a3b8 !important; }
+      .ms-card-actions { border-top-color: rgba(167,139,250,0.15) !important; color: #94a3b8 !important; }
     }
+    .ms-card-title { color: #e2dee9 !important; }
+    .ms-info-item { color: #64748b !important; .el-icon { color: #64748b !important; } }
+    .ms-card-stats { color: #64748b !important; border-top-color: #252540 !important; }
+    .ms-card-actions { border-top-color: #252540 !important; }
   }
 
   .ms-card-title { color: #e2dee9; }
@@ -1086,14 +1131,17 @@ html.dark-mode {
   .ms-empty { color: #64748b; }
 
   .el-dialog {
+    background: #1e1e2e;
+    .el-dialog__header { background: #1e1e2e; }
     .el-dialog__title { color: #e2dee9; }
   }
 
   .detail-section h4 { color: #e2dee9; }
-  .detail-item {
+  .d-info-card {
     background: #252540;
-    .d-label { color: #64748b; }
-    span:not(.d-label) { color: #cbd5e1; }
+    border-color: #2d2d4a;
+    .d-info-label { color: #64748b; }
+    .d-info-value { color: #cbd5e1; }
   }
   .d-stat-card {
     background: linear-gradient(135deg, #1e1e2e, #252540);
@@ -1101,11 +1149,12 @@ html.dark-mode {
     strong { color: #a78bfa; }
     span { color: #64748b; }
   }
-  .d-progress-text { color: #94a3b8; }
-  .d-record-list { &::-webkit-scrollbar-thumb { background: #3a3a5a; } }
-  .d-record-item {
+  .d-progress-card {
     background: #252540;
-    .d-rec-text { color: #94a3b8; }
+    border-color: #2d2d4a;
   }
+  .detail-title-text { color: #e2dee9; }
+  .d-progress-label { color: #94a3b8; }
+  .d-progress-num { color: #94a3b8; }
 }
 </style>

@@ -79,16 +79,18 @@ export function extractTaskTitle(text) {
 }
 
 /**
- * 通过后端进行真正的语音转写
+ * 通过后端进行真正的语音转写（支持说话人识别）
  * 将音频 Blob 上传到后端 /family-meeting/transcribe，后端调用 faster-whisper/whisper.cpp
  * @param {Blob} audioBlob - 录音 Blob (webm)
  * @param {object} options
  * @param {string} options.language - 语言 zh/en/auto
  * @param {string[]} options.hotwords - 自定义热词
- * @returns {Promise<{text:string, segments:Array, engine:string}>}
+ * @param {boolean} options.withDiarization - 是否启用说话人识别
+ * @param {string} options.familyId - 家庭ID（说话人识别时需要）
+ * @returns {Promise<{text:string, segments:Array, engine:string, diarization?:object}>}
  */
 export async function transcribeViaBackend(audioBlob, options = {}) {
-  const { language = 'zh', hotwords = [] } = options
+  const { language = 'zh', hotwords = [], withDiarization = false, familyId = '' } = options
 
   const fd = new FormData()
   // 确保文件名有正确的扩展名
@@ -97,6 +99,10 @@ export async function transcribeViaBackend(audioBlob, options = {}) {
   fd.append('language', language)
   if (hotwords.length > 0) {
     fd.append('hotwords', hotwords.join(','))
+  }
+  if (withDiarization) {
+    fd.append('withDiarization', 'true')
+    if (familyId) fd.append('familyId', familyId)
   }
 
   // 🔒 携带认证 token
@@ -129,7 +135,8 @@ export async function transcribeViaBackend(audioBlob, options = {}) {
   return {
     text: json.data.text || '',
     segments: json.data.segments || [],
-    engine: json.data.engine || 'unknown'
+    engine: json.data.engine || 'unknown',
+    diarization: json.data.diarization || null
   }
 }
 

@@ -121,6 +121,23 @@ function scheduleSync(state) {
 }
 
 async function doSync(state) {
+  // 🔒 如果没有认证 token（用户已登出），跳过同步并重置状态，
+  // 防止登出后因缺少 token 导致请求失败 → 重试 → 无限循环调用接口
+  try {
+    const token = localStorage.getItem('auth_token')
+    if (!token) {
+      state._syncStatus = 'idle'
+      _syncPending = false
+      _retryDelay = 2000
+      return
+    }
+  } catch {
+    state._syncStatus = 'idle'
+    _syncPending = false
+    _retryDelay = 2000
+    return
+  }
+
   _syncPending = true
   state._hasPendingSync = false
 
@@ -187,6 +204,27 @@ async function loadInitialState() {
   return _initPromise
 }
 
+/** 按指定 familyId 加载家庭状态 */
+let _initPromises = {}
+async function loadInitialStateForFamily(familyId) {
+  if (_initPromises[familyId]) return _initPromises[familyId]
+
+  _initPromises[familyId] = (async () => {
+    try {
+      const res = await fmApi.fetchState(familyId)
+      if (res.success && res.data) {
+        console.log(`[familyMeeting] 加载家庭 ${familyId} 状态成功`)
+        cacheSet(res.data)
+        return res.data
+      }
+    } catch (e) {
+      console.warn(`[familyMeeting] 加载家庭 ${familyId} 失败:`, e.message)
+    }
+    return null
+  })()
+  return _initPromises[familyId]
+}
+
 // 议事排序：共鸣数降序 → 优先级降序 → 创建时间早优先
 function sortAgenda(a, b) {
   const aRes = Array.isArray(a.resonance) ? a.resonance.length : 0
@@ -214,11 +252,14 @@ export default {
       emotionLogs: cached?.emotionLogs || [],
       unlockedMeetings: cached?.unlockedMeetings || [],  // 🔒 已解锁的加密会议 ID 列表
       settings: cached?.settings || {
-        autoDeleteAudio: true,
-        hotwords: '决定,结论,先搁置,行动项,待定',
-        transcribeMode: 'mock',
-        backendUrl: ''
+        autoDeleteAudio: false,
+        hotwords: '',
+        defaultSegmentDuration: 600,
+        defaultMode: 'text'
       },
+      // ===== 多家庭支持 =====
+      myFamilies: [],          // 用户参与的所有家庭列表 [{ familyId, familyName, role, memberCount, meetingCount, joinedAt }]
+      familiesLoading: false,  // 家庭列表加载中
       _initialized: false,     // 🔒 防止 initFromBackend 被重复调用覆盖数据
       _syncStatus: 'idle',    // idle | syncing | saved | error
       _hasPendingSync: false
@@ -297,7 +338,14 @@ export default {
       state.emotionLogs.filter(e => e.userId === userId),
 
     /** 同步状态：idle | syncing | saved | error */
-    syncStatus: (state) => state._syncStatus
+    syncStatus: (state) => state._syncStatus,
+
+    /** 📋 当前用户的所有家庭（多家庭支持） */
+    myFamilies: (state) => state.myFamilies,
+    /** 当前用户在活跃家庭中的角色 */
+    myRoleInActiveFamily: (state) => {
+      return state.myFamilies.find(f => f.familyId === state.family?.id)?.role || null
+    }
   },
 
   mutations: {
@@ -443,6 +491,11 @@ export default {
     },
 
     RESET_ALL(state) {
+      // 清除后台同步重试定时器，防止登出后仍持续调用后端接口
+      if (_retryTimer) { clearTimeout(_retryTimer); _retryTimer = null }
+      _retryDelay = 2000
+      _syncPending = false
+
       state.family = null
       state.members = []
       state.currentUserId = null
@@ -454,35 +507,73 @@ export default {
       state.emotionLogs = []
       state.unlockedMeetings = []
       state._initialized = false  // 重置后允许重新初始化
-      scheduleSync(state)
+      state._syncStatus = 'idle'
+      state._hasPendingSync = false
+      // 注意：RESET_ALL 不再调用 scheduleSync，
+      // 因为登出时 token 已被清除，空数据同步没有任何意义，
+      // 且会因请求失败触发新的重试定时器，导致登出后接口被反复调用。
+    },
+
+    RESET_ALL_MEMBERS(state) {
+      state.members = []
     }
   },
 
   actions: {
     // ---- 初始化：从后端加载状态 ----
-    async initFromBackend({ commit, state, rootState }) {
-      // 🔒 防止重复初始化覆盖用户已创建的数据
+    async initFromBackend({ commit, state, dispatch, rootState }) {
+      const authUserId = rootState.auth?.user?.userId
+
+      // 用户切换检测：如果当前用户变了，强制重置并重新初始化
+      if (state.currentUserId && authUserId && state.currentUserId !== authUserId) {
+        console.warn(`[familyMeeting] 用户切换 ${state.currentUserId} → ${authUserId}，重置状态`)
+        commit('RESET_ALL')
+        try { localStorage.removeItem(getStorageKey()) } catch {}
+        try { localStorage.removeItem('fm_last_active_family') } catch {}
+      }
+
+      // 防止重复初始化覆盖用户已创建的数据
       if (state._initialized) {
         console.log('[familyMeeting] 已初始化，跳过重复加载')
         return
       }
       try {
-        const remote = await loadInitialState()
-        if (remote) {
-          // 🔒 安全校验：后端返回的数据必须包含当前登录用户，否则视为脏数据/缓存泄漏
-          const authUserId = rootState.auth?.user?.userId
-          if (remote.family && authUserId) {
-            const isMember = remote.members?.some(m => m.id === authUserId)
-            if (!isMember) {
-              console.warn(`[familyMeeting] 数据隔离异常：后端返回的家庭 ${remote.family.id} 不包含当前用户 ${authUserId}，拒绝加载`)
-              try { localStorage.removeItem(getStorageKey()) } catch {}
-              commit('RESET_ALL')
-              state._initialized = true
-              return
+        // 先加载家庭列表
+        await dispatch('loadMyFamilies')
+
+        // 选择要加载的家庭：优先上次活跃的，或者第一个
+        let targetFamilyId = null
+        try {
+          targetFamilyId = localStorage.getItem('fm_last_active_family')
+        } catch { }
+        if (targetFamilyId && !state.myFamilies.find(f => f.familyId === targetFamilyId)) {
+          targetFamilyId = null
+        }
+        if (!targetFamilyId && state.myFamilies.length > 0) {
+          targetFamilyId = state.myFamilies[0].familyId
+        }
+
+        if (targetFamilyId) {
+          const remote = await loadInitialStateForFamily(targetFamilyId)
+          if (remote) {
+            const authUserId = rootState.auth?.user?.userId
+            if (remote.family && authUserId) {
+              const isMember = remote.members?.some(m => m.id === authUserId)
+              if (!isMember) {
+                console.warn(`[familyMeeting] 数据隔离异常：后端返回的家庭 ${remote.family.id} 不包含当前用户 ${authUserId}，拒绝加载`)
+                try { localStorage.removeItem(getStorageKey()) } catch {}
+                commit('RESET_ALL')
+                state._initialized = true
+                return
+              }
             }
+            console.log('[familyMeeting] 从后端加载状态成功，家庭:', remote.family?.name, '成员数:', remote.members?.length)
+            commit('SET_STATE', remote)
+            if (authUserId) {
+              state.currentUserId = authUserId
+            }
+            try { localStorage.setItem('fm_last_active_family', targetFamilyId) } catch { }
           }
-          console.log('[familyMeeting] 从后端/缓存加载状态成功，会议数:', remote.meetings?.length || 0)
-          commit('SET_STATE', remote)
         }
         state._initialized = true
       } catch (e) {
@@ -493,21 +584,45 @@ export default {
 
     // ===== 家庭空间 / 成员 =====
     /** 🔒 创建家庭空间，管理员自动绑定当前站点登录用户 */
-    initFamily({ commit, state, rootState }, { name, adminName }) {
+    async initFamily({ commit, state, rootState, dispatch }, { name, adminName }) {
       const authUser = rootState.auth?.user
       if (!authUser) {
         console.warn('[familyMeeting] 未登录，无法创建家庭空间')
-        return
+        return { success: false, error: '未登录' }
       }
       // 管理员 ID 使用站点用户的 userId，确保身份绑定
       const adminId = authUser.userId
-      const family = { id: uid('f'), name, adminId }
-      commit('SET_FAMILY', family)
-      commit('ADD_MEMBER', { id: adminId, name: adminName || authUser.nickname || '管理员', role: 'admin' })
-      commit('SET_CURRENT_USER', adminId)
+      try {
+        // 通过后端 API 创建家庭
+        const res = await fmApi.createFamily(name, adminName)
+        if (res.success && res.data) {
+          // 切换到新创建的家庭
+          commit('SET_FAMILY', res.data.family || { id: res.data.family?.id, name, adminId })
+          commit('RESET_ALL_MEMBERS')
+          state.members = res.data.members || [{ id: adminId, name: adminName || authUser.nickname || '管理员', role: 'admin' }]
+          commit('SET_CURRENT_USER', adminId)
+          try { localStorage.setItem('fm_last_active_family', res.data.family?.id) } catch { }
+          // 刷新家庭列表
+          await dispatch('loadMyFamilies')
+          return { success: true }
+        }
+        // 降级：本地创建
+        const family = { id: uid('f'), name, adminId }
+        commit('SET_FAMILY', family)
+        commit('ADD_MEMBER', { id: adminId, name: adminName || authUser.nickname || '管理员', role: 'admin' })
+        commit('SET_CURRENT_USER', adminId)
+        return { success: true }
+      } catch (e) {
+        console.warn('[familyMeeting] 后端创建家庭失败，使用本地降级:', e.message)
+        const family = { id: uid('f'), name, adminId }
+        commit('SET_FAMILY', family)
+        commit('ADD_MEMBER', { id: adminId, name: adminName || authUser.nickname || '管理员', role: 'admin' })
+        commit('SET_CURRENT_USER', adminId)
+        return { success: true }
+      }
     },
-    addMember({ commit }, { name, role }) {
-      commit('ADD_MEMBER', { id: uid('u'), name, role: role || 'member' })
+    addMember({ commit }, { userId, name, role }) {
+      commit('ADD_MEMBER', { id: userId || uid('u'), name, role: role || 'member' })
     },
     updateMember({ commit }, { id, patch }) {
       commit('UPDATE_MEMBER', { id, patch })
@@ -587,9 +702,11 @@ export default {
         title: payload.title,
         category: payload.category || '其他',
         desc: payload.desc || '',
-        priority: payload.priority || 2,
+        priority: payload.priority || 3,
         resonance: [],
         emotionLevel: payload.emotionLevel ?? null,
+        status: 'pending',
+        resolution: '',
         createdAt: nowISO()
       }
       commit('ADD_AGENDA', item)
@@ -705,6 +822,7 @@ export default {
       commit('RESET_ALL')
       // 同时清除本地缓存
       try { localStorage.removeItem(getStorageKey()) } catch {}
+      try { localStorage.removeItem('fm_last_active_family') } catch {}
     },
 
     // ===== 🔗 邀请 =====
@@ -729,25 +847,25 @@ export default {
     },
 
     /** 通过邀请码加入家庭（返回 { success, data, error, message, needConfirm, existingFamily }） */
-    async joinFamily({ commit, state }, { inviteCode, userName, deleteExisting = false }) {
+    async joinFamily({ commit, state, dispatch }, { inviteCode, userName, deleteExisting = false }) {
       try {
         const res = await fmApi.joinFamily(inviteCode, userName, deleteExisting)
         if (res.success && res.data) {
           if (deleteExisting) {
-            // 🔥 删旧换新：先清空本地状态，再加载新空间数据
             commit('RESET_ALL')
           }
-          // 更新本地状态：设置 family + 成员列表
           commit('SET_FAMILY', res.data.family)
           if (res.data.members) {
             state.members = res.data.members
           }
+          // 刷新家庭列表
+          await dispatch('loadMyFamilies')
+          try { localStorage.setItem('fm_last_active_family', res.data.family?.id) } catch { }
           if (res.data.existingMember) {
             return { success: true, data: res.data, message: '你已经是该家庭的成员' }
           }
           return { success: true, data: res.data }
         }
-        // 后端返回 409 → 需要确认删除现有空间
         if (res.needConfirm) {
           return {
             success: false,
@@ -764,14 +882,16 @@ export default {
     },
 
     /** 🚪 退出家庭空间 */
-    async leaveFamily({ commit }) {
+    async leaveFamily({ commit, dispatch }) {
       try {
         const res = await fmApi.leaveFamily()
         if (res.success) {
-          // 清空本地状态
           commit('RESET_ALL')
-          // 清除本地缓存
           try { localStorage.removeItem(getStorageKey()) } catch {}
+          try { localStorage.removeItem('fm_last_active_family') } catch {}
+          await dispatch('loadMyFamilies')
+          // 如果还有其他家庭，自动加载第一个
+          await dispatch('autoSwitchToFirstFamily')
           return { success: true, message: res.message || '已退出家庭空间' }
         }
         return { success: false, error: res.error || '退出失败' }
@@ -779,6 +899,127 @@ export default {
         console.error('[familyMeeting] 退出家庭失败:', e)
         return { success: false, error: e.message }
       }
+    },
+
+    // ===== 📋 多家庭支持 =====
+
+    /** 加载用户参与的所有家庭 */
+    async loadMyFamilies({ state }) {
+      try {
+        state.familiesLoading = true
+        const res = await fmApi.fetchMyFamilies()
+        if (res.success && res.data) {
+          state.myFamilies = res.data
+        }
+      } catch (e) {
+        console.warn('[familyMeeting] 加载家庭列表失败:', e.message)
+      } finally {
+        state.familiesLoading = false
+      }
+    },
+
+    /** 切换到指定家庭 */
+    async switchFamily({ state, commit, rootState }, familyId) {
+      try {
+        // 先保存当前状态
+        scheduleSync(state)
+        // 加载目标家庭
+        const remote = await loadInitialStateForFamily(familyId)
+        if (remote && remote.family) {
+          const authUserId = rootState.auth?.user?.userId
+          const isMember = remote.members?.some(m => m.id === authUserId)
+          if (!isMember) {
+            console.warn(`[familyMeeting] 切换到家庭 ${familyId} 失败：当前用户不在成员列表`)
+            return { success: false, error: '你不是该家庭的成员' }
+          }
+          commit('SET_STATE', remote)
+          if (authUserId) state.currentUserId = authUserId
+          try { localStorage.setItem('fm_last_active_family', familyId) } catch { }
+          console.log('[familyMeeting] 已切换家庭:', remote.family.name)
+          return { success: true }
+        }
+        return { success: false, error: '家庭数据不存在' }
+      } catch (e) {
+        console.error('[familyMeeting] 切换家庭失败:', e.message)
+        return { success: false, error: e.message }
+      }
+    },
+
+    /** 自动切换到第一个可用家庭 */
+    async autoSwitchToFirstFamily({ state, dispatch }) {
+      if (state.myFamilies.length === 0) return
+      const first = state.myFamilies[0]
+      await dispatch('switchFamily', first.familyId)
+    },
+
+    /** 💣 解散家庭空间（仅管理员） */
+    async dissolveFamily({ state, commit, dispatch }, familyId) {
+      try {
+        // 直接传 familyId 给后端，由后端校验权限
+        const res = await fmApi.dissolveFamily(familyId)
+        if (res.success) {
+          // 清空当前状态
+          commit('RESET_ALL')
+          try { localStorage.removeItem(getStorageKey()) } catch {}
+          try { localStorage.removeItem('fm_last_active_family') } catch {}
+          // 刷新列表
+          await dispatch('loadMyFamilies')
+          // 自动切到第一个其他家庭
+          await dispatch('autoSwitchToFirstFamily')
+          return { success: true, message: res.message }
+        }
+        return { success: false, error: res.error || '解散失败' }
+      } catch (e) {
+        console.error('[familyMeeting] 解散家庭失败:', e)
+        return { success: false, error: e.message }
+      }
+    },
+
+    /** 🚪 退出指定家庭空间（支持多家庭） */
+    async leaveSpecificFamily({ state, commit, dispatch }, familyId) {
+      try {
+        const isCurrentFamily = state.family?.id === familyId
+        const res = await fmApi.leaveSpecificFamily(familyId)
+        if (res.success) {
+          if (isCurrentFamily) {
+            commit('RESET_ALL')
+            try { localStorage.removeItem(getStorageKey()) } catch {}
+            try { localStorage.removeItem('fm_last_active_family') } catch {}
+          }
+          await dispatch('loadMyFamilies')
+          if (isCurrentFamily) {
+            await dispatch('autoSwitchToFirstFamily')
+          }
+          return { success: true, message: res.message }
+        }
+        return { success: false, error: res.error || '退出失败' }
+      } catch (e) {
+        console.error('[familyMeeting] 退出家庭失败:', e)
+        return { success: false, error: e.message }
+      }
+    },
+
+    /** 🚫 踢出成员（仅管理员） */
+    async kickMember({ state, dispatch }, memberId) {
+      try {
+        const res = await fmApi.kickMember(memberId)
+        if (res.success) {
+          // 从本地 state 移除该成员
+          const idx = state.members.findIndex(m => m.id === memberId)
+          if (idx >= 1) state.members.splice(idx, 1)
+          state.meetings.forEach(m => {
+            m.participants = m.participants.filter(p => p !== memberId)
+          })
+          scheduleSync(state)
+          await dispatch('loadMyFamilies')
+          return { success: true, message: res.message }
+        }
+        return { success: false, error: res.error || '踢出失败' }
+      } catch (e) {
+        console.error('[familyMeeting] 踢出成员失败:', e)
+        return { success: false, error: e.message }
+      }
     }
   }
 }
+
