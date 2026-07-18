@@ -361,7 +361,7 @@ const store = useStore()
 const router = useRouter()
 const meetingId = ref(store.getters['familyMeeting/visibleMeetings'][0]?.id || '')
 
-const mode = ref(store.state.familyMeeting.settings?.defaultMode || 'text')
+const mode = ref(store.state.familyMeeting.settings?.defaultMode === 'voice' ? 'record' : 'text')
 const textInput = ref('')
 const textSpeaker = ref(store.state.auth?.user?.userId || store.state.familyMeeting.currentUserId)
 const textSource = ref('')     // 'ai' = 来自录音转录
@@ -765,6 +765,14 @@ async function onSegmentCollected(audioBlob) {
     if (result.text && result.text.trim()) {
       const spLabel = speakerName ? ` · 说话人: ${speakerName}` : ''
       ElMessage.success(`第 ${idx} 段转写完成 · ${result.engine}${spLabel}`)
+      // 提示声纹识别状态
+      if (result.diarizationNote) {
+        ElMessage.info(result.diarizationNote)
+      } else if (result.diarizationError) {
+        ElMessage.warning(result.diarizationError)
+      } else if (!speakerName && result.diarization?.segments?.length === 0) {
+        ElMessage.warning('声纹识别未匹配到说话人，请确认成员已录入声纹')
+      }
     } else {
       // 静音片段：直接从列表中移除
       const segIdx = segments.value.findIndex(s => s === seg)

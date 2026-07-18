@@ -51,16 +51,7 @@
                 <span class="mi-role-tag" :class="m.role">
                   {{ m.role === 'admin' ? '管理员' : '成员' }}
                 </span>
-                <span v-if="voiceprintMap[m.id]" class="mi-vp-tag">
-                  🎤 已录
-                  <el-button
-                    v-if="canManageMembers || m.id === authUserId"
-                    link
-                    class="mi-vp-del"
-                    @click.stop="deleteVP(m)"
-                    title="删除声纹"
-                  >×</el-button>
-                </span>
+                <span v-if="voiceprintMap[m.id]" class="mi-vp-tag">声纹已录入</span>
               </div>
             </div>
             <div class="mi-stats">
@@ -203,11 +194,11 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useStore } from 'vuex'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   EditPen, Delete, Calendar, List, ChatLineSquare, Microphone
 } from '@element-plus/icons-vue'
-import { getVoiceprints, enrollVoiceprint, deleteVoiceprint } from '@/api/familyMeeting'
+import { getVoiceprints, enrollVoiceprint } from '@/api/familyMeeting'
 
 const emit = defineEmits(['memberKicked', 'dissolve', 'leave'])
 
@@ -358,7 +349,19 @@ async function fetchVoiceprints() {
   } catch { /* ignore */ }
 }
 
-function openVoiceprint(m) {
+async function openVoiceprint(m) {
+  // 如果已有声纹，弹出确认提示
+  if (voiceprintMap.value[m.id]) {
+    try {
+      await ElMessageBox.confirm('您的声音已录入，确定重新录入吗？', '确认操作', {
+        confirmButtonText: '重新录入',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+    } catch {
+      return // 用户取消
+    }
+  }
   vpMember.value = m
   vpDialogVisible.value = true
   cleanupVP()
@@ -457,22 +460,6 @@ async function saveVoiceprint() {
     ElMessage.error('录入失败: ' + e.message)
   } finally {
     vpSaving.value = false
-  }
-}
-
-async function deleteVP(m) {
-  const fid = store.state.familyMeeting.family?.id
-  if (!fid) return
-  try {
-    const res = await deleteVoiceprint(m.id, fid)
-    if (res.success) {
-      ElMessage.success(`${m.name} 的声纹已删除`)
-      await fetchVoiceprints()
-    } else {
-      ElMessage.error(res.error || '删除失败')
-    }
-  } catch (e) {
-    ElMessage.error('删除失败: ' + e.message)
   }
 }
 
@@ -746,15 +733,6 @@ defineExpose({ openVoiceprint })
   display: inline-flex;
   align-items: center;
   gap: 2px;
-}
-.mi-vp-del {
-  font-size: 14px !important;
-  font-weight: 700;
-  color: #ef4444 !important;
-  padding: 0 !important;
-  min-height: auto !important;
-  height: auto !important;
-  line-height: 1;
 }
 
 // ==================== 声纹录入弹窗 ====================
