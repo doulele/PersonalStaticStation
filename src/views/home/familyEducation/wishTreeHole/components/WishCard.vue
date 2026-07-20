@@ -1,101 +1,78 @@
 <template>
-  <div class="wish-card" :class="statusClass" @click="$emit('click')">
+  <div class="wish-card" :class="[statusClass, { 'just-completed': showCelebrate }]" @click="$emit('click')">
+    <!-- 完成撒花 -->
+    <div v-if="showCelebrate" class="confetti-burst">
+      <span v-for="i in 12" :key="i" class="confetti-piece" :style="{ '--i': i }">{{ ['🎉','✨','🌟','💫','🎊','⭐'][i % 6] }}</span>
+    </div>
+
+    <!-- 左侧进度环 -->
     <div class="wc-left">
-      <!-- 进度环 -->
-      <div class="progress-ring">
+      <div class="progress-ring" :class="{ 'ring-pulse': wish.progress >= 100 }">
         <svg viewBox="0 0 48 48" class="ring-svg">
           <circle cx="24" cy="24" r="20" fill="none" stroke="#e2e8f0" stroke-width="4" />
-          <circle
-            cx="24" cy="24" r="20"
-            fill="none"
-            :stroke="progressColor"
-            stroke-width="4"
-            stroke-linecap="round"
-            :stroke-dasharray="circumference"
-            :stroke-dashoffset="dashOffset"
-            class="ring-progress"
-          />
+          <circle cx="24" cy="24" r="20" fill="none" :stroke="progressColor" stroke-width="4"
+            stroke-linecap="round" :stroke-dasharray="circumference" :stroke-dashoffset="dashOffset" class="ring-progress" />
         </svg>
-        <span class="progress-text">{{ wish.progress }}%</span>
+        <span class="progress-text" :class="{ completed: wish.progress >= 100 }">{{ wish.progress }}%</span>
       </div>
     </div>
 
-    <div class="wc-center">
-      <div class="wc-title">{{ wish.title }}</div>
-      <div class="wc-meta">
-        <el-tag :type="priorityType" size="small">{{ wish.priority }}优先级</el-tag>
-        <el-tag size="small" effect="plain">{{ wish.category }}</el-tag>
-        <span v-if="wish.creatorName && wish.creatorName !== '匿名'" class="wc-author">
-          {{ wish.creatorName }}
+    <!-- 右侧主体内容 -->
+    <div class="wc-body">
+      <!-- 第一行：标题 + 截止标签 -->
+      <div class="wc-title-row">
+        <span class="wc-title">{{ wish.title }}</span>
+        <span class="wc-deadline-tag" :class="{ overdue: daysLeft < 0, 'no-deadline': !wish.targetDate }">
+          {{ wish.targetDate ? (daysLeft < 0 ? '逾期' + Math.abs(daysLeft) + '天' : '剩' + daysLeft + '天') : '无截止' }}
         </span>
       </div>
-      <!-- 天气挂件 -->
-      <div v-if="latestMood" class="wc-mood-weather" :title="latestMood">
-        {{ weatherEmoji }}
-      </div>
-    </div>
 
-    <div class="wc-right">
-      <div class="wc-days" v-if="wish.targetDate">
-        <span class="days-num" :class="{ overdue: daysLeft < 0 }">
-          {{ daysLeft < 0 ? '逾期' + Math.abs(daysLeft) + '天' : '剩' + daysLeft + '天' }}
-        </span>
-        <span class="days-label">{{ formatDate(wish.targetDate) }}</span>
-      </div>
-      <div v-else class="wc-days">
-        <span class="days-num no-deadline">无截止</span>
+      <!-- 描述（有则显示，最多2行） -->
+      <div v-if="wish.description" class="wc-desc">{{ wish.description }}</div>
+
+      <!-- 第二行：标签 + 日期 + 创建者 -->
+      <div class="wc-info-row">
+        <div class="wc-tags">
+          <el-tag :type="priorityType" size="small">{{ wish.priority }}优先级</el-tag>
+          <el-tag size="small" effect="plain">{{ wish.category }}</el-tag>
+        </div>
+        <div class="wc-meta-right">
+          <span class="wc-date" v-if="wish.targetDate">{{ formatDate(wish.targetDate) }}截止</span>
+          <span v-if="wish.creatorName && !isMine" class="wc-author">{{ wish.creatorName }}</span>
+        </div>
       </div>
     </div>
 
     <!-- 操作按钮组 -->
     <div class="wc-actions" @click.stop>
-      <el-tooltip content="打卡进度" placement="top">
-        <el-button circle size="small" :type="wish.status === '已完成' ? 'success' : 'primary'" @click="$emit('checkin')">
-          <el-icon><Check /></el-icon>
-        </el-button>
-      </el-tooltip>
-      <el-tooltip content="延期" placement="top" v-if="wish.status !== '已完成'">
-        <el-button circle size="small" @click="$emit('delay')">
-          <el-icon><Clock /></el-icon>
-        </el-button>
-      </el-tooltip>
-      <el-tooltip content="归档" placement="top" v-if="wish.status === '已完成' && !wish.archivedAt">
-        <el-button circle size="small" type="success" @click="$emit('archive')">
-          <el-icon><FolderChecked /></el-icon>
-        </el-button>
-      </el-tooltip>
-      <el-popconfirm title="确定要删除这个愿望吗？" @confirm="$emit('delete')" confirm-button-text="删除" cancel-button-text="取消">
+      <el-button size="small" text class="btn-pat" v-if="!isMine" @click="$emit('pat')">拍一拍</el-button>
+      <el-button size="small" text class="btn-checkin" :class="{ done: wish.status === '已完成' }" @click="$emit('checkin')">打卡</el-button>
+      <el-button size="small" text class="btn-delay" v-if="wish.status !== '已完成'" @click="$emit('delay')">延期</el-button>
+      <el-button size="small" text class="btn-archive" v-if="wish.status === '已完成' && !wish.archivedAt" @click="$emit('archive')">归档</el-button>
+      <el-popconfirm title="确定删除这个愿望？" @confirm="$emit('delete')" confirm-button-text="删除" cancel-button-text="取消">
         <template #reference>
-          <el-button circle size="small" type="danger" plain>
-            <el-icon><Delete /></el-icon>
-          </el-button>
+          <el-button size="small" text class="btn-delete">删除</el-button>
         </template>
       </el-popconfirm>
-      <el-tooltip content="拍一拍" placement="top">
-        <el-button circle size="small" type="warning" plain @click="$emit('pat')">
-          👋
-        </el-button>
-      </el-tooltip>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { Check, Clock, Delete, FolderChecked } from '@element-plus/icons-vue'
+import { computed, ref, watch } from 'vue'
+import { useStore } from 'vuex'
 
+const store = useStore()
 const props = defineProps({
-  wish: { type: Object, required: true },
-  latestMood: { type: String, default: '' }
+  wish: { type: Object, required: true }
 })
 
 defineEmits(['click', 'checkin', 'delete', 'archive', 'delay', 'pat'])
 
+const isMine = computed(() => store.state.auth?.user?.userId === props.wish.userId)
 const circumference = 2 * Math.PI * 20
 
-const dashOffset = computed(() => {
-  return circumference - (circumference * props.wish.progress) / 100
-})
+const dashOffset = computed(() => circumference - (circumference * props.wish.progress) / 100)
 
 const statusClass = computed(() => {
   if (props.wish.status === '已完成') return 'completed'
@@ -110,26 +87,18 @@ const progressColor = computed(() => {
   return '#3b82f6'
 })
 
+const showCelebrate = ref(false)
+watch(() => props.wish.progress, (val) => {
+  if (val >= 100) { showCelebrate.value = true; setTimeout(() => { showCelebrate.value = false }, 2500) }
+}, { immediate: true })
+
 const daysLeft = computed(() => {
   if (!props.wish.targetDate) return null
   const now = new Date(); now.setHours(0, 0, 0, 0)
-  const target = new Date(props.wish.targetDate)
-  return Math.ceil((target - now) / 86400000)
+  return Math.ceil((new Date(props.wish.targetDate) - now) / 86400000)
 })
 
-const priorityType = computed(() => {
-  const map = { '高': 'danger', '中': 'warning', '低': 'info' }
-  return map[props.wish.priority] || 'info'
-})
-
-const weatherEmoji = computed(() => {
-  const text = props.latestMood || ''
-  if (text.includes('开心') || text.includes('棒') || text.includes('好')) return '☀️'
-  if (text.includes('累') || text.includes('平静') || text.includes('一般')) return '☁️'
-  if (text.includes('难过') || text.includes('哭') || text.includes('烦')) return '🌧️'
-  if (text.includes('焦虑') || text.includes('害怕') || text.includes('担心')) return '⛈️'
-  return ''
-})
+const priorityType = computed(() => ({ '高': 'danger', '中': 'warning', '低': 'info' }[props.wish.priority] || 'info'))
 
 function formatDate(dateStr) {
   if (!dateStr) return ''
@@ -140,43 +109,57 @@ function formatDate(dateStr) {
 
 <style lang="scss" scoped>
 .wish-card {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 20px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    "ring body"
+    ".   actions";
+  column-gap: 14px;
+  row-gap: 12px;
+  padding: 18px;
   background: #fff;
   border-radius: 16px;
   border: 1px solid #e2e8f0;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
 
-  &:hover {
-    border-color: #6366f1;
-    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.1);
-    transform: translateY(-2px);
-
-    .wc-actions { opacity: 1; transform: translateX(0); }
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, #6366f1, #a855f7);
+    opacity: 0;
+    transition: opacity 0.3s ease;
   }
 
-  &.completed { border-left: 4px solid #10b981; }
-  &.overdue { border-left: 4px solid #f59e0b; }
+  &:hover {
+    border-color: #6366f1;
+    box-shadow: 0 8px 30px rgba(99, 102, 241, 0.1);
+    transform: translateY(-2px);
+    &::before { opacity: 1; }
+  }
+
+  &.completed { opacity: 0.85; }
+  &.overdue { border-color: #fecaca; }
 }
 
+// ====== 左侧进度环 ======
 .wc-left {
-  flex-shrink: 0;
+  grid-area: ring;
+  padding-top: 2px;
 }
 
 .progress-ring {
   position: relative;
-  width: 52px;
-  height: 52px;
+  width: 48px;
+  height: 48px;
 }
 
 .ring-svg {
-  width: 100%;
-  height: 100%;
+  width: 100%; height: 100%;
   transform: rotate(-90deg);
 }
 
@@ -185,114 +168,158 @@ function formatDate(dateStr) {
 }
 
 .progress-text {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 700;
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
   color: #0f172a;
+
+  &.completed {
+    color: #10b981; font-size: 13px;
+    &::after { content: ' ✓'; }
+  }
 }
 
-.wc-center {
+// ====== 右侧主体 ======
+.wc-body {
+  grid-area: body;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wc-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wc-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   flex: 1;
   min-width: 0;
 }
 
-.wc-title {
-  font-size: 16px;
+.wc-deadline-tag {
+  flex-shrink: 0;
+  font-size: 11px;
   font-weight: 600;
-  color: #0f172a;
-  margin-bottom: 8px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #eef2ff;
+  color: #6366f1;
   white-space: nowrap;
+
+  &.overdue { background: #fef2f2; color: #ef4444; }
+  &.no-deadline { background: #f1f5f9; color: #94a3b8; }
 }
 
-.wc-meta {
+.wc-desc {
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+.wc-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.wc-tags {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-wrap: wrap;
+}
+
+.wc-meta-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.wc-date {
+  font-size: 12px;
+  color: #94a3b8;
 }
 
 .wc-author {
   font-size: 12px;
   color: #94a3b8;
+  &::before { content: '·'; margin-right: 8px; }
 }
 
-.wc-mood-weather {
-  margin-top: 6px;
-  font-size: 18px;
-}
-
-.wc-right {
-  flex-shrink: 0;
-  text-align: right;
-  min-width: 70px;
-}
-
-.wc-days {
-  .days-num {
-    display: block;
-    font-size: 18px;
-    font-weight: 700;
-    color: #6366f1;
-    &.overdue { color: #ef4444; }
-    &.no-deadline { font-size: 13px; color: #94a3b8; }
-  }
-  .days-label {
-    font-size: 11px;
-    color: #94a3b8;
-  }
-}
-
-// 操作按钮 - 默认隐藏
+// ====== 操作按钮 ======
 .wc-actions {
+  grid-area: actions;
   display: flex;
-  gap: 6px;
-  position: absolute;
-  right: 20px;
-  bottom: 12px;
-  opacity: 0;
-  transform: translateX(10px);
-  transition: all 0.25s ease;
+  justify-content: flex-end;
+  gap: 0;
+  padding-top: 10px;
+  border-top: 1px solid #f1f5f9;
+  flex-wrap: wrap;
+
+  :deep(.el-button) { padding: 3px 8px; margin-left: 0; font-size: 12px; }
+
+  .btn-pat { color: #f59e0b; &:hover { color: #d97706; background: #fffbeb; } }
+  .btn-checkin { color: #6366f1; &:hover { color: #4f46e5; background: #eef2ff; }
+    &.done { color: #10b981; &:hover { color: #059669; background: #ecfdf5; } }
+  }
+  .btn-delay { color: #8b5cf6; &:hover { color: #7c3aed; background: #f5f3ff; } }
+  .btn-archive { color: #10b981; &:hover { color: #059669; background: #ecfdf5; } }
+  .btn-delete { color: #ef4444; &:hover { color: #dc2626; background: #fef2f2; } }
 }
 
+// ====== 撒花 ======
+.confetti-burst { position: absolute; inset: 0; pointer-events: none; z-index: 5; overflow: visible; }
+.confetti-piece {
+  position: absolute; top: 50%; left: 50%; font-size: 20px;
+  animation: confettiPop 2s ease-out forwards;
+  animation-delay: calc(var(--i) * 0.08s);
+}
+@keyframes confettiPop {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+  20% { transform: translate(calc(-50% + (var(--i) - 6) * 18px), calc(-50% - 40px + (var(--i) #{'%'} 3) * 20px)) scale(1.3); opacity: 1; }
+  100% { transform: translate(calc(-50% + (var(--i) - 6) * 50px), calc(-50% - 100px + (var(--i) #{'%'} 3) * 40px)) scale(0.5); opacity: 0; }
+}
+
+// ====== 进度环脉冲 ======
+.ring-pulse { animation: ringPulse 1s ease-in-out infinite; }
+@keyframes ringPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+
+.wish-card.just-completed {
+  border-color: #10b981;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
+}
+
+// ====== 移动端 ======
 @media (max-width: 768px) {
-  .wish-card {
-    padding: 14px;
-    gap: 10px;
-    flex-wrap: wrap;
+  .wish-card { padding: 14px; gap: 12px; }
+  .wc-body { gap: 4px; }
+  .wc-title { font-size: 14px; }
+  .wc-actions { margin-top: 4px; padding-top: 8px; gap: 2px;
+    :deep(.el-button) { font-size: 11px; padding: 2px 6px; }
   }
-  .wc-left { order: 1; }
-  .wc-center { order: 2; flex: 1 1 calc(100% - 80px); }
-  .wc-right { order: 3; min-width: 50px; }
-  .wc-title { font-size: 14px; margin-bottom: 6px; }
-  .wc-actions {
-    order: 4;
-    width: 100%;
-    position: static;
-    opacity: 1;
-    transform: none;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid #f1f5f9;
-    .el-button {
-      min-width: 36px;
-      min-height: 36px;
-    }
-  }
-  .progress-ring { width: 44px; height: 44px; }
-  .wc-days .days-num { font-size: 15px; }
+  .progress-ring { width: 42px; height: 42px; }
 }
 
 @media (max-width: 480px) {
-  .wc-meta { flex-wrap: wrap; }
   .wc-title { font-size: 13px; }
+  .wc-actions :deep(.el-button) { font-size: 10px; padding: 2px 5px; }
 }
 </style>
 
@@ -301,19 +328,16 @@ html.dark-mode {
   .wish-card {
     background: #1e1e2e;
     border-color: #2d2d4a;
-    &:hover { border-color: #a78bfa; box-shadow: 0 4px 20px rgba(167, 139, 250, 0.12); }
+    &:hover { border-color: #a78bfa; background: #252540; box-shadow: 0 8px 30px rgba(167, 139, 250, 0.12); }
+    &.overdue { border-color: #7f1d1d; }
   }
   .wc-title { color: #e2dee9; }
   .wc-author { color: #64748b; }
   .progress-text { color: #e2dee9; }
-  .days-num:not(.overdue):not(.no-deadline) { color: #a78bfa; }
-  .days-label { color: #64748b; }
-  // SVG 进度环背景色
+  .wc-date { color: #64748b; }
+  .wc-deadline-tag.no-deadline { background: #2d2d4a; color: #64748b; }
   .ring-svg circle:first-child { stroke: #2d2d4a; }
+  .wc-actions { border-top-color: #2d2d4a; }
   .wc-meta .el-tag--plain { background: #252540; color: #94a3b8; border-color: #2d2d4a; }
-  // 移动端操作按钮分隔线
-  @media (max-width: 768px) {
-    .wc-actions { border-top-color: #2d2d4a; }
-  }
 }
 </style>

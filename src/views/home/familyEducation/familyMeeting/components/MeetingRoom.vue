@@ -139,7 +139,7 @@
             <p>点击上方按钮开始录音，系统将按间隔自动分段转写<br>转写完成后可切换发言人并修改内容，确认后保存为会议记录</p>
           </div>
 
-          <!-- 分段进度列表 -->
+          <!-- 分段进度列表（支持多人说话识别） -->
           <div v-if="segments.length" class="rec-segments">
             <div
               v-for="(s, i) in segments"
@@ -151,29 +151,61 @@
                 'is-error': s.error
               }"
             >
+              <!-- 分段头部：时间信息 -->
               <div class="seg-item-head">
                 <div class="seg-item-left">
                   <span class="seg-num">{{ s.index }}</span>
-                  <span class="seg-speaker-name" :class="{ 'seg-speaker-unknown': !s.speakerName }">
-                    {{ s.speakerName || '未知' }}
-                  </span>
                   <span class="seg-time-range">{{ s.startTime }} – {{ s.endTime }}</span>
                   <span class="seg-dur">· {{ formatDuration(s.duration) }}</span>
+                  <span v-if="s.turns?.length > 1" class="seg-turn-count">{{ s.turns.length }}人发言</span>
                 </div>
                 <div class="seg-item-status">
                   <el-tag v-if="s.transcribing" size="small" type="warning" effect="dark">
                     <span class="spinner"></span> 转写中…
                   </el-tag>
                   <el-tag v-else-if="s.error" size="small" type="danger" effect="dark">{{ s.error }}</el-tag>
-                  <span v-else-if="!s.text" class="seg-idle-tag">等待转录</span>
+                  <span v-else-if="!s.turns && !s.text" class="seg-idle-tag">等待转录</span>
                 </div>
               </div>
-              <div v-if="!s.transcribing && s.text" class="seg-item-body">
+
+              <!-- 多人说话：按说话人分turn展示 -->
+              <div v-if="!s.transcribing && s.turns?.length" class="seg-turns">
+                <div
+                  v-for="(turn, ti) in s.turns"
+                  :key="ti"
+                  class="turn-item"
+                  :class="{ 'turn-saved': turn.saved }"
+                >
+                  <div class="turn-head">
+                    <span class="turn-speaker" :class="{ 'turn-speaker-unknown': !turn.speakerName }">
+                      🗣 {{ turn.speakerName || '未知说话人' }}
+                    </span>
+                    <span v-if="turn.confidence != null" class="turn-confidence">
+                      置信度 {{ Math.round(turn.confidence * 100) }}%
+                    </span>
+                  </div>
+                  <p class="turn-text">{{ turn.text }}</p>
+                  <div class="turn-actions">
+                    <el-button
+                      link size="small" type="primary"
+                      @click="saveTurn(s, ti)"
+                      :disabled="turn.saved"
+                    >{{ turn.saved ? '已保存' : '保存' }}</el-button>
+                    <el-button link size="small" type="primary" @click="editTurn(s, ti)">编辑</el-button>
+                    <el-popconfirm title="删除此发言？" @confirm="removeTurn(s, ti)">
+                      <template #reference>
+                        <el-button link size="small" type="danger">删除</el-button>
+                      </template>
+                    </el-popconfirm>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 降级：无声纹识别时的纯文本展示 -->
+              <div v-else-if="!s.transcribing && s.text && !s.turns" class="seg-item-body">
                 <p class="seg-text">{{ s.text }}</p>
                 <div class="seg-item-footer">
-                  <span v-if="s.speakerConfidence != null" class="seg-confidence">置信度 {{ Math.round(s.speakerConfidence * 100) }}%</span>
                   <div class="seg-item-actions">
-                    <el-button link size="small" type="primary" @click="saveSegmentDirect(s)">保存</el-button>
                     <el-button link size="small" type="primary" @click="editSegment(s)">编辑</el-button>
                     <el-popconfirm title="删除此分段？" @confirm="removeSegment(i)">
                       <template #reference>
@@ -182,6 +214,15 @@
                     </el-popconfirm>
                   </div>
                 </div>
+              </div>
+
+              <!-- 删除整个分段 -->
+              <div v-if="!s.transcribing && (s.turns?.length || s.text)" class="seg-del-row">
+                <el-popconfirm title="删除整个分段？所有发言人内容将一起删除" @confirm="removeSegment(i)">
+                  <template #reference>
+                    <el-button link size="small" type="danger">删除分段</el-button>
+                  </template>
+                </el-popconfirm>
               </div>
             </div>
           </div>
@@ -367,6 +408,7 @@ const textSpeaker = ref(store.state.auth?.user?.userId || store.state.familyMeet
 const textSource = ref('')     // 'ai' = 来自录音转录
 const textTimestamp = ref('')  // 录音时间段
 const editingSegment = ref(null)  // 当前正在编辑的分段引用
+const editingTurnIdx = ref(-1)    // 当前正在编辑的turn索引，-1表示整段编辑
 
 // 录音相关 - 支持暂停/继续 + 自动分段 + 后端转写
 const isRecording = ref(false)         // 是否正在录音（含暂停状态）
@@ -436,6 +478,7 @@ function switchToText() {
   textSource.value = ''
   textTimestamp.value = ''
   editingSegment.value = null
+  editingTurnIdx.value = -1
 }
 
 function onStart() { store.dispatch('familyMeeting/startMeeting', meetingId.value); ElMessage.success('会议已开始') }
@@ -445,6 +488,29 @@ function onClose() { store.dispatch('familyMeeting/closeMeeting', meetingId.valu
 function onSaveText() {
   const content = textInput.value.trim()
   if (!content) return
+
+  // 如果来自turn编辑：更新对应turn
+  if (editingSegment.value && editingTurnIdx.value >= 0) {
+    const turns = editingSegment.value.turns
+    if (turns && turns[editingTurnIdx.value]) {
+      turns[editingTurnIdx.value].text = content
+      turns[editingTurnIdx.value].speakerId = textSpeaker.value
+      // 同步更新 speakerName
+      if (members.value) {
+        const m = members.value.find(m => m.id === textSpeaker.value)
+        if (m) turns[editingTurnIdx.value].speakerName = m.name
+      }
+      ElMessage.success('发言已更新')
+    }
+    editingSegment.value = null
+    editingTurnIdx.value = -1
+    textInput.value = ''
+    textSource.value = ''
+    textTimestamp.value = ''
+    return
+  }
+
+  // 普通保存（文本记录或整段编辑）
   const payload = {
     meetingId: meetingId.value,
     speakerId: textSpeaker.value,
@@ -463,6 +529,7 @@ function onSaveText() {
     const idx = segments.value.indexOf(editingSegment.value)
     if (idx >= 0) segments.value.splice(idx, 1)
     editingSegment.value = null
+    editingTurnIdx.value = -1
   }
   ElMessage.success('记录已保存')
 }
@@ -747,31 +814,42 @@ async function onSegmentCollected(audioBlob) {
     seg.transcribing = false
     seg.engine = result.engine
 
-    // 🎤 声纹识别结果：取置信度最高的说话人
-    let speakerId = store.state.auth?.user?.userId || store.state.familyMeeting.currentUserId || ''
-    let speakerName = ''
+    // 🎤 声纹识别结果：将Whisper分段按说话人分组为turns
     if (result.diarization?.segments?.length) {
-      const best = result.diarization.segments.reduce((a, b) =>
-        (b.confidence || 0) > (a.confidence || 0) ? b : a
-      )
-      speakerId = best.speakerId || speakerId
-      speakerName = best.speakerName || ''
-      seg.speakerId = speakerId
-      seg.speakerName = speakerName
-      seg.speakerConfidence = best.confidence ?? null
-    }
+      const turns = result.diarization.segments
+        .filter(ds => ds.text && ds.text.trim())
+        .map(ds => ({
+          speakerId: ds.speakerId || null,
+          speakerName: ds.speakerName || '',
+          text: ds.text || '',
+          confidence: ds.confidence ?? null,
+          saved: false
+        }))
+      seg.turns = turns
+      // 确保seg.text也有值用于降级展示
+      seg.text = turns.map(t => t.text).join('\n')
 
-    // 📝 转写完成，保留在分段列表中供用户编辑
-    if (result.text && result.text.trim()) {
-      const spLabel = speakerName ? ` · 说话人: ${speakerName}` : ''
+      const speakerNames = [...new Set(turns.map(t => t.speakerName || '未知'))]
+      const spLabel = speakerNames.length ? ` · 说话人: ${speakerNames.join('、')}` : ''
       ElMessage.success(`第 ${idx} 段转写完成 · ${result.engine}${spLabel}`)
+      if (speakerNames.length > 1) {
+        ElMessage.info(`检测到 ${speakerNames.length} 人发言，请核对并保存`)
+      }
       // 提示声纹识别状态
       if (result.diarizationNote) {
         ElMessage.info(result.diarizationNote)
       } else if (result.diarizationError) {
         ElMessage.warning(result.diarizationError)
-      } else if (!speakerName && result.diarization?.segments?.length === 0) {
-        ElMessage.warning('声纹识别未匹配到说话人，请确认成员已录入声纹')
+      }
+    } else if (result.text && result.text.trim()) {
+      // 无声纹识别 → 降级为纯文本
+      ElMessage.success(`第 ${idx} 段转写完成 · ${result.engine}`)
+      if (result.diarizationNote) {
+        ElMessage.info(result.diarizationNote)
+      } else if (result.diarizationError) {
+        ElMessage.warning(result.diarizationError)
+      } else {
+        ElMessage.warning('无声纹识别结果，请确认成员已录入声纹')
       }
     } else {
       // 静音片段：直接从列表中移除
@@ -789,28 +867,52 @@ async function onSegmentCollected(audioBlob) {
   }
 }
 
-/** 直接保存分段（需有说话人） */
-function saveSegmentDirect(seg) {
-  if (!seg.speakerId) {
-    ElMessage.warning('未识别到说话人，请点击「编辑」到文本记录中选择发言人后再保存')
+/** 保存单个说话人的turn到会议记录 */
+function saveTurn(seg, turnIdx) {
+  const turn = seg.turns?.[turnIdx]
+  if (!turn) return
+  if (!turn.speakerId) {
+    ElMessage.warning('未识别到说话人，请先编辑选择发言人后再保存')
     return
   }
   store.dispatch('familyMeeting/addRecord', {
     meetingId: meetingId.value,
-    speakerId: seg.speakerId,
-    content: seg.text,
-    timestamp: `${seg.startTime} - ${seg.endTime}`,
+    speakerId: turn.speakerId,
+    content: turn.text,
+    timestamp: `${seg.startTime} – ${seg.endTime}`,
     source: 'ai'
   })
-  // 保存后从分段列表移除
-  const idx = segments.value.indexOf(seg)
-  if (idx >= 0) segments.value.splice(idx, 1)
+  turn.saved = true
   ElMessage.success('已保存为会议记录')
 }
 
-/** 编辑分段：跳转到文本模式预填内容 */
+/** 编辑单个turn：跳转到文本模式预填内容 */
+function editTurn(seg, turnIdx) {
+  const turn = seg.turns?.[turnIdx]
+  if (!turn) return
+  editingSegment.value = seg
+  editingTurnIdx.value = turnIdx
+  mode.value = 'text'
+  textSpeaker.value = turn.speakerId || store.state.auth?.user?.userId || store.state.familyMeeting.currentUserId || ''
+  textInput.value = turn.text || ''
+  textSource.value = 'ai'
+  textTimestamp.value = `${seg.startTime} – ${seg.endTime}`
+}
+
+/** 删除单个turn */
+function removeTurn(seg, turnIdx) {
+  seg.turns.splice(turnIdx, 1)
+  if (seg.turns.length === 0) {
+    const segIdx = segments.value.indexOf(seg)
+    if (segIdx >= 0) segments.value.splice(segIdx, 1)
+  }
+  ElMessage.success('发言已删除')
+}
+
+/** 编辑整段（降级：无声纹识别时的纯文本展示用） */
 function editSegment(seg) {
   editingSegment.value = seg
+  editingTurnIdx.value = -1
   mode.value = 'text'
   textSpeaker.value = seg.speakerId || store.state.auth?.user?.userId || store.state.familyMeeting.currentUserId || ''
   textInput.value = seg.text || ''
@@ -1181,6 +1283,44 @@ function onAddTaskFrom(record) {
 .seg-idle-tag {
   font-size: 12px; color: #94a3b8; white-space: nowrap;
 }
+.seg-turn-count {
+  font-size: 11px; color: #8b5cf6; font-weight: 600;
+  background: #ede9fe; padding: 1px 8px; border-radius: 10px;
+}
+.seg-del-row {
+  display: flex; justify-content: flex-end; margin-top: 6px;
+}
+
+// ==================== Turns（多人说话子分段） ====================
+.seg-turns {
+  margin-top: 10px; display: flex; flex-direction: column; gap: 6px;
+}
+.turn-item {
+  padding: 12px 14px; border-radius: 10px;
+  background: #f8fafc; border: 1px solid #e8ecf4;
+  transition: all 0.2s;
+  &.turn-saved { opacity: 0.7; background: #f0fdf4; border-color: #bbf7d0; }
+  &:hover { border-color: #c7d2fe; box-shadow: 0 1px 6px rgba(99,102,241,0.06); }
+}
+.turn-head {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;
+}
+.turn-speaker {
+  font-size: 12px; font-weight: 600; color: #4338ca;
+  &.turn-speaker-unknown { color: #94a3b8; font-weight: 400; }
+}
+.turn-confidence {
+  font-size: 11px; color: #94a3b8;
+}
+.turn-text {
+  font-size: 13px; color: #334155; line-height: 1.6; margin: 0;
+  word-break: break-word; white-space: pre-wrap;
+}
+.turn-actions {
+  display: flex; justify-content: flex-end; gap: 4px; margin-top: 8px; padding-top: 6px;
+  border-top: 1px solid #e8ecf4;
+  :deep(.el-button) { font-size: 12px; min-height: auto; padding: 0 4px; }
+}
 
 // ==================== 结果区域 ====================
 .mr-body { display: grid; grid-template-columns: 1fr 340px; gap: 18px; align-items: start; }
@@ -1484,6 +1624,19 @@ html.dark-mode {
   .seg-speaker-name { color: #a78bfa; &.seg-speaker-unknown { color: #64748b; } }
   .seg-confidence { color: #64748b; }
   .seg-idle-tag { color: #64748b; }
+  .seg-turn-count { color: #a78bfa; background: rgba(167,139,250,0.12); }
+
+  // 暗色：Turns
+  .seg-turns { }
+  .turn-item {
+    background: #1e1e2e; border-color: #2d2d4a;
+    &.turn-saved { background: rgba(16,185,129,0.06); border-color: rgba(16,185,129,0.2); }
+    &:hover { border-color: #4c4c7a; }
+  }
+  .turn-speaker { color: #a78bfa; &.turn-speaker-unknown { color: #64748b; } }
+  .turn-confidence { color: #64748b; }
+  .turn-text { color: #cbd5e1; }
+  .turn-actions { border-top-color: #2d2d4a; }
 
   // 记录列表
   .empty { color: #64748b; }

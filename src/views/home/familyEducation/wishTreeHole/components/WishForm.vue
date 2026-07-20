@@ -6,7 +6,7 @@
     :close-on-click-modal="false"
     destroy-on-close
   >
-    <el-form :model="form" label-position="top" ref="formRef" :rules="rules">
+    <el-form :model="form" label-position="top" ref="formRef" :rules="rules" class="wish-form">
       <el-form-item label="愿望标题" prop="title">
         <el-input v-model="form.title" placeholder="你想实现什么愿望？" maxlength="50" show-word-limit size="large" />
       </el-form-item>
@@ -28,7 +28,7 @@
         </el-col>
         <el-col :span="12">
           <el-form-item label="优先级">
-            <el-radio-group v-model="form.priority">
+            <el-radio-group v-model="form.priority" size="small">
               <el-radio-button value="高">高</el-radio-button>
               <el-radio-button value="中">中</el-radio-button>
               <el-radio-button value="低">低</el-radio-button>
@@ -49,7 +49,7 @@
 
       <el-form-item label="子任务/里程碑">
         <div class="subtask-list" v-if="form.subTasks.length > 0">
-          <div v-for="(task, idx) in form.subTasks" :key="idx" class="subtask-item">
+          <div v-for="(task, idx) in form.subTasks" :key="idx" class="subtask-card">
             <el-checkbox v-model="task.done" />
             <el-input v-model="task.title" placeholder="子任务名称" size="small" @blur="onSubTaskChange" />
             <el-button text type="danger" @click="removeSubTask(idx)">×</el-button>
@@ -60,7 +60,7 @@
     </el-form>
 
     <template #footer>
-      <el-button @click="visible = false">取消</el-button>
+      <el-button @click="emit('update:visible', false)">取消</el-button>
       <el-button type="primary" :loading="saving" @click="handleSubmit">创建愿望</el-button>
     </template>
   </el-dialog>
@@ -150,19 +150,45 @@ watch(() => props.visible, (v) => {
 </script>
 
 <style lang="scss" scoped>
-.subtask-list {
-  width: 100%;
+.wish-form {
+  .el-form-item {
+    margin-bottom: 20px;
+  }
 }
 
-.subtask-item {
+.subtask-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.subtask-card {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  &:hover {
+    border-color: #6366f1;
+    background: #ffffff;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.08);
+    transform: translateY(-2px);
+  }
+  .el-input {
+    flex: 1;
+  }
+  .el-button {
+    font-size: 18px;
+    padding: 0 8px;
+  }
 }
 
 @media (max-width: 768px) {
-  .subtask-item {
+  .subtask-card {
     flex-wrap: wrap;
     .el-button { margin-left: auto; }
   }
@@ -171,8 +197,23 @@ watch(() => props.visible, (v) => {
 
 <style lang="scss">
 html.dark-mode {
-  .subtask-item {
+  .subtask-card {
+    background: #1e1e2e;
+    border-color: #2d2d4a;
+    &:hover {
+      border-color: #a78bfa;
+      background: #252540;
+      box-shadow: 0 4px 16px rgba(167, 139, 250, 0.08);
+    }
     .el-input__wrapper { background: #252540; }
+    .el-checkbox__inner {
+      background: #252540;
+      border-color: #2d2d4a;
+    }
+  }
+  .el-dialog {
+    background: #1e1e2e;
+    border: 1px solid #2d2d4a;
   }
 }
 </style>

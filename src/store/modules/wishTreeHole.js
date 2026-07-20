@@ -26,7 +26,7 @@ export default {
     ranking: null,
 
     // UI状态
-    activeTab: 'wishes',
+    activeTab: 'treehole',
     wishFilter: { status: '', category: 'all' },
     loading: false
   }),
@@ -203,6 +203,13 @@ export default {
       const res = await api.getNotifications()
       if (res.success) commit('SET_NOTIFICATIONS', res.data)
       if (res.unreadCount !== undefined) commit('SET_UNREAD_COUNT', res.unreadCount)
+    },
+
+    async fetchUnreadCount({ commit }) {
+      try {
+        const res = await api.getUnreadCount()
+        if (res.success && res.count !== undefined) commit('SET_UNREAD_COUNT', res.count)
+      } catch { /* 静默失败，不影响用户体验 */ }
     },
 
     async markRead({ commit, dispatch }, id) {

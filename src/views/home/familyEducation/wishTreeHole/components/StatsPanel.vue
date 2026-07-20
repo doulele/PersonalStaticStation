@@ -1,5 +1,5 @@
 <template>
-  <el-drawer :model-value="visible" @update:model-value="(val) => emit('update:visible', val)" title="数据统计" size="400px" direction="rtl" destroy-on-close>
+  <el-drawer :model-value="visible" @update:model-value="(val) => emit('update:visible', val)" title="数据统计" :size="direction === 'btt' ? '70%' : '400px'" :direction="direction" destroy-on-close>
     <div class="stats-panel" v-loading="loading">
       <!-- 个人数据看板 -->
       <div class="stats-section">
@@ -71,7 +71,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useStore } from 'vuex'
 import { getAiBreakthrough } from '@/api/wishTreeHole'
 
-const props = defineProps({ visible: Boolean })
+const props = defineProps({ visible: Boolean, direction: { type: String, default: 'rtl' } })
 const emit = defineEmits(['update:visible'])
 const store = useStore()
 
@@ -99,7 +99,7 @@ watch(() => props.visible, (v) => {
 
 <style lang="scss" scoped>
 .stats-section {
-  margin-bottom: 28px;
+  margin-bottom: 16px;
 }
 
 .stats-section-title {
@@ -112,29 +112,34 @@ watch(() => props.visible, (v) => {
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 16px;
 }
 
 .stat-card {
   text-align: center;
-  padding: 16px 10px;
+  padding: 16px;
   background: #f8fafc;
   border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-  &.blue { background: #eef2ff; }
-  &.green { background: #ecfdf5; }
-  &.orange { background: #fffbeb; }
-  &.purple { background: #f5f3ff; }
+  &:hover {
+    border-color: #6366f1;
+    background: #ffffff;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.08);
+    transform: translateY(-2px);
+  }
+
+  &.blue { .stat-num { color: #3b82f6; } }
+  &.green { .stat-num { color: #10b981; } }
+  &.orange { .stat-num { color: #f59e0b; } }
+  &.purple { .stat-num { color: #8b5cf6; } }
 }
 
 .stat-num {
   font-size: 28px;
   font-weight: 700;
   color: #6366f1;
-  .blue & { color: #3b82f6; }
-  .green & { color: #10b981; }
-  .orange & { color: #f59e0b; }
-  .purple & { color: #8b5cf6; }
 }
 
 .stat-label {
@@ -144,7 +149,7 @@ watch(() => props.visible, (v) => {
 }
 
 .rank-subsection {
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .rank-label {
@@ -157,10 +162,19 @@ watch(() => props.visible, (v) => {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
-  border-radius: 8px;
+  padding: 16px;
+  border-radius: 12px;
   background: #f8fafc;
-  margin-bottom: 6px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    border-color: #6366f1;
+    background: #ffffff;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.08);
+    transform: translateY(-2px);
+  }
 }
 
 .rank-pos { font-size: 18px; }
@@ -168,10 +182,20 @@ watch(() => props.visible, (v) => {
 .rank-count { font-size: 13px; color: #6366f1; font-weight: 600; }
 
 .breakthrough-card {
-  padding: 14px;
-  background: linear-gradient(135deg, #eef2ff, #f5f3ff);
+  padding: 16px;
+  background: #f8fafc;
   border-radius: 12px;
+  border: 1px solid #e2e8f0;
   margin-bottom: 10px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    border-color: #6366f1;
+    background: #ffffff;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.08);
+    transform: translateY(-2px);
+  }
+
   .bt-title {
     font-size: 14px;
     font-weight: 600;
@@ -183,7 +207,7 @@ watch(() => props.visible, (v) => {
     padding-left: 20px;
     li {
       font-size: 13px;
-      color: #475569;
+      color: #64748b;
       line-height: 1.6;
     }
   }
@@ -197,12 +221,13 @@ watch(() => props.visible, (v) => {
 }
 
 @media (max-width: 768px) {
-  .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .stat-card { padding: 12px 8px; }
+  .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .stat-card { padding: 14px; }
   .stat-num { font-size: 22px; }
   .stat-label { font-size: 11px; }
   .stats-section-title { font-size: 15px; }
-  .breakthrough-card { padding: 12px; }
+  .rank-item { padding: 14px; }
+  .breakthrough-card { padding: 14px; }
   .bt-tips li { font-size: 12px; }
 }
 
@@ -214,17 +239,13 @@ watch(() => props.visible, (v) => {
 <style lang="scss">
 html.dark-mode {
   .stats-section-title { color: #e2dee9; }
-  .stat-card { background: #252540; }
-  .stat-card.blue { background: #1e2040; }
-  .stat-card.green { background: #1a2e24; }
-  .stat-card.orange { background: #2e2410; }
-  .stat-card.purple { background: #241e40; }
+  .stat-card { background: #252540; border-color: #2d2d4a; &:hover { border-color: #a78bfa; background: #1e1e2e; box-shadow: 0 4px 16px rgba(167, 139, 250, 0.08); transform: translateY(-2px); } }
   .stat-label { color: #64748b; }
-  .rank-item { background: #252540; }
+  .rank-item { background: #252540; border-color: #2d2d4a; &:hover { border-color: #a78bfa; background: #1e1e2e; box-shadow: 0 4px 16px rgba(167, 139, 250, 0.08); transform: translateY(-2px); } }
   .rank-name { color: #e2dee9; }
   .rank-count { color: #a78bfa; }
   .rank-label { color: #94a3b8; }
-  .breakthrough-card { background: linear-gradient(135deg, #1e2040, #241e40); }
+  .breakthrough-card { background: #252540; border-color: #2d2d4a; &:hover { border-color: #a78bfa; background: #1e1e2e; box-shadow: 0 4px 16px rgba(167, 139, 250, 0.08); transform: translateY(-2px); } }
   .bt-title { color: #e2dee9; }
   .bt-tips li { color: #94a3b8; }
   .empty-hint { color: #64748b; }

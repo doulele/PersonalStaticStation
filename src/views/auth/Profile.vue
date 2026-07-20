@@ -7,6 +7,55 @@
         <p class="page-subtitle">管理您的账户信息和密码</p>
       </div>
 
+      <!-- 头像区域 -->
+      <div class="info-card">
+        <div class="card-title">
+          <el-icon><Camera /></el-icon>
+          <span>个人头像</span>
+        </div>
+        <div class="avatar-section">
+          <div class="avatar-preview" @click="triggerUpload">
+            <img v-if="avatarPreview || currentUser?.avatar" :src="avatarPreview || currentUser?.avatar" alt="头像" class="avatar-img" />
+            <div v-else class="avatar-placeholder">
+              <el-icon :size="48"><UserFilled /></el-icon>
+              <span>点击上传</span>
+            </div>
+            <div class="avatar-overlay">
+              <el-icon><Edit /></el-icon>
+            </div>
+          </div>
+          <div class="avatar-info">
+            <p class="avatar-hint">点击头像更换，支持 JPG/PNG/WebP，不超过 2MB</p>
+            <el-button
+              v-if="avatarPreview"
+              size="small"
+              type="primary"
+              :loading="avatarLoading"
+              @click="uploadAvatar"
+            >{{ avatarLoading ? '上传中...' : '保存头像' }}</el-button>
+            <el-button
+              v-if="avatarPreview"
+              size="small"
+              @click="cancelAvatar"
+            >取消</el-button>
+            <el-button
+              v-if="currentUser?.avatar && !avatarPreview"
+              size="small"
+              type="danger"
+              plain
+              @click="deleteAvatar"
+            >删除头像</el-button>
+          </div>
+          <input
+            ref="avatarInput"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            style="display:none"
+            @change="onAvatarFileChange"
+          />
+        </div>
+      </div>
+
       <!-- 用户信息卡片 -->
       <div class="info-card">
         <div class="card-title">
@@ -145,9 +194,9 @@
 <script setup>
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useStore } from 'vuex'
-import { UserFilled, Edit, Lock, CircleCheckFilled, WarningFilled } from '@element-plus/icons-vue'
+import { UserFilled, Camera, Edit, Lock, CircleCheckFilled, WarningFilled } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { checkNicknameApi } from '@/api/auth'
+import { checkNicknameApi, uploadAvatarApi, deleteAvatarApi } from '@/api/auth'
 
 const store = useStore()
 
@@ -172,20 +221,84 @@ function showError(msg) {
   msgTimer = setTimeout(() => { errorMsg.value = '' }, 6000)
 }
 
+// ==================== 头像 ====================
+const avatarInput = ref(null)
+const avatarPreview = ref('')
+const avatarLoading = ref(false)
+const avatarFile = ref(null)
+
+function triggerUpload() {
+  avatarInput.value?.click()
+}
+
+function onAvatarFileChange(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  const allowed = ['image/jpeg', 'image/png', 'image/webp']
+  if (!allowed.includes(file.type)) {
+    ElMessage.warning('仅支持 JPG、PNG、WebP 格式')
+    return
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    ElMessage.warning('图片大小不能超过 2MB')
+    return
+  }
+  avatarFile.value = file
+  const reader = new FileReader()
+  reader.onload = (ev) => { avatarPreview.value = ev.target.result }
+  reader.readAsDataURL(file)
+}
+
+function cancelAvatar() {
+  avatarPreview.value = ''
+  avatarFile.value = null
+  if (avatarInput.value) avatarInput.value.value = ''
+}
+
+async function uploadAvatar() {
+  if (!avatarFile.value) return
+  avatarLoading.value = true
+  try {
+    const formData = new FormData()
+    formData.append('avatar', avatarFile.value)
+    const res = await uploadAvatarApi(formData)
+    if (res.success) {
+      ElMessage.success('头像更新成功')
+      avatarPreview.value = ''
+      avatarFile.value = null
+      if (avatarInput.value) avatarInput.value.value = ''
+      // 刷新用户信息以获取新头像 URL
+      store.dispatch('auth/fetchProfile')
+    } else {
+      ElMessage.error(res.error || '上传失败')
+    }
+  } catch {
+    ElMessage.error('上传失败，请稍后重试')
+  } finally {
+    avatarLoading.value = false
+  }
+}
+
+async function deleteAvatar() {
+  try {
+    const res = await deleteAvatarApi()
+    if (res.success) {
+      ElMessage.success('头像已删除')
+      store.dispatch('auth/fetchProfile')
+    } else {
+      ElMessage.error(res.error || '删除失败')
+    }
+  } catch {
+    ElMessage.error('删除失败，请稍后重试')
+  }
+}
+
 // ==================== 修改昵称 ====================
 const nicknameFormRef = ref(null)
 const nicknameLoading = ref(false)
 const nicknameForm = reactive({
   nickname: ''
 })
-
-const nicknameRules = {
-  nickname: [
-    { required: true, message: '请输入昵称', trigger: 'blur' },
-    { min: 2, max: 20, message: '昵称长度应为2-20个字符', trigger: 'blur' },
-    { validator: validateNicknameUnique, trigger: 'blur' }
-  ]
-}
 
 const validateNicknameUnique = async (rule, value, callback) => {
   const trimmed = (value || '').trim()
@@ -200,6 +313,14 @@ const validateNicknameUnique = async (rule, value, callback) => {
       callback()
     }
   } catch { callback() }
+}
+
+const nicknameRules = {
+  nickname: [
+    { required: true, message: '请输入昵称', trigger: 'blur' },
+    { min: 2, max: 20, message: '昵称长度应为2-20个字符', trigger: 'blur' },
+    { validator: validateNicknameUnique, trigger: 'blur' }
+  ]
 }
 
 onMounted(() => {
@@ -403,6 +524,77 @@ function formatDate(dateStr) {
   }
 }
 
+// ==================== 头像区域 ====================
+.avatar-section {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.avatar-preview {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+  flex-shrink: 0;
+  border: 3px solid var(--border-color, #e5e7eb);
+  transition: border-color 0.2s;
+
+  &:hover {
+    border-color: var(--color-primary, #409eff);
+    .avatar-overlay { opacity: 1; }
+  }
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: var(--bg-secondary, #f3f4f6);
+  color: var(--text-secondary, #9ca3af);
+  font-size: 12px;
+  
+  .el-icon { color: var(--text-secondary, #9ca3af); }
+}
+
+.avatar-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+  color: #fff;
+  font-size: 24px;
+}
+
+.avatar-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  
+  .avatar-hint {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-secondary, #6b7280);
+  }
+}
+
 // ==================== 表单样式 ====================
 .section-card :deep(.el-form-item) {
   margin-bottom: 18px;
@@ -549,6 +741,11 @@ html.dark-mode .profile-page {
   .section-card {
     background: #1e1e2e;
     border-color: #2d2d4a;
+  }
+
+  .avatar-placeholder {
+    background: #1a1a2e;
+    color: #64748b;
   }
 
   .card-title {

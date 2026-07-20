@@ -1,7 +1,7 @@
 /**
  * 认证相关 API
  */
-import { post, get, put } from './request'
+import { post, get, put, del } from './request'
 
 /**
  * 用户登录（支持邮箱或用户名）
@@ -115,4 +115,24 @@ export function resetPasswordByUsernameApi(username, securityAnswer, newPassword
  */
 export function searchUsersApi(keyword) {
   return get(`/auth/users/search?q=${encodeURIComponent(keyword)}`)
+}
+
+/**
+ * 上传用户头像（FormData - multipart/form-data）
+ * @param {FormData} formData - 包含 avatar 文件
+ */
+export function uploadAvatarApi(formData) {
+  const token = localStorage.getItem('auth_token')
+  return fetch('/staticTool/api/auth/avatar', {
+    method: 'POST',
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+    body: formData
+  }).then(r => r.json())
+}
+
+/**
+ * 删除用户头像
+ */
+export function deleteAvatarApi() {
+  return del('/auth/avatar')
 }

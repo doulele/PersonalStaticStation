@@ -1,5 +1,5 @@
 <template>
-  <el-drawer :model-value="visible" @update:model-value="(val) => emit('update:visible', val)" title="消息中心" size="400px" direction="rtl" destroy-on-close>
+  <el-drawer :model-value="visible" @update:model-value="(val) => emit('update:visible', val)" title="消息中心" :size="direction === 'btt' ? '70%' : '400px'" :direction="direction" destroy-on-close>
     <div class="notification-panel">
       <div class="np-header" v-if="notifications.length > 0">
         <el-button size="small" text @click="handleMarkAll">全部已读</el-button>
@@ -37,7 +37,7 @@
 import { computed } from 'vue'
 import { useStore } from 'vuex'
 
-const props = defineProps({ visible: Boolean })
+const props = defineProps({ visible: Boolean, direction: { type: String, default: 'rtl' } })
 const emit = defineEmits(['update:visible'])
 const store = useStore()
 
@@ -82,26 +82,58 @@ function handleMarkAll() {
 .np-header {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .np-list {
   display: flex;
   flex-direction: column;
+  gap: 16px;
 }
 
 .np-item {
   display: flex;
   gap: 12px;
-  padding: 14px 12px;
+  padding: 16px;
   border-radius: 12px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  overflow: hidden;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
 
-  &:hover { background: #f8fafc; }
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, #6366f1, #a855f7);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
 
-  &.unread { background: #eef2ff; }
+  &:hover {
+    border-color: #6366f1;
+    background: #ffffff;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.08);
+    transform: translateY(-2px);
+
+    &::before {
+      opacity: 1;
+    }
+  }
+
+  &.unread {
+    background: #eef2ff;
+    border-color: #dde4f7;
+
+    &::before {
+      opacity: 1;
+    }
+  }
 }
 
 .np-icon {
@@ -148,12 +180,12 @@ function handleMarkAll() {
 .empty-state {
   text-align: center;
   padding: 80px 20px;
-  color: #94a3b8;
-  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-icon { font-size: 64px; margin-bottom: 16px; }
+  p { font-size: 18px; color: #64748b; margin: 0; }
 }
 
 @media (max-width: 768px) {
-  .np-item { padding: 12px 10px; }
+  .np-item { padding: 14px; }
   .np-icon { font-size: 20px; width: 32px; }
   .np-title { font-size: 13px; }
   .np-desc { font-size: 12px; }
@@ -164,11 +196,17 @@ function handleMarkAll() {
 <style lang="scss">
 html.dark-mode {
   .np-item {
-    &:hover { background: #252540; }
-    &.unread { background: #252050; }
+    background: #252540;
+    border-color: #2d2d4a;
+    &:hover { background: #1e1e2e; border-color: #a78bfa; box-shadow: 0 4px 16px rgba(167, 139, 250, 0.08); transform: translateY(-2px); }
+    &.unread { background: #1e2040; border-color: #2d2d4a; }
   }
   .np-title { color: #e2dee9; }
   .np-desc { color: #94a3b8; }
   .np-time { color: #64748b; }
+  .empty-state {
+    p { color: #94a3b8; }
+    .empty-icon { color: #64748b; }
+  }
 }
 </style>

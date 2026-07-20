@@ -14,11 +14,24 @@
           </div>
           <div class="tool-info">
             <h3 class="tool-name">家庭成员管理</h3>
-            <p class="tool-desc">统一管理中心：创建/加入家庭空间、管理成员信息、邀请码，数据在家庭会议和愿望清单中共享</p>
+            <p class="tool-desc">创建/加入家庭空间、管理成员信息、邀请码，数据在家庭会议和愿望清单中共享</p>
           </div>
           <el-icon class="tool-arrow"><ArrowRight /></el-icon>
         </div>
       </router-link>
+
+      <div class="tool-card" @click="handleWishTreeHoleClick">
+        <div class="tool-card-inner">
+          <div class="tool-icon orange">
+            <el-icon :size="32"><MagicStick /></el-icon>
+          </div>
+          <div class="tool-info">
+            <h3 class="tool-name">家庭树洞 & 愿望清单</h3>
+            <p class="tool-desc">全家一起追逐愿望，匿名分享心情。打卡进度、树洞倾诉、拍一拍鼓励</p>
+          </div>
+          <el-icon class="tool-arrow"><ArrowRight /></el-icon>
+        </div>
+      </div>
 
       <div class="tool-card" @click="handleFamilyMeetingClick">
         <div class="tool-card-inner">
@@ -28,19 +41,6 @@
           <div class="tool-info">
             <h3 class="tool-name">家庭会议</h3>
             <p class="tool-desc">私密安全的家庭会议：议题收集、语音转写、记忆墙与决策追踪</p>
-          </div>
-          <el-icon class="tool-arrow"><ArrowRight /></el-icon>
-        </div>
-      </div>
-
-      <div class="tool-card" @click="handleWishTreeHoleClick">
-        <div class="tool-card-inner">
-          <div class="tool-icon orange">
-            <el-icon :size="32"><MagicStick /></el-icon>
-          </div>
-          <div class="tool-info">
-            <h3 class="tool-name">愿望清单 & 家庭树洞</h3>
-            <p class="tool-desc">全家一起追逐愿望，匿名分享心情。打卡进度、树洞倾诉、拍一拍鼓励</p>
           </div>
           <el-icon class="tool-arrow"><ArrowRight /></el-icon>
         </div>
@@ -159,8 +159,8 @@ async function handleWishTreeHoleClick() {
 }
 
 .tools-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 16px;
 }
 
@@ -270,10 +270,6 @@ async function handleWishTreeHoleClick() {
 
   .page-title {
     font-size: 28px;
-  }
-
-  .tools-grid {
-    grid-template-columns: 1fr;
   }
 
   .tool-card-inner {

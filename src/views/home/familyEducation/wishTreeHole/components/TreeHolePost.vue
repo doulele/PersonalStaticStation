@@ -52,7 +52,7 @@
     </div>
 
     <template #footer>
-      <el-button @click="visible = false">取消</el-button>
+      <el-button @click="emit('update:visible', false)">取消</el-button>
       <el-button type="success" :loading="posting" @click="handlePost" :disabled="!content.trim()">
         发布树洞
       </el-button>
@@ -120,6 +120,28 @@ watch(() => props.visible, (v) => {
   display: flex;
   flex-direction: column;
   gap: 20px;
+
+  :deep(.el-textarea__inner) {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    color: #0f172a;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+      border-color: #6366f1;
+    }
+
+    &:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    &::placeholder {
+      color: #94a3b8;
+    }
+  }
 }
 
 .mood-options {
@@ -148,13 +170,23 @@ watch(() => props.visible, (v) => {
 .weather-item {
   font-size: 24px;
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 8px;
-  transition: all 0.2s;
-  border: 2px solid transparent;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-  &:hover { background: #f1f5f9; }
-  &.active { border-color: #6366f1; background: #eef2ff; }
+  &:hover {
+    border-color: #6366f1;
+    background: #ffffff;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.08);
+    transform: translateY(-2px);
+  }
+
+  &.active {
+    border-color: #6366f1;
+    background: #eef2ff;
+  }
 }
 
 .mask-preview {
@@ -168,15 +200,32 @@ watch(() => props.visible, (v) => {
     gap: 8px;
   }
   .option-label { min-width: auto; font-size: 12px; }
-  .weather-item { font-size: 20px; padding: 2px 6px; }
+  .weather-item { font-size: 20px; padding: 6px 10px; }
 }
 </style>
 
 <style lang="scss">
 html.dark-mode {
+  .mood-post {
+    :deep(.el-textarea__inner) {
+      background: #1e1e2e;
+      border-color: #2d2d4a;
+      color: #e2dee9;
+
+      &:hover, &:focus {
+        border-color: #a78bfa;
+      }
+
+      &::placeholder {
+        color: #64748b;
+      }
+    }
+  }
   .weather-item {
-    &:hover { background: #252540; }
-    &.active { border-color: #a78bfa; background: #1e2040; }
+    background: #1e1e2e;
+    border-color: #2d2d4a;
+    &:hover { border-color: #a78bfa; background: #252540; box-shadow: 0 4px 16px rgba(167, 139, 250, 0.08); transform: translateY(-2px); }
+    &.active { border-color: #a78bfa; background: #252540; }
   }
   .mask-preview { color: #64748b; }
   .el-switch__label { color: #94a3b8; }

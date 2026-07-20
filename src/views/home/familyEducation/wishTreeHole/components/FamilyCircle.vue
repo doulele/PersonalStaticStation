@@ -138,14 +138,40 @@ function copyInvite() {
 .family-circle {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 16px;
 }
 
 .circle-section {
-  background: #fff;
+  background: #f8fafc;
   border-radius: 16px;
-  padding: 20px;
+  padding: 28px;
   border: 1px solid #e2e8f0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, #6366f1, #a855f7);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  &:hover {
+    border-color: #6366f1;
+    background: #ffffff;
+    box-shadow: 0 8px 30px rgba(99, 102, 241, 0.1);
+    transform: translateY(-2px);
+
+    &::before {
+      opacity: 1;
+    }
+  }
 }
 
 .section-title {
@@ -158,13 +184,23 @@ function copyInvite() {
 .shared-wishes {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .shared-wish-card {
-  padding: 14px;
+  padding: 16px;
   background: #f8fafc;
   border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    border-color: #6366f1;
+    background: #ffffff;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.08);
+    transform: translateY(-2px);
+  }
+
   .sw-title {
     font-size: 14px;
     font-weight: 600;
@@ -184,13 +220,25 @@ function copyInvite() {
 .activity-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .activity-item {
   display: flex;
   gap: 12px;
   align-items: flex-start;
+  padding: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    border-color: #6366f1;
+    background: #ffffff;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.08);
+    transform: translateY(-2px);
+  }
 }
 
 .act-avatar {
@@ -211,7 +259,7 @@ function copyInvite() {
 
 .act-text {
   font-size: 14px;
-  color: #334155;
+  color: #64748b;
   line-height: 1.5;
   strong { color: #6366f1; }
 }
@@ -225,16 +273,25 @@ function copyInvite() {
 .member-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
 }
 
 .member-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px;
-  border-radius: 10px;
+  padding: 16px;
+  border-radius: 12px;
   background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    border-color: #6366f1;
+    background: #ffffff;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.08);
+    transform: translateY(-2px);
+  }
 }
 
 .member-avatar {
@@ -266,7 +323,7 @@ function copyInvite() {
 .invite-area {
   margin-top: 16px;
   padding-top: 16px;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid #e2e8f0;
 }
 
 .invite-text {
@@ -289,11 +346,12 @@ function copyInvite() {
 }
 
 @media (max-width: 768px) {
-  .family-circle { gap: 20px; }
-  .circle-section { padding: 14px; border-radius: 14px; }
+  .family-circle { gap: 12px; }
+  .circle-section { padding: 20px; border-radius: 14px; }
   .section-title { font-size: 15px; margin-bottom: 12px; }
-  .shared-wish-card { padding: 12px; }
-  .member-item { padding: 8px; gap: 10px; }
+  .shared-wish-card { padding: 14px; }
+  .activity-item { padding: 14px; }
+  .member-item { padding: 14px; gap: 10px; }
   .invite-text strong { font-size: 16px; letter-spacing: 2px; }
 }
 
@@ -305,10 +363,11 @@ function copyInvite() {
 
 <style lang="scss">
 html.dark-mode {
-  .circle-section { background: #1e1e2e; border-color: #2d2d4a; }
+  .circle-section { background: #1e1e2e; border-color: #2d2d4a; &:hover { border-color: #a78bfa; background: #252540; box-shadow: 0 8px 30px rgba(167, 139, 250, 0.12); } }
   .section-title { color: #e2dee9; }
-  .shared-wish-card { background: #252540; .sw-title { color: #e2dee9; } .sw-footer { color: #64748b; } }
-  .member-item { background: #252540; }
+  .shared-wish-card { background: #252540; border-color: #2d2d4a; &:hover { border-color: #a78bfa; background: #1e1e2e; box-shadow: 0 4px 16px rgba(167, 139, 250, 0.08); transform: translateY(-2px); } .sw-title { color: #e2dee9; } .sw-footer { color: #64748b; } }
+  .activity-item { background: #252540; border-color: #2d2d4a; &:hover { border-color: #a78bfa; background: #1e1e2e; box-shadow: 0 4px 16px rgba(167, 139, 250, 0.08); transform: translateY(-2px); } }
+  .member-item { background: #252540; border-color: #2d2d4a; &:hover { border-color: #a78bfa; background: #1e1e2e; box-shadow: 0 4px 16px rgba(167, 139, 250, 0.08); transform: translateY(-2px); } }
   .member-name { color: #e2dee9; }
   .act-avatar { background: #1e2040; }
   .act-text { color: #94a3b8; strong { color: #a78bfa; } }

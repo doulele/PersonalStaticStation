@@ -37,7 +37,7 @@
         <!-- 已登录：用户下拉菜单 -->
         <el-dropdown v-if="isLoggedIn" trigger="click" popper-class="user-dropdown-popper">
           <div class="user-avatar-area">
-            <el-avatar :size="32" class="user-avatar">
+            <el-avatar :size="32" class="user-avatar" :src="currentUser?.avatar || undefined">
               {{ userInitial }}
             </el-avatar>
             <span class="user-nickname">{{ currentUser?.nickname || '用户' }}</span>
@@ -47,7 +47,7 @@
             <el-dropdown-menu>
               <el-dropdown-item disabled>
                 <div class="dropdown-user-info">
-                  <el-avatar :size="40">{{ userInitial }}</el-avatar>
+                  <el-avatar :size="40" :src="currentUser?.avatar || undefined">{{ userInitial }}</el-avatar>
                   <div class="dropdown-user-info-text">
                     <div class="dropdown-nickname">{{ currentUser?.nickname }}</div>
                     <div class="dropdown-email">{{ currentUser?.email }}</div>

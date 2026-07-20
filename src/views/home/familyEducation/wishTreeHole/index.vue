@@ -5,54 +5,69 @@
 
     <!-- 有家庭：显示主界面 -->
     <template v-else>
+      <!-- 返回按钮 -->
+      <div class="back-bar">
+        <el-button text @click="goBack" class="back-btn">
+          <el-icon><ArrowLeft /></el-icon>
+          <span>返回</span>
+        </el-button>
+      </div>
+
       <!-- 页面头部 -->
-      <div class="wth-header">
-        <div class="wth-header-left">
-          <h1 class="wth-title">🏡 {{ family?.name }}</h1>
-          <p class="wth-subtitle">愿望清单 & 家庭树洞</p>
-        </div>
-        <div class="wth-header-right">
-          <el-badge :value="unreadCount" :hidden="unreadCount === 0" :max="99">
-            <el-button circle :icon="Bell" @click="showNotifications = true" />
-          </el-badge>
-          <el-button circle :icon="DataAnalysis" @click="showStats = true" />
-        </div>
+      <div class="page-header">
+        <h1 class="page-title">{{ family?.name || '愿望清单 & 家庭树洞' }}</h1>
+        <p class="page-desc">全家一起追逐愿望，匿名分享心情</p>
       </div>
 
       <!-- Tab 导航 -->
       <div class="wth-tabs">
-        <div
-          v-for="tab in tabs"
-          :key="tab.key"
-          class="wth-tab"
-          :class="{ active: activeTab === tab.key }"
-          @click="switchTab(tab.key)"
-        >
-          <el-icon><component :is="tab.icon" /></el-icon>
-          <span>{{ tab.label }}</span>
+        <div class="wth-tabs-inner">
+          <div
+            v-for="tab in tabs"
+            :key="tab.key"
+            class="wth-tab"
+            :class="{ active: activeTab === tab.key }"
+            @click="switchTab(tab.key)"
+          >
+            <span>{{ tab.label }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 操作栏 -->
+      <div class="wth-action-bar">
+        <div class="wth-action-left">
+          <el-button v-if="activeTab === 'treehole'" type="primary" text @click="showMoodPost = true">
+            <span>发布树洞</span>
+          </el-button>
+          <el-button v-if="activeTab === 'wishes'" type="primary" text @click="showWishForm = true">
+            <span>新建愿望</span>
+          </el-button>
+        </div>
+        <div class="wth-action-right">
+          <el-badge :value="unreadCount" :hidden="unreadCount === 0" :max="99">
+            <el-button text @click="openNotifications">
+              <span>消息中心</span>
+            </el-button>
+          </el-badge>
+          <el-button text @click="showStats = true">
+            <span>数据统计</span>
+          </el-button>
         </div>
       </div>
 
       <!-- 内容区域 -->
-      <div class="wth-content">
-        <!-- 愿望清单 Tab -->
-        <WishList v-if="activeTab === 'wishes'" @detail="openWishDetail" />
+      <div class="content-card">
+        <div class="wth-content">
+          <!-- 愿望清单 Tab -->
+          <WishList v-if="activeTab === 'wishes'" @detail="openWishDetail" />
 
-        <!-- 树洞 Tab -->
-        <TreeHoleStream v-if="activeTab === 'treehole'" @convert="handleConvertMood" />
+          <!-- 树洞 Tab -->
+          <TreeHoleStream v-if="activeTab === 'treehole'" @convert="handleConvertMood" />
 
-        <!-- 家庭圈 Tab -->
-        <FamilyCircle v-if="activeTab === 'circle'" @pat="handlePat" />
-      </div>
-
-      <!-- 创建愿望 FAB -->
-      <div class="wth-fab" v-if="activeTab === 'wishes'" @click="showWishForm = true">
-        <el-icon :size="24"><Plus /></el-icon>
-      </div>
-
-      <!-- 发布树洞 FAB -->
-      <div class="wth-fab treehole-fab" v-if="activeTab === 'treehole'" @click="showMoodPost = true">
-        <el-icon :size="24"><EditPen /></el-icon>
+          <!-- 家庭圈 Tab -->
+          <FamilyCircle v-if="activeTab === 'circle'" @pat="handlePat" />
+        </div>
       </div>
     </template>
 
@@ -60,15 +75,15 @@
     <WishForm v-model:visible="showWishForm" @saved="onWishSaved" />
     <WishDetail v-model:visible="showWishDetail" :wish-id="detailWishId" @pat="handlePat" />
     <TreeHolePost v-model:visible="showMoodPost" @posted="onMoodPosted" />
-    <NotificationPanel v-model:visible="showNotifications" />
-    <StatsPanel v-model:visible="showStats" />
+    <NotificationPanel v-model:visible="showNotifications" :direction="isMobile ? 'btt' : 'rtl'" />
+    <StatsPanel v-model:visible="showStats" :direction="isMobile ? 'btt' : 'rtl'" />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useStore } from 'vuex'
-import { Bell, DataAnalysis, Plus, EditPen, List, ChatLineRound, Connection } from '@element-plus/icons-vue'
+import { Bell, DataAnalysis, Plus, EditPen, List, ChatLineRound, Connection, ArrowLeft } from '@element-plus/icons-vue'
 import WishList from './components/WishList.vue'
 import WishForm from './components/WishForm.vue'
 import WishDetail from './components/WishDetail.vue'
@@ -79,7 +94,10 @@ import NotificationPanel from './components/NotificationPanel.vue'
 import StatsPanel from './components/StatsPanel.vue'
 import EmptyFamilyState from '../components/EmptyFamilyState.vue'
 
+import { useRouter } from 'vue-router'
+
 const store = useStore()
+const router = useRouter()
 
 // 🏠 家庭空间从共享 familyMeeting store 读取
 const family = computed(() => store.getters['wishTreeHole/family'])
@@ -89,8 +107,8 @@ const activeTab = computed(() => store.state.wishTreeHole.activeTab)
 const unreadCount = computed(() => store.state.wishTreeHole.unreadCount)
 
 const tabs = [
-  { key: 'wishes', label: '愿望清单', icon: List },
   { key: 'treehole', label: '家庭树洞', icon: ChatLineRound },
+  { key: 'wishes', label: '愿望清单', icon: List },
   { key: 'circle', label: '家庭圈', icon: Connection }
 ]
 
@@ -101,12 +119,28 @@ const showMoodPost = ref(false)
 const showNotifications = ref(false)
 const showStats = ref(false)
 const detailWishId = ref(null)
+const isMobile = ref(window.innerWidth < 768)
+
+function onResize() {
+  isMobile.value = window.innerWidth < 768
+}
 
 // 切换Tab
 function switchTab(key) {
   store.commit('wishTreeHole/SET_ACTIVE_TAB', key)
   if (key === 'wishes') store.dispatch('wishTreeHole/loadWishes')
   if (key === 'treehole') store.dispatch('wishTreeHole/loadMoods')
+  store.dispatch('wishTreeHole/fetchUnreadCount')
+}
+
+function openNotifications() {
+  store.dispatch('wishTreeHole/loadNotifications')
+  showNotifications.value = true
+}
+
+// 返回上一页
+function goBack() {
+  router.back()
 }
 
 // 事件处理
@@ -135,6 +169,7 @@ async function handlePat({ userId, targetType, targetId, message }) {
 
 // 初始化 — 先确保共享家庭空间已加载
 onMounted(async () => {
+  window.addEventListener('resize', onResize)
   if (!store.state.familyMeeting._initialized) {
     await store.dispatch('familyMeeting/initFromBackend')
   }
@@ -151,13 +186,19 @@ onMounted(async () => {
     store.dispatch('wishTreeHole/init')
   }
 })
+
+onUnmounted(() => {
+  window.removeEventListener('resize', onResize)
+})
 </script>
 
 <style lang="scss" scoped>
 .wth-page {
-  padding: 24px;
-  max-width: 900px;
+  padding: 40px 32px;
+  max-width: 1200px;
+  width: 80%;
   margin: 0 auto;
+  box-sizing: border-box;
   animation: fadeIn 0.4s ease-out;
   min-height: 100vh;
 }
@@ -167,40 +208,92 @@ onMounted(async () => {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.wth-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 24px;
+// ==================== 返回按钮 ====================
+.back-bar {
+  margin-bottom: 16px;
+}
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 400;
+  color: #64748b;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  &:hover { color: #6366f1; background: #f1f5f9; }
 }
 
-.wth-header-left {
-  .wth-title {
-    font-size: 28px;
-    font-weight: 700;
-    color: #0f172a;
-    margin: 0 0 4px;
-  }
-  .wth-subtitle {
-    font-size: 14px;
-    color: #94a3b8;
-    margin: 0;
-  }
+// Page Header — 居中风格，参考 familyEducation/index.vue
+.page-header {
+  text-align: center;
+  margin-bottom: 48px;
 }
 
-.wth-header-right {
-  display: flex;
-  gap: 8px;
+.page-title {
+  font-size: 36px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 8px;
+  letter-spacing: -0.02em;
+}
+
+.page-desc {
+  font-size: 16px;
+  color: #64748b;
+  margin: 0;
 }
 
 // Tabs
 .wth-tabs {
   display: flex;
-  gap: 4px;
-  background: #f1f5f9;
+  align-items: center;
+  justify-content: space-between;
+  background: #e2e8f0;
   border-radius: 12px;
   padding: 4px;
   margin-bottom: 24px;
+  gap: 8px;
+}
+
+.wth-tabs-inner {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+// ==================== 操作栏 ====================
+.wth-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding: 0 4px;
+}
+
+.wth-action-left,
+.wth-action-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.wth-action-left {
+  :deep(.el-button) {
+    font-size: 14px;
+    color: #6366f1;
+    &:hover { background: #eef2ff; }
+  }
+}
+
+.wth-action-right {
+  :deep(.el-button) {
+    font-size: 13px;
+    color: #64748b;
+    &:hover { color: #6366f1; background: #f1f5f9; }
+  }
 }
 
 .wth-tab {
@@ -231,77 +324,65 @@ onMounted(async () => {
   min-height: 400px;
 }
 
-// FAB
-.wth-fab {
-  position: fixed;
-  bottom: 40px;
-  right: 40px;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
-  transition: all 0.3s ease;
-  z-index: 100;
-  -webkit-tap-highlight-color: transparent;
-
-  &:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 24px rgba(99, 102, 241, 0.5);
-  }
-  &:active {
-    transform: scale(0.95);
-  }
-
-  &.treehole-fab {
-    background: linear-gradient(135deg, #10b981, #059669);
-    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
-    &:hover {
-      box-shadow: 0 6px 24px rgba(16, 185, 129, 0.5);
-    }
-  }
+.content-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 28px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @media (max-width: 768px) {
-  .wth-page { padding: 12px 12px 80px; }
-  .wth-header {
-    flex-direction: column;
-    gap: 12px;
+  .wth-page {
+    padding: 16px 12px 80px;
+    width: 100%;
+    max-width: 100%;
   }
-  .wth-header-left .wth-title { font-size: 22px; }
-  .wth-header-right {
-    align-self: flex-end;
-  }
+  .back-bar { margin-bottom: 8px; }
+  .page-header { margin-bottom: 20px; }
+  .page-title { font-size: 22px; }
+  .page-desc { font-size: 13px; }
   .wth-tabs {
     position: sticky;
     top: 0;
     z-index: 50;
     border-radius: 10px;
-    margin-bottom: 16px;
+    margin-bottom: 10px;
+    padding: 3px;
   }
   .wth-tab {
-    padding: 8px 10px;
+    padding: 9px 8px;
     font-size: 13px;
-    gap: 4px;
+    border-radius: 8px;
   }
-  .wth-fab {
-    bottom: 20px;
-    right: 16px;
-    width: 48px;
-    height: 48px;
+  .wth-action-bar {
+    margin-bottom: 10px;
+    padding: 0;
+  }
+  .wth-action-left :deep(.el-button) {
+    font-size: 13px;
+    padding: 4px 8px;
+  }
+  .wth-action-right :deep(.el-button) {
+    font-size: 13px;
+    padding: 4px 6px;
+  }
+  .content-card {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
   }
 }
 
 @media (max-width: 480px) {
-  .wth-page { padding: 8px 8px 72px; }
-  .wth-tab span {
-    display: none; // 仅显示图标
-  }
+  .wth-page { padding: 12px 10px 72px; }
+  .page-header { margin-bottom: 16px; }
+  .page-title { font-size: 20px; }
+  .page-desc { font-size: 12px; }
+  .wth-tab { font-size: 12px; padding: 8px 4px; }
+  .wth-action-left :deep(.el-button) { font-size: 12px; padding: 4px 6px; }
+  .wth-action-right :deep(.el-button) { font-size: 12px; padding: 4px 4px; }
 }
 </style>
 
@@ -309,12 +390,14 @@ onMounted(async () => {
 html.dark-mode {
   // 页面级别
   .wth-page { background: transparent; }
-  .wth-header-left {
-    .wth-title { color: #e2dee9; }
-    .wth-subtitle { color: #94a3b8; }
+  .back-btn {
+    color: #94a3b8;
+    &:hover { color: #a78bfa; background: #252540; }
   }
+  .page-title { color: #e2dee9; }
+  .page-desc { color: #94a3b8; }
   .wth-tabs {
-    background: #1e1e3a;
+    background: #252540;
   }
   .wth-tab {
     color: #94a3b8;
@@ -323,6 +406,10 @@ html.dark-mode {
       background: #2d2d4a;
       color: #a78bfa;
     }
+  }
+  .content-card {
+    background: #1e1e2e;
+    border-color: #2d2d4a;
   }
 
   // ====== Element Plus 全局覆盖（影响 el-dialog / el-drawer 等弹窗组件） ======
@@ -459,8 +546,7 @@ html.dark-mode {
     .el-dialog__footer { padding: 12px 16px 16px; }
   }
   .el-drawer {
-    width: 92vw !important;
-    border-radius: 16px 0 0 16px;
+    border-radius: 16px 16px 0 0;
   }
   .el-message-box {
     width: 88vw !important;

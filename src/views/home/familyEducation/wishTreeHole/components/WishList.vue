@@ -1,23 +1,25 @@
 <template>
   <div class="wish-list">
     <!-- 分类筛选 -->
-    <div class="filter-bar">
-      <div class="filter-status">
-        <el-radio-group v-model="filterStatus" size="small" @change="onFilterChange">
-          <el-radio-button value="">全部</el-radio-button>
-          <el-radio-button value="进行中">进行中</el-radio-button>
-          <el-radio-button value="已完成">已完成</el-radio-button>
-          <el-radio-button value="逾期">逾期</el-radio-button>
-        </el-radio-group>
-      </div>
-      <div class="filter-category">
-        <el-select v-model="filterCategory" size="small" placeholder="分类" @change="onFilterChange" style="width: 120px;">
-          <el-option label="全部分类" value="all" />
-          <el-option label="生活" value="生活" />
-          <el-option label="学习" value="学习" />
-          <el-option label="旅行" value="旅行" />
-          <el-option label="体验" value="体验" />
-        </el-select>
+    <div class="filter-card">
+      <div class="filter-bar">
+        <div class="filter-status">
+          <el-radio-group v-model="filterStatus" size="" @change="onFilterChange">
+            <el-radio-button value="">全部</el-radio-button>
+            <el-radio-button value="进行中">进行中</el-radio-button>
+            <el-radio-button value="已完成">已完成</el-radio-button>
+            <el-radio-button value="逾期">逾期</el-radio-button>
+          </el-radio-group>
+        </div>
+        <div class="filter-category">
+          <el-select v-model="filterCategory" size="" placeholder="分类" @change="onFilterChange" style="width: 120px;">
+            <el-option label="全部" value="all" />
+            <el-option label="生活" value="生活" />
+            <el-option label="学习" value="学习" />
+            <el-option label="旅行" value="旅行" />
+            <el-option label="体验" value="体验" />
+          </el-select>
+        </div>
       </div>
     </div>
 
@@ -38,8 +40,9 @@
 
     <!-- 空状态 -->
     <div v-else class="empty-state">
-      <div class="empty-icon">📝</div>
-      <p class="empty-text">还没有愿望，点击右下角按钮创建第一个愿望吧！</p>
+      <el-icon class="empty-icon"><Document /></el-icon>
+      <p class="empty-text">还没有愿望</p>
+      <p class="empty-hint">点击右下角按钮创建第一个愿望吧</p>
     </div>
 
     <!-- 延期弹窗 -->
@@ -66,6 +69,7 @@
 import { ref, computed, watch } from 'vue'
 import { useStore } from 'vuex'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { Document } from '@element-plus/icons-vue'
 import WishCard from './WishCard.vue'
 
 const emit = defineEmits(['detail', 'pat'])
@@ -146,46 +150,94 @@ function handlePat(wish) {
 <style lang="scss" scoped>
 .wish-list { }
 
+.filter-card {
+  background: #f8fafc;
+  // border: 1px solid #e2e8f0;
+  // border-radius: 16px;
+  // padding: 16px 28px;
+  margin-bottom: 16px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  &:hover {
+    // border-color: #6366f1;
+    // background: #ffffff;
+    // box-shadow: 0 8px 30px rgba(99, 102, 241, 0.1);
+    // transform: translateY(-2px);
+  }
+}
+
 .filter-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  gap: 8px;
+  gap: 12px;
 }
 
 .wish-cards {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .empty-state {
   text-align: center;
   padding: 80px 20px;
-  .empty-icon { font-size: 48px; margin-bottom: 16px; }
-  .empty-text { font-size: 15px; color: #94a3b8; }
+  .empty-icon {
+    font-size: 64px;
+    color: #cbd5e1;
+    margin-bottom: 16px;
+  }
+  .empty-text {
+    font-size: 18px;
+    color: #64748b;
+    margin: 0 0 8px;
+  }
+  .empty-hint {
+    font-size: 14px;
+    color: #94a3b8;
+    margin: 0;
+  }
 }
 
 @media (max-width: 768px) {
-  .filter-bar {
-    flex-direction: column;
-    align-items: stretch;
+  .filter-card {
+    padding: 12px;
   }
-  .filter-category {
-    display: flex;
-    justify-content: flex-end;
+  .filter-status :deep(.el-radio-button__inner) {
+    padding: 5px 10px;
+    font-size: 13px;
+  }
+  .filter-status :deep(.el-radio-button) {
+    height: 32px;
+  }
+  .filter-status :deep(.el-radio-button__inner) {
+    line-height: 20px;
+  }
+  .filter-category :deep(.el-select) {
+    width: 90px !important;
+  }
+  .filter-category :deep(.el-input__wrapper) {
+    height: 32px;
+  }
+  .filter-category :deep(.el-input__inner) {
+    height: 30px;
   }
 }
 </style>
 
 <style lang="scss">
 html.dark-mode {
-  .empty-text { color: #64748b; }
-  .filter-bar {
-    .el-radio-group { /* covered by global */ }
+  .filter-card {
+    background: #1e1e2e;
+    border-color: #2d2d4a;
+    &:hover {
+      border-color: #a78bfa;
+      background: #252540;
+      box-shadow: 0 8px 30px rgba(167, 139, 250, 0.12);
+    }
   }
+  .empty-icon { color: #475569; }
+  .empty-text { color: #94a3b8; }
+  .empty-hint { color: #64748b; }
   .el-select .el-input__wrapper { background: #252540; }
 }
 </style>
