@@ -79,7 +79,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { ElMessageBox } from 'element-plus'
-import { ArrowRight, ArrowDown, DataLine, Present, Document, Service, Lock, Connection, Timer, Filter, TrendCharts, Headset, Picture, VideoPlay, MapLocation, Coin, Memo, Sunny, VideoCamera, Moon, School } from '@element-plus/icons-vue'
+import { ArrowRight, ArrowDown, DataLine, Present, Document, Service, Lock, Connection, Timer, Filter, TrendCharts, Headset, Picture, VideoPlay, MapLocation, Coin, Memo, Sunny, VideoCamera, Moon, School, MagicStick, FolderOpened, Dish } from '@element-plus/icons-vue'
 import { ALL_TOOLS } from '@/config/toolsRegistry'
 import { fetchToolRanking, recordToolClick } from '@/api/stats'
 
@@ -94,7 +94,7 @@ const loading = ref(true)
 const iconMap = {
   DataLine, Present, Document, Service, Lock, Connection, Timer,
   Filter, TrendCharts, Headset, Picture, VideoPlay, MapLocation,
-  Coin, Memo, Sunny, VideoCamera, Moon, School
+  Coin, Memo, Sunny, VideoCamera, Moon, School, MagicStick, FolderOpened, Dish
 }
 
 function getIcon(name) {

@@ -151,6 +151,37 @@ export const ALL_TOOLS = [
     color: 'orange'
   },
 
+  // ========== 生活服务 - 新增 ==========
+  {
+    id: 'task-alchemist',
+    name: '第二人生·任务炼金术士',
+    desc: '精力标签化任务管理、心流专注、时间税防拖延、AI伙伴陪伴成长',
+    category: 'life',
+    path: '/home/lifeServices/taskAlchemist',
+    icon: 'MagicStick',
+    color: 'yellow'
+  },
+  {
+    id: 'eternal-archive',
+    name: '永恒档案',
+    desc: '个人重要文档保险库，智能分类、版本管理、安全分享、全文检索',
+    category: 'life',
+    path: '/home/lifeServices/eternalArchive',
+    icon: 'FolderOpened',
+    color: 'green'
+  },
+
+  // ========== 家庭/教育 - 新增 ==========
+  {
+    id: 'recipe-lab',
+    name: '食验室 · 灵感灶',
+    desc: '输入食材智能推荐菜谱，命运之勺随机抽选，解决今天吃什么',
+    category: 'family',
+    path: '/home/familyEducation/recipeLab',
+    icon: 'Dish',
+    color: 'orange'
+  },
+
   // ========== 家庭/教育 ==========
   {
     id: 'baby-sleep',

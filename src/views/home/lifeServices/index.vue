@@ -70,12 +70,38 @@
           <el-icon class="tool-arrow"><ArrowRight /></el-icon>
         </div>
       </router-link>
+
+      <router-link to="/home/lifeServices/taskAlchemist" class="tool-card" @click="recordToolClick('/home/lifeServices/taskAlchemist')">
+        <div class="tool-card-inner">
+          <div class="tool-icon gold">
+            <el-icon :size="32"><MagicStick /></el-icon>
+          </div>
+          <div class="tool-info">
+            <h3 class="tool-name">第二人生·任务炼金术士</h3>
+            <p class="tool-desc">精力标签化任务管理、心流专注、时间税防拖延、AI伙伴陪伴成长</p>
+          </div>
+          <el-icon class="tool-arrow"><ArrowRight /></el-icon>
+        </div>
+      </router-link>
+
+      <router-link to="/home/lifeServices/eternalArchive" class="tool-card" @click="recordToolClick('/home/lifeServices/eternalArchive')">
+        <div class="tool-card-inner">
+          <div class="tool-icon teal">
+            <el-icon :size="32"><FolderOpened /></el-icon>
+          </div>
+          <div class="tool-info">
+            <h3 class="tool-name">永恒档案</h3>
+            <p class="tool-desc">个人重要文档保险库，智能分类、版本管理、安全分享、全文检索</p>
+          </div>
+          <el-icon class="tool-arrow"><ArrowRight /></el-icon>
+        </div>
+      </router-link>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ArrowRight, MapLocation, Coin, Memo, Sunny, Present } from '@element-plus/icons-vue'
+import { ArrowRight, MapLocation, Coin, Memo, Sunny, Present, MagicStick, FolderOpened } from '@element-plus/icons-vue'
 import { recordToolClick } from '@/api/stats'
 </script>
 
@@ -193,6 +219,14 @@ import { recordToolClick } from '@/api/stats'
 
   &.yellow {
     background: linear-gradient(135deg, #f59e0b 0%, #eab308 100%);
+  }
+
+  &.gold {
+    background: linear-gradient(135deg, #d4a843 0%, #f0c060 100%);
+  }
+
+  &.teal {
+    background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
   }
 }
 
