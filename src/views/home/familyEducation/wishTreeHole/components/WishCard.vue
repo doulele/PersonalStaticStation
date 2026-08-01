@@ -13,7 +13,7 @@
           <circle cx="24" cy="24" r="20" fill="none" :stroke="progressColor" stroke-width="4"
             stroke-linecap="round" :stroke-dasharray="circumference" :stroke-dashoffset="dashOffset" class="ring-progress" />
         </svg>
-        <span class="progress-text" :class="{ completed: wish.progress >= 100 }">{{ wish.progress }}%</span>
+        <span class="progress-text" :class="{ completed: wish.progress >= 100 }">{{ checkinCount }}/{{ wish.targetCount || 5 }}</span>
       </div>
     </div>
 
@@ -71,6 +71,13 @@ defineEmits(['click', 'checkin', 'delete', 'archive', 'delay', 'pat'])
 
 const isMine = computed(() => store.state.auth?.user?.userId === props.wish.userId)
 const circumference = 2 * Math.PI * 20
+const targetCount = computed(() => props.wish.targetCount || 5)
+const checkinCount = computed(() => {
+  // 基于 progress 和 targetCount 反推打卡次数
+  const tc = targetCount.value
+  if (tc <= 0) return 0
+  return Math.round((props.wish.progress || 0) / 100 * tc)
+})
 
 const dashOffset = computed(() => circumference - (circumference * props.wish.progress) / 100)
 

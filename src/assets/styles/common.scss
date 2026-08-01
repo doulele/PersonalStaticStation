@@ -1070,19 +1070,35 @@ html.dark-mode {
       &:hover { color: #a78bfa !important; }
       &.active { background: #252540 !important; color: #e2dee9 !important; box-shadow: 0 1px 4px rgba(0,0,0,0.2) !important; }
     }
-    // URL输入框
-    .input-box {
-      background: #252540 !important; border-color: #2d2d4a !important; box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
-      &:focus-within { border-color: #7c3aed !important; box-shadow: 0 0 0 3px rgba(124,58,237,0.08) !important; }
+    // URL输入框（融合搜索框）
+    .parse-fused {
+      background: #1a1a2e !important; border-color: #2d2d4a !important;
+      &:focus-within { border-color: #7c3aed !important; box-shadow: 0 0 0 4px rgba(124,58,237,0.12) !important; }
     }
-    // 搜索行
-    .search-row {
-      background: #252540 !important; border-color: #2d2d4a !important; box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
-      &:focus-within { border-color: #7c3aed !important; box-shadow: 0 0 0 3px rgba(124,58,237,0.08) !important; }
-    }
+    .fused-divider { background: #2d2d4a !important; }
     .input-icon { color: #6b7280 !important; }
-    .url-input { color: #e2dee9 !important; &::placeholder { color: #4b5563 !important; } }
+    .url-input { color: #e2dee9 !important; &::placeholder { color: #6b7280 !important; } }
     .clear-icon { color: #6b7280 !important; &:hover { color: #cbd5e1 !important; } }
+    // 搜索视频 - 名称搜索框
+    .search-row {
+      background: #1a1a2e !important; border-color: #2d2d4a !important;
+      &:focus-within { border-color: #7c3aed !important; box-shadow: 0 0 0 4px rgba(124,58,237,0.12) !important; }
+    }
+    .platform-divider { background: #2d2d4a !important; }
+    .platform-select-wrap {
+      background: #252540 !important;
+      &:hover { background: #2d2d50 !important; }
+    }
+    .platform-select-text { color: #e2dee9 !important; }
+    .platform-arrow { color: #94a3b8 !important; }
+    .platform-dropdown {
+      background: #1a1a2e !important; border-color: #2d2d4a !important; box-shadow: 0 8px 30px rgba(0,0,0,0.4) !important;
+    }
+    .platform-dropdown-item {
+      color: #94a3b8 !important;
+      &:hover { background: #2d2d50 !important; color: #a78bfa !important; }
+      &.active { background: #2d2d50 !important; color: #a78bfa !important; }
+    }
     // 平台选择下拉
     .platform-select {
       background: #1a1a2e !important; border-color: #2d2d4a !important; color: #e2dee9 !important;
@@ -1102,18 +1118,19 @@ html.dark-mode {
     }
     // 解析路径选择
     .line-select-label { color: #94a3b8 !important; }
-    .line-select-trigger { background: #252540 !important; border-color: #2d2d4a !important; color: #e2dee9 !important;
-      &:hover, &.open { border-color: #7c3aed !important; background: #2d2d4a !important; }
+    .line-select-trigger {
+      &:hover, &.open { background: #252540 !important; }
+      &:hover .selected-line-name, &.open .selected-line-name { color: #a78bfa !important; }
     }
-    .selected-line-name { color: #e2dee9 !important; }
+    .selected-line-name { color: #94a3b8 !important; }
     .dropdown-arrow { color: #6b7280 !important; }
-    .line-select-options { background: #1a1a2e !important; border-color: #2d2d4a !important; box-shadow: 0 8px 24px rgba(0,0,0,0.4) !important; }
-    .line-option { &:hover { background: #252540 !important; } &.active { background: #252040 !important; .line-option-name { color: #a78bfa !important; } } }
+    .line-select-options { background: #1a1a2e !important; border-color: #2d2d4a !important; box-shadow: 0 8px 30px rgba(0,0,0,0.4) !important; }
+    .line-option { &:hover { background: #2d2d50 !important; } &.active { background: #2d2d50 !important; .line-option-name { color: #a78bfa !important; } } }
     .line-option-name { color: #e2dee9 !important; }
     .line-option-ping, .line-option-api { color: #6b7280 !important; }
     .dropdown-header { color: #6b7280 !important; border-bottom-color: #2d2d4a !important; }
-    .manage-lines-btn { background: #252540 !important; border-color: #2d2d4a !important; color: #94a3b8 !important;
-      &:hover { border-color: #7c3aed !important; color: #a78bfa !important; background: #2d2d4a !important; }
+    .manage-lines-btn { color: #6b7280 !important;
+      &:hover { color: #a78bfa !important; background: #252540 !important; }
     }
     // 搜索加载遮罩
     .search-loading-overlay { background: rgba(0,0,0,0.8) !important; }
@@ -1198,17 +1215,15 @@ html.dark-mode {
     .history-index { background: #2d2d4a !important; color: #94a3b8 !important; }
     .history-title { color: #e2dee9 !important; }
     .history-play { color: #a78bfa !important; }
-    // 使用说明
-    .tips-section {
-      background: linear-gradient(135deg, #1a1a2e, #252040) !important;
-      border-color: #2d2d4a !important;
-      h3 { color: #e2dee9 !important; }
+    // 使用指南
+    .search-guide {
+      background: #1a1a2e !important; border-color: #2d2d4a !important;
     }
-    .tips-list li {
-      color: #94a3b8 !important;
-      strong { color: #e2dee9 !important; }
-      .tip-tag { background: #252040 !important; color: #a78bfa !important; }
-    }
+    .guide-header { color: #e2dee9 !important; }
+    .guide-item { background: transparent !important; }
+    .guide-step { color: #94a3b8 !important; }
+    .guide-title { color: #e2dee9 !important; }
+    .guide-desc { color: #6b7280 !important; }
     // 解析路径管理弹窗
     .line-manage-panel {
       .line-manage-add { background: #252540 !important; border-color: #2d2d4a !important; }

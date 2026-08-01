@@ -98,11 +98,11 @@ function onFilterChange() {
 }
 
 async function handleCheckin(wish) {
-  const newProgress = Math.min(wish.progress + 20, 100)
-  const res = await store.dispatch('wishTreeHole/checkinWish', { id: wish.id, note: '', progress: newProgress })
+  const res = await store.dispatch('wishTreeHole/checkinWish', { id: wish.id, note: '' })
   if (res.success) {
-    ElMessage.success(newProgress >= 100 ? '🎉 愿望达成！' : '打卡成功！当前进度 ' + newProgress + '%')
-    if (newProgress >= 100) {
+    const p = res.data?.progress || 0
+    ElMessage.success(p >= 100 ? '🎉 愿望达成！' : '打卡成功！')
+    if (p >= 100) {
       emit('detail', wish.id)
     }
   }

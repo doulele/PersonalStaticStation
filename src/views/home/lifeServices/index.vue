@@ -96,12 +96,25 @@
           <el-icon class="tool-arrow"><ArrowRight /></el-icon>
         </div>
       </router-link>
+
+      <router-link to="/home/lifeServices/recipeLab" class="tool-card" @click="recordToolClick('/home/lifeServices/recipeLab')">
+        <div class="tool-card-inner">
+          <div class="tool-icon red">
+            <el-icon :size="32"><Dish /></el-icon>
+          </div>
+          <div class="tool-info">
+            <h3 class="tool-name">食验室 · 灵感灶</h3>
+            <p class="tool-desc">输入食材智能推荐菜谱，命运之勺随机抽选，解决今天吃什么</p>
+          </div>
+          <el-icon class="tool-arrow"><ArrowRight /></el-icon>
+        </div>
+      </router-link>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ArrowRight, MapLocation, Coin, Memo, Sunny, Present, MagicStick, FolderOpened } from '@element-plus/icons-vue'
+import { ArrowRight, MapLocation, Coin, Memo, Sunny, Present, MagicStick, FolderOpened, Dish } from '@element-plus/icons-vue'
 import { recordToolClick } from '@/api/stats'
 </script>
 
@@ -227,6 +240,10 @@ import { recordToolClick } from '@/api/stats'
 
   &.teal {
     background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+  }
+
+  &.red {
+    background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
   }
 }
 

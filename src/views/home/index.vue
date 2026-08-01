@@ -437,6 +437,9 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .tool-clicks {
@@ -454,6 +457,11 @@ onMounted(async () => {
   font-size: 13px;
   color: var(--muted-color);
   line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tool-arrow {

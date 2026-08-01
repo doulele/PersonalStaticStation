@@ -60,7 +60,7 @@
       <div class="content-card">
         <div class="wth-content">
           <!-- 愿望清单 Tab -->
-          <WishList v-if="activeTab === 'wishes'" @detail="openWishDetail" />
+          <WishList v-if="activeTab === 'wishes'" @detail="openWishDetail" @pat="handlePat" />
 
           <!-- 树洞 Tab -->
           <TreeHoleStream v-if="activeTab === 'treehole'" @convert="handleConvertMood" />
@@ -83,6 +83,8 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useStore } from 'vuex'
+import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { Bell, DataAnalysis, Plus, EditPen, List, ChatLineRound, Connection, ArrowLeft } from '@element-plus/icons-vue'
 import WishList from './components/WishList.vue'
 import WishForm from './components/WishForm.vue'
@@ -93,8 +95,6 @@ import FamilyCircle from './components/FamilyCircle.vue'
 import NotificationPanel from './components/NotificationPanel.vue'
 import StatsPanel from './components/StatsPanel.vue'
 import EmptyFamilyState from '../components/EmptyFamilyState.vue'
-
-import { useRouter } from 'vue-router'
 
 const store = useStore()
 const router = useRouter()
@@ -164,7 +164,19 @@ async function handleConvertMood(id) {
   }
 }
 async function handlePat({ userId, targetType, targetId, message }) {
-  await store.dispatch('wishTreeHole/patUser', { toUserId: userId, targetType, targetId, message })
+  console.log('[index] handlePat received', { userId, targetType, targetId, message })
+  try {
+    const res = await store.dispatch('wishTreeHole/patUser', { toUserId: userId, targetType, targetId, message })
+    console.log('[index] patUser API response', res)
+    if (res && res.success) {
+      ElMessage.success('👋 ' + (message || '已发送拍一拍'))
+    } else {
+      ElMessage.error(res?.error || '发送失败')
+    }
+  } catch (err) {
+    console.error('[index] patUser error', err)
+    ElMessage.error('网络错误，请重试')
+  }
 }
 
 // 初始化 — 先确保共享家庭空间已加载

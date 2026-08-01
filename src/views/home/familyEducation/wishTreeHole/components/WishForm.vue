@@ -37,15 +37,24 @@
         </el-col>
       </el-row>
 
-      <el-form-item label="目标日期">
-        <el-date-picker
-          v-model="form.targetDate"
-          type="date"
-          placeholder="选择期望完成日期"
-          style="width: 100%"
-          :disabled-date="disabledDate"
-        />
-      </el-form-item>
+      <el-row :gutter="16">
+        <el-col :span="12">
+          <el-form-item label="目标打卡次数">
+            <el-input-number v-model="form.targetCount" :min="1" :max="99" :step="1" style="width: 100%" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="目标日期">
+            <el-date-picker
+              v-model="form.targetDate"
+              type="date"
+              placeholder="选择期望完成日期"
+              style="width: 100%"
+              :disabled-date="disabledDate"
+            />
+          </el-form-item>
+        </el-col>
+      </el-row>
 
       <el-form-item label="子任务/里程碑">
         <div class="subtask-list" v-if="form.subTasks.length > 0">
@@ -87,6 +96,7 @@ const form = reactive({
   description: '',
   category: '生活',
   priority: '中',
+  targetCount: 5,
   targetDate: null,
   subTasks: []
 })
@@ -114,6 +124,7 @@ async function handleSubmit() {
       description: form.description.trim(),
       category: form.category,
       priority: form.priority,
+      targetCount: form.targetCount,
       targetDate: form.targetDate instanceof Date
         ? form.targetDate.toISOString().slice(0, 10)
         : form.targetDate,
@@ -139,6 +150,7 @@ function resetForm() {
   form.description = ''
   form.category = '生活'
   form.priority = '中'
+  form.targetCount = 5
   form.targetDate = null
   form.subTasks = []
 }

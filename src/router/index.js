@@ -157,6 +157,11 @@ const routes = [
         component: () => import('@/views/home/lifeServices/eternalArchive/index.vue'),
         meta: { title: '永恒档案', icon: 'FolderOpened' }
       },
+      {
+        path: 'lifeServices/recipeLab',
+        component: () => import('@/views/home/lifeServices/recipeLab/index.vue'),
+        meta: { title: '食验室 · 灵感灶', icon: 'Dish' }
+      },
       /**生活服务end */
       /**家庭/教育start */
       {
@@ -183,11 +188,6 @@ const routes = [
         path: 'familyEducation/wishTreeHole',
         component: () => import('@/views/home/familyEducation/wishTreeHole/index.vue'),
         meta: { title: '愿望清单 & 家庭树洞', icon: 'MagicStick', requiresAuth: true }
-      },
-      {
-        path: 'familyEducation/recipeLab',
-        component: () => import('@/views/home/familyEducation/recipeLab/index.vue'),
-        meta: { title: '食验室 · 灵感灶', icon: 'Dish' }
       },
       /**家庭/教育end */
     ]

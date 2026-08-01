@@ -16,6 +16,39 @@ export default defineConfig({
     port: 3000,
     open: false,
     proxy: {
+      // VIP视频搜索代理 → 走本地后端（防第三方溯源）
+      '/staticTool/api/video-parse/proxy-search': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/staticTool\/api/, '')
+      },
+      // 线路五 (chen-dong) 播放解析 → 走本地后端
+      '/staticTool/api/video-parse/cd-play': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/staticTool\/api/, '')
+      },
+      // HLS 流代理 → 走本地后端（解决 .ts 分片 SSL/CORS）
+      '/staticTool/api/video-parse/hls-proxy': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/staticTool\/api/, '')
+      },
+      '/staticTool/api/video-parse/hls-segment': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/staticTool\/api/, '')
+      },
+      '/staticTool/api/video-parse/proxy-page': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/staticTool\/api/, '')
+      },
       // 本地调试：video-parse（含 yt-dlp）转发到线上（线上有 yt-dlp）
       '/staticTool/api/video-parse': {
         target: 'https://wellwin.top',

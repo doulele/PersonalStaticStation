@@ -39,7 +39,7 @@
     <div class="circle-section">
       <h3 class="section-title">👨‍👩‍👧‍👦 家庭成员</h3>
       <div class="member-list">
-        <div v-for="m in members" :key="m.userId || m.id" class="member-item">
+        <div v-for="m in members" :key="m.id" class="member-item">
           <div class="member-avatar">
             {{ (m.nickname || m.name || '?')[0] }}
           </div>
@@ -118,12 +118,15 @@ function timeAgo(d) {
 }
 
 function handlePat(member) {
-  emit('pat', {
-    userId: member.userId,
+  console.log('[FamilyCircle] handlePat clicked', member)
+  const payload = {
+    userId: member.id,
     targetType: 'member',
-    targetId: member.userId,
-    message: `拍了拍 ${member.nickname || member.name}`
-  })
+    targetId: member.id,
+    message: `拍了拍 ${member.name || member.id}`
+  }
+  console.log('[FamilyCircle] emitting pat', payload)
+  emit('pat', payload)
 }
 
 function copyInvite() {

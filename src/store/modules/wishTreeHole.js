@@ -195,7 +195,10 @@ export default {
 
     // ==================== 互动 ====================
     async patUser({ commit }, data) {
-      return await api.patUser(data)
+      console.log('[store] patUser action called with', data)
+      const res = await api.patUser(data)
+      console.log('[store] patUser API result', res)
+      return res
     },
 
     // ==================== 通知 ====================

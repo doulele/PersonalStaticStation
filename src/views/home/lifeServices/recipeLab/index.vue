@@ -475,7 +475,7 @@ function addToHistory(recipe) {
   localStorage.setItem('rl_history', JSON.stringify(history.value))
 }
 
-function goBack() { router.push('/home/familyEducation') }
+function goBack() { router.push('/home/lifeServices') }
 </script>
 
 <style lang="scss" scoped>

@@ -171,15 +171,15 @@ export const ALL_TOOLS = [
     color: 'green'
   },
 
-  // ========== 家庭/教育 - 新增 ==========
+  // ========== 生活服务 - 新增 ==========
   {
     id: 'recipe-lab',
     name: '食验室 · 灵感灶',
     desc: '输入食材智能推荐菜谱，命运之勺随机抽选，解决今天吃什么',
-    category: 'family',
-    path: '/home/familyEducation/recipeLab',
+    category: 'life',
+    path: '/home/lifeServices/recipeLab',
     icon: 'Dish',
-    color: 'orange'
+    color: 'red'
   },
 
   // ========== 家庭/教育 ==========

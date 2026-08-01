@@ -59,18 +59,6 @@
         </div>
       </router-link>
 
-      <router-link to="/home/familyEducation/recipeLab" class="tool-card" @click="recordToolClick('/home/familyEducation/recipeLab')">
-        <div class="tool-card-inner">
-          <div class="tool-icon red">
-            <el-icon :size="32"><Dish /></el-icon>
-          </div>
-          <div class="tool-info">
-            <h3 class="tool-name">食验室 · 灵感灶</h3>
-            <p class="tool-desc">输入食材智能推荐菜谱，命运之勺随机抽选，解决今天吃什么</p>
-          </div>
-          <el-icon class="tool-arrow"><ArrowRight /></el-icon>
-        </div>
-      </router-link>
       
     </div>
   </div>
@@ -78,7 +66,7 @@
 
 <script setup>
 import { ElMessageBox } from 'element-plus'
-import { ArrowRight, Moon, ChatDotRound, UserFilled, MagicStick, Dish } from '@element-plus/icons-vue'
+import { ArrowRight, Moon, ChatDotRound, UserFilled, MagicStick } from '@element-plus/icons-vue'
 import { recordToolClick } from '@/api/stats'
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
@@ -249,10 +237,6 @@ async function handleWishTreeHoleClick() {
 
   &.orange {
     background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
-  }
-
-  &.red {
-    background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
   }
 }
 

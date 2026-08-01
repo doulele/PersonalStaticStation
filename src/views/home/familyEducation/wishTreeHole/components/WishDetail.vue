@@ -44,6 +44,10 @@
             <el-date-picker v-model="form.targetDate" type="date" placeholder="选择日期" style="width: 100%" />
           </el-form-item>
 
+          <el-form-item label="目标打卡次数">
+            <el-input-number v-model="form.targetCount" :min="1" :max="99" :step="1" style="width: 100%" />
+          </el-form-item>
+
           <!-- 子任务 -->
           <el-form-item label="子任务">
             <div class="edit-subtasks">
@@ -81,7 +85,7 @@
           <div class="detail-progress">
             <div class="progress-info">
               <span>进度</span>
-              <span>{{ wish.progress }}%</span>
+              <span>{{ checkinCount }}/{{ wish.targetCount || 5 }} 次 ({{ wish.progress }}%)</span>
             </div>
             <el-progress :percentage="wish.progress" :color="progressColor" :stroke-width="12"
               :striped="wish.progress < 100" :striped-flow="wish.progress < 100" />
@@ -128,7 +132,7 @@
         <div class="detail-actions" v-if="wish.status !== '已完成'">
           <el-button type="primary" @click="handleCheckin" :icon="CircleCheck">打卡进度</el-button>
           <el-button @click="handleDelay" :icon="Clock">延期</el-button>
-          <el-button type="warning" plain @click="$emit('pat', { userId: wish.userId, targetType: 'wish', targetId: wish.id, message: `拍了拍「${wish.title}」` })">
+          <el-button type="warning" plain @click="handlePatClick">
             <span class="pat-icon">👋</span> 拍一拍
           </el-button>
         </div>
@@ -156,6 +160,7 @@ const moods = computed(() => wish.value?.moods || [])
 const checkins = computed(() => wish.value?.checkins || [])
 const subTasks = computed(() => wish.value?.subTasks || [])
 const doneCount = computed(() => subTasks.value.filter(t => t.done).length)
+const checkinCount = computed(() => (wish.value?.checkins || []).length)
 
 const daysLeft = computed(() => {
   if (!wish.value?.targetDate) return 0
@@ -180,6 +185,7 @@ const form = reactive({
   description: '',
   category: '生活',
   priority: '中',
+  targetCount: 5,
   targetDate: '',
   subTasks: []
 })
@@ -190,6 +196,7 @@ watch(() => wish.value, (w) => {
     form.description = w.description || ''
     form.category = w.category || '生活'
     form.priority = w.priority || '中'
+    form.targetCount = w.targetCount || 5
     form.targetDate = w.targetDate || ''
     form.subTasks = [...(w.subTasks || [])]
   }
@@ -235,10 +242,10 @@ function timeAgo(d) {
 
 async function handleCheckin() {
   if (!wish.value) return
-  const newProgress = Math.min(wish.value.progress + 20, 100)
-  const res = await store.dispatch('wishTreeHole/checkinWish', { id: wish.value.id, progress: newProgress })
+  const res = await store.dispatch('wishTreeHole/checkinWish', { id: wish.value.id, note: '' })
   if (res.success) {
-    ElMessage.success(newProgress >= 100 ? '🎉 愿望达成！' : '打卡成功！')
+    const p = res.data?.progress || 0
+    ElMessage.success(p >= 100 ? '🎉 愿望达成！' : '打卡成功！')
     if (wish.value.id) store.dispatch('wishTreeHole/loadWishDetail', wish.value.id)
   }
 }
@@ -261,6 +268,12 @@ async function handleDelay() {
 async function saveSubTasks() {
   if (!wish.value) return
   await store.dispatch('wishTreeHole/updateSubTasks', { id: wish.value.id, subTasks: subTasks.value })
+}
+
+function handlePatClick() {
+  if (!wish.value) return
+  console.log('[WishDetail] pat clicked', wish.value)
+  emit('pat', { userId: wish.value.userId, targetType: 'wish', targetId: wish.value.id, message: `拍了拍「${wish.value.title}」` })
 }
 </script>
 
