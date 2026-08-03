@@ -236,6 +236,13 @@
             <span class="guide-desc">点击搜索结果卡片即可直接播放，无需手动输入链接</span>
           </div>
         </div>
+        <div class="guide-item">
+          <span class="guide-step">4、</span>
+          <div class="guide-body">
+            <span class="guide-title">备用方案</span>
+            <span class="guide-desc">如短视频无法播放，可切换至链接解析或VIP视频标签页尝试其他方式观看</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -948,7 +955,7 @@ defineExpose({
 }
 .guide-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 2px;
 }
 .guide-step {

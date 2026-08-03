@@ -96,31 +96,59 @@
       <button class="history-line-clear" @click="clearHistory">清空</button>
     </div>
 
+    <!-- 播放窗口（插槽） -->
+    <slot name="player"></slot>
+
     <!-- 使用指南 -->
-    <div class="search-guide">
+    <div class="search-guide" v-if="!parsing && !showPlayer">
       <div class="guide-header">使用指南</div>
       <div class="guide-list">
         <div class="guide-item">
           <span class="guide-step">1、</span>
           <div class="guide-body">
-            <span class="guide-title">粘贴链接</span>
-            <span class="guide-desc">支持 腾讯视频、爱奇艺、优酷、芒果TV、B站 等主流平台的视频解析</span>
+            <span class="guide-title">复制视频链接</span>
+            <span class="guide-desc">从下方快捷跳转进入目标网站，复制需要解析的视频页面URL</span>
           </div>
         </div>
         <div class="guide-item">
           <span class="guide-step">2、</span>
           <div class="guide-body">
-            <span class="guide-title">选择线路</span>
-            <span class="guide-desc">选择合适的解析路径，点击立即解析即可观看</span>
+            <span class="guide-title">粘贴解析</span>
+            <span class="guide-desc">粘贴链接到输入框，选择解析线路后点击解析，失败将自动切换下一条线路</span>
           </div>
         </div>
         <div class="guide-item">
           <span class="guide-step">3、</span>
           <div class="guide-body">
-            <span class="guide-title">管理接口</span>
-            <span class="guide-desc">可点击设置按钮自行添加、修改或删除解析接口</span>
+            <span class="guide-title">手动兜底</span>
+            <span class="guide-desc">自动尝试全部失败后可手动点击线路按钮切换，仍无法播放请参考备用方案</span>
           </div>
         </div>
+        <div class="guide-item">
+          <span class="guide-step">4、</span>
+          <div class="guide-body">
+            <span class="guide-title">备用方案</span>
+            <span class="guide-desc">如所有线路均无法播放，可点击下方快捷跳转进入目标网站直接观看</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 快捷跳转 -->
+    <div class="quick-jump-section">
+      <div class="quick-jump-header">快捷跳转</div>
+      <div class="quick-jump-grid">
+        <a
+          v-for="site in quickJumpSites"
+          :key="site.name"
+          :href="site.url"
+          target="_blank"
+          rel="noopener"
+          class="quick-jump-card"
+        >
+          <span class="quick-jump-icon">{{ site.icon }}</span>
+          <span class="quick-jump-name">{{ site.name }}</span>
+        </a>
       </div>
     </div>
   </div>
@@ -139,7 +167,8 @@ const props = defineProps({
   useYtDlp: { type: Boolean, default: false },
   parsing: { type: Boolean, default: false },
   ytDlpExtracting: { type: Boolean, default: false },
-  selectedLineIndex: { type: Number, default: 0 }
+  selectedLineIndex: { type: Number, default: 0 },
+  showPlayer: { type: Boolean, default: false }
 })
 
 const emit = defineEmits([
@@ -151,20 +180,21 @@ const emit = defineEmits([
 const videoUrl = ref('')
 const lineDropdownOpen = ref(false)
 
+// 快捷跳转平台
+const quickJumpSites = [
+  { name: '腾讯视频', url: 'https://v.qq.com', icon: '🐧' },
+  { name: '爱奇艺', url: 'https://www.iqiyi.com', icon: '🥝' },
+  { name: '优酷', url: 'https://www.youku.com', icon: '▶' },
+  { name: '芒果TV', url: 'https://www.mgtv.com', icon: '🥭' },
+  { name: '哔哩哔哩', url: 'https://www.bilibili.com', icon: '📺' }
+]
+
 const history = ref(loadHistory())
 
 function loadHistory() {
   try {
     return JSON.parse(localStorage.getItem('vip_video_history') || '[]')
   } catch { return [] }
-}
-
-function saveHistory(item) {
-  const list = [item, ...history.value.filter(h => h.url !== item.url)].slice(0, 20)
-  history.value = list
-  try {
-    localStorage.setItem('vip_video_history', JSON.stringify(list))
-  } catch { /* ignore */ }
 }
 
 function clearHistory() {
@@ -209,12 +239,9 @@ function handleParse() {
     ElMessage.warning('请输入有效的视频链接（以 http:// 或 https:// 开头）')
     return
   }
-  emit('parse', { url, useYtDlp: props.useYtDlp })
-  saveHistory({
-    url,
-    title: '视频',
-    time: new Date().toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-  })
+  // 标题由父组件通过后端/dmku 自动获取
+  emit('parse', { url, useYtDlp: props.useYtDlp, title: '' })
+  // 历史记录由父组件 index.vue 统一管理
 }
 
 function replayFromHistory(item) {
@@ -239,10 +266,17 @@ function handleClickOutside(e) {
 import { onMounted, onBeforeUnmount } from 'vue'
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
+  window.addEventListener('history-updated', reloadHistory)
 })
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside)
+  window.removeEventListener('history-updated', reloadHistory)
 })
+
+// 从 localStorage 重新加载历史（响应 index.vue 的 updateHistoryTitle 调用）
+function reloadHistory() {
+  history.value = loadHistory()
+}
 </script>
 
 <style lang="scss" scoped>
@@ -472,6 +506,55 @@ onBeforeUnmount(() => {
   &:hover { color: #ef4444; }
 }
 
+// 快捷跳转
+.quick-jump-section {
+  margin-top: 12px;
+  padding: 18px 20px;
+  background: #fff;
+  border: 1px solid #e8ecf4;
+  border-radius: 12px;
+}
+.quick-jump-header {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 14px;
+}
+.quick-jump-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+}
+.quick-jump-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  &:nth-child(1) { background: linear-gradient(135deg, #0ea5e9, #06b6d4); }
+  &:nth-child(2) { background: linear-gradient(135deg, #10b981, #34d399); }
+  &:nth-child(3) { background: linear-gradient(135deg, #3b82f6, #6366f1); }
+  &:nth-child(4) { background: linear-gradient(135deg, #f59e0b, #f97316); }
+  &:nth-child(5) { background: linear-gradient(135deg, #ec4899, #f472b6); }
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+.quick-jump-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.quick-jump-name {
+  white-space: nowrap;
+}
+
 // 使用指南（与 VIP 视频保持一致）
 .search-guide {
   margin-top: 20px;
@@ -494,7 +577,7 @@ onBeforeUnmount(() => {
 }
 .guide-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 2px;
 }
 .guide-step {
@@ -565,11 +648,12 @@ onBeforeUnmount(() => {
   .guide-desc { font-size: 11px; }
 }
 
-// 深色模式
-:global(html.dark-mode .url-parse-panel) {
-  .parse-fused {
-    background: #1a1a2e; border-color: #2d2d4a;
-  }
+// 深色模式已迁移至下方独立 <style lang="scss"> 块（不 scoped），与 VideoName.vue 保持一致
+</style>
+
+<style lang="scss">
+html.dark-mode .url-parse-panel {
+  .parse-fused { background: #1a1a2e; border-color: #2d2d4a; }
   .input-icon { color: #6b7280; }
   .url-input { color: #e2dee9; &::placeholder { color: #6b7280; } }
   .clear-icon { color: #6b7280; &:hover { color: #cbd5e1; } }
@@ -600,9 +684,13 @@ onBeforeUnmount(() => {
     color: #64748b;
     &:hover { color: #f87171; }
   }
-  .search-guide {
-    background: #1a1a2e; border-color: #2d2d4a;
+  .quick-jump-section { background: #1a1a2e; border-color: #2d2d4a; }
+  .quick-jump-header { color: #e2dee9; }
+  .quick-jump-card {
+    background: #1e1e32; border-color: #2d2d4a; color: #94a3b8;
+    &:hover { border-color: #7c3aed; color: #a78bfa; background: #2d2d50; }
   }
+  .search-guide { background: #1a1a2e; border-color: #2d2d4a; }
   .guide-header { color: #e2dee9; }
   .guide-item { background: transparent; }
   .guide-step { color: #94a3b8; }

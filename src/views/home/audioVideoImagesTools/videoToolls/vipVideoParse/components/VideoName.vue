@@ -1222,7 +1222,7 @@ onUnmounted(() => {
 }
 .guide-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 2px;
 }
 .guide-step {

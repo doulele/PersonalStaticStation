@@ -43,6 +43,20 @@ export default defineConfig({
         secure: false,
         rewrite: (path) => path.replace(/^\/staticTool\/api/, '')
       },
+      // 页面标题抓取 → 走本地后端（无需线上，降低延迟）
+      '/staticTool/api/video-parse/page-title': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/staticTool\/api/, '')
+      },
+      // 解析线路健康检测 → 走本地后端
+      '/staticTool/api/video-parse/check-apis': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/staticTool\/api/, '')
+      },
       // 本地调试：video-parse（含 yt-dlp）转发到线上（线上有 yt-dlp）
       '/staticTool/api/video-parse': {
         target: 'https://wellwin.top',

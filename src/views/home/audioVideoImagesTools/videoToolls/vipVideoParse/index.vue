@@ -43,12 +43,109 @@
         :parsing="parsing"
         :yt-dlp-extracting="ytDlpExtracting"
         :selected-line-index="selectedLineIndex"
+        :show-player="showPlayer"
         @update:use-yt-dlp="useYtDlp = $event"
         @update:selected-line-index="selectedLineIndex = $event"
         @parse="onUrlParse"
         @check-api-health="checkApiHealth"
         @show-line-manage="showLineManage = true"
-      />
+      >
+        <!-- 视频播放区（slot 插入到 历史 和 快捷跳转 之间） -->
+        <template #player>
+          <div v-if="showPlayer" class="player-section">
+            <div class="player-container">
+              <div class="player-header">
+                <div class="player-header-top">
+                  <div class="player-title-wrap">
+                    <el-icon :size="18"><VideoPlay /></el-icon>
+                    <span class="player-title">{{ parsedTitle || '正在播放' }}</span>
+                  </div>
+                  <button class="player-close" @click="closePlayer" title="关闭播放器">
+                    <el-icon :size="18"><Close /></el-icon>
+                  </button>
+                </div>
+                <div class="player-header-bottom">
+                  <!-- 自动线路尝试状态 -->
+                  <span v-if="parsingStatusText" class="parsing-status" :class="{ 'parsing-error': !parsing && parsingStatusText.includes('无法') }">
+                    <span v-if="parsing" class="parsing-spinner"></span>
+                    {{ parsingStatusText }}
+                    <button v-if="parsing && autoTryingLine >= 0" class="stop-auto-btn" @click="stopAutoTry()">停止</button>
+                  </span>
+                  <!-- yt-dlp 提取信息 -->
+                  <span v-if="ytDlpVideoInfo" class="ytdlp-info">
+                    <span class="ytdlp-badge">yt-dlp</span>
+                    <span v-if="ytDlpVideoInfo.durationString" class="ytdlp-duration">{{ ytDlpVideoInfo.durationString }}</span>
+                  </span>
+                  <!-- 第三方解析线路切换 -->
+                  <div class="line-switcher" v-if="!useYtDlp && userLines.length > 1">
+                    <span class="line-label">播放线路：</span>
+                    <button
+                      v-for="(line, idx) in userLines"
+                      :key="idx"
+                      class="line-btn"
+                      :class="{ active: currentLine === idx }"
+                      @click="currentLine = idx"
+                    >{{ line.name }}</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- yt-dlp 直链播放器 -->
+              <div v-if="useYtDlp && ytDlpStreamUrl" class="video-wrapper">
+                <video
+                  ref="videoPlayer"
+                  class="video-player-native"
+                  controls
+                  playsinline
+                  webkit-playsinline
+                  x5-playsinline
+                  x5-video-player-type="h5"
+                  x5-video-player-fullscreen="false"
+                  preload="auto"
+                ></video>
+              </div>
+
+              <!-- yt-dlp 提取中 -->
+              <div v-else-if="useYtDlp && ytDlpExtracting" class="video-wrapper">
+                <div class="video-placeholder extracting">
+                  <el-icon class="is-loading" :size="48"><Loading /></el-icon>
+                  <p>yt-dlp 正在提取视频流...</p>
+                  <span class="extract-hint">{{ ytDlpExtractHint }}</span>
+                </div>
+              </div>
+
+              <!-- yt-dlp 提取失败 -->
+              <div v-else-if="useYtDlp && ytDlpError" class="video-wrapper">
+                <div class="video-placeholder error">
+                  <el-icon :size="48"><WarningFilled /></el-icon>
+                  <p>提取失败</p>
+                  <span class="error-detail">{{ ytDlpError }}</span>
+                  <button class="fallback-btn" @click="switchToThirdParty">切换到第三方解析</button>
+                </div>
+              </div>
+
+              <!-- 第三方解析 iframe 播放 -->
+              <div v-else-if="!useYtDlp" class="video-wrapper">
+                <iframe
+                  v-if="currentPlayUrl"
+                  :key="parseSessionId"
+                  :src="currentPlayUrl"
+                  class="video-iframe"
+                  frameborder="0"
+                  allowfullscreen
+                  allow="autoplay; encrypted-media"
+                  sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                  @load="onIframeLoad"
+                ></iframe>
+                <div v-else class="video-placeholder">
+                  <el-icon :size="64"><VideoCamera /></el-icon>
+                  <p>输入视频链接开始播放</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+      </UrlParse>
 
       <!-- 短视频搜索 Tab -->
       <SearchVideo
@@ -61,81 +158,6 @@
 
     </div>
 
-    <!-- 视频播放区 -->
-    <div v-if="showPlayer" class="player-section">
-      <div class="player-container">
-        <div class="player-header">
-          <span class="player-title">{{ parsedTitle || '正在播放' }}</span>
-          <!-- yt-dlp 提取信息 -->
-          <span v-if="ytDlpVideoInfo" class="ytdlp-info">
-            <span class="ytdlp-badge">yt-dlp</span>
-            <span v-if="ytDlpVideoInfo.durationString" class="ytdlp-duration">{{ ytDlpVideoInfo.durationString }}</span>
-          </span>
-          <!-- 第三方解析线路切换 -->
-          <div class="line-switcher" v-if="!useYtDlp && userLines.length > 1">
-            <span class="line-label">播放线路：</span>
-            <button
-              v-for="(line, idx) in userLines"
-              :key="idx"
-              class="line-btn"
-              :class="{ active: currentLine === idx }"
-              @click="currentLine = idx"
-            >{{ line.name }}</button>
-          </div>
-        </div>
-
-        <!-- yt-dlp 直链播放器 -->
-        <div v-if="useYtDlp && ytDlpStreamUrl" class="video-wrapper">
-          <video
-            ref="videoPlayer"
-            class="video-player-native"
-            controls
-            playsinline
-            webkit-playsinline
-            x5-playsinline
-            x5-video-player-type="h5"
-            x5-video-player-fullscreen="false"
-            preload="auto"
-          ></video>
-        </div>
-
-        <!-- yt-dlp 提取中 -->
-        <div v-else-if="useYtDlp && ytDlpExtracting" class="video-wrapper">
-          <div class="video-placeholder extracting">
-            <el-icon class="is-loading" :size="48"><Loading /></el-icon>
-            <p>yt-dlp 正在提取视频流...</p>
-            <span class="extract-hint">{{ ytDlpExtractHint }}</span>
-          </div>
-        </div>
-
-        <!-- yt-dlp 提取失败 -->
-        <div v-else-if="useYtDlp && ytDlpError" class="video-wrapper">
-          <div class="video-placeholder error">
-            <el-icon :size="48"><WarningFilled /></el-icon>
-            <p>提取失败</p>
-            <span class="error-detail">{{ ytDlpError }}</span>
-            <button class="fallback-btn" @click="switchToThirdParty">切换到第三方解析</button>
-          </div>
-        </div>
-
-        <!-- 第三方解析 iframe 播放 -->
-        <div v-else-if="!useYtDlp" class="video-wrapper">
-          <iframe
-            v-if="currentPlayUrl"
-            :src="currentPlayUrl"
-            class="video-iframe"
-            frameborder="0"
-            allowfullscreen
-            allow="autoplay; encrypted-media"
-            sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-          ></iframe>
-          <div v-else class="video-placeholder">
-            <el-icon :size="64"><VideoCamera /></el-icon>
-            <p>输入视频链接开始播放</p>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <!-- 解析路径管理弹窗 -->
     <el-dialog
@@ -161,10 +183,7 @@
               @keydown.enter="addNewLine"
             />
           </div>
-          <button class="add-btn" :disabled="!newLineName.trim() || !newLineApi.trim()" @click="addNewLine">
-            <el-icon :size="16"><Plus /></el-icon>
-            <span>添加</span>
-          </button>
+          <button class="add-btn" :disabled="!newLineName.trim() || !newLineApi.trim()" @click="addNewLine">添加</button>
         </div>
         <div class="line-manage-list" v-if="userLines.length > 0">
           <div class="line-manage-header">
@@ -182,14 +201,16 @@
               </div>
             </template>
             <template v-else>
-              <span class="lm-item-name">
-                <span class="status-dot" :class="getLineHealthStatus(line.name)"></span>
-                {{ line.name }}
-              </span>
-              <span class="lm-item-api">{{ line.api }}</span>
-              <div class="lm-item-actions">
-                <el-button text size="small" type="primary" @click="startEditLine(idx)">编辑</el-button>
-                <el-button text size="small" type="danger" @click="deleteLine(idx)" :disabled="userLines.length <= 1">删除</el-button>
+              <div class="lm-item-main">
+                <div class="lm-item-name">
+                  <span class="status-dot" :class="getLineHealthStatus(line.name)"></span>
+                  <span class="lm-item-name-text">{{ line.name }}</span>
+                  <span class="lm-item-api">{{ line.api }}</span>
+                </div>
+                <div class="lm-item-actions">
+                  <el-button text size="small" type="primary" @click="startEditLine(idx)">编辑</el-button>
+                  <el-button text size="small" type="danger" @click="deleteLine(idx)" :disabled="userLines.length <= 1">删除</el-button>
+                </div>
               </div>
             </template>
           </div>
@@ -214,7 +235,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import {
-  ArrowLeft, VideoPlay, Loading, VideoCamera, WarningFilled, Search, Link, Plus, Edit
+  ArrowLeft, VideoPlay, Loading, VideoCamera, WarningFilled, Search, Link, Plus, Edit, Close
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import Hls from 'hls.js'
@@ -245,16 +266,18 @@ const parsedTitle = ref('')
 const currentLine = ref(0)
 const videoUrl = ref('')
 
+// 自动线路尝试
+const autoTryingLine = ref(-1)
+const autoTryTimer = ref(null)
+const parsingStatusText = ref('')
+// 解析会话ID：每次新解析 +1，强制销毁重建 iframe，确保旧视频停止播放
+const parseSessionId = ref(0)
+
 // ==================== 解析路径 ====================
 const defaultLines = [
   { name: '线路一', api: 'https://jx.m3u8.tv/jiexi/?url=' },
-  { name: '线路二', api: 'https://vip.bljiex.com/?v=' },
-  { name: '线路三', api: 'https://jx.618g.com/?url=' },
-  { name: '线路四', api: 'https://z1.m1907.top/?jx=' },
-  { name: '线路五', api: 'https://jx.playerjx.com/?url=' },
-  { name: '线路六', api: 'https://jx.nnxv.cn/tv.php?url=' },
-  { name: '线路七', api: 'https://www.8090g.cn/jiexi/?url=' },
-  { name: '线路八', api: 'https://www.playm3u8.cn/jiexi.php?url=' }
+  { name: '线路二', api: 'https://jx.xmflv.com/?url=' },
+  { name: '线路三', api: 'https://www.8090g.cn/?url=' }
 ]
 
 const userLines = ref(loadUserLines())
@@ -301,6 +324,11 @@ function getLineHealthStatus(lineName) {
   const h = apiHealthMap.value[lineName]
   if (!h || h.online === null) return 'unknown'
   return h.online ? 'online' : 'offline'
+}
+
+function lineHealthText(lineName) {
+  const status = getLineHealthStatus(lineName)
+  return status === 'online' ? '可用' : status === 'offline' ? '不可用' : '待检测'
 }
 
 // ==================== yt-dlp 模式 ====================
@@ -403,17 +431,92 @@ function switchToThirdParty() {
   handleThirdPartyParse(videoUrl.value.trim())
 }
 
-function handleThirdPartyParse(url) {
-  parsing.value = true
-  currentLine.value = selectedLineIndex.value
-  showPlayer.value = true
+// 自动逐线路尝试，单线路超时 6 秒
+const LINE_FALLBACK_TIMEOUT = 15000
 
-  setTimeout(() => {
-    parsedTitle.value = '视频'
+function stopAutoTry() {
+  if (autoTryTimer.value) {
+    clearTimeout(autoTryTimer.value)
+    autoTryTimer.value = null
+  }
+  const wasTrying = autoTryingLine.value >= 0
+  autoTryingLine.value = -1
+  parsingStatusText.value = ''
+  if (wasTrying) {
     parsing.value = false
-    ElMessage.success('解析成功！开始播放')
-  }, 800)
+    ElMessage.success(`已停止自动切换，保持在 ${userLines.value[currentLine.value]?.name || '当前线路'}`)
+  }
 }
+
+// iframe 加载完成，当前线路解析成功，停止自动尝试
+function onIframeLoad() {
+  if (autoTryingLine.value >= 0) {
+    clearTimeout(autoTryTimer.value)
+    autoTryTimer.value = null
+    autoTryingLine.value = -1
+    parsingStatusText.value = ''
+    parsing.value = false
+    ElMessage.success(`解析成功！当前线路：${userLines.value[currentLine.value]?.name || '线路'}`)
+  }
+}
+
+// 关闭播放器
+function closePlayer() {
+  stopAutoTry()
+  showPlayer.value = false
+  parsedTitle.value = ''
+  videoUrl.value = ''
+}
+
+function tryLine(url, index) {
+  const lines = userLines.value
+  if (index >= lines.length) {
+    // 所有线路均失败
+    stopAutoTry()
+    parsing.value = false
+    parsingStatusText.value = '所有线路均无法解析，请尝试切换线路后手动重试，或点击下方友情链接'
+    ElMessage.error('所有线路均无法解析，请尝试切换线路或使用友情链接')
+    return
+  }
+
+  autoTryingLine.value = index
+  currentLine.value = index
+  parsingStatusText.value = `正在尝试 ${lines[index].name}（${index + 1}/${lines.length}）...`
+
+  autoTryTimer.value = setTimeout(() => {
+    // 本线路超时，尝试下一条
+    tryLine(url, index + 1)
+  }, LINE_FALLBACK_TIMEOUT)
+}
+
+function handleThirdPartyParse(url, title) {
+  stopAutoTry()
+  // 递增会话ID，强制 Vue 销毁旧 iframe 并重建，确保旧视频立即停止
+  parseSessionId.value++
+  parsing.value = true
+  showPlayer.value = true
+  parsedTitle.value = title || '视频'
+
+  const lines = userLines.value
+  if (lines.length === 0) {
+    parsing.value = false
+    ElMessage.warning('请先添加解析线路')
+    return
+  }
+
+  // 从用户选中的线路开始尝试
+  tryLine(url, selectedLineIndex.value)
+}
+
+// 用户手动切换线路时停止自动尝试
+watch(currentLine, (newVal) => {
+  if (autoTryingLine.value >= 0 && newVal !== autoTryingLine.value) {
+    // 用户手动切换了线路，停止自动尝试
+    stopAutoTry()
+    parsing.value = false
+    ElMessage.info('已切换到 ' + userLines.value[newVal]?.name)
+  }
+})
 
 // ==================== 搜索视频回调 ====================
 function onSearchPlayEpisode(ep) {
@@ -425,9 +528,10 @@ function onSearchPlayEpisode(ep) {
 }
 
 // ==================== 链接解析回调 ====================
-function onUrlParse({ url, useYtDlp: isYtDlp }) {
+function onUrlParse({ url, useYtDlp: isYtDlp, title }) {
   videoUrl.value = url
   showPlayer.value = true
+  parsedTitle.value = title || '视频'
 
   if (isYtDlp && ytDlpAvailable.value) {
     if (ytDlpExtracting.value) return
@@ -438,7 +542,120 @@ function onUrlParse({ url, useYtDlp: isYtDlp }) {
       return
     }
     useYtDlp.value = false
-    handleThirdPartyParse(url)
+    handleThirdPartyParse(url, title)
+  }
+
+  // 异步从后端获取视频真实标题（当前标题为自动生成时才覆盖）
+  const autoTitle = titleFromUrl(url)
+  if (!title || title === autoTitle) {
+    fetchPageTitle(url, url)
+  }
+
+  // 历史记录由 index.vue 统一管理
+  saveHistory({
+    url,
+    title: '解析中...',
+    time: new Date().toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+  })
+}
+
+// 从完整标题中提取剧名（去掉集数后缀），用于去重
+function extractShowName(title) {
+  if (!title || title === '解析中...') return title
+  // 去掉常见集数模式：第X话/集/回、EP.X、S01E01 等
+  return title.replace(/\s*[（(]?(第\d+[话集回]|EP\.?\s*\d+|S\d{2}\s*E\d+)[）)]?\s*$/i, '').trim() || title
+}
+
+// 按剧名去重：同一个剧只保留最近一次记录
+function dedupHistoryByShow() {
+  try {
+    const history = JSON.parse(localStorage.getItem('vip_video_history') || '[]')
+    const seen = new Set()
+    const result = []
+    for (const item of history) {
+      const key = extractShowName(item.title)
+      // "解析中..." 用 URL 作为去重 key，避免不同剧的"解析中..."被误合并；没有 URL 或 key 无效则保留
+      if (!key || key === '解析中...') {
+        const fallbackKey = item.url || key
+        if (fallbackKey && !seen.has(fallbackKey)) {
+          seen.add(fallbackKey)
+          result.push(item)
+        }
+        continue
+      }
+      if (!seen.has(key)) {
+        seen.add(key)
+        result.push(item)
+      }
+      // else: 同名剧已在前面出现过（更近的），跳过当前这条旧的
+    }
+    localStorage.setItem('vip_video_history', JSON.stringify(result))
+  } catch { /* ignore */ }
+}
+
+// 保存解析历史到 localStorage 并通知 UrlParse 组件刷新
+function saveHistory(item) {
+  try {
+    const history = JSON.parse(localStorage.getItem('vip_video_history') || '[]')
+    // 先去掉同 URL 的旧记录
+    const filtered = history.filter(h => h.url !== item.url)
+    const list = [item, ...filtered].slice(0, 30)
+    localStorage.setItem('vip_video_history', JSON.stringify(list))
+    // 写入后立即去重，清理同名旧记录
+    dedupHistoryByShow()
+    // 通知 UrlParse.vue 刷新历史列表
+    window.dispatchEvent(new Event('history-updated'))
+  } catch { /* ignore */ }
+}
+
+// 更新历史记录中的某条标题
+function updateHistoryTitle(url, newTitle) {
+  try {
+    const history = JSON.parse(localStorage.getItem('vip_video_history') || '[]')
+    const idx = history.findIndex(h => h.url === url)
+    if (idx >= 0) {
+      // 只要找到对应的条目就更新标题（无论之前是什么），然后去重
+      history[idx].title = newTitle
+      localStorage.setItem('vip_video_history', JSON.stringify(history))
+      // 标题更新后按剧名去重，防止同一部剧出现多条
+      dedupHistoryByShow()
+      window.dispatchEvent(new Event('history-updated'))
+    }
+  } catch { /* ignore */ }
+}
+
+// 从后端获取页面真实标题
+async function fetchPageTitle(url, originalUrl) {
+  try {
+    const res = await fetch(`/staticTool/api/video-parse/page-title?url=${encodeURIComponent(url)}`)
+    const json = await res.json()
+    if (json.code === 0 && json.data && json.data.title) {
+      const fetchedTitle = json.data.title
+      const autoTitle = titleFromUrl(originalUrl || url)
+      // 只在当前标题仍是自动生成的情况下覆盖（防止覆盖用户手动输入的名称）
+      if (parsedTitle.value === '视频' || parsedTitle.value === autoTitle || parsedTitle.value === (originalUrl || url).substring(0, 30)) {
+        parsedTitle.value = fetchedTitle
+        updateHistoryTitle(originalUrl || url, fetchedTitle)
+      }
+    }
+  } catch {
+    // 静默失败
+  }
+}
+
+// URL 提取标题的辅助（用于判断是否需要更新历史记录）
+function titleFromUrl(url) {
+  try {
+    const u = new URL(url)
+    const host = u.hostname.replace(/^www\./, '')
+    const parts = u.pathname.split('/').filter(Boolean)
+    if (parts.length > 0) {
+      const last = parts[parts.length - 1].replace(/\.(html?|php|aspx?|jsp)$/, '')
+      return last.length > 2 ? last : host
+    }
+    return host
+  } catch {
+    return url.substring(0, 30)
   }
 }
 
@@ -459,13 +676,17 @@ const editingLineIndex = ref(-1)
 const editLineName = ref('')
 const editLineApi = ref('')
 
+const PARSE_LINES_VERSION = 7 // 升级版本号，旧版默认线路自动替换为新版
+
 function loadUserLines() {
   try {
     const saved = localStorage.getItem('vip_video_parse_lines')
-    if (saved) {
+    const savedVersion = localStorage.getItem('vip_video_parse_lines_version')
+    if (saved && Number(savedVersion) >= PARSE_LINES_VERSION) {
       const parsed = JSON.parse(saved)
       if (Array.isArray(parsed) && parsed.length > 0) return parsed
     }
+    // 版本不匹配或旧版数据，使用新版默认线路
   } catch { /* ignore */ }
   return [...defaultLines]
 }
@@ -473,6 +694,7 @@ function loadUserLines() {
 function saveUserLines() {
   try {
     localStorage.setItem('vip_video_parse_lines', JSON.stringify(userLines.value))
+    localStorage.setItem('vip_video_parse_lines_version', String(PARSE_LINES_VERSION))
   } catch { /* ignore */ }
 }
 
@@ -551,7 +773,7 @@ function resetLines() {
     userLines.value = [...defaultLines]
     selectedLineIndex.value = 0
     currentLine.value = 0
-    localStorage.removeItem('vip_video_parse_lines')
+    saveUserLines()
     ElMessage.success('已恢复默认解析路径')
   }).catch(() => {})
 }
@@ -719,7 +941,7 @@ onBeforeUnmount(() => {
 }
 
 // Player
-.player-section { margin-bottom: 44px; }
+.player-section { margin-top: 12px; margin-bottom: 44px; }
 
 .player-container {
   background: #fff;
@@ -731,15 +953,93 @@ onBeforeUnmount(() => {
 
 .player-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   padding: 14px 20px;
   background: #fafbfc;
   border-bottom: 1px solid #f1f5f9;
-  flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
 }
-.player-title { font-size: 15px; font-weight: 600; color: #0f172a; }
+.player-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+.player-header-bottom {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+.player-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+.player-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: none;
+  color: #94a3b8;
+  cursor: pointer;
+  border-radius: 8px;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  &:hover { background: #fee2e2; color: #ef4444; }
+}
+
+.parsing-status {
+  font-size: 12px;
+  color: #6366f1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  &.parsing-error {
+    color: #ef4444;
+  }
+}
+.parsing-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #e0e0ff;
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+.stop-auto-btn {
+  margin-left: 4px;
+  padding: 2px 10px;
+  font-size: 12px;
+  color: #fff;
+  background: #ef4444;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+  &:hover {
+    background: #dc2626;
+  }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 .ytdlp-info { display: flex; align-items: center; gap: 8px; }
 .ytdlp-badge {
   padding: 2px 10px;
@@ -809,9 +1109,11 @@ onBeforeUnmount(() => {
 
 // 解析路径管理弹窗
 .line-manage-panel {
+  overflow: hidden;
+  min-width: 0;
   .line-manage-add {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 10px;
     margin-bottom: 20px;
     padding: 16px;
@@ -819,8 +1121,10 @@ onBeforeUnmount(() => {
     border: 1px solid #e8ecf1;
     border-radius: 12px;
   }
-  .add-inputs { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .add-inputs { flex: 1; display: flex; flex-direction: row; gap: 8px; }
   .add-input {
+    flex: 0 0 130px;
+    width: 130px;
     padding: 8px 12px;
     border: 1px solid #e8ecf1;
     border-radius: 8px;
@@ -832,12 +1136,12 @@ onBeforeUnmount(() => {
     &:focus { border-color: #6366f1; }
     &::placeholder { color: #94a3b8; font-size: 12px; }
   }
-  .add-input-api { font-size: 12px; }
+  .add-input-api { flex: 1; width: auto; font-size: 12px; }
   .add-btn {
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 9px 18px;
+    justify-content: center;
+    padding: 8px 16px;
     background: linear-gradient(135deg, #6366f1, #8b5cf6);
     color: #fff;
     border: none;
@@ -847,7 +1151,7 @@ onBeforeUnmount(() => {
     cursor: pointer;
     transition: all 0.2s;
     white-space: nowrap;
-    margin-top: 4px;
+    flex-shrink: 0;
     &:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99,102,241,0.3); }
     &:disabled { opacity: 0.5; cursor: not-allowed; }
   }
@@ -874,8 +1178,9 @@ onBeforeUnmount(() => {
     gap: 12px;
     padding: 12px 16px;
     border-bottom: 1px solid #f1f5f9;
+    min-width: 0;
     &:last-child { border-bottom: none; }
-    .lm-item-name { flex: 0 0 120px; font-size: 14px; font-weight: 500; color: #0f172a; display: flex; align-items: center; gap: 6px; }
+    .lm-item-name { font-size: 14px; font-weight: 500; color: #0f172a; display: flex; align-items: center; gap: 6px; }
     .lm-item-api {
       flex: 1;
       font-size: 12px;
@@ -884,7 +1189,7 @@ onBeforeUnmount(() => {
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    .lm-item-actions { flex: 0 0 100px; display: flex; gap: 4px; justify-content: center; }
+    .lm-item-actions { display: flex; gap: 4px; }
     .edit-input {
       padding: 6px 10px;
       border: 1px solid #e8ecf1;
@@ -935,14 +1240,20 @@ onBeforeUnmount(() => {
   .input-mode-btn { padding: 6px 14px; font-size: 12px; }
   .video-wrapper { aspect-ratio: 16 / 9.5; }
   .line-manage-panel {
+    box-sizing: border-box;
+    max-width: 100%;
+    overflow: hidden;
     .line-manage-add { flex-direction: column; padding: 12px; gap: 8px; }
+    .add-inputs { flex-direction: column; width: 100%; }
+    .add-input { flex: 1 1 auto; width: auto; }
+    .add-input-api { flex: 1 1 auto; width: auto; }
     .add-btn { margin-top: 0; align-self: flex-end; }
     .line-manage-header { display: none; }
-    .line-manage-item { flex-wrap: wrap; gap: 6px; padding: 10px 12px; }
-    .lm-item-name, .lm-item-api { flex: 1 1 auto; min-width: 120px; }
-    .lm-item-api { font-size: 11px; }
+    .line-manage-item { flex-wrap: wrap; gap: 6px; padding: 10px 12px; min-width: 0; }
+    .lm-item-name, .lm-item-api { flex: 1 1 auto; min-width: 80px; word-break: break-all; }
+    .lm-item-api { font-size: 11px; white-space: normal; }
     .lm-item-actions { flex: 0 0 auto; }
-    .edit-input { font-size: 12px; padding: 4px 8px; }
+    .edit-input { font-size: 12px; padding: 4px 8px; min-width: 0; }
   }
 }
 
@@ -963,11 +1274,107 @@ onBeforeUnmount(() => {
   .input-mode-btn { padding: 5px 12px; font-size: 11px; border-radius: 6px; }
   .fallback-btn { padding: 8px 16px; font-size: 13px; }
   .line-manage-panel {
-    .add-btn { padding: 8px 14px; font-size: 12px; }
-    .line-manage-item { padding: 8px 10px; }
-    .lm-item-name { font-size: 13px; }
-    .edit-input { font-size: 11px; }
+    overflow: hidden;
+    .line-manage-add { padding: 10px; gap: 6px; }
+    .add-inputs { width: 100%; }
+    .add-input { flex: 1 1 auto !important; width: 100%; font-size: 12px; padding: 8px 10px; box-sizing: border-box; }
+    .add-input-api { flex: 1 1 auto !important; width: 100%; box-sizing: border-box; }
+    .add-btn { width: 100%; justify-content: center; padding: 8px 0; font-size: 12px; }
+    .line-manage-list {
+      border: none;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .line-manage-item {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 12px;
+      background: #fff;
+      border: 1px solid #e8ecf1;
+      border-left: 3px solid #e2e8f0;
+      border-radius: 8px;
+      min-width: 0;
+      &:has(.status-dot.online) {
+        border-left-color: #22c55e;
+        background: #f8fdfb;
+      }
+      &:has(.status-dot.offline) {
+        border-left-color: #ef4444;
+        background: #fffafa;
+      }
+    }
+    .lm-item-main {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .lm-item-name {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      column-gap: 24px;
+      row-gap: 4px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #0f172a;
+      line-height: 1.2;
+    }
+    .lm-item-name-text {
+      white-space: nowrap;
+      min-width: 0;
+      flex-shrink: 0;
+    }
+    .lm-item-api {
+      flex: 1 1 100%;
+      font-size: 11px;
+      font-weight: 400;
+      color: #cbd5e1;
+      line-height: 1.3;
+      word-break: break-all;
+      white-space: normal;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      flex-shrink: 0;
+      align-self: center;
+      &.online {
+        background: #22c55e;
+        box-shadow: 0 0 0 2px rgba(34,197,94,0.2);
+        animation: statusPulse 1.6s ease-in-out infinite;
+      }
+      &.offline { background: #ef4444; box-shadow: 0 0 0 2px rgba(239,68,68,0.15); }
+      &.unknown { background: #94a3b8; }
+    }
+    .lm-item-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0;
+      flex-shrink: 0;
+      .el-button {
+        padding: 2px 8px;
+        height: auto;
+        min-height: auto;
+        font-size: 12px;
+        margin: 0;
+      }
+    }
+    .edit-input { font-size: 11px; max-width: 100%; min-width: 0; box-sizing: border-box; }
   }
+}
+
+@keyframes statusPulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(34,197,94,0.2); }
+  50% { box-shadow: 0 0 0 5px rgba(34,197,94,0); }
 }
 </style>
 
@@ -1031,6 +1438,86 @@ html.dark-mode .vip-video-parse-page {
       }
     }
     .line-manage-empty p { color: #6b7280; }
+  }
+}
+
+// 深色模式 - 移动端卡片适配
+@media (max-width: 480px) {
+  html.dark-mode .vip-video-parse-page .line-manage-panel {
+    .line-manage-list { background: transparent; }
+    .line-manage-item {
+      background: #1a1a2e;
+      border-color: #2d2d4a;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+      &:has(.status-dot.online) {
+        border-left-color: #22c55e;
+        background: rgba(34,197,94,0.06);
+      }
+      &:has(.status-dot.offline) {
+        border-left-color: #ef4444;
+        background: rgba(239,68,68,0.05);
+      }
+    }
+    .lm-item-name { color: #e2dee9; }
+    .lm-item-api { color: #6b7280; }
+  }
+}
+
+// 深色模式 - 移动端卡片地址颜色更浅
+@media (max-width: 480px) {
+  html.dark-mode .vip-video-parse-page .line-manage-panel {
+    .lm-item-api { color: #4b5260; }
+  }
+}
+
+// 管理解析路径弹窗 - 响应式宽度（el-dialog 被 teleport 到 body，必须用全局样式）
+@media (max-width: 768px) {
+  .el-overlay-dialog .el-dialog {
+    width: calc(100vw - 32px) !important;
+    max-width: 580px;
+    min-width: 0 !important;
+    box-sizing: border-box;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+  .el-overlay-dialog .el-dialog__body {
+    padding: 16px;
+    overflow: hidden;
+    box-sizing: border-box;
+    word-break: break-all;
+  }
+  .el-overlay-dialog .el-dialog__header {
+    padding: 16px 16px 0;
+    box-sizing: border-box;
+  }
+  .el-overlay-dialog .el-dialog__footer {
+    padding: 0 16px 16px;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 480px) {
+  .el-overlay-dialog .el-dialog {
+    width: calc(100vw - 16px) !important;
+    max-width: 100vw;
+    min-width: 0 !important;
+    box-sizing: border-box;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+  .el-overlay-dialog .el-dialog__body {
+    padding: 12px;
+    overflow: hidden;
+    box-sizing: border-box;
+    word-break: break-all;
+  }
+  .el-overlay-dialog .el-dialog__header {
+    padding: 12px 12px 0;
+    box-sizing: border-box;
+  }
+  .el-overlay-dialog .el-dialog__footer {
+    padding: 0 12px 12px;
+    box-sizing: border-box;
   }
 }
 </style>
