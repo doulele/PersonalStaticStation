@@ -486,10 +486,6 @@ defineExpose({
   border: 2px solid #e2e8f0;
   border-radius: 14px;
   transition: all 0.25s ease;
-  &:focus-within {
-    border-color: #6366f1;
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.08);
-  }
 }
 .input-icon { color: #94a3b8; margin: 0 12px 0 16px; flex-shrink: 0; align-self: center; }
 .url-input {
@@ -1047,7 +1043,6 @@ defineExpose({
   .search-row {
     background: #1a1a2e;
     border-color: #2d2d4a;
-    &:focus-within { border-color: #7c3aed; box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12); }
   }
   .input-icon { color: #6b7280; }
   .url-input {

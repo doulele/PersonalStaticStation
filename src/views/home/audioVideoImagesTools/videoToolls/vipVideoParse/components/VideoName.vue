@@ -63,17 +63,10 @@
           <span class="episode-label">剧集（{{ currentEpisodes.length }}集）：</span>
           <div class="episode-bar-actions">
             <button
-              class="sort-btn"
-              :class="{ active: episodeSortOrder === 'desc' }"
-              title="倒序（新→旧）"
-              @click="episodeSortOrder = 'desc'"
-            >倒序</button>
-            <button
-              class="sort-btn"
-              :class="{ active: episodeSortOrder === 'asc' }"
-              title="正序（旧→新）"
-              @click="episodeSortOrder = 'asc'"
-            >正序</button>
+              class="toggle-btn"
+              @click="episodeSortOrder = episodeSortOrder === 'desc' ? 'asc' : 'desc'"
+              :title="episodeSortOrder === 'desc' ? '切换为正序（旧→新）' : '切换为倒序（新→旧）'"
+            >{{ episodeSortOrder === 'desc' ? '倒序' : '正序' }}</button>
             <button
               class="toggle-btn"
               @click="episodeExpanded = !episodeExpanded"
@@ -1046,10 +1039,6 @@ onUnmounted(() => {
   border-radius: 14px;
   background: #fff;
   transition: all 0.25s ease;
-  &:focus-within {
-    border-color: #6366f1;
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.08);
-  }
 }
 
 .fused-input {
@@ -1374,7 +1363,6 @@ onUnmounted(() => {
   .player-close { width: 28px; height: 28px; }
   .episode-bar { padding: 10px 14px; gap: 6px; }
   .episode-btn { padding: 4px 10px; font-size: 11px; }
-  .sort-btn { padding: 2px 8px; font-size: 10px; }
   .toggle-btn { padding: 2px 8px; font-size: 10px; }
   .video-wrapper { aspect-ratio: 4 / 3; max-height: 300px; }
 
@@ -1480,23 +1468,6 @@ onUnmounted(() => {
   font-size: 13px;
   color: #94a3b8;
   white-space: nowrap;
-}
-.sort-btn {
-  padding: 3px 10px;
-  font-size: 11px;
-  font-weight: 500;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
-  color: #94a3b8;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s;
-  &:hover { border-color: #6366f1; color: #6366f1; }
-  &.active {
-    border-color: #6366f1;
-    color: #fff;
-    background: #6366f1;
-  }
 }
 .toggle-btn {
   display: flex;
@@ -1627,7 +1598,6 @@ html.dark-mode .video-name-panel {
   .search-fused {
     background: #1a1a2e;
     border-color: #2d2d4a;
-    &:focus-within { border-color: #7c3aed; box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12); }
   }
 
   .fused-input {
@@ -1718,10 +1688,6 @@ html.dark-mode .video-name-panel {
   .player-close:hover { background: #3d1a1a; color: #f87171; }
   .episode-bar { border-bottom-color: #2d2d4a; }
   .episode-label { color: #6b7280; }
-  .sort-btn { background: #252540; border-color: #2d2d4a; color: #6b7280;
-    &:hover { border-color: #7c3aed; color: #a78bfa; }
-    &.active { border-color: #7c3aed; background: #7c3aed; color: #fff; }
-  }
   .toggle-btn { background: #252540; border-color: #2d2d4a; color: #6b7280;
     &:hover { border-color: #7c3aed; color: #a78bfa; background: #2d2d50; }
   }

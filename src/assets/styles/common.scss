@@ -1073,7 +1073,6 @@ html.dark-mode {
     // URL输入框（融合搜索框）
     .parse-fused {
       background: #1a1a2e !important; border-color: #2d2d4a !important;
-      &:focus-within { border-color: #7c3aed !important; box-shadow: 0 0 0 4px rgba(124,58,237,0.12) !important; }
     }
     .fused-divider { background: #2d2d4a !important; }
     .input-icon { color: #6b7280 !important; }
@@ -1082,7 +1081,6 @@ html.dark-mode {
     // 搜索视频 - 名称搜索框
     .search-row {
       background: #1a1a2e !important; border-color: #2d2d4a !important;
-      &:focus-within { border-color: #7c3aed !important; box-shadow: 0 0 0 4px rgba(124,58,237,0.12) !important; }
     }
     .platform-divider { background: #2d2d4a !important; }
     .platform-select-wrap {
@@ -1285,10 +1283,6 @@ html.dark-mode {
     }
     .content-title { color: #e2dee9 !important; }
     .content-meta { color: #6b7280 !important; }
-    // 排序按钮
-    .sort-btn { border-color: #2d2d4a !important; background: #1e1e2e !important; color: #94a3b8 !important;
-      &:hover { border-color: #6d5acf !important; color: #a78bfa !important; }
-    }
     // 搜索区域
     .search-input-wrap { background: #1a1a2e !important; border-color: #2d2d4a !important;
       &:focus-within { border-color: #7c3aed !important; background: #1e1e2e !important; }
