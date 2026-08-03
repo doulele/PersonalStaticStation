@@ -163,6 +163,7 @@
               <img
                 :src="item.pic || defaultPoster"
                 :alt="item.title"
+                referrerpolicy="no-referrer"
                 loading="lazy"
                 @error="onPosterError($event, idx)"
               />
@@ -184,22 +185,29 @@
         <div class="guide-item">
           <span class="guide-step">1、</span>
           <div class="guide-body">
-            <span class="guide-title">搜索片源</span>
-            <span class="guide-desc">输入片名或关键词，回车即可搜索</span>
+            <span class="guide-title">输入片名搜索</span>
+            <span class="guide-desc">输入电影/电视剧名称，回车或点击搜索按钮即可</span>
           </div>
         </div>
         <div class="guide-item">
           <span class="guide-step">2、</span>
           <div class="guide-body">
-            <span class="guide-title">链接解析</span>
-            <span class="guide-desc">粘贴视频链接，直接解析播放</span>
+            <span class="guide-title">选择合适线路</span>
+            <span class="guide-desc">六条线路覆盖不同片源库，某线路无结果时切换其他线路再试</span>
           </div>
         </div>
         <div class="guide-item">
           <span class="guide-step">3、</span>
           <div class="guide-body">
-            <span class="guide-title">切换线路</span>
-            <span class="guide-desc">切换搜索线路，获取更多片源结果</span>
+            <span class="guide-title">播放与操作</span>
+            <span class="guide-desc">点击结果卡片即可播放，支持全屏及倍速播放</span>
+          </div>
+        </div>
+        <div class="guide-item">
+          <span class="guide-step">4、</span>
+          <div class="guide-body">
+            <span class="guide-title">备用方案</span>
+            <span class="guide-desc">如遇所有线路无法播放，可点击下方友情链接跳转其他网站进行观看</span>
           </div>
         </div>
       </div>
@@ -312,6 +320,15 @@ const lines = [
     domain: '59v.net',
     desc: '永乐视频，资源海量',
     buildUrl: (kw) => `https://www.59v.net/vodsearch/-------------/?wd=${encodeURIComponent(kw)}`
+  },
+  {
+    id: 6,
+    name: '线路六',
+    domain: '4kcz.com',
+    desc: '厂长资源，更新及时',
+    buildUrl: (kw) => {
+      return `/staticTool/api/video-parse/proxy-search/line6?keyword=${encodeURIComponent(kw)}`
+    }
   }
 ];
 
@@ -353,7 +370,11 @@ function handleClickOutside(e) {
 // ==================== 友情链接 ====================
 const friendLinks = [
   { name: '永乐视频', url: 'https://www.59v.net' },
-  { name: '118885', url: 'https://118885.com' }
+  { name: '泥视频', url: 'https://www.nivod.vip' },
+  { name: '厂长资源', url: 'https://www.4kcz.com/' },
+  { name: '118885', url: 'https://118885.com' },
+  { name: '影猫の仓库', url: 'https://www.ymck.pro' },
+  { name: '布布追剧', url: 'https://bubuzhuiju.com' }
 ];
 
 // ==================== 搜索状态 ====================
@@ -464,13 +485,13 @@ function openResult(item) {
     currentEpisodeIndex.value = lastIdx
     playUrl(item.episodes[lastIdx].url)
   } else if (item.url) {
-    // ylu.cc 等外部详情页：通过后端代理页面嵌入 iframe，解决源站 X-Frame-Options 阻止问题
+    // ylu.cc 等外部详情页：直接 iframe 嵌入（源站无 X-Frame-Options 限制，直接嵌入即可避免 CORS）
     const isHtmlPage = item.url.includes('ylu.cc') || /\.html?/i.test(item.url)
     if (isHtmlPage) {
       currentPlayItem.value = item
       currentEpisodes.value = []
       currentEpisodeIndex.value = 0
-      playProxiedPage(item.url)
+      playDirectIframe(item.url)
       return
     }
     currentPlayItem.value = item
@@ -551,7 +572,7 @@ function playDirectIframe(pageUrl) {
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <style>*{margin:0;padding:0;box-sizing:border-box}body{background:#000;display:flex;align-items:center;justify-content:center;width:100vw;height:100vh;overflow:hidden}iframe{width:100%;height:100%;border:none}#err{display:none;color:#aaa;text-align:center;font-family:sans-serif;padding:20px;max-width:360px}#err p{margin:8px 0;line-height:1.6}#err button{display:inline-block;margin:8px 6px;padding:8px 20px;background:#6366f1;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px}#err button.ext{background:#475569}</style></head>
 <body>
-<iframe id="frame" src="${safeUrl}" allowfullscreen allow="autoplay; encrypted-media" sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals allow-top-navigation"></iframe>
+<iframe id="frame" src="${safeUrl}" allowfullscreen allow="autoplay; encrypted-media"></iframe>
 <div id="err"><p>⚠️ 该页面可能不允许被内嵌播放</p><p>请尝试在外部窗口中打开：</p><button onclick="parent.openExternalPage()">在新窗口打开</button></div>
 <script>
 var frame=document.getElementById('frame');
@@ -568,56 +589,6 @@ frame.onload=function(){
       // 跨域无法访问
     }
   }, 8000);
-};
-<\/script></body></html>`
-
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
-  iframeBlobUrl.value = URL.createObjectURL(blob)
-  showIframePlayer.value = true
-  playerLoading.value = false
-}
-
-/** 通过后端代理页面，在 iframe 中内嵌播放（保留供其他场景使用） */
-function playProxiedPage(pageUrl) {
-  closeHls()
-  playerLoading.value = true
-  playerError.value = ''
-  isProxiedPage.value = true
-
-  if (iframeBlobUrl.value) {
-    URL.revokeObjectURL(iframeBlobUrl.value)
-    iframeBlobUrl.value = ''
-  }
-
-  const origin = window.location.origin
-  const proxyUrl = `${origin}/staticTool/api/video-parse/proxy-page?url=${encodeURIComponent(pageUrl)}`
-
-  // 构造 iframe 页面，将代理 URL 作为主内容
-  const html = `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#000;display:flex;align-items:center;justify-content:center;width:100vw;height:100vh;overflow:hidden}iframe{width:100%;height:100%;border:none}#err{display:none;color:#aaa;text-align:center;font-family:sans-serif;padding:20px;max-width:320px}#err p{margin:8px 0}#err button{display:inline-block;margin:8px 6px;padding:8px 20px;background:#6366f1;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:14px}#err button.ext{background:#475569}</style></head>
-<body>
-<iframe id="frame" src="${proxyUrl.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$')}" allowfullscreen allow="autoplay; encrypted-media"></iframe>
-<div id="err"><p>⚠️ 页面加载失败，可能被源站拒绝内嵌</p><button class="ext" onclick="parent.openExternalPage()">在外部打开</button></div>
-<script>
-var frame=document.getElementById('frame');
-frame.onerror=function(){ document.getElementById('frame').style.display='none'; document.getElementById('err').style.display='block'; };
-frame.onload=function(){
-  // 检测是否被 CSP 或 X-Frame-Options 阻止（白屏/空白）
-  setTimeout(function(){
-    try {
-      var d=frame.contentDocument||frame.contentWindow.document;
-      if(!d||!d.body||d.body.innerHTML.trim()===''){
-        document.getElementById('frame').style.display='none';
-        document.getElementById('err').style.display='block';
-      }
-    } catch(e) {
-      // 跨域无法访问 → 可能被 CSP 阻止
-      document.getElementById('frame').style.display='none';
-      document.getElementById('err').style.display='block';
-    }
-  }, 5000);
 };
 <\/script></body></html>`
 
@@ -1321,6 +1292,22 @@ onUnmounted(() => {
 
   // 永乐视频
   &:nth-child(1) {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    &:hover {
+      box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+      transform: translateY(-1px);
+    }
+  }
+  // 泥视频
+  &:nth-child(2) {
+    background: linear-gradient(135deg, #0ea5e9, #06b6d4);
+    &:hover {
+      box-shadow: 0 4px 14px rgba(14, 165, 233, 0.35);
+      transform: translateY(-1px);
+    }
+  }
+  // 厂长资源
+  &:nth-child(3) {
     background: linear-gradient(135deg, #6366f1, #8b5cf6);
     &:hover {
       box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
@@ -1328,10 +1315,26 @@ onUnmounted(() => {
     }
   }
   // 118885
-  &:nth-child(2) {
-    background: linear-gradient(135deg, #f97316, #ef4444);
+  &:nth-child(4) {
+    background: linear-gradient(135deg, #ec4899, #8b5cf6);
     &:hover {
-      box-shadow: 0 4px 14px rgba(249, 115, 22, 0.35);
+      box-shadow: 0 4px 14px rgba(236, 72, 153, 0.35);
+      transform: translateY(-1px);
+    }
+  }
+  // 影猫の仓库
+  &:nth-child(5) {
+    background: linear-gradient(135deg, #10b981, #14b8a6);
+    &:hover {
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+      transform: translateY(-1px);
+    }
+  }
+  // 布布追剧
+  &:nth-child(6) {
+    background: linear-gradient(135deg, #f59e0b, #f97316);
+    &:hover {
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
       transform: translateY(-1px);
     }
   }

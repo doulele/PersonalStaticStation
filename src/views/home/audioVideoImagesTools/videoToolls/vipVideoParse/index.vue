@@ -31,14 +31,6 @@
       <!-- 视频名称 Tab -->
       <VideoName v-show="activeTab === 'name'" />
 
-      <!-- 搜索视频 Tab -->
-      <SearchVideo
-        v-show="activeTab === 'search'"
-        ref="searchVideoRef"
-        @switch-mode="switchTab"
-        @play-episode="onSearchPlayEpisode"
-      />
-
       <!-- 链接解析 Tab -->
       <UrlParse
         v-show="activeTab === 'url'"
@@ -56,6 +48,14 @@
         @parse="onUrlParse"
         @check-api-health="checkApiHealth"
         @show-line-manage="showLineManage = true"
+      />
+
+      <!-- 短视频搜索 Tab -->
+      <SearchVideo
+        v-show="activeTab === 'search'"
+        ref="searchVideoRef"
+        @switch-mode="switchTab"
+        @play-episode="onSearchPlayEpisode"
       />
 
 
@@ -225,8 +225,8 @@ import VideoName from './components/VideoName.vue'
 // ==================== Tab 切换 ====================
 const tabs = [
   { key: 'name', label: 'VIP视频', icon: Edit },
-  { key: 'search', label: '搜索视频', icon: Search },
-  { key: 'url', label: '链接解析', icon: Link }
+  { key: 'url', label: '链接解析', icon: Link },
+  { key: 'search', label: '短视频', icon: Search }
 ]
 const activeTab = ref('name')
 const searchVideoRef = ref(null)

@@ -43,12 +43,6 @@ export default defineConfig({
         secure: false,
         rewrite: (path) => path.replace(/^\/staticTool\/api/, '')
       },
-      '/staticTool/api/video-parse/proxy-page': {
-        target: 'http://localhost:3001',
-        changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path.replace(/^\/staticTool\/api/, '')
-      },
       // 本地调试：video-parse（含 yt-dlp）转发到线上（线上有 yt-dlp）
       '/staticTool/api/video-parse': {
         target: 'https://wellwin.top',
