@@ -3,8 +3,10 @@
     <!-- 不支持名称搜索的平台提示 -->
     <div v-if="isUnsupportedPlatform && !searching" class="platform-search-hint">
       <el-icon :size="16"><WarningFilled /></el-icon>
-      <span>{{ { tencent: '腾讯视频', youku: '优酷', iqiyi: '爱奇艺', mgtv: '芒果TV' }[searchPlatform] }}暂不支持名称搜索，将在B站中搜索相关视频</span>
-      <span class="hint-action" @click="$emit('switchMode', 'url')">如需观看该平台独播剧集，请切换到「链接解析」模式</span>
+      <span>
+        {{ platformLabelMap[searchPlatform] }}暂不支持名称搜索，请粘贴 {{ platformLabelMap[searchPlatform] }} 视频链接直接播放
+      </span>
+      <span class="hint-action" @click="$emit('switchMode', 'url')">也可切换到「链接解析」模式</span>
     </div>
 
     <!-- 名称搜索框 -->
@@ -13,8 +15,8 @@
         <!-- <el-icon class="input-icon" :size="20"><Search /></el-icon> -->
         <input
           v-model="searchQuery"
-          class="url-input"
-          placeholder="输入视频名称搜索（如：周杰伦 稻香 MV）"
+          class="search-video-input"
+          placeholder="输入名称搜索，或直接粘贴视频链接播放"
           :disabled="searching"
           @keydown.enter="handleSearch"
         />
@@ -52,7 +54,7 @@
         <h3 class="search-loading-title">正在搜索中...</h3>
         <p class="search-loading-query">"{{ searchQuery }}"</p>
         <p class="search-loading-platform">
-          搜索范围：{{ { auto: 'B站 + YouTube', bilibili: 'B站', youtube: 'YouTube', tencent: 'B站 + YouTube', youku: 'B站 + YouTube', iqiyi: 'B站 + YouTube', mgtv: 'B站 + YouTube' }[searchPlatform] || 'B站 + YouTube' }}
+          搜索范围：{{ { auto: 'B站', bilibili: 'B站', douyin: '抖音', kuaishou: '快手', haokan: '好看视频', weishi: '微视' }[searchPlatform] || 'B站' }}
         </p>
         <div class="search-loading-progress">
           <div class="progress-bar">
@@ -74,8 +76,7 @@
           </span>
         </h3>
         <span class="search-platform-badge">{{ {
-          auto: '自动', bilibili: 'B站', youtube: 'YouTube',
-          tencent: '腾讯视频', youku: '优酷', iqiyi: '爱奇艺', mgtv: '芒果TV'
+          auto: '自动', bilibili: 'B站', douyin: '抖音', kuaishou: '快手', haokan: '好看视频', weishi: '微视'
         }[searchPlatform] || '自动' }}</span>
       </div>
 
@@ -211,7 +212,7 @@
       <button class="history-line-clear" @click="clearSearchHistory">清空</button>
     </div>
 
-    <!-- 使用指南 -->
+    <!-- 使用指南（与 VIP 视频保持一致） -->
     <div class="search-guide">
       <div class="guide-header">使用指南</div>
       <div class="guide-list">
@@ -226,14 +227,14 @@
           <span class="guide-step">2、</span>
           <div class="guide-body">
             <span class="guide-title">平台筛选</span>
-            <span class="guide-desc">支持 B站、腾讯视频、优酷、爱奇艺、芒果TV、YouTube 等平台，可通过下拉菜单指定</span>
+            <span class="guide-desc">B站支持名称搜索；抖音、快手、好看视频、微视可粘贴链接直接播放</span>
           </div>
         </div>
         <div class="guide-item">
           <span class="guide-step">3、</span>
           <div class="guide-body">
-            <span class="guide-title">播放视频</span>
-            <span class="guide-desc">点击搜索结果卡片即可直接播放，无需手动输入链接</span>
+            <span class="guide-title">粘贴链接播放</span>
+            <span class="guide-desc">直接粘贴抖音、快手、B站、好看视频、微视等视频链接即可播放</span>
           </div>
         </div>
         <div class="guide-item">
@@ -263,21 +264,17 @@ const searchElapsed = ref(0)
 const platformDropdownOpen = ref(false)
 const platformOptions = [
   { value: 'bilibili', label: 'B站' },
-  { value: 'youtube', label: 'YouTube' },
-  { value: 'bilibili_youtube', label: 'B站 + YouTube' },
-  { value: 'tencent', label: '腾讯视频' },
-  { value: 'youku', label: '优酷' },
-  { value: 'iqiyi', label: '爱奇艺' },
-  { value: 'mgtv', label: '芒果TV' }
+  { value: 'douyin', label: '抖音' },
+  { value: 'kuaishou', label: '快手' },
+  { value: 'haokan', label: '好看视频' },
+  { value: 'weishi', label: '微视' }
 ]
 const platformLabelMap = {
   bilibili: 'B站',
-  youtube: 'YouTube',
-  bilibili_youtube: 'B站 + YouTube',
-  tencent: '腾讯视频',
-  youku: '优酷',
-  iqiyi: '爱奇艺',
-  mgtv: '芒果TV'
+  douyin: '抖音',
+  kuaishou: '快手',
+  haokan: '好看视频',
+  weishi: '微视'
 }
 function selectPlatform(val) {
   searchPlatform.value = val
@@ -295,8 +292,8 @@ const groupPlaylists = ref({})
 const loadingPlaylists = ref(new Set())
 const playingEpisodeId = ref('')
 
-// 不支持名称搜索的平台
-const unsupportedPlatforms = new Set(['tencent', 'youku', 'iqiyi', 'mgtv'])
+// 不支持名称搜索的平台（yt-dlp 无对应名称搜索协议）
+const unsupportedPlatforms = new Set(['douyin', 'kuaishou', 'haokan', 'weishi'])
 const isUnsupportedPlatform = computed(() => unsupportedPlatforms.has(searchPlatform.value))
 
 const totalEpisodes = computed(() => {
@@ -390,6 +387,19 @@ function quickSearch(kw) {
   handleSearch()
 }
 
+// 判断输入是否为支持直链播放的视频链接（抖音/快手/B站等）
+function looksLikeVideoUrl(str) {
+  if (!/^https?:\/\/.+/i.test(str.trim())) return false
+  const hosts = [
+    'douyin.com', 'iesdouyin.com',           // 抖音
+    'kuaishou.com', 'gifshow.com',           // 快手
+    'bilibili.com', 'b23.tv', 'bilibili.tv', // B站
+    'haokan.baidu.com',                      // 好看视频
+    'weishi.qq.com'                          // 微视
+  ]
+  return hosts.some(h => str.includes(h))
+}
+
 async function handleSearch() {
   const q = searchQuery.value.trim()
   if (!q) {
@@ -397,12 +407,16 @@ async function handleSearch() {
     return
   }
 
-  // 不支持名称搜索的平台提示
-  if (isUnsupportedPlatform.value) {
-    const platformNames = {
-      tencent: '腾讯视频', youku: '优酷', iqiyi: '爱奇艺', mgtv: '芒果TV'
-    }
-    ElMessage.warning(`${platformNames[searchPlatform.value]}暂不支持名称搜索，将在B站中搜索相关视频`)
+  // 识别输入是否为视频链接，是则直接走 yt-dlp 提取播放
+  if (looksLikeVideoUrl(q)) {
+    playEpisode({ id: '', title: '粘贴的视频', webpageUrl: q, thumbnail: '' })
+    return
+  }
+
+  // 抖音/快手/好看/微视无名称搜索协议，提示粘贴链接
+  if (['douyin', 'kuaishou', 'haokan', 'weishi'].includes(searchPlatform.value)) {
+    ElMessage.warning(`${platformLabelMap[searchPlatform.value]}暂不支持名称搜索，请粘贴视频链接直接播放`)
+    return
   }
 
   searching.value = true
@@ -495,7 +509,7 @@ defineExpose({
   transition: all 0.25s ease;
 }
 .input-icon { color: #94a3b8; margin: 0 12px 0 16px; flex-shrink: 0; align-self: center; }
-.url-input {
+.search-video-input {
   flex: 1; border: none; outline: none; font-size: 16px; color: #0f172a; background: transparent; min-width: 0; padding: 14px 16px;
   &::placeholder { color: #94a3b8; }
 }
@@ -932,7 +946,7 @@ defineExpose({
   &:hover { color: #ef4444; }
 }
 
-// 使用指南（与 VIP 视频保持一致）
+// ==================== 使用指南 ====================
 .search-guide {
   margin-top: 20px;
   margin-bottom: 28px;
@@ -987,7 +1001,7 @@ defineExpose({
 // 响应式 - 平板
 @media (max-width: 768px) {
   .search-row { border-radius: 12px; }
-  .url-input { font-size: 15px; padding: 12px 14px; }
+  .search-video-input { font-size: 15px; padding: 12px 14px; }
   .platform-select-wrap { padding: 0 12px; }
   .platform-select-text { font-size: 13px; }
   .platform-dropdown { min-width: 140px; }
@@ -1015,7 +1029,7 @@ defineExpose({
 // 响应式 - 手机
 @media (max-width: 480px) {
   .search-row { border-radius: 12px; }
-  .url-input { font-size: 14px; padding: 10px 12px; }
+  .search-video-input { font-size: 14px; padding: 10px 12px; }
   .platform-select-wrap { padding: 0 10px; }
   .platform-select-text { font-size: 12px; }
   .platform-dropdown { min-width: 130px; }
@@ -1037,12 +1051,17 @@ defineExpose({
   .card-duration { font-size: 10px; bottom: 4px; right: 4px; }
   .history-section { margin-top: 16px; margin-bottom: 16px; padding: 12px; }
   .history-index { width: 22px; height: 22px; font-size: 11px; }
-  .search-guide { padding: 12px; margin-top: 14px; margin-bottom: 20px; }
+  .search-guide { margin-top: 14px; padding: 14px; }
   .guide-header { font-size: 14px; margin-bottom: 12px; }
   .guide-list { gap: 8px; }
   .guide-step { font-size: 13px; }
   .guide-title { font-size: 13px; }
   .guide-desc { font-size: 11px; }
+  .guide-body {
+    flex-direction: column;
+    gap: 2px;
+  }
+  .guide-title { white-space: normal; }
 }
 
 // 深色模式
@@ -1052,18 +1071,18 @@ defineExpose({
     border-color: #2d2d4a;
   }
   .input-icon { color: #6b7280; }
-  .url-input {
+  .search-video-input {
     color: #e2dee9;
-    &::placeholder { color: #6b7280; }
     // 覆盖浏览器自动填充的浅色背景
-    &:-webkit-autofill,
-    &:-webkit-autofill:hover,
-    &:-webkit-autofill:focus {
-      -webkit-text-fill-color: #e2dee9;
-      -webkit-box-shadow: 0 0 0 1000px #1a1a2e inset;
-      caret-color: #e2dee9;
-      transition: background-color 5000s ease-in-out 0s;
-    }
+    // &:-webkit-autofill,
+    // &:-webkit-autofill:hover,
+    // &:-webkit-autofill:focus {
+    //   -webkit-text-fill-color: #e2dee9;
+    //   -webkit-box-shadow: 0 0 0 1000px #1a1a2e inset;
+    //   caret-color: #e2dee9;
+    //   transition: background-color 5000s ease-in-out 0s;
+    // }
+    &::placeholder { color: #94a3b8!important; }
   }
   .clear-icon { color: #6b7280; &:hover { color: #cbd5e1; } }
   .platform-divider { background: #2d2d4a; }
@@ -1148,6 +1167,14 @@ defineExpose({
   .guide-item { background: transparent; }
   .guide-step { color: #94a3b8; }
   .guide-title { color: #e2dee9; }
-  .guide-desc { color: #6b7280; }
+  // .guide-desc { opacity: 0.5; }
+}
+</style>
+
+
+<style>
+/* SearchVideo 深色模式硬覆盖：绕过 scoped 编译 */
+html.dark-mode .search-video-panel .guide-desc {
+  opacity: 0.5 !important;
 }
 </style>

@@ -1380,6 +1380,11 @@ onUnmounted(() => {
   .guide-step { font-size: 13px; }
   .guide-title { font-size: 13px; }
   .guide-desc { font-size: 11px; }
+  .guide-body {
+    flex-direction: column;
+    gap: 2px;
+  }
+  .guide-title { white-space: normal; }
   .link-cards { grid-template-columns: repeat(2, 1fr); }
   .results-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
   .results-info { font-size: 12px; }
@@ -1605,7 +1610,6 @@ html.dark-mode .video-name-panel {
 
   .fused-input {
     color: #e2dee9;
-    &::placeholder { color: #6b7280; }
   }
 
   .fused-divider { background: #2d2d4a; }

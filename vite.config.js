@@ -57,6 +57,34 @@ export default defineConfig({
         secure: false,
         rewrite: (path) => path.replace(/^\/staticTool\/api/, '')
       },
+      // 视频下载 / 转MP3 → 走本地后端（下载需走服务器，避免线上大流量）
+      '/staticTool/api/video-parse/ytdlp/download': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/staticTool\/api/, '')
+      },
+      // B站扫码登录 → 走本地后端
+      '/staticTool/api/video-parse/ytdlp/bili-qrcode': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/staticTool\/api/, '')
+      },
+      // yt-dlp 状态检测 → 走本地后端
+      '/staticTool/api/video-parse/ytdlp/status': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/staticTool\/api/, '')
+      },
+      // Cookie 状态查询 → 走本地后端
+      '/staticTool/api/video-parse/ytdlp/cookies': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/staticTool\/api/, '')
+      },
       // 本地调试：video-parse（含 yt-dlp）转发到线上（线上有 yt-dlp）
       '/staticTool/api/video-parse': {
         target: 'https://wellwin.top',

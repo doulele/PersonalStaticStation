@@ -13,18 +13,29 @@
 
     <!-- 输入区 -->
     <div class="input-section">
-      <!-- Tab 切换 -->
-      <div class="input-mode-switch">
+      <!-- Tab 切换 + B站登录 -->
+      <div class="input-toolbar">
+        <div class="input-mode-switch">
+          <button
+            v-for="tab in tabs"
+            :key="tab.key"
+            class="input-mode-btn"
+            :class="{ active: activeTab === tab.key }"
+            :disabled="searching"
+            @click="switchTab(tab.key)"
+          >
+            {{ tab.label }}
+          </button>
+        </div>
         <button
-          v-for="tab in tabs"
-          :key="tab.key"
-          class="input-mode-btn"
-          :class="{ active: activeTab === tab.key }"
-          :disabled="searching"
-          @click="switchTab(tab.key)"
+          v-show="activeTab === 'search'"
+          class="bili-login-btn"
+          :class="{ 'bili-expired': biliLogged && biliCookieValid === false }"
+          @click="openBiliLogin"
+          :title="biliButtonTitle"
         >
-          <!-- <el-icon :size="14"><component :is="tab.icon" /></el-icon> -->
-          {{ tab.label }}
+          <el-icon :size="14"><component :is="biliButtonIcon" /></el-icon>
+          <span>{{ biliButtonText }}</span>
         </button>
       </div>
 
@@ -38,114 +49,13 @@
         :user-lines="userLines"
         :api-health-map="apiHealthMap"
         :health-checking="healthChecking"
-        :yt-dlp-available="ytDlpAvailable"
-        :use-yt-dlp="useYtDlp"
         :parsing="parsing"
-        :yt-dlp-extracting="ytDlpExtracting"
         :selected-line-index="selectedLineIndex"
-        :show-player="showPlayer"
-        @update:use-yt-dlp="useYtDlp = $event"
         @update:selected-line-index="selectedLineIndex = $event"
         @parse="onUrlParse"
         @check-api-health="checkApiHealth"
         @show-line-manage="showLineManage = true"
-      >
-        <!-- 视频播放区（slot 插入到 历史 和 快捷跳转 之间） -->
-        <template #player>
-          <div v-if="showPlayer" class="player-section">
-            <div class="player-container">
-              <div class="player-header">
-                <div class="player-header-top">
-                  <div class="player-title-wrap">
-                    <el-icon :size="18"><VideoPlay /></el-icon>
-                    <span class="player-title">{{ parsedTitle || '正在播放' }}</span>
-                  </div>
-                  <button class="player-close" @click="closePlayer" title="关闭播放器">
-                    <el-icon :size="18"><Close /></el-icon>
-                  </button>
-                </div>
-                <div class="player-header-bottom">
-                  <!-- 自动线路尝试状态 -->
-                  <span v-if="parsingStatusText" class="parsing-status" :class="{ 'parsing-error': !parsing && parsingStatusText.includes('无法') }">
-                    <span v-if="parsing" class="parsing-spinner"></span>
-                    {{ parsingStatusText }}
-                    <button v-if="parsing && autoTryingLine >= 0" class="stop-auto-btn" @click="stopAutoTry()">停止</button>
-                  </span>
-                  <!-- yt-dlp 提取信息 -->
-                  <span v-if="ytDlpVideoInfo" class="ytdlp-info">
-                    <span class="ytdlp-badge">yt-dlp</span>
-                    <span v-if="ytDlpVideoInfo.durationString" class="ytdlp-duration">{{ ytDlpVideoInfo.durationString }}</span>
-                  </span>
-                  <!-- 第三方解析线路切换 -->
-                  <div class="line-switcher" v-if="!useYtDlp && userLines.length > 1">
-                    <span class="line-label">播放线路：</span>
-                    <button
-                      v-for="(line, idx) in userLines"
-                      :key="idx"
-                      class="line-btn"
-                      :class="{ active: currentLine === idx }"
-                      @click="currentLine = idx"
-                    >{{ line.name }}</button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- yt-dlp 直链播放器 -->
-              <div v-if="useYtDlp && ytDlpStreamUrl" class="video-wrapper">
-                <video
-                  ref="videoPlayer"
-                  class="video-player-native"
-                  controls
-                  playsinline
-                  webkit-playsinline
-                  x5-playsinline
-                  x5-video-player-type="h5"
-                  x5-video-player-fullscreen="false"
-                  preload="auto"
-                ></video>
-              </div>
-
-              <!-- yt-dlp 提取中 -->
-              <div v-else-if="useYtDlp && ytDlpExtracting" class="video-wrapper">
-                <div class="video-placeholder extracting">
-                  <el-icon class="is-loading" :size="48"><Loading /></el-icon>
-                  <p>yt-dlp 正在提取视频流...</p>
-                  <span class="extract-hint">{{ ytDlpExtractHint }}</span>
-                </div>
-              </div>
-
-              <!-- yt-dlp 提取失败 -->
-              <div v-else-if="useYtDlp && ytDlpError" class="video-wrapper">
-                <div class="video-placeholder error">
-                  <el-icon :size="48"><WarningFilled /></el-icon>
-                  <p>提取失败</p>
-                  <span class="error-detail">{{ ytDlpError }}</span>
-                  <button class="fallback-btn" @click="switchToThirdParty">切换到第三方解析</button>
-                </div>
-              </div>
-
-              <!-- 第三方解析 iframe 播放 -->
-              <div v-else-if="!useYtDlp" class="video-wrapper">
-                <iframe
-                  v-if="currentPlayUrl"
-                  :key="parseSessionId"
-                  :src="currentPlayUrl"
-                  class="video-iframe"
-                  frameborder="0"
-                  allowfullscreen
-                  allow="autoplay; encrypted-media"
-                  sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-                  @load="onIframeLoad"
-                ></iframe>
-                <div v-else class="video-placeholder">
-                  <el-icon :size="64"><VideoCamera /></el-icon>
-                  <p>输入视频链接开始播放</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </template>
-      </UrlParse>
+      />
 
       <!-- 短视频搜索 Tab -->
       <SearchVideo
@@ -155,9 +65,157 @@
         @play-episode="onSearchPlayEpisode"
       />
 
+      <!-- 视频播放区（独立于 tab，短视频/链接解析均可播放） -->
+      <div v-if="showPlayer" class="player-section">
+        <div class="player-container">
+          <div class="player-header">
+            <div class="player-header-top">
+              <div class="player-title-wrap">
+                <el-icon :size="18"><VideoPlay /></el-icon>
+                <span class="player-title">{{ parsedTitle || '正在播放' }}</span>
+              </div>
+              <button class="player-close" @click="closePlayer" title="关闭播放器">
+                <el-icon :size="18"><Close /></el-icon>
+              </button>
+            </div>
+            <div class="player-header-bottom">
+              <!-- 自动线路尝试状态 -->
+              <span v-if="parsingStatusText" class="parsing-status" :class="{ 'parsing-error': !parsing && parsingStatusText.includes('无法') }">
+                <span v-if="parsing" class="parsing-spinner"></span>
+                {{ parsingStatusText }}
+                <button v-if="parsing && autoTryingLine >= 0" class="stop-auto-btn" @click="stopAutoTry()">停止</button>
+              </span>
+              <!-- yt-dlp 提取信息 -->
+              <span v-if="ytDlpVideoInfo" class="ytdlp-info">
+                <span class="ytdlp-badge">yt-dlp</span>
+                <span v-if="ytDlpVideoInfo.durationString" class="ytdlp-duration">{{ ytDlpVideoInfo.durationString }}</span>
+              </span>
+              <!-- 下载 / 转MP3 -->
+              <span v-if="useYtDlp && videoUrl && ytDlpStreamUrl" class="download-actions">
+                <button class="dl-btn" @click="downloadVideo(false)" :disabled="downloading">下载视频</button>
+                <button class="dl-btn" @click="downloadVideo(true)" :disabled="downloading">{{ downloading ? '处理中...' : '转MP3' }}</button>
+              </span>
+              <!-- 第三方解析线路切换 -->
+              <div class="line-switcher" v-if="!useYtDlp && userLines.length > 1">
+                <span class="line-label">播放线路：</span>
+                <button
+                  v-for="(line, idx) in userLines"
+                  :key="idx"
+                  class="line-btn"
+                  :class="{ active: currentLine === idx }"
+                  @click="currentLine = idx"
+                >{{ line.name }}</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- yt-dlp 直链播放器 -->
+          <div v-if="useYtDlp && ytDlpStreamUrl" class="video-wrapper">
+            <video
+              ref="videoPlayer"
+              class="video-player-native"
+              controls
+              playsinline
+              webkit-playsinline
+              x5-playsinline
+              x5-video-player-type="h5"
+              x5-video-player-fullscreen="false"
+              preload="auto"
+            ></video>
+          </div>
+
+          <!-- yt-dlp 提取中 -->
+          <div v-else-if="useYtDlp && ytDlpExtracting" class="video-wrapper">
+            <div class="video-placeholder extracting">
+              <el-icon class="is-loading" :size="48"><Loading /></el-icon>
+              <p>yt-dlp 正在提取视频流...</p>
+              <span class="extract-hint">{{ ytDlpExtractHint }}</span>
+            </div>
+          </div>
+
+          <!-- yt-dlp 提取失败 -->
+          <div v-else-if="useYtDlp && ytDlpError" class="video-wrapper">
+            <div class="video-placeholder error">
+              <el-icon :size="48"><WarningFilled /></el-icon>
+              <p>提取失败</p>
+              <span class="error-detail">{{ ytDlpError }}</span>
+              <button class="fallback-btn" @click="switchToThirdParty">切换到第三方解析</button>
+            </div>
+          </div>
+
+          <!-- 第三方解析 iframe 播放 -->
+          <div v-else-if="!useYtDlp" class="video-wrapper">
+            <iframe
+              v-if="currentPlayUrl"
+              :key="parseSessionId"
+              :src="currentPlayUrl"
+              class="video-iframe"
+              frameborder="0"
+              allowfullscreen
+              allow="autoplay; encrypted-media"
+              sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+              @load="onIframeLoad"
+            ></iframe>
+            <div v-else class="video-placeholder">
+              <el-icon :size="64"><VideoCamera /></el-icon>
+              <p>输入视频链接开始播放</p>
+            </div>
+          </div>
+        </div>
+        <button
+          v-show="activeTab === 'search'"
+          class="bili-login-btn"
+          :class="{ 'bili-expired': biliLogged && biliCookieValid === false }"
+          @click="openBiliLogin"
+          :title="biliButtonTitle"
+        >
+          <el-icon :size="14"><component :is="biliButtonIcon" /></el-icon>
+          <span>{{ biliButtonText }}</span>
+        </button>
+      </div>
 
     </div>
 
+    <!-- B站扫码登录弹窗 -->
+    <el-dialog
+      v-model="showBiliLogin"
+      title="B站扫码登录"
+      width="360px"
+      :close-on-click-modal="true"
+      :close-on-press-escape="true"
+      destroy-on-close
+      class="bili-login-dialog"
+    >
+      <div class="bili-login-body">
+        <!-- 登录成功 -->
+        <div v-if="biliLoginStatus === 'success'" class="bili-login-success">
+          <el-icon :size="56" :color="biliCookieValid ? '#22c55e' : '#f59e0b'"><SuccessFilled /></el-icon>
+          <p>{{ biliLoginMessage }}</p>
+          <p class="bili-login-sub">{{ biliCookieValid ? '现在可以观看需要登录的 B站视频了' : '部分视频可能仍需登录才能观看' }}</p>
+        </div>
+        <!-- 加载二维码 -->
+        <div v-else-if="biliQrLoading" class="bili-login-loading">
+          <el-icon class="is-loading" :size="40"><Loading /></el-icon>
+          <p>正在获取二维码...</p>
+        </div>
+        <!-- 二维码展示 -->
+        <div v-else-if="biliQrUrl" class="bili-login-qr">
+          <img :src="biliQrImg" class="bili-qr-img" alt="B站登录二维码" />
+          <p class="bili-qr-status">
+            <el-icon class="is-loading" :size="16"><Loading /></el-icon>
+            {{ biliQrStatusText }}
+          </p>
+          <p class="bili-login-tip">使用 B站 手机客户端或手机浏览器扫码登录</p>
+          <button class="bili-refresh-btn" @click="refreshBiliQr">刷新二维码</button>
+        </div>
+        <!-- 二维码过期/失败 -->
+        <div v-else class="bili-login-error">
+          <el-icon :size="48" color="#ef4444"><WarningFilled /></el-icon>
+          <p>二维码加载失败</p>
+          <button class="bili-refresh-btn" @click="refreshBiliQr">重新获取</button>
+        </div>
+      </div>
+    </el-dialog>
 
     <!-- 解析路径管理弹窗 -->
     <el-dialog
@@ -235,10 +293,11 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import {
-  ArrowLeft, VideoPlay, Loading, VideoCamera, WarningFilled, Search, Link, Plus, Edit, Close
+  ArrowLeft, VideoPlay, Loading, VideoCamera, WarningFilled, Search, Link, Plus, Edit, Close, SuccessFilled, Connection
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import Hls from 'hls.js'
+import QRCode from 'qrcode'
 import SearchVideo from './components/SearchVideo.vue'
 import UrlParse from './components/UrlParse.vue'
 import VideoName from './components/VideoName.vue'
@@ -258,6 +317,10 @@ function switchTab(key) {
   if (searchVideoRef.value) {
     searchVideoRef.value.clearResults()
   }
+  // 切到短视频 tab 时检查 B站登录状态
+  if (key === 'search') {
+    checkBiliLoginStatus()
+  }
 }
 
 // ==================== 公共播放状态 ====================
@@ -265,6 +328,47 @@ const showPlayer = ref(false)
 const parsedTitle = ref('')
 const currentLine = ref(0)
 const videoUrl = ref('')
+const downloading = ref(false)
+
+// ==================== B站扫码登录 ====================
+const showBiliLogin = ref(false)
+const biliLogged = ref(false)
+const biliCookieValid = ref(null)  // true=有效 false=失效 null=未知/检查中
+const biliNickname = ref('')
+
+const biliButtonText = computed(() => {
+  if (!biliLogged.value) return 'B站登录'
+  if (biliCookieValid.value === null) return '检查中...'
+  if (biliCookieValid.value === false) return 'B站登录失效'
+  if (biliCookieValid.value === true && biliNickname.value) return biliNickname.value
+  return 'B站已登录'
+})
+const biliButtonIcon = computed(() => {
+  if (biliCookieValid.value === null) return Loading
+  if (biliCookieValid.value === false) return WarningFilled
+  if (biliLogged.value) return SuccessFilled
+  return Connection
+})
+const biliButtonIconName = computed(() => {
+  if (biliCookieValid.value === null) return 'Loading'
+  if (biliCookieValid.value === false) return 'WarningFilled'
+  if (biliLogged.value) return 'SuccessFilled'
+  return 'Connection'
+})
+const biliButtonTitle = computed(() => {
+  if (biliCookieValid.value === null) return 'B站登录状态检查中...'
+  if (biliCookieValid.value === false) return 'B站登录已失效，点击重新扫码'
+  if (biliLogged.value) return 'B站已登录，点击重新扫码'
+  return 'B站扫码登录，解锁更多视频'
+})
+const biliQrLoading = ref(false)
+const biliQrUrl = ref('')
+const biliQrImg = ref('')
+const biliQrStatusText = ref('')
+const biliLoginStatus = ref('') // '' | 'pending' | 'scanned' | 'success' | 'expired'
+const biliLoginMessage = ref('')
+const biliQrTimer = ref(null)
+const biliQrKey = ref('')
 
 // 自动线路尝试
 const autoTryingLine = ref(-1)
@@ -525,6 +629,179 @@ function onSearchPlayEpisode(ep) {
   parsedTitle.value = ep.title || '视频'
   useYtDlp.value = true
   handleYtDlpExtract(videoUrl.value.trim())
+}
+
+// ==================== 下载 / 转MP3 ====================
+// 通过后端 yt-dlp 下载视频（或转音频 MP3）
+async function downloadVideo(audioOnly = false) {
+  const url = videoUrl.value?.trim()
+  if (!url) {
+    ElMessage.warning('请先加载视频')
+    return
+  }
+  if (downloading.value) return
+  downloading.value = true
+  try {
+    const res = await fetch('/staticTool/api/video-parse/ytdlp/download', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        url,
+        audioOnly,
+        title: parsedTitle.value || 'video'
+      })
+    })
+
+    if (!res.ok) {
+      let msg = '下载失败'
+      try {
+        const data = await res.json()
+        msg = data.message || data.detail || msg
+      } catch { /* ignore */ }
+      ElMessage.error(msg)
+      return
+    }
+
+    // 触发浏览器下载
+    const blob = await res.blob()
+    const disposition = res.headers.get('Content-Disposition') || ''
+    const fileName = decodeURIComponent((disposition.match(/filename\*=UTF-8''(.+)/) || [])[1] || (audioOnly ? 'audio.mp3' : 'video.mp4'))
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = fileName
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(a.href)
+    ElMessage.success(audioOnly ? 'MP3 转换完成，已开始下载' : '视频下载完成')
+  } catch (err) {
+    console.error('[download]', err)
+    ElMessage.error('下载失败，请检查后端连接')
+  } finally {
+    downloading.value = false
+  }
+}
+
+// ==================== B站扫码登录 ====================
+function openBiliLogin() {
+  showBiliLogin.value = true
+  biliLoginStatus.value = ''
+  refreshBiliQr()
+}
+
+function closeBiliLogin() {
+  showBiliLogin.value = false
+  if (biliQrTimer.value) {
+    clearInterval(biliQrTimer.value)
+    biliQrTimer.value = null
+  }
+}
+
+async function refreshBiliQr() {
+  biliQrLoading.value = true
+  biliLoginStatus.value = ''
+  biliQrUrl.value = ''
+  biliQrImg.value = ''
+  try {
+    const res = await fetch('/staticTool/api/video-parse/ytdlp/bili-qrcode', { method: 'POST' })
+    const data = await res.json()
+    if (data.code !== 0 || !data.data?.url) {
+      ElMessage.error(data.message || '获取二维码失败')
+      return
+    }
+    biliQrUrl.value = data.data.url
+    biliQrKey.value = data.data.qrcodeKey
+    // 本地生成二维码图片（Canvas → DataURL）
+    biliQrImg.value = await QRCode.toDataURL(data.data.url, { width: 240, margin: 1, color: { dark: '#000', light: '#fff' } })
+    biliQrStatusText.value = '等待扫码'
+    startBiliPolling()
+  } catch (err) {
+    console.error('[bili-login]', err)
+    ElMessage.error('获取二维码失败，请检查后端连接')
+  } finally {
+    biliQrLoading.value = false
+  }
+}
+
+function startBiliPolling() {
+  if (biliQrTimer.value) clearInterval(biliQrTimer.value)
+  // 每 3 秒轮询一次
+  biliQrTimer.value = setInterval(async () => {
+    if (!biliQrKey.value || !showBiliLogin.value) return
+    try {
+      const res = await fetch(`/staticTool/api/video-parse/ytdlp/bili-qrcode/status?qrcodeKey=${biliQrKey.value}`)
+      const data = await res.json()
+      const status = data.data?.status
+      if (status === 'success') {
+        clearInterval(biliQrTimer.value)
+        biliQrTimer.value = null
+        biliLoginStatus.value = 'success'
+        // 使用后端验证结果设置状态
+        const isValid = data.data?.valid !== false // 后端验证通过或未验证都视为有效
+        biliLogged.value = true
+        biliCookieValid.value = isValid
+        biliNickname.value = data.data?.nickname || 'B站用户'
+        biliLoginMessage.value = data.data?.message || `登录成功，欢迎 ${biliNickname.value}`
+        // 等 2 秒让用户看到成功提示，然后自动关闭弹窗
+        setTimeout(() => {
+          if (showBiliLogin.value) {
+            showBiliLogin.value = false
+          }
+        }, 2000)
+      } else if (status === 'scanned') {
+        biliQrStatusText.value = '已扫码，请在手机上确认'
+      } else if (status === 'pending') {
+        biliQrStatusText.value = '等待扫码'
+      } else if (status === 'expired') {
+        clearInterval(biliQrTimer.value)
+        biliQrTimer.value = null
+        biliQrStatusText.value = '二维码已过期，请刷新'
+      }
+    } catch (err) {
+      console.error('[bili-login poll]', err)
+    }
+  }, 3000)
+}
+
+async function checkBiliLoginStatus() {
+  const wasLoggedIn = biliLogged.value
+  try {
+    const res = await fetch('/staticTool/api/video-parse/ytdlp/cookies/bilibili')
+    const data = await res.json()
+    const configured = !!data.data?.configured
+    const valid = data.data?.valid ?? null
+
+    if (!wasLoggedIn) {
+      // 刷新后首次检查：后端返回 configured=true 但 valid=false（cookie 过期）
+      // 此时不该显示"登录失效"（用户本就没登录过），统一显示"B站登录"
+      if (configured && valid === false) {
+        biliLogged.value = false
+        biliCookieValid.value = null
+      } else {
+        biliLogged.value = configured
+        biliCookieValid.value = valid
+      }
+      biliNickname.value = data.data?.nickname || ''
+    } else {
+      // 已登录：只接受正向更新，不把有效降级为失效
+      // 扫码成功是最优验证，后端 cookie 检查可能因存储延迟等原因不一致
+      if (valid === true) {
+        biliCookieValid.value = true
+        biliNickname.value = data.data?.nickname || biliNickname.value
+      }
+      if (configured === false) {
+        // cookie 文件丢了才降级
+        biliLogged.value = false
+        biliCookieValid.value = false
+      }
+    }
+  } catch (err) {
+    console.error('[bili-login status]', err)
+    if (!wasLoggedIn) {
+      biliLogged.value = false
+      biliCookieValid.value = false
+    }
+  }
 }
 
 // ==================== 链接解析回调 ====================
@@ -850,6 +1127,10 @@ onBeforeUnmount(() => {
     hls.destroy()
     hls = null
   }
+  if (biliQrTimer.value) {
+    clearInterval(biliQrTimer.value)
+    biliQrTimer.value = null
+  }
 })
 </script>
 
@@ -881,15 +1162,44 @@ onBeforeUnmount(() => {
 .page-header {
   text-align: center;
   margin-bottom: 36px;
-  // padding-top: 24px;
   padding-bottom: 24px;
   border-bottom: 1px solid #f1f5f9;
+}
+.input-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  gap: 12px;
 }
 .back-btn { 
   flex-shrink: 0;
   padding: 8px 16px;
   font-size: 14px;
   font-weight: 500;
+}
+.bili-login-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6366f1;
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  &:hover { background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); transform: translateY(-1px); box-shadow: 0 2px 8px rgba(99,102,241,0.15); }
+  &:active { transform: translateY(0); }
+  &.bili-expired {
+    color: #dc2626;
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    &:hover { background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); box-shadow: 0 2px 8px rgba(220,38,38,0.12); }
+  }
 }
 .header-center { text-align: center; }
 
@@ -1050,6 +1360,23 @@ onBeforeUnmount(() => {
   color: #d97706;
 }
 .ytdlp-duration { font-size: 12px; color: #94a3b8; }
+.download-actions { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.dl-btn {
+  padding: 4px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #4b5563;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+  &:hover:not(:disabled) {
+    border-color: #6366f1;
+    color: #6366f1;
+  }
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+}
 .line-switcher { display: flex; align-items: center; gap: 6px; }
 .line-label { font-size: 12px; color: #94a3b8; }
 .line-btn {
@@ -1238,6 +1565,8 @@ onBeforeUnmount(() => {
   .line-btn { padding: 4px 10px; font-size: 11px; }
   .input-mode-switch { border-radius: 10px; }
   .input-mode-btn { padding: 6px 14px; font-size: 12px; }
+  .input-toolbar { gap: 8px; }
+  .bili-login-btn { padding: 6px 10px; font-size: 12px; }
   .video-wrapper { aspect-ratio: 16 / 9.5; }
   .line-manage-panel {
     box-sizing: border-box;
@@ -1272,6 +1601,8 @@ onBeforeUnmount(() => {
   .line-btn { padding: 3px 8px; font-size: 11px; }
   .input-mode-switch { border-radius: 8px; }
   .input-mode-btn { padding: 5px 12px; font-size: 11px; border-radius: 6px; }
+  .input-toolbar { gap: 6px; }
+  .bili-login-btn { padding: 5px 8px; font-size: 11px; gap: 3px; }
   .fallback-btn { padding: 8px 16px; font-size: 13px; }
   .line-manage-panel {
     overflow: hidden;
@@ -1392,6 +1723,16 @@ html.dark-mode .vip-video-parse-page {
 
   .page-header { border-bottom-color: #2d2d4a; }
   .page-desc { color: #94a3b8; }
+  .bili-login-btn {
+    color: #a78bfa;
+    background: linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(167,139,250,0.12) 100%);
+    &:hover { background: linear-gradient(135deg, rgba(99,102,241,0.18) 0%, rgba(167,139,250,0.2) 100%); box-shadow: 0 2px 8px rgba(167,139,250,0.12); }
+    &.bili-expired {
+      color: #f87171;
+      background: linear-gradient(135deg, rgba(220,38,38,0.1) 0%, rgba(239,68,68,0.08) 100%);
+      &:hover { background: linear-gradient(135deg, rgba(220,38,38,0.16) 0%, rgba(239,68,68,0.14) 100%); box-shadow: 0 2px 8px rgba(239,68,68,0.1); }
+    }
+  }
 
   .input-mode-switch { background: #1a1a2e; }
   .input-mode-btn {
@@ -1519,5 +1860,98 @@ html.dark-mode .vip-video-parse-page {
     padding: 0 12px 12px;
     box-sizing: border-box;
   }
+}
+
+// ==================== B站扫码登录弹窗 ====================
+.bili-login-dialog .el-dialog__body {
+  padding: 20px;
+}
+.bili-login-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-height: 300px;
+  justify-content: center;
+}
+.bili-login-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #64748b;
+  font-size: 14px;
+}
+.bili-login-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.bili-qr-img {
+  width: 200px;
+  height: 200px;
+  border: 1px solid #e8ecf1;
+  border-radius: 8px;
+  padding: 8px;
+  background: #fff;
+}
+.bili-qr-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #6366f1;
+  margin: 0;
+}
+.bili-login-tip {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 0;
+}
+.bili-refresh-btn {
+  margin-top: 4px;
+  padding: 5px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #4b5563;
+  background: #fff;
+  cursor: pointer;
+  &:hover { border-color: #6366f1; color: #6366f1; }
+}
+.bili-login-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  p { margin: 0; font-size: 15px; font-weight: 600; color: #0f172a; }
+  .bili-login-sub { font-size: 13px; font-weight: 400; color: #94a3b8; }
+}
+.bili-login-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: #ef4444;
+  font-size: 14px;
+  p { margin: 0; }
+}
+
+// 统一深色模式下所有 tab 的 input placeholder 颜色
+// 注意：input::placeholder 必须用 input 元素作为后代选择器（不能用 .search-video-panel 直接套），否则 scoped 后无法匹配
+// 统一深色模式下所有 input placeholder 颜色（高优先级选择器覆盖 scoped 编译）
+html.dark-mode .vip-video-parse-page .url-input::placeholder,
+html.dark-mode .vip-video-parse-page .fused-input::placeholder,
+html.dark-mode .vip-video-parse-page input::placeholder {
+  color: #4a4d56 !important;
+  opacity: 1 !important;
+}
+
+// 统一深色模式下所有 tab 的使用指南描述颜色
+// 必须用多重选择器确保优先级高于各组件 scoped 编译后的 [data-v-xxx] 选择器
+html.dark-mode .vip-video-parse-page .search-guide .guide-desc,
+html.dark-mode .vip-video-parse-page .guide-desc {
+  color: #6b7280 !important;
 }
 </style>

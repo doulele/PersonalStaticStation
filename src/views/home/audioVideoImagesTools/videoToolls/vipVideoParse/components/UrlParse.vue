@@ -5,7 +5,7 @@
       <div class="parse-fused">
         <input
           v-model="videoUrl"
-          class="url-input"
+          class="url-parse-input"
           placeholder="粘贴视频播放链接（支持腾讯、爱奇艺、优酷、芒果等）"
           @keydown.enter="handleParse"
         />
@@ -56,29 +56,8 @@
         <button class="manage-lines-btn" @click="$emit('showLineManage')" title="管理解析路径">
           <el-icon :size="16"><Setting /></el-icon>
         </button>
-        <button class="parse-btn" :disabled="!videoUrl.trim()" :class="{ loading: parsing || ytDlpExtracting }" @click="handleParse">
-          <span>{{ parsing || ytDlpExtracting ? (useYtDlp ? '提取中' : '解析中') : '解析' }}</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- 提取方式切换（第二行） -->
-    <div class="parse-mode-switch" v-if="ytDlpAvailable">
-      <span class="mode-label">提取方式：</span>
-      <div class="mode-toggle">
-        <button
-          class="mode-btn"
-          :class="{ active: !useYtDlp }"
-          :disabled="parsing || ytDlpExtracting"
-          @click="useYtDlp = false"
-        >第三方解析</button>
-        <button
-          class="mode-btn"
-          :class="{ active: useYtDlp }"
-          :disabled="parsing || ytDlpExtracting"
-          @click="useYtDlp = true"
-        >
-          <span class="ytdlp-icon">⬇</span> yt-dlp 直链
+        <button class="parse-btn" :disabled="!videoUrl.trim()" :class="{ loading: parsing }" @click="handleParse">
+          <span>{{ parsing ? '解析中' : '解析' }}</span>
         </button>
       </div>
     </div>
@@ -96,11 +75,8 @@
       <button class="history-line-clear" @click="clearHistory">清空</button>
     </div>
 
-    <!-- 播放窗口（插槽） -->
-    <slot name="player"></slot>
-
     <!-- 使用指南 -->
-    <div class="search-guide" v-if="!parsing && !showPlayer">
+    <div class="search-guide" v-if="!parsing">
       <div class="guide-header">使用指南</div>
       <div class="guide-list">
         <div class="guide-item">
@@ -163,16 +139,12 @@ const props = defineProps({
   userLines: { type: Array, default: () => [] },
   apiHealthMap: { type: Object, default: () => ({}) },
   healthChecking: { type: Boolean, default: false },
-  ytDlpAvailable: { type: Boolean, default: false },
-  useYtDlp: { type: Boolean, default: false },
   parsing: { type: Boolean, default: false },
-  ytDlpExtracting: { type: Boolean, default: false },
-  selectedLineIndex: { type: Number, default: 0 },
-  showPlayer: { type: Boolean, default: false }
+  selectedLineIndex: { type: Number, default: 0 }
 })
 
 const emit = defineEmits([
-  'update:useYtDlp', 'update:selectedLineIndex',
+  'update:selectedLineIndex',
   'parse', 'checkApiHealth', 'selectLine', 'showLineManage',
   'clearHistory', 'replayFromHistory'
 ])
@@ -182,11 +154,12 @@ const lineDropdownOpen = ref(false)
 
 // 快捷跳转平台
 const quickJumpSites = [
+  { name: '哔哩哔哩', url: 'https://www.bilibili.com', icon: '📺' },
   { name: '腾讯视频', url: 'https://v.qq.com', icon: '🐧' },
-  { name: '爱奇艺', url: 'https://www.iqiyi.com', icon: '🥝' },
   { name: '优酷', url: 'https://www.youku.com', icon: '▶' },
   { name: '芒果TV', url: 'https://www.mgtv.com', icon: '🥭' },
-  { name: '哔哩哔哩', url: 'https://www.bilibili.com', icon: '📺' }
+  { name: '爱奇艺', url: 'https://www.iqiyi.com', icon: '🥝' },
+  { name: '搜狐视频', url: 'https://tv.sohu.com', icon: '🦊' }
 ]
 
 const history = ref(loadHistory())
@@ -239,8 +212,8 @@ function handleParse() {
     ElMessage.warning('请输入有效的视频链接（以 http:// 或 https:// 开头）')
     return
   }
-  // 标题由父组件通过后端/dmku 自动获取
-  emit('parse', { url, useYtDlp: props.useYtDlp, title: '' })
+  // 链接解析统一走第三方解析；标题由父组件通过后端/dmku 自动获取
+  emit('parse', { url, useYtDlp: false, title: '' })
   // 历史记录由父组件 index.vue 统一管理
 }
 
@@ -291,7 +264,7 @@ function reloadHistory() {
   margin-bottom: 12px;
 }
 .input-icon { color: #94a3b8; margin: 0 12px 0 16px; flex-shrink: 0; align-self: center; }
-.url-input {
+.url-parse-input {
   flex: 1; border: none; outline: none; font-size: 16px; color: #0f172a; background: transparent; min-width: 0; padding: 14px 16px;
   &::placeholder { color: #94a3b8; }
 }
@@ -420,36 +393,6 @@ function reloadHistory() {
 
 .dropdown-fade-enter-active, .dropdown-fade-leave-active { transition: all 0.2s ease; }
 .dropdown-fade-enter-from, .dropdown-fade-leave-to { opacity: 0; transform: translateY(-6px); }
-
-// 解析模式切换
-.parse-mode-switch {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin: 16px 0 14px;
-  flex-wrap: wrap;
-}
-.mode-label { font-size: 13px; color: #64748b; font-weight: 500; }
-.mode-toggle { display: flex; background: #f1f5f9; border-radius: 10px; padding: 3px; }
-.mode-btn {
-  padding: 7px 18px;
-  border: none;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #64748b;
-  background: transparent;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  &:hover:not(:disabled) { color: #6366f1; }
-  &.active { background: #fff; color: #6366f1; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-  &:disabled { cursor: not-allowed; opacity: 0.6; }
-}
-.ytdlp-icon { font-size: 11px; }
 
 .parse-btn {
   display: inline-flex;
@@ -609,13 +552,11 @@ function reloadHistory() {
 // 响应式
 @media (max-width: 768px) {
   .parse-fused { border-radius: 12px; }
-  .url-input { font-size: 15px; }
+  .url-parse-input { font-size: 15px; }
   .input-icon { margin-right: 8px; }
   .parse-btn { padding: 0 14px; font-size: 14px; }
   .line-select-trigger { padding: 0 12px; font-size: 13px; }
   .manage-lines-btn { width: 36px; }
-  .parse-mode-switch { gap: 6px; }
-  .mode-btn { padding: 5px 14px; font-size: 12px; }
   .history-section { padding: 14px; margin-bottom: 20px; }
   .history-header h3 { font-size: 14px; }
   .history-item { padding: 8px 10px; }
@@ -630,7 +571,7 @@ function reloadHistory() {
 
 @media (max-width: 480px) {
   .parse-fused { border-radius: 12px; }
-  .url-input { font-size: 14px; &::placeholder { font-size: 12px; } }
+  .url-parse-input { font-size: 14px; &::placeholder { font-size: 12px; } }
   .input-icon { margin-right: 6px; }
   .parse-btn { padding: 0 12px; font-size: 13px; gap: 4px; }
   .line-select-trigger { font-size: 12px; padding: 0 10px; }
@@ -646,6 +587,11 @@ function reloadHistory() {
   .guide-step { font-size: 13px; }
   .guide-title { font-size: 13px; }
   .guide-desc { font-size: 11px; }
+  .guide-body {
+    flex-direction: column;
+    gap: 2px;
+  }
+  .guide-title { white-space: normal; }
 }
 
 // 深色模式已迁移至下方独立 <style lang="scss"> 块（不 scoped），与 VideoName.vue 保持一致
@@ -655,12 +601,9 @@ function reloadHistory() {
 html.dark-mode .url-parse-panel {
   .parse-fused { background: #1a1a2e; border-color: #2d2d4a; }
   .input-icon { color: #6b7280; }
-  .url-input { color: #e2dee9; &::placeholder { color: #6b7280; } }
+  .url-parse-input { color: #e2dee9; }
   .clear-icon { color: #6b7280; &:hover { color: #cbd5e1; } }
   .fused-divider { background: #2d2d4a; }
-  .parse-mode-switch .mode-toggle { background: #1a1a2e; }
-  .mode-label { color: #94a3b8; }
-  .mode-btn { color: #6b7280; &.active { background: #252540; color: #a78bfa; } }
   .line-select-trigger {
     &:hover, &.open { background: #252540; }
     &:hover .selected-line-name, &.open .selected-line-name { color: #a78bfa; }
