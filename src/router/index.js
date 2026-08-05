@@ -78,6 +78,13 @@ const routes = [
         meta: { title: '大道七线股诊', icon: 'DataLine' }
       },
       /**股票及基金end */
+      /**跟党走start */
+      {
+        path: 'fund/national-team',
+        component: () => import('@/views/home/fundStockTools/nationalTeam/index.vue'),
+        meta: { title: '跟党走·国家队动向监测', icon: 'DataLine' }
+      },
+      /**跟党走end */
       /**彩票分析 — 归入生活服务目录下 */
       {
         path: 'lifeServices/lottery',

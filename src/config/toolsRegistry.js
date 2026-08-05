@@ -71,6 +71,15 @@ export const ALL_TOOLS = [
     icon: 'TrendCharts',
     color: 'green'
   },
+  {
+    id: 'national-team',
+    name: '跟党走·国家队动向',
+    desc: '监测宽基ETF份额变化，倒推国家队进出场时机',
+    category: 'fund',
+    path: '/home/fund/national-team',
+    icon: 'Flag',
+    color: 'red'
+  },
   // 注意：以下两个是详情页，不在首页热门工具展示，不参与点击统计
   // stock-detail: 妖股详情 (/home/fund/stock-detail)
   // dadao-detail: 大道七线股诊 (/home/fund/dadao-detail)
