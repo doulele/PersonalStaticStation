@@ -93,7 +93,8 @@
               <!-- 下载 / 转MP3 -->
               <span v-if="useYtDlp && videoUrl && ytDlpStreamUrl" class="download-actions">
                 <button class="dl-btn" @click="downloadVideo(false)" :disabled="downloading">下载视频</button>
-                <button class="dl-btn" @click="downloadVideo(true)" :disabled="downloading">{{ downloading ? '处理中...' : '转MP3' }}</button>
+                <button class="dl-btn dl-btn-nw" v-if="needNoWatermark" @click="downloadNoWatermark()" :disabled="downloadingNoWM">{{ downloadingNoWM ? '处理中...' : '无水印下载' }}</button>
+                <button class="dl-btn" @click="downloadVideo(true)" :disabled="downloading">转MP3</button>
               </span>
               <!-- 第三方解析线路切换 -->
               <div class="line-switcher" v-if="!useYtDlp && userLines.length > 1">
@@ -162,18 +163,60 @@
             </div>
           </div>
         </div>
-        <button
-          v-show="activeTab === 'search'"
-          class="bili-login-btn"
-          :class="{ 'bili-expired': biliLogged && biliCookieValid === false }"
-          @click="openBiliLogin"
-          :title="biliButtonTitle"
-        >
-          <el-icon :size="14"><component :is="biliButtonIcon" /></el-icon>
-          <span>{{ biliButtonText }}</span>
-        </button>
       </div>
+    </div>
 
+    <!-- 使用指南 -->
+    <div v-show="activeTab === 'search'" class="search-guide">
+      <div class="guide-header">使用指南</div>
+      <div class="guide-list">
+        <div class="guide-item">
+          <span class="guide-step">1、</span>
+          <div class="guide-body">
+            <span class="guide-title">搜索片源</span>
+            <span class="guide-desc">输入关键词即可搜索全网视频，支持中文、英文和拼音</span>
+          </div>
+        </div>
+        <div class="guide-item">
+          <span class="guide-step">2、</span>
+          <div class="guide-body">
+            <span class="guide-title">平台筛选</span>
+            <span class="guide-desc">B站支持名称搜索；抖音、快手、好看视频、微视可粘贴链接直接播放</span>
+          </div>
+        </div>
+        <div class="guide-item">
+          <span class="guide-step">3、</span>
+          <div class="guide-body">
+            <span class="guide-title">粘贴链接播放</span>
+            <span class="guide-desc">直接粘贴抖音、快手、B站、好看视频、微视等视频链接即可播放</span>
+          </div>
+        </div>
+        <div class="guide-item">
+          <span class="guide-step">4、</span>
+          <div class="guide-body">
+            <span class="guide-title">备用方案</span>
+            <span class="guide-desc">如短视频无法播放，可切换至链接解析或VIP视频标签页尝试其他方式观看</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 快捷跳转 -->
+    <div v-show="activeTab === 'search'" class="quick-jump-section">
+      <div class="quick-jump-header">快捷跳转</div>
+      <div class="quick-jump-grid">
+        <a
+          v-for="site in quickJumpSites"
+          :key="site.name"
+          :href="site.url"
+          target="_blank"
+          rel="noopener"
+          class="quick-jump-card"
+        >
+          <span class="quick-jump-icon">{{ site.icon }}</span>
+          <span class="quick-jump-name">{{ site.name }}</span>
+        </a>
+      </div>
     </div>
 
     <!-- B站扫码登录弹窗 -->
@@ -329,6 +372,14 @@ const parsedTitle = ref('')
 const currentLine = ref(0)
 const videoUrl = ref('')
 const downloading = ref(false)
+const downloadingNoWM = ref(false)
+
+// 是否需要无水印下载（抖音/快手等短视频平台）
+const needNoWatermark = computed(() => {
+  const url = videoUrl.value || ''
+  return url.includes('douyin.com') || url.includes('iesdouyin.com')
+    || url.includes('kuaishou.com') || url.includes('gifshow.com')
+})
 
 // ==================== B站扫码登录 ====================
 const showBiliLogin = ref(false)
@@ -447,6 +498,15 @@ const ytDlpError = ref('')
 const ytDlpExtractHint = ref('')
 const videoPlayer = ref(null)
 const parsing = ref(false)
+
+// 快捷跳转
+const quickJumpSites = [
+  { name: '哔哩哔哩', url: 'https://www.bilibili.com', icon: '📺' },
+  { name: '抖音', url: 'https://www.douyin.com', icon: '🎵' },
+  { name: '快手', url: 'https://www.kuaishou.com', icon: '🎬' },
+  { name: '好看视频', url: 'https://haokan.baidu.com', icon: '🎞️' },
+  { name: '微视', url: 'https://weishi.qq.com', icon: '📱' }
+]
 
 async function checkYtDlpStatus() {
   try {
@@ -682,6 +742,55 @@ async function downloadVideo(audioOnly = false) {
   }
 }
 
+// 无水印下载（抖音/快手等短视频平台）
+async function downloadNoWatermark() {
+  const url = videoUrl.value?.trim()
+  if (!url) {
+    ElMessage.warning('请先加载视频')
+    return
+  }
+  if (downloadingNoWM.value) return
+  downloadingNoWM.value = true
+  try {
+    const res = await fetch('/staticTool/api/video-parse/ytdlp/no-watermark-download', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        url,
+        title: parsedTitle.value || 'video'
+      })
+    })
+
+    if (!res.ok) {
+      let msg = '无水印下载失败'
+      try {
+        const data = await res.json()
+        msg = data.message || data.detail || msg
+      } catch { /* ignore */ }
+      ElMessage.error(msg)
+      return
+    }
+
+    const blob = await res.blob()
+    const disposition = res.headers.get('Content-Disposition') || ''
+    const fileName = decodeURIComponent((disposition.match(/filename\*=UTF-8''(.+)/) || [])[1] || 'video_无水印.mp4')
+
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = fileName
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(a.href)
+    ElMessage.success('无水印视频下载完成')
+  } catch (err) {
+    console.error('[no-watermark download]', err)
+    ElMessage.error('无水印下载失败，请检查后端连接')
+  } finally {
+    downloadingNoWM.value = false
+  }
+}
+
 // ==================== B站扫码登录 ====================
 function openBiliLogin() {
   showBiliLogin.value = true
@@ -738,16 +847,20 @@ function startBiliPolling() {
         biliLoginStatus.value = 'success'
         // 使用后端验证结果设置状态
         const isValid = data.data?.valid !== false // 后端验证通过或未验证都视为有效
+        const hasNickname = !!data.data?.nickname
         biliLogged.value = true
         biliCookieValid.value = isValid
         biliNickname.value = data.data?.nickname || 'B站用户'
         biliLoginMessage.value = data.data?.message || `登录成功，欢迎 ${biliNickname.value}`
-        // 等 2 秒让用户看到成功提示，然后自动关闭弹窗
-        setTimeout(() => {
-          if (showBiliLogin.value) {
-            showBiliLogin.value = false
-          }
-        }, 2000)
+        // 只有验证通过且有真实昵称（完全成功）才自动关闭弹窗
+        // 有错误时让用户看到提示，手动关闭
+        if (isValid && hasNickname) {
+          setTimeout(() => {
+            if (showBiliLogin.value) {
+              showBiliLogin.value = false
+            }
+          }, 2000)
+        }
       } else if (status === 'scanned') {
         biliQrStatusText.value = '已扫码，请在手机上确认'
       } else if (status === 'pending') {
@@ -1192,7 +1305,13 @@ onBeforeUnmount(() => {
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
+  max-width: 180px;
   transition: all 0.2s;
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   &:hover { background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); transform: translateY(-1px); box-shadow: 0 2px 8px rgba(99,102,241,0.15); }
   &:active { transform: translateY(0); }
   &.bili-expired {
@@ -1376,6 +1495,16 @@ onBeforeUnmount(() => {
     color: #6366f1;
   }
   &:disabled { opacity: 0.6; cursor: not-allowed; }
+}
+.dl-btn-nw {
+  border-color: #f97316;
+  color: #f97316;
+  background: #fff7ed;
+  &:hover:not(:disabled) {
+    border-color: #ea580c;
+    color: #ea580c;
+    background: #ffedd5;
+  }
 }
 .line-switcher { display: flex; align-items: center; gap: 6px; }
 .line-label { font-size: 12px; color: #94a3b8; }
@@ -1566,7 +1695,7 @@ onBeforeUnmount(() => {
   .input-mode-switch { border-radius: 10px; }
   .input-mode-btn { padding: 6px 14px; font-size: 12px; }
   .input-toolbar { gap: 8px; }
-  .bili-login-btn { padding: 6px 10px; font-size: 12px; }
+  .bili-login-btn { padding: 6px 10px; font-size: 12px; max-width: 140px; }
   .video-wrapper { aspect-ratio: 16 / 9.5; }
   .line-manage-panel {
     box-sizing: border-box;
@@ -1602,7 +1731,7 @@ onBeforeUnmount(() => {
   .input-mode-switch { border-radius: 8px; }
   .input-mode-btn { padding: 5px 12px; font-size: 11px; border-radius: 6px; }
   .input-toolbar { gap: 6px; }
-  .bili-login-btn { padding: 5px 8px; font-size: 11px; gap: 3px; }
+  .bili-login-btn { padding: 5px 8px; font-size: 11px; gap: 3px; max-width: 110px; }
   .fallback-btn { padding: 8px 16px; font-size: 13px; }
   .line-manage-panel {
     overflow: hidden;
@@ -1948,10 +2077,175 @@ html.dark-mode .vip-video-parse-page input::placeholder {
   opacity: 1 !important;
 }
 
+// 暗黑模式下 B站登录成功弹窗文字颜色
+html.dark-mode .bili-login-success {
+  p { color: #e2dee9 !important; }
+  .bili-login-sub { color: #9ca3af !important; }
+}
+
+// ==================== 使用指南（短视频搜索 Tab） ====================
+.search-guide {
+  margin-top: 20px;
+  margin-bottom: 28px;
+  padding: 18px 20px;
+  background: #fff;
+  border: 1px solid #e8ecf4;
+  border-radius: 12px;
+  animation: fadeIn 0.3s ease;
+}
+.guide-header {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 14px;
+}
+.guide-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.guide-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+}
+.guide-step {
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #475569;
+}
+.guide-body {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.guide-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.guide-desc {
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
 // 统一深色模式下所有 tab 的使用指南描述颜色
 // 必须用多重选择器确保优先级高于各组件 scoped 编译后的 [data-v-xxx] 选择器
 html.dark-mode .vip-video-parse-page .search-guide .guide-desc,
 html.dark-mode .vip-video-parse-page .guide-desc {
   color: #6b7280 !important;
+}
+
+// 使用指南——暗黑模式
+html.dark-mode .vip-video-parse-page {
+  .search-guide {
+    background: #1a1a2e; border-color: #2d2d4a;
+  }
+  .guide-header { color: #e2dee9; }
+  .guide-step { color: #94a3b8; }
+  .guide-title { color: #e2dee9; }
+}
+
+// 使用指南——响应式平板
+@media (max-width: 768px) {
+  .search-guide { padding: 14px; }
+  .guide-header { font-size: 14px; }
+  .guide-step { font-size: 13px; }
+  .guide-title { font-size: 13px; }
+  .guide-desc { font-size: 12px; }
+}
+
+// 使用指南——响应式手机
+@media (max-width: 480px) {
+  .search-guide { margin-top: 14px; padding: 14px; }
+  .guide-header { font-size: 14px; margin-bottom: 12px; }
+  .guide-list { gap: 8px; }
+  .guide-step { font-size: 13px; }
+  .guide-title { font-size: 13px; }
+  .guide-desc { font-size: 11px; }
+  .guide-body {
+    flex-direction: column;
+    gap: 2px;
+  }
+  .guide-title { white-space: normal; }
+}
+
+// ==================== 快捷跳转 ====================
+.quick-jump-section {
+  margin-top: 12px;
+  margin-bottom: 20px;
+  padding: 18px 20px;
+  background: #fff;
+  border: 1px solid #e8ecf4;
+  border-radius: 12px;
+}
+.quick-jump-header {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 14px;
+}
+.quick-jump-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+}
+.quick-jump-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  &:nth-child(1) { background: linear-gradient(135deg, #fb7299, #fc8bab); }
+  &:nth-child(2) { background: linear-gradient(135deg, #1e293b, #04d9ff); }
+  &:nth-child(3) { background: linear-gradient(135deg, #ff6b00, #ff8c36); }
+  &:nth-child(4) { background: linear-gradient(135deg, #3b82f6, #6366f1); }
+  &:nth-child(5) { background: linear-gradient(135deg, #22c55e, #4ade80); }
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+.quick-jump-icon { font-size: 16px; flex-shrink: 0; }
+.quick-jump-name { white-space: nowrap; }
+
+// 快捷跳转——暗黑模式
+html.dark-mode .vip-video-parse-page {
+  .quick-jump-section { background: #1a1a2e; border-color: #2d2d4a; }
+  .quick-jump-header { color: #e2dee9; }
+  .quick-jump-card {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    &:nth-child(2) {
+      box-shadow: 0 0 10px rgba(4, 217, 255, 0.25), 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+  }
+}
+
+// 快捷跳转——响应式平板
+@media (max-width: 768px) {
+  .quick-jump-section { padding: 14px; }
+  .quick-jump-header { font-size: 14px; }
+  .quick-jump-card { padding: 8px 10px; font-size: 12px; }
+}
+
+// 快捷跳转——响应式手机
+@media (max-width: 480px) {
+  .quick-jump-section { margin-top: 10px; padding: 12px; }
+  .quick-jump-header { font-size: 14px; margin-bottom: 10px; }
+  .quick-jump-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .quick-jump-card { padding: 8px 6px; font-size: 11px; gap: 4px; }
+  .quick-jump-icon { font-size: 13px; }
 }
 </style>

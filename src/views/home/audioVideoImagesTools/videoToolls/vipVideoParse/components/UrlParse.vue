@@ -485,6 +485,7 @@ function reloadHistory() {
   &:nth-child(3) { background: linear-gradient(135deg, #3b82f6, #6366f1); }
   &:nth-child(4) { background: linear-gradient(135deg, #f59e0b, #f97316); }
   &:nth-child(5) { background: linear-gradient(135deg, #ec4899, #f472b6); }
+  &:nth-child(6) { background: linear-gradient(135deg, #d97706, #fbbf24); }
   &:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -630,8 +631,9 @@ html.dark-mode .url-parse-panel {
   .quick-jump-section { background: #1a1a2e; border-color: #2d2d4a; }
   .quick-jump-header { color: #e2dee9; }
   .quick-jump-card {
-    background: #1e1e32; border-color: #2d2d4a; color: #94a3b8;
-    &:hover { border-color: #7c3aed; color: #a78bfa; background: #2d2d50; }
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    &:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45); }
   }
   .search-guide { background: #1a1a2e; border-color: #2d2d4a; }
   .guide-header { color: #e2dee9; }

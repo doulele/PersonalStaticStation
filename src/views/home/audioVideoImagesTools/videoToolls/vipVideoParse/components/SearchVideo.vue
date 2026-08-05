@@ -212,40 +212,6 @@
       <button class="history-line-clear" @click="clearSearchHistory">清空</button>
     </div>
 
-    <!-- 使用指南（与 VIP 视频保持一致） -->
-    <div class="search-guide">
-      <div class="guide-header">使用指南</div>
-      <div class="guide-list">
-        <div class="guide-item">
-          <span class="guide-step">1、</span>
-          <div class="guide-body">
-            <span class="guide-title">搜索片源</span>
-            <span class="guide-desc">输入关键词即可搜索全网视频，支持中文、英文和拼音</span>
-          </div>
-        </div>
-        <div class="guide-item">
-          <span class="guide-step">2、</span>
-          <div class="guide-body">
-            <span class="guide-title">平台筛选</span>
-            <span class="guide-desc">B站支持名称搜索；抖音、快手、好看视频、微视可粘贴链接直接播放</span>
-          </div>
-        </div>
-        <div class="guide-item">
-          <span class="guide-step">3、</span>
-          <div class="guide-body">
-            <span class="guide-title">粘贴链接播放</span>
-            <span class="guide-desc">直接粘贴抖音、快手、B站、好看视频、微视等视频链接即可播放</span>
-          </div>
-        </div>
-        <div class="guide-item">
-          <span class="guide-step">4、</span>
-          <div class="guide-body">
-            <span class="guide-title">备用方案</span>
-            <span class="guide-desc">如短视频无法播放，可切换至链接解析或VIP视频标签页尝试其他方式观看</span>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -387,17 +353,49 @@ function quickSearch(kw) {
   handleSearch()
 }
 
+// 根据 URL 自动识别所属平台
+const platformUrlPatterns = [
+  { platform: 'douyin', hosts: ['douyin.com', 'iesdouyin.com'] },
+  { platform: 'kuaishou', hosts: ['kuaishou.com', 'gifshow.com'] },
+  { platform: 'bilibili', hosts: ['bilibili.com', 'b23.tv', 'bilibili.tv'] },
+  { platform: 'haokan', hosts: ['haokan.baidu.com'] },
+  { platform: 'weishi', hosts: ['weishi.qq.com'] }
+]
+function detectPlatformFromUrl(str) {
+  // 直接检查是否包含已知平台域名，不强制要求 http(s):// 前缀
+  // 用户经常粘贴不带协议的链接（如 douyin.com/video/xxx）
+  const match = platformUrlPatterns.find(p => p.hosts.some(h => str.includes(h)))
+  return match ? match.platform : null
+}
+
+// 输入变化时，如果识别到链接则自动切换平台下拉
+watch(searchQuery, (val) => {
+  const url = (val || '').trim()
+  const detected = detectPlatformFromUrl(url)
+  if (detected) {
+    // 识别到链接 → 自动切换对应平台
+    searchPlatform.value = detected
+  } else if (!url) {
+    // 清空输入框 → 回到默认B站
+    if (searchPlatform.value !== 'bilibili') {
+      searchPlatform.value = 'bilibili'
+    }
+  } else {
+    // 非链接文本（名称搜索）→ 只有B站支持，自动切到B站
+    searchPlatform.value = 'bilibili'
+  }
+})
+
 // 判断输入是否为支持直链播放的视频链接（抖音/快手/B站等）
 function looksLikeVideoUrl(str) {
-  if (!/^https?:\/\/.+/i.test(str.trim())) return false
-  const hosts = [
-    'douyin.com', 'iesdouyin.com',           // 抖音
-    'kuaishou.com', 'gifshow.com',           // 快手
-    'bilibili.com', 'b23.tv', 'bilibili.tv', // B站
-    'haokan.baidu.com',                      // 好看视频
-    'weishi.qq.com'                          // 微视
-  ]
-  return hosts.some(h => str.includes(h))
+  return !!detectPlatformFromUrl(str)
+}
+
+// 补全缺失的协议前缀
+function normalizeVideoUrl(str) {
+  const s = str.trim()
+  if (/^https?:\/\//i.test(s)) return s
+  return 'https://' + s.replace(/^\/+/, '')
 }
 
 async function handleSearch() {
@@ -409,7 +407,8 @@ async function handleSearch() {
 
   // 识别输入是否为视频链接，是则直接走 yt-dlp 提取播放
   if (looksLikeVideoUrl(q)) {
-    playEpisode({ id: '', title: '粘贴的视频', webpageUrl: q, thumbnail: '' })
+    const url = normalizeVideoUrl(q)
+    playEpisode({ id: '', title: '粘贴的视频', webpageUrl: url, thumbnail: '' })
     return
   }
 
@@ -946,58 +945,6 @@ defineExpose({
   &:hover { color: #ef4444; }
 }
 
-// ==================== 使用指南 ====================
-.search-guide {
-  margin-top: 20px;
-  margin-bottom: 28px;
-  padding: 18px 20px;
-  background: #fff;
-  border: 1px solid #e8ecf4;
-  border-radius: 12px;
-  animation: fadeIn 0.3s ease;
-}
-.guide-header {
-  font-size: 15px;
-  font-weight: 700;
-  color: #0f172a;
-  margin-bottom: 14px;
-}
-.guide-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.guide-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 2px;
-}
-.guide-step {
-  flex-shrink: 0;
-  font-size: 14px;
-  font-weight: 700;
-  color: #475569;
-}
-.guide-body {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  min-width: 0;
-  flex-wrap: wrap;
-}
-.guide-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #0f172a;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.guide-desc {
-  font-size: 13px;
-  color: #94a3b8;
-  line-height: 1.4;
-}
-
 // 响应式 - 平板
 @media (max-width: 768px) {
   .search-row { border-radius: 12px; }
@@ -1019,11 +966,6 @@ defineExpose({
   .history-header h3 { font-size: 14px; }
   .history-item { padding: 8px 10px; }
   .history-title { font-size: 13px; }
-  .search-guide { padding: 14px; }
-  .guide-header { font-size: 14px; }
-  .guide-step { font-size: 13px; }
-  .guide-title { font-size: 13px; }
-  .guide-desc { font-size: 12px; }
 }
 
 // 响应式 - 手机
@@ -1051,17 +993,6 @@ defineExpose({
   .card-duration { font-size: 10px; bottom: 4px; right: 4px; }
   .history-section { margin-top: 16px; margin-bottom: 16px; padding: 12px; }
   .history-index { width: 22px; height: 22px; font-size: 11px; }
-  .search-guide { margin-top: 14px; padding: 14px; }
-  .guide-header { font-size: 14px; margin-bottom: 12px; }
-  .guide-list { gap: 8px; }
-  .guide-step { font-size: 13px; }
-  .guide-title { font-size: 13px; }
-  .guide-desc { font-size: 11px; }
-  .guide-body {
-    flex-direction: column;
-    gap: 2px;
-  }
-  .guide-title { white-space: normal; }
 }
 
 // 深色模式
@@ -1160,21 +1091,6 @@ defineExpose({
     color: #64748b;
     &:hover { color: #f87171; }
   }
-  .search-guide {
-    background: #1a1a2e; border-color: #2d2d4a;
-  }
-  .guide-header { color: #e2dee9; }
-  .guide-item { background: transparent; }
-  .guide-step { color: #94a3b8; }
-  .guide-title { color: #e2dee9; }
-  // .guide-desc { opacity: 0.5; }
 }
 </style>
 
-
-<style>
-/* SearchVideo 深色模式硬覆盖：绕过 scoped 编译 */
-html.dark-mode .search-video-panel .guide-desc {
-  opacity: 0.5 !important;
-}
-</style>
