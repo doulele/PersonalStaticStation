@@ -45,6 +45,19 @@
         </div>
       </router-link>
 
+      <router-link to="/home/fund/national-team" class="tool-card" @click="recordToolClick('/home/fund/national-team')">
+        <div class="tool-card-inner">
+          <div class="tool-icon red">
+            <el-icon :size="32"><Flag /></el-icon>
+          </div>
+          <div class="tool-info">
+            <h3 class="tool-name">跟党走·国家队动向</h3>
+            <p class="tool-desc">监测宽基ETF份额变化，倒推国家队进出场时机</p>
+          </div>
+          <el-icon class="tool-arrow"><ArrowRight /></el-icon>
+        </div>
+      </router-link>
+
       <!-- 详情页：大道七线股诊 — 不在热门工具展示，不参与点击统计 -->
       <router-link to="/home/fund/dadao-detail" class="tool-card">
         <div class="tool-card-inner">
@@ -63,7 +76,7 @@
 </template>
 
 <script setup>
-import { ArrowRight, DataLine, TrendCharts, Filter } from '@element-plus/icons-vue'
+import { ArrowRight, DataLine, TrendCharts, Filter, Flag } from '@element-plus/icons-vue'
 import { recordToolClick } from '@/api/stats'
 </script>
 
@@ -181,6 +194,10 @@ import { recordToolClick } from '@/api/stats'
 
   &.orange {
     background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+  }
+
+  &.red {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   }
 }
 
