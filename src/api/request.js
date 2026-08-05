@@ -95,7 +95,11 @@ function getOldAuthToken() {
  */
 export function get(endpoint, params = {}) {
   let url = endpoint
-  const query = new URLSearchParams(params).toString()
+  // 过滤掉 undefined/null 值，避免序列化为 "undefined" 字符串
+  const cleanParams = Object.fromEntries(
+    Object.entries(params).filter(([, v]) => v !== undefined && v !== null)
+  )
+  const query = new URLSearchParams(cleanParams).toString()
   if (query) {
     url += `?${query}`
   }
