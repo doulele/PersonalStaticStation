@@ -12,7 +12,7 @@
         </span>
         <span v-if="statusData.lastUpdate" class="nt-update-time">更新于 {{ statusData.lastUpdate }}</span>
         <el-button type="primary" :loading="triggering" :disabled="triggering" @click="handleTrigger" round>
-          <el-icon><Refresh /></el-icon> {{ triggering ? triggerStatus : '🔄 立即刷新数据' }}
+          <el-icon><Refresh /></el-icon> {{ triggering ? triggerStatus : '立即刷新数据' }}
         </el-button>
         <el-date-picker
           v-model="selectedDate"
@@ -760,25 +760,26 @@ onUnmounted(() => {
 
 <style lang="scss" scoped>
 .nt-page {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 20px 24px;
   color: #e0e0e0;
+  overflow-x: hidden;
 }
 
 // Hero
 .nt-hero {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 12px;
+  margin-bottom: 20px;
 }
-.nt-title { font-size: 26px; font-weight: 700; color: #f0f0f0; }
-.nt-subtitle { font-size: 13px; color: #999; margin-top: 6px; }
+.nt-title { font-size: 22px; font-weight: 700; color: #f0f0f0; }
+.nt-subtitle { font-size: 12px; color: #999; margin-top: 4px; }
 .nt-hero-right {
-  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
 }
 .nt-source-badge {
   padding: 4px 12px; border-radius: 12px; font-size: 12px;
@@ -789,24 +790,25 @@ onUnmounted(() => {
 
 // Signal Card
 .nt-signal-card {
-  display: flex; gap: 40px; padding: 28px 32px;
+  display: flex; gap: 24px; padding: 24px;
   background: linear-gradient(135deg, #1a1d2e 0%, #1e2135 100%);
-  border: 1px solid #2a2d3e; border-radius: 16px; margin-bottom: 24px;
+  border: 1px solid #2a2d3e; border-radius: 16px; margin-bottom: 20px;
   align-items: center; flex-wrap: wrap;
 }
-.nt-signal-main { display: flex; align-items: center; gap: 28px; }
+.nt-signal-main { display: flex; align-items: center; gap: 20px; }
 .nt-score-ring {
-  width: 110px; height: 110px; border-radius: 50%;
+  width: 90px; height: 90px; border-radius: 50%;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   border: 3px solid #333;
+  flex-shrink: 0;
   &.extreme-low { border-color: #ff4757; box-shadow: 0 0 20px #ff475730; }
   &.low { border-color: #ff6b81; }
   &.normal { border-color: #ffa502; }
   &.high { border-color: #1e90ff; }
   &.extreme-high { border-color: #ff4757; box-shadow: 0 0 20px #ff475730; }
 }
-.nt-score-num { font-size: 32px; font-weight: 800; color: #f0f0f0; }
-.nt-score-label { font-size: 11px; color: #888; margin-top: 2px; }
+.nt-score-num { font-size: 28px; font-weight: 800; color: #f0f0f0; }
+.nt-score-label { font-size: 10px; color: #888; margin-top: 1px; }
 .nt-signal-level { font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
 .nt-signal-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 .nt-signal-suggestion { font-size: 14px; color: #bbb; margin-top: 8px; line-height: 1.5; max-width: 400px; }
@@ -823,67 +825,69 @@ onUnmounted(() => {
 
 // Stats Row
 .nt-stats-row {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px; margin-bottom: 24px;
+  display: grid; grid-template-columns: repeat(6, 1fr);
+  gap: 10px; margin-bottom: 20px;
+  @media (max-width: 900px) { grid-template-columns: repeat(3, 1fr); }
 }
 .nt-stat-card {
-  background: #1a1d2e; border: 1px solid #2a2d3e; border-radius: 12px;
-  padding: 16px; text-align: center;
+  background: #1a1d2e; border: 1px solid #2a2d3e; border-radius: 10px;
+  padding: 12px 8px; text-align: center;
 }
-.nt-stat-val { display: block; font-size: 22px; font-weight: 700; color: #f0f0f0; }
-.nt-stat-lbl { font-size: 11px; color: #888; margin-top: 4px; display: block; }
+.nt-stat-val { display: block; font-size: 18px; font-weight: 700; color: #f0f0f0; }
+.nt-stat-lbl { font-size: 11px; color: #888; margin-top: 2px; display: block; }
 
 // Tabs
-.nt-tabs-section { margin-bottom: 24px; }
-.nt-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.nt-tabs-section { margin-bottom: 20px; }
+.nt-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; }
 .nt-tab-btn {
-  padding: 8px 18px; border: 1px solid #2a2d3e; border-radius: 10px;
-  background: #1a1d2e; color: #999; font-size: 13px; cursor: pointer;
-  display: flex; align-items: center; gap: 6px; transition: all 0.2s;
+  padding: 6px 14px; border: 1px solid #2a2d3e; border-radius: 8px;
+  background: #1a1d2e; color: #999; font-size: 12px; cursor: pointer;
+  display: flex; align-items: center; gap: 5px; transition: all 0.2s;
   &:hover { border-color: #444; color: #ddd; }
   &.active { background: #2a2d4e; border-color: #3b82f6; color: #3b82f6; font-weight: 600; }
 }
-.nt-tab-icon { font-size: 16px; }
+.nt-tab-icon { font-size: 14px; }
 .nt-tab-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 .nt-agency-note {
   font-size: 12px; color: #666; display: flex; align-items: center; gap: 6px;
 }
 
 // Section title
-.nt-section-title { font-size: 16px; font-weight: 600; color: #ddd; margin-bottom: 16px; }
+.nt-section-title { font-size: 15px; font-weight: 600; color: #ddd; margin-bottom: 12px; }
 
 // ETF Charts Grid
-.nt-charts-section { margin-bottom: 24px; }
+.nt-charts-section { margin-bottom: 20px; }
 .nt-etf-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
-  @media (max-width: 1100px) { grid-template-columns: repeat(2, 1fr); }
-  @media (max-width: 700px) { grid-template-columns: 1fr; }
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  @media (max-width: 1000px) { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 650px) { grid-template-columns: 1fr; }
 }
 .nt-etf-chart-item {
-  background: #1a1d2e; border: 1px solid #2a2d3e; border-radius: 12px;
-  padding: 12px; transition: border-color 0.3s;
+  background: #1a1d2e; border: 1px solid #2a2d3e; border-radius: 10px;
+  padding: 10px; transition: border-color 0.3s;
   &.highlighted { border-color: #f59e0b50; box-shadow: 0 0 12px #f59e0b10; }
 }
-.nt-etf-chart-header { display: flex; gap: 8px; align-items: baseline; margin-bottom: 8px; }
-.nt-etf-code { font-size: 15px; font-weight: 700; color: #f0f0f0; }
-.nt-etf-name { font-size: 12px; color: #888; }
-.nt-etf-chart { width: 100%; height: 200px; }
+.nt-etf-chart-header { display: flex; gap: 6px; align-items: baseline; margin-bottom: 4px; }
+.nt-etf-code { font-size: 14px; font-weight: 700; color: #f0f0f0; }
+.nt-etf-name { font-size: 11px; color: #888; }
+.nt-etf-chart { width: 100%; height: 170px; }
 
 // Bottom Charts
 .nt-bottom-charts {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;
-  @media (max-width: 900px) { grid-template-columns: 1fr; }
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px;
+  @media (max-width: 800px) { grid-template-columns: 1fr; }
 }
 .nt-bottom-chart-panel {
-  background: #1a1d2e; border: 1px solid #2a2d3e; border-radius: 12px;
-  padding: 18px;
+  background: #1a1d2e; border: 1px solid #2a2d3e; border-radius: 10px;
+  padding: 14px;
+  min-width: 0;
 }
-.nt-big-chart { width: 100%; height: 340px; }
+.nt-big-chart { width: 100%; height: 300px; }
 
 // Backtest
 .nt-backtest {
-  background: #1a1d2e; border: 1px solid #2a2d3e; border-radius: 12px;
-  padding: 20px 24px; margin-bottom: 24px;
+  background: #1a1d2e; border: 1px solid #2a2d3e; border-radius: 10px;
+  padding: 16px 20px; margin-bottom: 20px;
 }
 .nt-backtest-row { display: flex; gap: 20px; flex-wrap: wrap; }
 .nt-backtest-item { text-align: center; padding: 12px 20px; background: #1e2135; border-radius: 10px; }
@@ -894,7 +898,7 @@ onUnmounted(() => {
 
 // Footer
 .nt-footer {
-  text-align: center; padding: 20px; font-size: 12px; color: #555; line-height: 1.8;
-  border-top: 1px solid #222; margin-top: 32px;
+  text-align: center; padding: 16px; font-size: 11px; color: #555; line-height: 1.8;
+  border-top: 1px solid #222; margin-top: 24px;
 }
 </style>
