@@ -75,8 +75,11 @@
       <button class="history-line-clear" @click="clearHistory">清空</button>
     </div>
 
+    <!-- 视频播放区（由父组件 slot 注入，放在历史下方） -->
+    <slot name="player"></slot>
+
     <!-- 使用指南 -->
-    <div class="search-guide" v-if="!parsing">
+    <div class="search-guide" v-if="!parsing && !showPlayer">
       <div class="guide-header">使用指南</div>
       <div class="guide-list">
         <div class="guide-item">
@@ -140,7 +143,8 @@ const props = defineProps({
   apiHealthMap: { type: Object, default: () => ({}) },
   healthChecking: { type: Boolean, default: false },
   parsing: { type: Boolean, default: false },
-  selectedLineIndex: { type: Number, default: 0 }
+  selectedLineIndex: { type: Number, default: 0 },
+  showPlayer: { type: Boolean, default: false }
 })
 
 const emit = defineEmits([

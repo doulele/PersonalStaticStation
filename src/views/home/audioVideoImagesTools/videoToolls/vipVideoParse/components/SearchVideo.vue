@@ -54,7 +54,7 @@
         <h3 class="search-loading-title">正在搜索中...</h3>
         <p class="search-loading-query">"{{ searchQuery }}"</p>
         <p class="search-loading-platform">
-          搜索范围：{{ { auto: 'B站', bilibili: 'B站', douyin: '抖音', kuaishou: '快手', haokan: '好看视频', weishi: '微视' }[searchPlatform] || 'B站' }}
+          搜索范围：{{ { auto: 'B站', bilibili: 'B站', douyin: '抖音', kuaishou: '快手', haokan: '好看视频' }[searchPlatform] || 'B站' }}
         </p>
         <div class="search-loading-progress">
           <div class="progress-bar">
@@ -76,7 +76,7 @@
           </span>
         </h3>
         <span class="search-platform-badge">{{ {
-          auto: '自动', bilibili: 'B站', douyin: '抖音', kuaishou: '快手', haokan: '好看视频', weishi: '微视'
+          auto: '自动', bilibili: 'B站', douyin: '抖音', kuaishou: '快手', haokan: '好看视频'
         }[searchPlatform] || '自动' }}</span>
       </div>
 
@@ -212,6 +212,9 @@
       <button class="history-line-clear" @click="clearSearchHistory">清空</button>
     </div>
 
+    <!-- 视频播放区（由父组件 slot 注入，放在搜索框和历史下方） -->
+    <slot name="player"></slot>
+
   </div>
 </template>
 
@@ -232,15 +235,13 @@ const platformOptions = [
   { value: 'bilibili', label: 'B站' },
   { value: 'douyin', label: '抖音' },
   { value: 'kuaishou', label: '快手' },
-  { value: 'haokan', label: '好看视频' },
-  { value: 'weishi', label: '微视' }
+  { value: 'haokan', label: '好看视频' }
 ]
 const platformLabelMap = {
   bilibili: 'B站',
   douyin: '抖音',
   kuaishou: '快手',
-  haokan: '好看视频',
-  weishi: '微视'
+  haokan: '好看视频'
 }
 function selectPlatform(val) {
   searchPlatform.value = val
@@ -259,7 +260,7 @@ const loadingPlaylists = ref(new Set())
 const playingEpisodeId = ref('')
 
 // 不支持名称搜索的平台（yt-dlp 无对应名称搜索协议）
-const unsupportedPlatforms = new Set(['douyin', 'kuaishou', 'haokan', 'weishi'])
+const unsupportedPlatforms = new Set(['douyin', 'kuaishou', 'haokan'])
 const isUnsupportedPlatform = computed(() => unsupportedPlatforms.has(searchPlatform.value))
 
 const totalEpisodes = computed(() => {
@@ -358,8 +359,7 @@ const platformUrlPatterns = [
   { platform: 'douyin', hosts: ['douyin.com', 'iesdouyin.com'] },
   { platform: 'kuaishou', hosts: ['kuaishou.com', 'gifshow.com'] },
   { platform: 'bilibili', hosts: ['bilibili.com', 'b23.tv', 'bilibili.tv'] },
-  { platform: 'haokan', hosts: ['haokan.baidu.com'] },
-  { platform: 'weishi', hosts: ['weishi.qq.com'] }
+  { platform: 'haokan', hosts: ['haokan.baidu.com'] }
 ]
 function detectPlatformFromUrl(str) {
   // 直接检查是否包含已知平台域名，不强制要求 http(s):// 前缀
@@ -412,8 +412,8 @@ async function handleSearch() {
     return
   }
 
-  // 抖音/快手/好看/微视无名称搜索协议，提示粘贴链接
-  if (['douyin', 'kuaishou', 'haokan', 'weishi'].includes(searchPlatform.value)) {
+  // 抖音/快手/好看无名称搜索协议，提示粘贴链接
+  if (['douyin', 'kuaishou', 'haokan'].includes(searchPlatform.value)) {
     ElMessage.warning(`${platformLabelMap[searchPlatform.value]}暂不支持名称搜索，请粘贴视频链接直接播放`)
     return
   }
@@ -649,7 +649,7 @@ defineExpose({
 .search-loading-query { font-size: 15px; color: #6366f1; font-weight: 600; margin: 0 0 4px; word-break: break-all; }
 .search-loading-platform { font-size: 13px; color: #94a3b8; margin: 0 0 24px; }
 .search-loading-progress {
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   .progress-bar {
     height: 6px;
     background: #e2e8f0;
@@ -674,7 +674,7 @@ defineExpose({
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   h3 { font-size: 18px; font-weight: 600; color: #0f172a; margin: 0; }
   .result-count { font-size: 13px; color: #94a3b8; font-weight: 400; }
 }
@@ -1085,6 +1085,23 @@ defineExpose({
   .history-line { color: #94a3b8; }
   .history-label { color: #64748b; }
   .history-item {
+    &:hover { color: #a78bfa; }
+  }
+  .history-line-clear {
+    color: #64748b;
+    &:hover { color: #f87171; }
+  }
+}
+</style>
+
+<style lang="scss">
+/* 暗黑模式（不 scoped，与 UrlParse.vue 保持一致） */
+html.dark-mode .search-video-panel {
+  .history-line { color: #94a3b8; }
+  .history-label { color: #64748b; }
+  .history-item {
+    color: #94a3b8;
+    &::after { color: #64748b; }
     &:hover { color: #a78bfa; }
   }
   .history-line-clear {

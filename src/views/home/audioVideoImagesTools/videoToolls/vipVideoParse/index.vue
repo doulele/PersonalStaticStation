@@ -51,123 +51,205 @@
         :health-checking="healthChecking"
         :parsing="parsing"
         :selected-line-index="selectedLineIndex"
+        :show-player="showPlayer"
         @update:selected-line-index="selectedLineIndex = $event"
         @parse="onUrlParse"
         @check-api-health="checkApiHealth"
         @show-line-manage="showLineManage = true"
-      />
+      >
+        <!-- 链接解析 Tab：播放器通过 slot 放在历史下方（仅当前 tab 渲染） -->
+        <template v-if="showPlayer && activeTab === 'url'" #player>
+          <div class="player-section player-section--inline">
+            <div class="player-container">
+              <div class="player-header">
+                <div class="player-header-top">
+                  <div class="player-title-wrap">
+                    <el-icon :size="18"><VideoPlay /></el-icon>
+                    <span class="player-title">{{ parsedTitle || '正在播放' }}</span>
+                  </div>
+                  <button class="player-close" @click="closePlayer" title="关闭播放器">
+                    <el-icon :size="18"><Close /></el-icon>
+                  </button>
+                </div>
+                <div class="player-header-bottom">
+                  <span v-if="parsingStatusText" class="parsing-status" :class="{ 'parsing-error': !parsing && parsingStatusText.includes('无法') }">
+                    <span v-if="parsing" class="parsing-spinner"></span>
+                    {{ parsingStatusText }}
+                    <button v-if="parsing && autoTryingLine >= 0" class="stop-auto-btn" @click="stopAutoTry()">停止</button>
+                  </span>
+                  <span v-if="ytDlpVideoInfo" class="ytdlp-info">
+                    <span class="ytdlp-badge">yt-dlp</span>
+                    <span v-if="ytDlpVideoInfo.durationString" class="ytdlp-duration">{{ ytDlpVideoInfo.durationString }}</span>
+                  </span>
+                  <span v-if="useYtDlp && videoUrl && ytDlpStreamUrl" class="download-actions">
+                    <button class="dl-btn" @click="downloadVideo(false)" :disabled="downloading">下载视频</button>
+                    <button class="dl-btn dl-btn-nw" v-if="needNoWatermark" @click="downloadNoWatermark()" :disabled="downloadingNoWM">{{ downloadingNoWM ? '处理中...' : '无水印下载' }}</button>
+                    <button class="dl-btn" @click="downloadVideo(true)" :disabled="downloading">转MP3</button>
+                  </span>
+                  <div class="line-switcher" v-if="!useYtDlp && userLines.length > 1">
+                    <span class="line-label">播放线路：</span>
+                    <button
+                      v-for="(line, idx) in userLines"
+                      :key="idx"
+                      class="line-btn"
+                      :class="{ active: currentLine === idx }"
+                      @click="currentLine = idx"
+                    >{{ line.name }}</button>
+                  </div>
+                </div>
+              </div>
+              <div v-if="useYtDlp && ytDlpStreamUrl" class="video-wrapper">
+                <video
+                  ref="videoPlayer"
+                  class="video-player-native"
+                  controls
+                  playsinline
+                  webkit-playsinline
+                  x5-playsinline
+                  x5-video-player-type="h5"
+                  x5-video-player-fullscreen="false"
+                  preload="auto"
+                ></video>
+              </div>
+              <div v-else-if="useYtDlp && ytDlpExtracting" class="video-wrapper">
+                <div class="video-placeholder extracting">
+                  <el-icon class="is-loading" :size="48"><Loading /></el-icon>
+                  <p>yt-dlp 正在提取视频流...</p>
+                  <span class="extract-hint">{{ ytDlpExtractHint }}</span>
+                </div>
+              </div>
+              <div v-else-if="useYtDlp && ytDlpError" class="video-wrapper">
+                <div class="video-placeholder error">
+                  <el-icon :size="48"><WarningFilled /></el-icon>
+                  <p>提取失败</p>
+                  <span class="error-detail">{{ ytDlpError }}</span>
+                  <button class="fallback-btn" @click="switchToThirdParty">切换到第三方解析</button>
+                </div>
+              </div>
+              <div v-else-if="!useYtDlp" class="video-wrapper">
+                <iframe
+                  v-if="currentPlayUrl"
+                  :key="parseSessionId"
+                  :src="currentPlayUrl"
+                  class="video-iframe"
+                  frameborder="0"
+                  allowfullscreen
+                  allow="autoplay; encrypted-media"
+                  sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                  @load="onIframeLoad"
+                ></iframe>
+                <div v-else class="video-placeholder">
+                  <el-icon :size="64"><VideoCamera /></el-icon>
+                  <p>输入视频链接开始播放</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+      </UrlParse>
 
-      <!-- 短视频搜索 Tab -->
+    </div>
+
+    <!-- 短视频搜索 Tab（播放器放在搜索框和历史下方） -->
+    <div v-if="activeTab === 'search'" class="search-video-below-player" :class="{ 'has-player': showPlayer }">
       <SearchVideo
-        v-show="activeTab === 'search'"
         ref="searchVideoRef"
         @switch-mode="switchTab"
         @play-episode="onSearchPlayEpisode"
-      />
-
-      <!-- 视频播放区（独立于 tab，短视频/链接解析均可播放） -->
-      <div v-if="showPlayer" class="player-section">
-        <div class="player-container">
-          <div class="player-header">
-            <div class="player-header-top">
-              <div class="player-title-wrap">
-                <el-icon :size="18"><VideoPlay /></el-icon>
-                <span class="player-title">{{ parsedTitle || '正在播放' }}</span>
+      >
+        <!-- 短视频 Tab：播放器通过 slot 放在搜索框和历史下方（仅当前 tab 渲染） -->
+        <template v-if="showPlayer && activeTab === 'search'" #player>
+          <div class="player-section player-section--inline">
+            <div class="player-container">
+              <div class="player-header">
+                <div class="player-header-top">
+                  <div class="player-title-wrap">
+                    <el-icon :size="18"><VideoPlay /></el-icon>
+                    <span class="player-title">{{ parsedTitle || '正在播放' }}</span>
+                  </div>
+                  <button class="player-close" @click="closePlayer" title="关闭播放器">
+                    <el-icon :size="18"><Close /></el-icon>
+                  </button>
+                </div>
+                <div class="player-header-bottom">
+                  <span v-if="parsingStatusText" class="parsing-status" :class="{ 'parsing-error': !parsing && parsingStatusText.includes('无法') }">
+                    <span v-if="parsing" class="parsing-spinner"></span>
+                    {{ parsingStatusText }}
+                    <button v-if="parsing && autoTryingLine >= 0" class="stop-auto-btn" @click="stopAutoTry()">停止</button>
+                  </span>
+                  <span v-if="ytDlpVideoInfo" class="ytdlp-info">
+                    <span class="ytdlp-badge">yt-dlp</span>
+                    <span v-if="ytDlpVideoInfo.durationString" class="ytdlp-duration">{{ ytDlpVideoInfo.durationString }}</span>
+                  </span>
+                  <span v-if="useYtDlp && videoUrl && ytDlpStreamUrl" class="download-actions">
+                    <button class="dl-btn" @click="downloadVideo(false)" :disabled="downloading">下载视频</button>
+                    <button class="dl-btn dl-btn-nw" v-if="needNoWatermark" @click="downloadNoWatermark()" :disabled="downloadingNoWM">{{ downloadingNoWM ? '处理中...' : '无水印下载' }}</button>
+                    <button class="dl-btn" @click="downloadVideo(true)" :disabled="downloading">转MP3</button>
+                  </span>
+                  <div class="line-switcher" v-if="!useYtDlp && userLines.length > 1">
+                    <span class="line-label">播放线路：</span>
+                    <button
+                      v-for="(line, idx) in userLines"
+                      :key="idx"
+                      class="line-btn"
+                      :class="{ active: currentLine === idx }"
+                      @click="currentLine = idx"
+                    >{{ line.name }}</button>
+                  </div>
+                </div>
               </div>
-              <button class="player-close" @click="closePlayer" title="关闭播放器">
-                <el-icon :size="18"><Close /></el-icon>
-              </button>
-            </div>
-            <div class="player-header-bottom">
-              <!-- 自动线路尝试状态 -->
-              <span v-if="parsingStatusText" class="parsing-status" :class="{ 'parsing-error': !parsing && parsingStatusText.includes('无法') }">
-                <span v-if="parsing" class="parsing-spinner"></span>
-                {{ parsingStatusText }}
-                <button v-if="parsing && autoTryingLine >= 0" class="stop-auto-btn" @click="stopAutoTry()">停止</button>
-              </span>
-              <!-- yt-dlp 提取信息 -->
-              <span v-if="ytDlpVideoInfo" class="ytdlp-info">
-                <span class="ytdlp-badge">yt-dlp</span>
-                <span v-if="ytDlpVideoInfo.durationString" class="ytdlp-duration">{{ ytDlpVideoInfo.durationString }}</span>
-              </span>
-              <!-- 下载 / 转MP3 -->
-              <span v-if="useYtDlp && videoUrl && ytDlpStreamUrl" class="download-actions">
-                <button class="dl-btn" @click="downloadVideo(false)" :disabled="downloading">下载视频</button>
-                <button class="dl-btn dl-btn-nw" v-if="needNoWatermark" @click="downloadNoWatermark()" :disabled="downloadingNoWM">{{ downloadingNoWM ? '处理中...' : '无水印下载' }}</button>
-                <button class="dl-btn" @click="downloadVideo(true)" :disabled="downloading">转MP3</button>
-              </span>
-              <!-- 第三方解析线路切换 -->
-              <div class="line-switcher" v-if="!useYtDlp && userLines.length > 1">
-                <span class="line-label">播放线路：</span>
-                <button
-                  v-for="(line, idx) in userLines"
-                  :key="idx"
-                  class="line-btn"
-                  :class="{ active: currentLine === idx }"
-                  @click="currentLine = idx"
-                >{{ line.name }}</button>
+              <div v-if="useYtDlp && ytDlpStreamUrl" class="video-wrapper">
+                <video
+                  ref="videoPlayer"
+                  class="video-player-native"
+                  controls
+                  playsinline
+                  webkit-playsinline
+                  x5-playsinline
+                  x5-video-player-type="h5"
+                  x5-video-player-fullscreen="false"
+                  preload="auto"
+                ></video>
+              </div>
+              <div v-else-if="useYtDlp && ytDlpExtracting" class="video-wrapper">
+                <div class="video-placeholder extracting">
+                  <el-icon class="is-loading" :size="48"><Loading /></el-icon>
+                  <p>yt-dlp 正在提取视频流...</p>
+                  <span class="extract-hint">{{ ytDlpExtractHint }}</span>
+                </div>
+              </div>
+              <div v-else-if="useYtDlp && ytDlpError" class="video-wrapper">
+                <div class="video-placeholder error">
+                  <el-icon :size="48"><WarningFilled /></el-icon>
+                  <p>提取失败</p>
+                  <span class="error-detail">{{ ytDlpError }}</span>
+                </div>
+              </div>
+              <div v-else-if="!useYtDlp" class="video-wrapper">
+                <iframe
+                  v-if="currentPlayUrl"
+                  :key="parseSessionId"
+                  :src="currentPlayUrl"
+                  class="video-iframe"
+                  frameborder="0"
+                  allowfullscreen
+                  allow="autoplay; encrypted-media"
+                  sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                  @load="onIframeLoad"
+                ></iframe>
+                <div v-else class="video-placeholder">
+                  <el-icon :size="64"><VideoCamera /></el-icon>
+                  <p>输入视频链接开始播放</p>
+                </div>
               </div>
             </div>
           </div>
-
-          <!-- yt-dlp 直链播放器 -->
-          <div v-if="useYtDlp && ytDlpStreamUrl" class="video-wrapper">
-            <video
-              ref="videoPlayer"
-              class="video-player-native"
-              controls
-              playsinline
-              webkit-playsinline
-              x5-playsinline
-              x5-video-player-type="h5"
-              x5-video-player-fullscreen="false"
-              preload="auto"
-            ></video>
-          </div>
-
-          <!-- yt-dlp 提取中 -->
-          <div v-else-if="useYtDlp && ytDlpExtracting" class="video-wrapper">
-            <div class="video-placeholder extracting">
-              <el-icon class="is-loading" :size="48"><Loading /></el-icon>
-              <p>yt-dlp 正在提取视频流...</p>
-              <span class="extract-hint">{{ ytDlpExtractHint }}</span>
-            </div>
-          </div>
-
-          <!-- yt-dlp 提取失败 -->
-          <div v-else-if="useYtDlp && ytDlpError" class="video-wrapper">
-            <div class="video-placeholder error">
-              <el-icon :size="48"><WarningFilled /></el-icon>
-              <p>提取失败</p>
-              <span class="error-detail">{{ ytDlpError }}</span>
-              <button class="fallback-btn" @click="switchToThirdParty">切换到第三方解析</button>
-            </div>
-          </div>
-
-          <!-- 第三方解析 iframe 播放 -->
-          <div v-else-if="!useYtDlp" class="video-wrapper">
-            <iframe
-              v-if="currentPlayUrl"
-              :key="parseSessionId"
-              :src="currentPlayUrl"
-              class="video-iframe"
-              frameborder="0"
-              allowfullscreen
-              allow="autoplay; encrypted-media"
-              sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-              @load="onIframeLoad"
-            ></iframe>
-            <div v-else class="video-placeholder">
-              <el-icon :size="64"><VideoCamera /></el-icon>
-              <p>输入视频链接开始播放</p>
-            </div>
-          </div>
-        </div>
-      </div>
+        </template>
+      </SearchVideo>
     </div>
 
     <!-- 使用指南 -->
-    <div v-show="activeTab === 'search'" class="search-guide">
+    <div v-show="activeTab === 'search' && !showPlayer" class="search-guide">
       <div class="guide-header">使用指南</div>
       <div class="guide-list">
         <div class="guide-item">
@@ -181,14 +263,14 @@
           <span class="guide-step">2、</span>
           <div class="guide-body">
             <span class="guide-title">平台筛选</span>
-            <span class="guide-desc">B站支持名称搜索；抖音、快手、好看视频、微视可粘贴链接直接播放</span>
+            <span class="guide-desc">B站支持名称搜索；抖音、快手、好看视频可粘贴链接直接播放</span>
           </div>
         </div>
         <div class="guide-item">
           <span class="guide-step">3、</span>
           <div class="guide-body">
             <span class="guide-title">粘贴链接播放</span>
-            <span class="guide-desc">直接粘贴抖音、快手、B站、好看视频、微视等视频链接即可播放</span>
+            <span class="guide-desc">直接粘贴抖音、快手、B站、好看视频等视频链接即可播放</span>
           </div>
         </div>
         <div class="guide-item">
@@ -355,6 +437,10 @@ const activeTab = ref('name')
 const searchVideoRef = ref(null)
 
 function switchTab(key) {
+  // 切换 tab 时关闭播放器（播放器不跨 tab）
+  if (key !== activeTab.value && showPlayer.value) {
+    closePlayer()
+  }
   activeTab.value = key
   // 切换时清理搜索组件的旧结果
   if (searchVideoRef.value) {
@@ -504,8 +590,7 @@ const quickJumpSites = [
   { name: '哔哩哔哩', url: 'https://www.bilibili.com', icon: '📺' },
   { name: '抖音', url: 'https://www.douyin.com', icon: '🎵' },
   { name: '快手', url: 'https://www.kuaishou.com', icon: '🎬' },
-  { name: '好看视频', url: 'https://haokan.baidu.com', icon: '🎞️' },
-  { name: '微视', url: 'https://weishi.qq.com', icon: '📱' }
+  { name: '好看视频', url: 'https://haokan.baidu.com', icon: '🎞️' }
 ]
 
 async function checkYtDlpStatus() {
@@ -1370,7 +1455,9 @@ onBeforeUnmount(() => {
 }
 
 // Player
-.player-section { margin-top: 12px; margin-bottom: 44px; }
+.player-section { margin-top: 12px; margin-bottom: 12px; }
+.search-video-below-player { margin-top: 0; }
+.search-video-below-player.has-player { margin-top: 24px; }
 
 .player-container {
   background: #fff;
