@@ -156,6 +156,7 @@
         ref="searchVideoRef"
         @switch-mode="switchTab"
         @play-episode="onSearchPlayEpisode"
+        @close-player="closePlayer"
       >
         <!-- 短视频 Tab：播放器通过 slot 放在搜索框和历史下方（仅当前 tab 渲染） -->
         <template v-if="showPlayer && activeTab === 'search'" #player>
@@ -256,25 +257,18 @@
           <span class="guide-step">1、</span>
           <div class="guide-body">
             <span class="guide-title">搜索片源</span>
-            <span class="guide-desc">输入关键词即可搜索全网视频，支持中文、英文和拼音</span>
+            <span class="guide-desc">输入关键词搜索B站视频，支持中文、英文和拼音</span>
           </div>
         </div>
         <div class="guide-item">
           <span class="guide-step">2、</span>
           <div class="guide-body">
             <span class="guide-title">平台筛选</span>
-            <span class="guide-desc">B站支持名称搜索；抖音、快手、好看视频可粘贴链接直接播放</span>
+            <span class="guide-desc">B站支持名称搜索，点击搜索结果中的剧集即可播放</span>
           </div>
         </div>
         <div class="guide-item">
           <span class="guide-step">3、</span>
-          <div class="guide-body">
-            <span class="guide-title">粘贴链接播放</span>
-            <span class="guide-desc">直接粘贴抖音、快手、B站、好看视频等视频链接即可播放</span>
-          </div>
-        </div>
-        <div class="guide-item">
-          <span class="guide-step">4、</span>
           <div class="guide-body">
             <span class="guide-title">备用方案</span>
             <span class="guide-desc">如短视频无法播放，可切换至链接解析或VIP视频标签页尝试其他方式观看</span>
@@ -1274,12 +1268,18 @@ watch(ytDlpStreamUrl, async (url) => {
   const isProxyUrl = url.includes('/proxy-stream/')
 
   if (isM3u8 && Hls.isSupported()) {
+    const isHlsStatic = url.includes('/staticTool/hls/')
     hls = new Hls({
       xhrSetup: (xhr) => {
-        if (!isProxyUrl) {
+        // HLS 静态文件走 nginx，不需要 Referer
+        if (!isProxyUrl && !isHlsStatic) {
           xhr.setRequestHeader('Referer', 'https://www.bilibili.com/')
         }
-      }
+      },
+      // HLS 静态文件（B站转码）可能还在生成中，允许重试
+      manifestLoadingMaxRetry: isHlsStatic ? 30 : 1,
+      manifestLoadingRetryDelay: isHlsStatic ? 3000 : 1000,
+      manifestLoadingTimeOut: isHlsStatic ? 120000 : 10000
     })
     hls.loadSource(url)
     hls.attachMedia(video)
@@ -1291,7 +1291,13 @@ watch(ytDlpStreamUrl, async (url) => {
         console.error('[hls.js fatal]', data.type, data.details)
         switch (data.type) {
           case Hls.ErrorTypes.NETWORK_ERROR:
-            ElMessage.error('网络错误，视频加载失败')
+            if (isHlsStatic && data.details === 'manifestLoadError') {
+              // B站 HLS：后台可能还在生成，让 hls.js 自动重试
+              console.log('[hls.js] manifest 尚未就绪，等待后台生成...')
+            } else {
+              ElMessage.error('网络错误，视频加载失败')
+              hls.destroy()
+            }
             break
           case Hls.ErrorTypes.MEDIA_ERROR:
             hls.recoverMediaError()

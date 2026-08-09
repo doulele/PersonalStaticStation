@@ -3,10 +3,7 @@
     <!-- 不支持名称搜索的平台提示 -->
     <div v-if="isUnsupportedPlatform && !searching" class="platform-search-hint">
       <el-icon :size="16"><WarningFilled /></el-icon>
-      <span>
-        {{ platformLabelMap[searchPlatform] }}暂不支持名称搜索，请粘贴 {{ platformLabelMap[searchPlatform] }} 视频链接直接播放
-      </span>
-      <span class="hint-action" @click="$emit('switchMode', 'url')">也可切换到「链接解析」模式</span>
+      <span>{{ platformLabelMap[searchPlatform] }}链接播放功能开发中，敬请期待</span>
     </div>
 
     <!-- 名称搜索框 -->
@@ -16,7 +13,7 @@
         <input
           v-model="searchQuery"
           class="search-video-input"
-          placeholder="输入名称搜索，或直接粘贴视频链接播放"
+          placeholder="输入名称搜索"
           :disabled="searching"
           @keydown.enter="handleSearch"
         />
@@ -66,7 +63,22 @@
       </div>
     </div>
 
-    <!-- 搜索结果 -->
+    <!-- 搜索历史 -->
+    <div v-if="searchHistory.length" class="history-line">
+      <span class="history-label">历史：</span>
+      <span
+        v-for="(kw, idx) in searchHistory"
+        :key="idx"
+        class="history-item"
+        @click="quickSearch(kw)"
+      >{{ kw }}</span>
+      <button class="history-line-clear" @click="clearSearchHistory">清空</button>
+    </div>
+
+    <!-- 视频播放区（由父组件 slot 注入，放在搜索框、搜索历史下方） -->
+    <slot name="player"></slot>
+
+    <!-- 搜索结果（放在播放器下方） -->
     <div v-if="(searchGroups.length > 0 || searchUngrouped.length > 0)" class="search-results-section">
       <div class="search-results-header">
         <h3>
@@ -81,7 +93,7 @@
       </div>
 
       <!-- 剧集分组卡片 -->
-      <div class="show-groups-list">
+      <div v-if="searchGroups.length > 0" class="show-groups-list">
         <div
           v-for="(group, gi) in searchGroups"
           :key="'g-' + gi"
@@ -200,21 +212,6 @@
       <p>未找到相关视频，请换个关键词试试</p>
     </div>
 
-    <!-- 搜索历史 -->
-    <div v-if="searchHistory.length" class="history-line">
-      <span class="history-label">历史：</span>
-      <span
-        v-for="(kw, idx) in searchHistory"
-        :key="idx"
-        class="history-item"
-        @click="quickSearch(kw)"
-      >{{ kw }}</span>
-      <button class="history-line-clear" @click="clearSearchHistory">清空</button>
-    </div>
-
-    <!-- 视频播放区（由父组件 slot 注入，放在搜索框和历史下方） -->
-    <slot name="player"></slot>
-
   </div>
 </template>
 
@@ -223,7 +220,7 @@ import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { Search, CircleClose, Loading, WarningFilled, ArrowDown, VideoPlay } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
-const emit = defineEmits(['switchMode', 'playEpisode'])
+const emit = defineEmits(['switchMode', 'playEpisode', 'closePlayer'])
 
 // ==================== 搜索状态 ====================
 const searchQuery = ref('')
@@ -386,18 +383,6 @@ watch(searchQuery, (val) => {
   }
 })
 
-// 判断输入是否为支持直链播放的视频链接（抖音/快手/B站等）
-function looksLikeVideoUrl(str) {
-  return !!detectPlatformFromUrl(str)
-}
-
-// 补全缺失的协议前缀
-function normalizeVideoUrl(str) {
-  const s = str.trim()
-  if (/^https?:\/\//i.test(s)) return s
-  return 'https://' + s.replace(/^\/+/, '')
-}
-
 async function handleSearch() {
   const q = searchQuery.value.trim()
   if (!q) {
@@ -405,16 +390,19 @@ async function handleSearch() {
     return
   }
 
-  // 识别输入是否为视频链接，是则直接走 yt-dlp 提取播放
-  if (looksLikeVideoUrl(q)) {
-    const url = normalizeVideoUrl(q)
-    playEpisode({ id: '', title: '粘贴的视频', webpageUrl: url, thumbnail: '' })
-    return
-  }
+  // 每次搜索前：清理旧搜索结果、关闭播放器（换平台/换关键词都重新开始）
+  searchGroups.value = []
+  searchUngrouped.value = []
+  searchNoResult.value = false
+  expandedGroups.value = new Set()
+  groupPlaylists.value = {}
+  loadingPlaylists.value = new Set()
+  playingEpisodeId.value = ''
+  emit('closePlayer')
 
-  // 抖音/快手/好看无名称搜索协议，提示粘贴链接
+  // 抖音/快手/好看链接播放功能开发中
   if (['douyin', 'kuaishou', 'haokan'].includes(searchPlatform.value)) {
-    ElMessage.warning(`${platformLabelMap[searchPlatform.value]}暂不支持名称搜索，请粘贴视频链接直接播放`)
+    ElMessage.warning(`${platformLabelMap[searchPlatform.value]}链接播放功能开发中，敬请期待`)
     return
   }
 
@@ -423,13 +411,6 @@ async function handleSearch() {
   searchTimer = setInterval(() => {
     searchElapsed.value++
   }, 1000)
-  searchGroups.value = []
-  searchUngrouped.value = []
-  searchNoResult.value = false
-  expandedGroups.value = new Set()
-  groupPlaylists.value = {}
-  loadingPlaylists.value = new Set()
-  playingEpisodeId.value = ''
 
   try {
     const res = await fetch('/staticTool/api/video-parse/ytdlp/search', {

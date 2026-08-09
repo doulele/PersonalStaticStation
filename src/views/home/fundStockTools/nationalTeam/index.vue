@@ -1,5 +1,5 @@
 <template>
-  <div class="nt-page">
+  <div class="nt-page" data-nt-page>
     <!-- ==================== 顶部信号总览卡片 ==================== -->
     <section class="nt-hero">
       <div class="nt-hero-left">
@@ -95,20 +95,43 @@
       </div>
     </section>
 
-    <!-- ==================== 机构Tab切换 ==================== -->
+    <!-- ==================== 机构Tab切换 + 图表天数筛选 ==================== -->
     <section class="nt-tabs-section">
-      <div class="nt-tabs">
-        <button
-          v-for="ag in AGENCIES"
-          :key="ag.key"
-          class="nt-tab-btn"
-          :class="{ active: currentAgency === ag.key }"
-          @click="switchAgency(ag.key)"
-        >
-          <span class="nt-tab-icon">{{ ag.icon }}</span>
-          <span class="nt-tab-label">{{ ag.label }}</span>
-          <span v-if="agencySignals[ag.key]" class="nt-tab-dot" :style="{ background: getLevelColor(agencySignals[ag.key].signal_level) }"></span>
-        </button>
+      <div class="nt-tabs-row">
+        <div class="nt-tabs">
+          <button
+            v-for="ag in AGENCIES"
+            :key="ag.key"
+            class="nt-tab-btn"
+            :class="{ active: currentAgency === ag.key }"
+            @click="switchAgency(ag.key)"
+          >
+            <span class="nt-tab-icon">{{ ag.icon }}</span>
+            <span class="nt-tab-label">{{ ag.label }}</span>
+            <span v-if="agencySignals[ag.key]" class="nt-tab-dot" :style="{ background: getLevelColor(agencySignals[ag.key].signal_level) }"></span>
+          </button>
+        </div>
+        <div class="nt-chart-filter">
+          <span class="nt-filter-label">图表范围</span>
+          <el-select v-model="chartDays" @change="onChartDaysChange" size="small" style="width: 110px">
+            <el-option :value="7" label="近7天" />
+            <el-option :value="30" label="近30天" />
+            <el-option :value="90" label="近90天" />
+            <el-option :value="180" label="近180天" />
+            <el-option :value="365" label="近365天" />
+          </el-select>
+          <span class="nt-filter-label">信号等级</span>
+          <el-select v-model="signalFilter" @change="onFilterChange" size="small" style="width: 130px">
+            <el-option value="all" label="全部信号" />
+            <el-option value="buy" label="仅低估(买入)" />
+            <el-option value="sell" label="仅高估(卖出)" />
+          </el-select>
+          <span class="nt-filter-label">ETF显示</span>
+          <el-select v-model="etfShowMode" @change="onFilterChange" size="small" style="width: 140px">
+            <el-option value="all" label="全部ETF" />
+            <el-option value="agency" :label="'仅' + currentAgencyLabel" />
+          </el-select>
+        </div>
       </div>
       <div class="nt-agency-note">
         <el-icon><InfoFilled /></el-icon>
@@ -121,7 +144,7 @@
       <h3 class="nt-section-title">📊 六大核心ETF监测</h3>
       <div class="nt-etf-grid">
         <div
-          v-for="etf in ETFS"
+          v-for="etf in visibleETFs"
           :key="etf.code"
           class="nt-etf-chart-item"
           :class="{ highlighted: isETFFocused(etf.code) }"
@@ -138,7 +161,7 @@
     <!-- ==================== 下方图表区: 对比图 + 热力图 ==================== -->
     <section class="nt-bottom-charts">
       <div class="nt-bottom-chart-panel">
-        <h3 class="nt-section-title">📈 多机构信号对比（近90天）</h3>
+        <h3 class="nt-section-title">📈 多机构信号对比（近{{ chartDays }}天）</h3>
         <div ref="comparisonChartRef" class="nt-big-chart"></div>
       </div>
       <div class="nt-bottom-chart-panel">
@@ -247,6 +270,9 @@ const SIGNAL_LEVEL_CONFIG = {
 const today = new Date().toISOString().slice(0, 10)
 const selectedDate = ref(today)
 const currentAgency = ref('overview')
+const chartDays = ref(90)       // 图表数据范围天数
+const signalFilter = ref('all') // 信号等级筛选: all/buy/sell
+const etfShowMode = ref('all')  // ETF显示模式: all/agency
 const triggering = ref(false)
 const triggerStatus = ref('')
 const signalLoading = ref(true)
@@ -278,6 +304,13 @@ const currentAgencyLabel = computed(() => {
 
 const currentAgencyETFs = computed(() => {
   return AGENCIES.find(a => a.key === currentAgency.value)?.etfs || []
+})
+
+const visibleETFs = computed(() => {
+  if (etfShowMode.value === 'agency') {
+    return ETFS.filter(e => currentAgencyETFs.value.includes(e.code))
+  }
+  return ETFS
 })
 
 const signalLevelConfig = computed(() => {
@@ -322,15 +355,16 @@ function setChartRef(code, el) {
 async function fetchAllData(date) {
   signalLoading.value = true
   const d = date || today
+  const days = chartDays.value
 
   try {
     // 并行获取所有数据
     const [signalRes, etfRes, historyRes, allHistoryRes, anomalyRes, statusRes] = await Promise.all([
       getTodaySignal(d, currentAgency.value),
-      getETFData({ days: 90 }),
-      getSignalHistory(90, currentAgency.value),
-      getSignalHistory(90),  // all agencies
-      getAnomalies(7),
+      getETFData({ days }),
+      getSignalHistory(days, currentAgency.value),
+      getSignalHistory(days),  // all agencies
+      getAnomalies(Math.min(days, 7)),  // 异动列表最多7天
       getStatus()
     ])
 
@@ -338,7 +372,8 @@ async function fetchAllData(date) {
     else signalData.value = null
 
     if (etfRes?.code === 0 && etfRes?.data) allETFData.value = etfRes.data
-    if (historyRes?.code === 0 && historyRes?.data) allHistoryData.value = historyRes.data
+    // allHistoryData 始终用全部机构数据（对比图/热力图/统计需要），historyRes 只用于当前机构的信号卡片
+    if (allHistoryRes?.code === 0 && allHistoryRes?.data) allHistoryData.value = allHistoryRes.data
     if (anomalyRes?.code === 0 && anomalyRes?.data) anomalyData.value = anomalyRes.data
 
     if (statusRes?.code === 0 && statusRes?.data) {
@@ -358,7 +393,7 @@ async function fetchAllData(date) {
       if (r.data) agencySignals[r.key] = r.data
     }
 
-    // 计算统计数据
+    // 计算统计数据（用全部机构数据）
     calcStats(allHistoryRes?.data || [])
 
     // 计算回测
@@ -538,10 +573,18 @@ function renderComparisonChart() {
     return
   }
 
-  const dates = [...new Set(allSignals.map(s => s.date))].sort()
+  // 按信号等级筛选
+  let filteredSignals = allSignals
+  if (signalFilter.value === 'buy') {
+    filteredSignals = allSignals.filter(s => ['extreme_low', 'low'].includes(s.signal_level))
+  } else if (signalFilter.value === 'sell') {
+    filteredSignals = allSignals.filter(s => ['high', 'extreme_high'].includes(s.signal_level))
+  }
+
+  const dates = [...new Set(filteredSignals.map(s => s.date))].sort()
   const series = AGENCIES.map(ag => {
     const map = {}
-    allSignals.filter(s => s.agency === ag.key).forEach(s => { map[s.date] = s.overall_score })
+    filteredSignals.filter(s => s.agency === ag.key).forEach(s => { map[s.date] = s.overall_score })
     return {
       name: ag.label,
       type: 'line',
@@ -574,8 +617,15 @@ function renderHeatmapChart() {
 
   if (!heatmapChart) heatmapChart = echarts.init(el)
 
-  const signals = (allHistoryData.value || [])
+  let signals = (allHistoryData.value || [])
     .filter(s => s.agency === 'overview')
+
+  // 按信号等级筛选
+  if (signalFilter.value === 'buy') {
+    signals = signals.filter(s => ['extreme_low', 'low'].includes(s.signal_level))
+  } else if (signalFilter.value === 'sell') {
+    signals = signals.filter(s => ['high', 'extreme_high'].includes(s.signal_level))
+  }
 
   if (signals.length === 0) {
     heatmapChart.setOption({
@@ -698,11 +748,24 @@ function renderCumulativeChart() {
 
 function switchAgency(key) {
   currentAgency.value = key
+  // 切换机构时如果ETF显示模式为"仅当前机构"，自动更新
+  if (etfShowMode.value === 'agency') {
+    // visibleETFs 自动跟着 currentAgencyETFs 变
+  }
   fetchAllData(selectedDate.value)
 }
 
 function onDateChange(date) {
   fetchAllData(date)
+}
+
+function onChartDaysChange() {
+  fetchAllData(selectedDate.value)
+}
+
+function onFilterChange() {
+  // 信号等级和ETF显示切换无需重新请求数据，直接重渲染图表即可
+  renderAllCharts()
 }
 
 async function handleTrigger() {
@@ -759,15 +822,183 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
+// ===== 浅色模式变量（默认） =====
 .nt-page {
+  --nt-bg: #ffffff;
+  --nt-surface: #f8fafc;
+  --nt-surface-border: #e2e8f0;
+  --nt-surface-hover: #f1f5f9;
+  --nt-text: #1e293b;
+  --nt-text-secondary: #64748b;
+  --nt-text-muted: #94a3b8;
+  --nt-heading: #0f172a;
+  --nt-divider: #e2e8f0;
+  --nt-hero-bg: linear-gradient(135deg, #f0f4ff 0%, #f8fafc 100%);
+  --nt-hero-border: #e2e8f0;
+  --nt-card-bg: #ffffff;
+  --nt-card-border: #e2e8f0;
+  --nt-card-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  --nt-tab-bg: #f1f5f9;
+  --nt-tab-border: #e2e8f0;
+  --nt-tab-text: #64748b;
+  --nt-tab-hover-bg: #e2e8f0;
+  --nt-tab-hover-text: #334155;
+  --nt-tab-active-bg: #eef2ff;
+  --nt-tab-active-border: #6366f1;
+  --nt-tab-active-text: #4f46e5;
+  --nt-score-ring-border: #e2e8f0;
+  --nt-score-num: #0f172a;
+  --nt-score-label: #94a3b8;
+  --nt-signal-text: #334155;
+  --nt-signal-position: #64748b;
+  --nt-factor-label: #64748b;
+  --nt-badge-bg: #f0fdf4;
+  --nt-badge-text: #16a34a;
+  --nt-badge-border: #bbf7d0;
+  --nt-badge-err-bg: #fef2f2;
+  --nt-badge-err-text: #dc2626;
+  --nt-badge-err-border: #fecaca;
+  --nt-stat-bg: #ffffff;
+  --nt-stat-border: #e2e8f0;
+  --nt-stat-val: #1e293b;
+  --nt-stat-lbl: #94a3b8;
+  --nt-chart-bg: #ffffff;
+  --nt-chart-border: #e2e8f0;
+  --nt-chart-grid: #f1f5f9;
+  --nt-empty-bg: #f8fafc;
+  --nt-empty-border: #e2e8f0;
+  --nt-empty-text: #94a3b8;
+  --nt-highlight-border: #f59e0b;
+  --nt-highlight-shadow: 0 0 12px rgba(245,158,11,0.15);
+  --nt-backtest-item-bg: #f8fafc;
+  --nt-backtest-item-border: #e2e8f0;
+  --nt-footer-text: #94a3b8;
+  --nt-footer-border: #e2e8f0;
+
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px 24px;
-  color: #e0e0e0;
+  color: var(--nt-text);
   overflow-x: hidden;
 }
 
-// Hero
+// ===== 移动端 =====
+@media (max-width: 768px) {
+  .nt-page {
+    padding: 12px 10px;
+  }
+
+  // Hero
+  .nt-hero {
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding: 12px 14px;
+  }
+  .nt-title { font-size: 18px; }
+  .nt-subtitle { font-size: 11px; }
+  .nt-hero-right {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 6px;
+    :deep(.el-button) { font-size: 12px; padding: 6px 14px; }
+    :deep(.el-date-picker) { width: 130px !important; }
+  }
+  .nt-source-badge { font-size: 11px; padding: 3px 8px; }
+  .nt-update-time { font-size: 11px; }
+
+  // 信号卡片
+  .nt-signal-card {
+    flex-direction: column;
+    padding: 16px;
+    gap: 14px;
+  }
+  .nt-signal-main { gap: 14px; }
+  .nt-score-ring { width: 72px; height: 72px; }
+  .nt-score-num { font-size: 22px; }
+  .nt-signal-level { font-size: 18px; }
+  .nt-signal-suggestion { font-size: 13px; max-width: 100%; }
+  .nt-signal-position { font-size: 13px; }
+  .nt-signal-factors { min-width: 100%; gap: 10px; }
+  .nt-factor-name { font-size: 11px; }
+  .nt-empty-signal { padding: 28px 16px; font-size: 13px; }
+
+  // 统计卡片
+  .nt-stats-row {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .nt-stat-card { padding: 10px 4px; border-radius: 8px; }
+  .nt-stat-val { font-size: 15px; }
+  .nt-stat-lbl { font-size: 10px; }
+
+  // Tab + 筛选器
+  .nt-tabs-section { margin-bottom: 14px; }
+  .nt-tabs-row { flex-direction: column; align-items: stretch; gap: 6px; }
+  .nt-tabs { gap: 2px; }
+  .nt-tab-btn { padding: 5px 10px; font-size: 11px; border-radius: 6px; }
+  .nt-tab-icon { font-size: 12px; }
+  .nt-chart-filter {
+    flex-wrap: wrap;
+    gap: 6px;
+    :deep(.el-select) { width: 100px !important; }
+  }
+  .nt-filter-label { font-size: 11px; }
+  .nt-agency-note { font-size: 11px; }
+
+  // ETF 图表
+  .nt-section-title { font-size: 13px; margin-bottom: 8px; }
+  .nt-etf-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .nt-etf-chart-item { padding: 8px; }
+  .nt-etf-chart { height: 150px; }
+  .nt-etf-code { font-size: 13px; }
+  .nt-etf-name { font-size: 10px; }
+
+  // 底部图表
+  .nt-bottom-charts {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .nt-bottom-chart-panel { padding: 10px; }
+  .nt-big-chart { height: 240px; }
+
+  // 回测
+  .nt-backtest { padding: 14px; }
+  .nt-backtest-row { gap: 10px; }
+  .nt-backtest-item { padding: 10px 14px; flex: 1; min-width: 90px; }
+  .nt-backtest-return { font-size: 18px; }
+
+  // 页脚
+  .nt-footer { font-size: 10px; padding: 12px; }
+}
+
+// ===== 小屏手机（≤480px） =====
+@media (max-width: 480px) {
+  .nt-page { padding: 10px 8px; }
+  .nt-hero { padding: 10px 12px; }
+  .nt-title { font-size: 16px; }
+  .nt-hero-right {
+    :deep(.el-date-picker) { width: 120px !important; }
+    :deep(.el-button) { font-size: 11px; padding: 5px 10px; }
+  }
+  .nt-stats-row { grid-template-columns: repeat(2, 1fr); }
+  .nt-stat-val { font-size: 14px; }
+  .nt-chart-filter {
+    :deep(.el-select) { width: 90px !important; }
+  }
+  .nt-etf-chart { height: 130px; }
+  .nt-big-chart { height: 200px; }
+  .nt-score-ring { width: 60px; height: 60px; }
+  .nt-score-num { font-size: 18px; }
+  .nt-signal-level { font-size: 16px; }
+}
+
+// ===== Hero =====
 .nt-hero {
   display: flex;
   justify-content: space-between;
@@ -775,31 +1006,37 @@ onUnmounted(() => {
   flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 20px;
+  padding: 16px 20px;
+  background: var(--nt-hero-bg);
+  border: 1px solid var(--nt-hero-border);
+  border-radius: 14px;
 }
-.nt-title { font-size: 22px; font-weight: 700; color: #f0f0f0; }
-.nt-subtitle { font-size: 12px; color: #999; margin-top: 4px; }
+.nt-title { font-size: 22px; font-weight: 700; color: var(--nt-heading); }
+.nt-subtitle { font-size: 12px; color: var(--nt-text-muted); margin-top: 4px; }
 .nt-hero-right {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
 }
 .nt-source-badge {
   padding: 4px 12px; border-radius: 12px; font-size: 12px;
-  background: #1a2a1a; color: #4ade80; border: 1px solid #4ade8040;
-  &.err { background: #2a1a1a; color: #f87171; border-color: #f8717140; }
+  background: var(--nt-badge-bg); color: var(--nt-badge-text); border: 1px solid var(--nt-badge-border);
+  &.err { background: var(--nt-badge-err-bg); color: var(--nt-badge-err-text); border-color: var(--nt-badge-err-border); }
 }
-.nt-update-time { font-size: 12px; color: #666; }
+.nt-update-time { font-size: 12px; color: var(--nt-text-muted); }
 
-// Signal Card
+// ===== Signal Card =====
 .nt-signal-card {
   display: flex; gap: 24px; padding: 24px;
-  background: linear-gradient(135deg, #1a1d2e 0%, #1e2135 100%);
-  border: 1px solid #2a2d3e; border-radius: 16px; margin-bottom: 20px;
+  background: var(--nt-card-bg);
+  border: 1px solid var(--nt-card-border);
+  border-radius: 16px; margin-bottom: 20px;
   align-items: center; flex-wrap: wrap;
+  box-shadow: var(--nt-card-shadow);
 }
 .nt-signal-main { display: flex; align-items: center; gap: 20px; }
 .nt-score-ring {
   width: 90px; height: 90px; border-radius: 50%;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  border: 3px solid #333;
+  border: 3px solid var(--nt-score-ring-border);
   flex-shrink: 0;
   &.extreme-low { border-color: #ff4757; box-shadow: 0 0 20px #ff475730; }
   &.low { border-color: #ff6b81; }
@@ -807,55 +1044,64 @@ onUnmounted(() => {
   &.high { border-color: #1e90ff; }
   &.extreme-high { border-color: #ff4757; box-shadow: 0 0 20px #ff475730; }
 }
-.nt-score-num { font-size: 28px; font-weight: 800; color: #f0f0f0; }
-.nt-score-label { font-size: 10px; color: #888; margin-top: 1px; }
+.nt-score-num { font-size: 28px; font-weight: 800; color: var(--nt-score-num); }
+.nt-score-label { font-size: 10px; color: var(--nt-score-label); margin-top: 1px; }
 .nt-signal-level { font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
 .nt-signal-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-.nt-signal-suggestion { font-size: 14px; color: #bbb; margin-top: 8px; line-height: 1.5; max-width: 400px; }
-.nt-signal-position { font-size: 14px; color: #999; margin-top: 6px; strong { color: #f59e0b; } }
+.nt-signal-suggestion { font-size: 14px; color: var(--nt-signal-text); margin-top: 8px; line-height: 1.5; max-width: 400px; }
+.nt-signal-position { font-size: 14px; color: var(--nt-signal-position); margin-top: 6px; strong { color: #f59e0b; } }
 .nt-signal-factors { flex: 1; min-width: 280px; display: flex; flex-direction: column; gap: 14px; }
-.nt-factor-name { font-size: 12px; color: #999; margin-bottom: 4px; display: block; }
+.nt-factor-name { font-size: 12px; color: var(--nt-factor-label); margin-bottom: 4px; display: block; }
 .nt-consecutive-warn { font-size: 13px; color: #f59e0b; margin-top: 4px; }
 
-// Empty signal
+// ===== Empty signal =====
 .nt-empty-signal {
-  text-align: center; padding: 40px; color: #666; font-size: 15px;
-  background: #1a1d2e; border: 1px dashed #333; border-radius: 12px; margin-bottom: 24px;
+  text-align: center; padding: 40px; font-size: 15px;
+  color: var(--nt-empty-text);
+  background: var(--nt-empty-bg);
+  border: 1px dashed var(--nt-empty-border);
+  border-radius: 12px; margin-bottom: 24px;
 }
 
-// Stats Row
+// ===== Stats Row =====
 .nt-stats-row {
   display: grid; grid-template-columns: repeat(6, 1fr);
   gap: 10px; margin-bottom: 20px;
   @media (max-width: 900px) { grid-template-columns: repeat(3, 1fr); }
 }
 .nt-stat-card {
-  background: #1a1d2e; border: 1px solid #2a2d3e; border-radius: 10px;
+  background: var(--nt-stat-bg);
+  border: 1px solid var(--nt-stat-border);
+  border-radius: 10px;
   padding: 12px 8px; text-align: center;
+  box-shadow: var(--nt-card-shadow);
 }
-.nt-stat-val { display: block; font-size: 18px; font-weight: 700; color: #f0f0f0; }
-.nt-stat-lbl { font-size: 11px; color: #888; margin-top: 2px; display: block; }
+.nt-stat-val { display: block; font-size: 18px; font-weight: 700; color: var(--nt-stat-val); }
+.nt-stat-lbl { font-size: 11px; color: var(--nt-stat-lbl); margin-top: 2px; display: block; }
 
-// Tabs
+// ===== Tabs =====
 .nt-tabs-section { margin-bottom: 20px; }
-.nt-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; }
+.nt-tabs-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.nt-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.nt-chart-filter { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.nt-filter-label { font-size: 12px; color: var(--nt-text-muted); white-space: nowrap; }
 .nt-tab-btn {
-  padding: 6px 14px; border: 1px solid #2a2d3e; border-radius: 8px;
-  background: #1a1d2e; color: #999; font-size: 12px; cursor: pointer;
+  padding: 6px 14px; border: 1px solid var(--nt-tab-border); border-radius: 8px;
+  background: var(--nt-tab-bg); color: var(--nt-tab-text); font-size: 12px; cursor: pointer;
   display: flex; align-items: center; gap: 5px; transition: all 0.2s;
-  &:hover { border-color: #444; color: #ddd; }
-  &.active { background: #2a2d4e; border-color: #3b82f6; color: #3b82f6; font-weight: 600; }
+  &:hover { border-color: var(--nt-tab-active-border); background: var(--nt-tab-hover-bg); color: var(--nt-tab-hover-text); }
+  &.active { background: var(--nt-tab-active-bg); border-color: var(--nt-tab-active-border); color: var(--nt-tab-active-text); font-weight: 600; }
 }
 .nt-tab-icon { font-size: 14px; }
 .nt-tab-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 .nt-agency-note {
-  font-size: 12px; color: #666; display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--nt-text-muted); display: flex; align-items: center; gap: 6px;
 }
 
-// Section title
-.nt-section-title { font-size: 15px; font-weight: 600; color: #ddd; margin-bottom: 12px; }
+// ===== Section title =====
+.nt-section-title { font-size: 15px; font-weight: 600; color: var(--nt-heading); margin-bottom: 12px; }
 
-// ETF Charts Grid
+// ===== ETF Charts Grid =====
 .nt-charts-section { margin-bottom: 20px; }
 .nt-etf-grid {
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
@@ -863,42 +1109,106 @@ onUnmounted(() => {
   @media (max-width: 650px) { grid-template-columns: 1fr; }
 }
 .nt-etf-chart-item {
-  background: #1a1d2e; border: 1px solid #2a2d3e; border-radius: 10px;
+  background: var(--nt-chart-bg); border: 1px solid var(--nt-chart-border); border-radius: 10px;
   padding: 10px; transition: border-color 0.3s;
-  &.highlighted { border-color: #f59e0b50; box-shadow: 0 0 12px #f59e0b10; }
+  box-shadow: var(--nt-card-shadow);
+  &.highlighted { border-color: var(--nt-highlight-border); box-shadow: var(--nt-highlight-shadow); }
 }
 .nt-etf-chart-header { display: flex; gap: 6px; align-items: baseline; margin-bottom: 4px; }
-.nt-etf-code { font-size: 14px; font-weight: 700; color: #f0f0f0; }
-.nt-etf-name { font-size: 11px; color: #888; }
+.nt-etf-code { font-size: 14px; font-weight: 700; color: var(--nt-heading); }
+.nt-etf-name { font-size: 11px; color: var(--nt-text-muted); }
 .nt-etf-chart { width: 100%; height: 170px; }
 
-// Bottom Charts
+// ===== Bottom Charts =====
 .nt-bottom-charts {
   display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px;
   @media (max-width: 800px) { grid-template-columns: 1fr; }
 }
 .nt-bottom-chart-panel {
-  background: #1a1d2e; border: 1px solid #2a2d3e; border-radius: 10px;
+  background: var(--nt-chart-bg); border: 1px solid var(--nt-chart-border); border-radius: 10px;
   padding: 14px;
   min-width: 0;
+  box-shadow: var(--nt-card-shadow);
 }
 .nt-big-chart { width: 100%; height: 300px; }
 
-// Backtest
+// ===== Backtest =====
 .nt-backtest {
-  background: #1a1d2e; border: 1px solid #2a2d3e; border-radius: 10px;
+  background: var(--nt-card-bg); border: 1px solid var(--nt-card-border); border-radius: 10px;
   padding: 16px 20px; margin-bottom: 20px;
+  box-shadow: var(--nt-card-shadow);
 }
 .nt-backtest-row { display: flex; gap: 20px; flex-wrap: wrap; }
-.nt-backtest-item { text-align: center; padding: 12px 20px; background: #1e2135; border-radius: 10px; }
-.nt-backtest-days { font-size: 12px; color: #888; display: block; }
-.nt-backtest-return { font-size: 22px; font-weight: 700; &.up { color: #22c55e; } &.down { color: #ef4444; } }
-.nt-backtest-action { font-size: 12px; color: #666; display: block; margin-top: 4px; }
-.nt-backtest-note { font-size: 11px; color: #555; margin-top: 14px; }
+.nt-backtest-item {
+  text-align: center; padding: 12px 20px;
+  background: var(--nt-backtest-item-bg);
+  border: 1px solid var(--nt-backtest-item-border);
+  border-radius: 10px;
+}
+.nt-backtest-days { font-size: 12px; color: var(--nt-text-muted); display: block; }
+.nt-backtest-return { font-size: 22px; font-weight: 700; &.up { color: #16a34a; } &.down { color: #dc2626; } }
+.nt-backtest-action { font-size: 12px; color: var(--nt-text-muted); display: block; margin-top: 4px; }
+.nt-backtest-note { font-size: 11px; color: var(--nt-text-muted); margin-top: 14px; }
 
-// Footer
+// ===== Footer =====
 .nt-footer {
-  text-align: center; padding: 16px; font-size: 11px; color: #555; line-height: 1.8;
-  border-top: 1px solid #222; margin-top: 24px;
+  text-align: center; padding: 16px; font-size: 11px; color: var(--nt-footer-text); line-height: 1.8;
+  border-top: 1px solid var(--nt-footer-border); margin-top: 24px;
+}
+</style>
+
+<!-- 深色模式覆盖（非 scoped，确保 html.dark-mode 选择器不受 Vue data-v 影响） -->
+<style lang="scss">
+html.dark-mode [data-nt-page] {
+  --nt-bg: #0f0f1a;
+  --nt-surface: #1e1e2e;
+  --nt-surface-border: #2d2d4a;
+  --nt-surface-hover: #252540;
+  --nt-text: #e2dee9;
+  --nt-text-secondary: #94a3b8;
+  --nt-text-muted: #64748b;
+  --nt-heading: #e2dee9;
+  --nt-divider: #2d2d4a;
+  --nt-hero-bg: linear-gradient(135deg, #1a1d2e 0%, #1e2135 100%);
+  --nt-hero-border: #2d2d4a;
+  --nt-card-bg: #1a1d2e;
+  --nt-card-border: #2a2d3e;
+  --nt-card-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  --nt-tab-bg: #1a1d2e;
+  --nt-tab-border: #2a2d3e;
+  --nt-tab-text: #94a3b8;
+  --nt-tab-hover-bg: #252540;
+  --nt-tab-hover-text: #e2dee9;
+  --nt-tab-active-bg: #2a2d4e;
+  --nt-tab-active-border: #6366f1;
+  --nt-tab-active-text: #818cf8;
+  --nt-score-ring-border: #333;
+  --nt-score-num: #f0f0f0;
+  --nt-score-label: #888;
+  --nt-signal-text: #bbb;
+  --nt-signal-position: #999;
+  --nt-factor-label: #999;
+  --nt-badge-bg: #1a2a1a;
+  --nt-badge-text: #4ade80;
+  --nt-badge-border: #4ade8040;
+  --nt-badge-err-bg: #2a1a1a;
+  --nt-badge-err-text: #f87171;
+  --nt-badge-err-border: #f8717140;
+  --nt-stat-bg: #1a1d2e;
+  --nt-stat-border: #2a2d3e;
+  --nt-stat-val: #f0f0f0;
+  --nt-stat-lbl: #888;
+  --nt-chart-bg: #1a1d2e;
+  --nt-chart-border: #2a2d3e;
+  --nt-chart-grid: #222;
+  --nt-empty-bg: #1a1d2e;
+  --nt-empty-border: #333;
+  --nt-empty-text: #666;
+  --nt-highlight-border: #f59e0b50;
+  --nt-highlight-shadow: 0 0 12px #f59e0b10;
+  --nt-backtest-item-bg: #1e2135;
+  --nt-backtest-item-border: #2a2d3e;
+  --nt-footer-text: #555;
+  --nt-footer-border: #222;
 }
 </style>
