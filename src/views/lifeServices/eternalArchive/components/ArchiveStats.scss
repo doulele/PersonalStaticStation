@@ -1,0 +1,109 @@
+﻿.archive-stats { margin-bottom: 24px; }
+.stats-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+}
+
+.stat-card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.stat-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 14px;
+}
+
+.storage-visual {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+.storage-bar-wrap { flex: 1; }
+.storage-bar {
+  height: 12px;
+  background: #e2e8f0;
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  margin-bottom: 8px;
+}
+.bar-segment {
+  height: 100%;
+  transition: width 0.5s ease;
+  &.s-level { background: #f0c060; }
+  &.a-level { background: #c0c0c0; }
+  &.b-level { background: #cd7f32; }
+}
+.storage-legend {
+  display: flex;
+  gap: 10px;
+  font-size: 11px;
+}
+.legend-item { color: #94a3b8; }
+
+.storage-water-tank { position: relative; }
+.tank-svg { width: 40px; height: 60px; display: block; }
+.water-fill { transition: all 1s ease; }
+.tank-label {
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #0d9488;
+}
+.storage-text {
+  text-align: center;
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 8px 0 0;
+}
+
+.quick-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.quick-stat {
+  text-align: center;
+  padding: 10px;
+  background: #f8fafc;
+  border-radius: 10px;
+}
+.quick-num {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0d9488;
+  display: block;
+}
+.quick-label { font-size: 11px; color: #94a3b8; }
+
+.expiring-list { display: flex; flex-direction: column; gap: 8px; }
+.expiring-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.expiring-icon { font-size: 14px; }
+.expiring-name { flex: 1; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.expiring-days { color: #f59e0b; font-weight: 600; white-space: nowrap; }
+
+@media (max-width: 768px) {
+  .stats-row { grid-template-columns: 1fr; }
+}
+
+html.dark-mode & {
+  .stat-card { background: #1e1e2e; border-color: #2d2d4a; }
+  .stat-title { color: #e2dee9; }
+  .quick-stat { background: #252540; }
+  .expiring-name { color: #e2dee9; }
+}

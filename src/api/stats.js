@@ -4,7 +4,7 @@ const API_BASE = '/staticTool/api/stats'
 
 /**
  * 记录一次工具页面点击
- * @param {string} toolPath - 工具路由路径，如 "/home/lifeServices/lottery"
+ * @param {string} toolPath - 工具路由路径，如 "/lifeServices/lottery"
  */
 export function recordToolClick(toolPath) {
   // 纯 fire-and-forget：不阻塞导航

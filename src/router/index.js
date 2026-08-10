@@ -33,172 +33,168 @@ const routes = [
       }
     ]
   },
+  // ==================== 主应用（AppLayout 统一布局） ====================
   {
     path: '/',
-    redirect: '/home'
-  },
-  {
-    path: '/home',
     component: () => import('@/components/layout/AppLayout.vue'),
     children: [
       {
         path: '',
+        redirect: '/home'
+      },
+      // ==================== 首页 ====================
+      {
+        path: 'home',
         component: () => import('@/views/home/index.vue'),
         meta: { title: '首页', icon: 'HomeFilled' }
       },
-      /**股票基金start */
+      // ==================== 基金/股票 ====================
       {
         path: 'fund',
-        component: () => import('@/views/home/fundStockTools/fundStockToolsList.vue'),
+        component: () => import('@/views/fund/fundStockToolsList.vue'),
         meta: { title: '基金/股票', icon: 'DataLine' }
       },
       {
         path: 'fund/fund-search',
-        component: () => import('@/views/home/fundStockTools/fundInformationSearch.vue'),
+        component: () => import('@/views/fund/fundInformationSearch.vue'),
         meta: { title: '基金信息查询', icon: 'DataLine' }
       },
       {
         path: 'fund/fund-filter',
-        component: () => import('@/views/home/fundStockTools/fundFilter/index.vue'),
+        component: () => import('@/views/fund/fundFilter/index.vue'),
         meta: { title: '基金筛选', icon: 'DataLine' }
       },
       {
         path: 'fund/stock-filter',
-        component: () => import('@/views/home/fundStockTools/stockFilter/index.vue'),
+        component: () => import('@/views/fund/stockFilter/index.vue'),
         meta: { title: '妖股筛选', icon: 'DataLine' }
       },
       {
         path: 'fund/stock-detail',
-        component: () => import('@/views/home/fundStockTools/stockFilter/stockDetail.vue'),
+        component: () => import('@/views/fund/stockFilter/stockDetail.vue'),
         meta: { title: '妖股详情', icon: 'DataLine' }
       },
       {
         path: 'fund/dadao-detail',
-        component: () => import('@/views/home/fundStockTools/stockFilter/DaDaoQiXianDetail.vue'),
+        component: () => import('@/views/fund/stockFilter/DaDaoQiXianDetail.vue'),
         meta: { title: '大道七线股诊', icon: 'DataLine' }
       },
-      /**股票及基金end */
-      /**跟党走start */
       {
         path: 'fund/national-team',
-        component: () => import('@/views/home/fundStockTools/nationalTeam/index.vue'),
+        component: () => import('@/views/fund/nationalTeam/index.vue'),
         meta: { title: '跟党走·国家队动向监测', icon: 'DataLine' }
       },
-      /**跟党走end */
-      /**彩票分析 — 归入生活服务目录下 */
+      // ==================== 音视频图像 ====================
       {
-        path: 'lifeServices/lottery',
-        component: () => import('@/views/home/lotteryTools/index.vue'),
-        meta: { title: '双色球/大乐透分析', icon: 'Present' }
-      },
-      /**音视频图像start */
-      {
-        path: 'audioVideoImagesTools',
-        component: () => import('@/views/home/audioVideoImagesTools/index.vue'),
+        path: 'mediaTools',
+        component: () => import('@/views/mediaTools/index.vue'),
         meta: { title: '视频音频图像在线工具', icon: 'Present' }
       },
       {
-        path: 'audioVideoImagesTools/novelOnline',
-        component: () => import('@/views/home/audioVideoImagesTools/audioTools/novelOnline/index.vue'),
+        path: 'mediaTools/novelOnline',
+        component: () => import('@/views/mediaTools/audioTools/novelOnline/index.vue'),
         meta: { title: '在线音频', icon: 'Present' }
       },
       {
-        path: 'audioVideoImagesTools/vipVideoParse',
-        component: () => import('@/views/home/audioVideoImagesTools/videoToolls/vipVideoParse/index.vue'),
+        path: 'mediaTools/vipVideoParse',
+        component: () => import('@/views/mediaTools/videoToolls/vipVideoParse/index.vue'),
         meta: { title: '在线视频', icon: 'Present' }
       },
       {
-        path: 'audioVideoImagesTools/imageTools',
-        component: () => import('@/views/home/audioVideoImagesTools/imageTools/index.vue'),
+        path: 'mediaTools/imageTools',
+        component: () => import('@/views/mediaTools/imageTools/index.vue'),
         meta: { title: '图片处理', icon: 'Picture' }
       },
-      /**音视频图像end */
-      /**生活服务start */
+      // ==================== 生活服务 ====================
       {
         path: 'lifeServices',
-        component: () => import('@/views/home/lifeServices/index.vue'),
+        component: () => import('@/views/lifeServices/index.vue'),
         meta: { title: '生活服务', icon: 'Service' }
       },
       {
+        path: 'lifeServices/lottery',
+        component: () => import('@/views/lifeServices/lotteryTools/index.vue'),
+        meta: { title: '双色球/大乐透分析', icon: 'Present' }
+      },
+      {
         path: 'lifeServices/travelGuide',
-        component: () => import('@/views/home/lifeServices/travelGuide/index.vue'),
+        component: () => import('@/views/lifeServices/travelGuide/index.vue'),
         meta: { title: '旅游攻略', icon: 'MapLocation' }
       },
       {
         path: 'lifeServices/travelGuide/plan/:id',
-        component: () => import('@/views/home/lifeServices/travelGuide/plan/index.vue'),
+        component: () => import('@/views/lifeServices/travelGuide/plan/index.vue'),
         meta: { title: '规划行程', icon: 'MapLocation' }
       },
       {
         path: 'lifeServices/travelGuide/plan-multi',
-        component: () => import('@/views/home/lifeServices/travelGuide/plan-multi/index.vue'),
+        component: () => import('@/views/lifeServices/travelGuide/plan-multi/index.vue'),
         meta: { title: '多景点串联规划', icon: 'MapLocation' }
       },
       {
         path: 'lifeServices/travelGuide/result',
-        component: () => import('@/views/home/lifeServices/travelGuide/result/index.vue'),
+        component: () => import('@/views/lifeServices/travelGuide/result/index.vue'),
         meta: { title: '攻略结果', icon: 'MapLocation' }
       },
       {
         path: 'lifeServices/oilPrice',
-        component: () => import('@/views/home/lifeServices/oilPrice/index.vue'),
+        component: () => import('@/views/lifeServices/oilPrice/index.vue'),
         meta: { title: '今日油价', icon: 'Coin' }
       },
       {
         path: 'lifeServices/weather',
-        component: () => import('@/views/home/lifeServices/weather/index.vue'),
+        component: () => import('@/views/lifeServices/weather/index.vue'),
         meta: { title: '天气预报', icon: 'Sunny' }
       },
       {
         path: 'lifeServices/travelMemo',
-        component: () => import('@/views/home/lifeServices/travelMemo/index.vue'),
+        component: () => import('@/views/lifeServices/travelMemo/index.vue'),
         meta: { title: '出行备忘', icon: 'Memo' }
       },
       {
         path: 'lifeServices/taskAlchemist',
-        component: () => import('@/views/home/lifeServices/taskAlchemist/index.vue'),
+        component: () => import('@/views/lifeServices/taskAlchemist/index.vue'),
         meta: { title: '第二人生·任务炼金术士', icon: 'MagicStick' }
       },
       {
         path: 'lifeServices/eternalArchive',
-        component: () => import('@/views/home/lifeServices/eternalArchive/index.vue'),
+        component: () => import('@/views/lifeServices/eternalArchive/index.vue'),
         meta: { title: '永恒档案', icon: 'FolderOpened' }
       },
       {
         path: 'lifeServices/recipeLab',
-        component: () => import('@/views/home/lifeServices/recipeLab/index.vue'),
+        component: () => import('@/views/lifeServices/recipeLab/index.vue'),
         meta: { title: '食验室 · 灵感灶', icon: 'Dish' }
       },
-      /**生活服务end */
-      /**家庭/教育start */
+      // ==================== 家庭/教育 ====================
       {
         path: 'familyEducation',
-        component: () => import('@/views/home/familyEducation/index.vue'),
+        component: () => import('@/views/familyEducation/index.vue'),
         meta: { title: '家庭/教育', icon: 'School' }
       },
       {
         path: 'familyEducation/babySleep',
-        component: () => import('@/views/home/familyEducation/babySleep/index.vue'),
+        component: () => import('@/views/familyEducation/babySleep/index.vue'),
         meta: { title: '宝宝哄睡', icon: 'Moon' }
       },
       {
         path: 'familyEducation/familyMeeting',
-        component: () => import('@/views/home/familyEducation/familyMeeting/index.vue'),
+        component: () => import('@/views/familyEducation/familyMeeting/index.vue'),
         meta: { title: '家庭会议', icon: 'ChatDotRound', requiresAuth: true }
       },
       {
         path: 'familyEducation/members',
-        component: () => import('@/views/home/familyEducation/members/index.vue'),
+        component: () => import('@/views/familyEducation/members/index.vue'),
         meta: { title: '家庭成员管理', icon: 'UserFilled', requiresAuth: true }
       },
       {
         path: 'familyEducation/wishTreeHole',
-        component: () => import('@/views/home/familyEducation/wishTreeHole/index.vue'),
+        component: () => import('@/views/familyEducation/wishTreeHole/index.vue'),
         meta: { title: '愿望清单 & 家庭树洞', icon: 'MagicStick', requiresAuth: true }
       },
-      /**家庭/教育end */
     ]
   },
+  // ==================== 其他 ====================
   {
     path: '/other',
     name: 'Other',
@@ -219,6 +215,7 @@ const routes = [
       }
     ]
   },
+  // ==================== 404 ====================
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',

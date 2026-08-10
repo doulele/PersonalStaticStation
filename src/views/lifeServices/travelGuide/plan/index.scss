@@ -1,0 +1,550 @@
+﻿.plan-page {
+  height: calc(100vh - 100px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #f1f5f9;
+}
+
+// ==================== 顶栏 ====================
+.plan-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-bottom: 1px solid rgba(226, 232, 240, 1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.back-btn {
+  flex-shrink: 0;
+  color: #64748b;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 6px 12px;
+  transition: all 0.2s;
+
+  &:hover {
+    color: #6366f1;
+    background: #eef2ff;
+  }
+}
+
+.topbar-divider {
+  width: 1px;
+  height: 24px;
+  background: #e2e8f0;
+  flex-shrink: 0;
+  border-radius: 1px;
+}
+
+.attraction-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex-shrink: 1;
+
+  .title-icon-wrapper {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+  }
+
+  .title-content {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 2px;
+  }
+
+  .title-name {
+    font-size: 17px;
+    font-weight: 700;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 320px;
+    line-height: 1.3;
+  }
+
+  .title-subtitle {
+    font-size: 11px;
+    color: #94a3b8;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+  }
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+// ==================== 交通方式切换按钮 ====================
+.transport-toggle {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 3px;
+  flex-shrink: 0;
+
+  .toggle-option {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s;
+    border-radius: 9px;
+    white-space: nowrap;
+
+    &:hover {
+      color: #334155;
+      background: rgba(255, 255, 255, 0.6);
+    }
+
+    &.active {
+      background: #fff;
+      color: #10b981;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+      font-weight: 600;
+    }
+
+    .toggle-icon { font-size: 16px; line-height: 1; }
+    .toggle-label { font-size: 13px; font-weight: inherit; }
+  }
+}
+
+// ==================== 推荐模式切换按钮 ====================
+.recommend-toggle {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 3px;
+  flex-shrink: 0;
+
+  .toggle-option {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s;
+    border-radius: 9px;
+    white-space: nowrap;
+
+    &:hover:not(:disabled) {
+      color: #334155;
+      background: rgba(255, 255, 255, 0.6);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    &.active {
+      background: #fff;
+      color: #6366f1;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+      font-weight: 600;
+    }
+
+    &.ai.active {
+      color: #f59e0b;
+    }
+
+    .toggle-label {
+      font-size: 13px;
+      font-weight: inherit;
+    }
+  }
+}
+
+.topbar-info-pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.info-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.pill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+
+  &.spot { background: #ef4444; }
+  &.food { background: #10b981; }
+  &.hotel { background: #3b82f6; }
+}
+
+// ==================== 主内容区 ====================
+.plan-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  padding: 8px 4px 0;
+  gap: 8px;
+}
+
+// 地图区块
+.map-section {
+  flex: 0 0 52%;
+  height: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  background: #f1f5f9;
+}
+
+// 右侧面板滚动区
+.panels-area {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 8px 0 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  touch-action: pan-y; /* 移动端：确保垂直滚动不被 vuedraggable/touch-action:none 阻止 */
+  -webkit-overflow-scrolling: touch; /* iOS 平滑滚动 */
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+.panel-wrapper {
+  flex-shrink: 0;
+  border-radius: 16px;
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+}
+
+// 滚动底部留白
+.scroll-spacer {
+  height: 80px;
+  flex-shrink: 0;
+}
+
+// ==================== 底部悬浮栏 ====================
+.floating-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  z-index: 100;
+}
+
+.generate-btn {
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  padding: 12px 28px !important;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+  transition: all 0.25s;
+
+  &:hover {
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+    transform: translateY(-1px);
+  }
+}
+
+.floating-stats {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.stat-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.stat-label {
+  strong {
+    color: #0f172a;
+    font-weight: 700;
+  }
+}
+
+.stat-divider {
+  width: 1px;
+  height: 22px;
+  background: #e2e8f0;
+  margin: 0 18px;
+}
+
+// ==================== 响应式：平板 ====================
+@media (max-width: 1024px) {
+  .plan-body {
+    flex-direction: column;
+    gap: 6px;
+    padding: 4px 4px 0;
+  }
+
+  .map-section {
+    flex: 0 0 320px;
+    width: 100%;
+    min-height: 260px;
+    border-radius: 14px;
+  }
+
+  .panels-area {
+    flex: 1;
+    gap: 10px;
+    padding-right: 0;
+    padding: 0 2px;
+  }
+
+  .plan-topbar {
+    padding: 10px 16px;
+  }
+
+  .topbar-info-pills {
+    display: none;
+  }
+
+  .attraction-title .title-name {
+    max-width: 200px;
+    font-size: 15px;
+  }
+
+  .floating-bar {
+    padding: 0 18px;
+  }
+}
+
+// ==================== 响应式：手机端 ====================
+@media (max-width: 768px) {
+  .plan-page {
+    height: 100vh;
+    height: 100dvh;
+  }
+
+  // ---- 顶栏：双行布局 ----
+  .plan-topbar {
+    flex-wrap: wrap;
+    padding: 6px 10px;
+    gap: 4px 8px;
+  }
+
+  .topbar-left {
+    gap: 6px;
+    flex: 1 1 auto;
+    max-width: 55%; // 给右侧留空间
+  }
+
+  .topbar-divider {
+    display: none;
+  }
+
+  .back-btn {
+    padding: 4px 6px;
+    min-width: auto;
+    // 移动端只显示图标
+    :deep(span + span) {
+      display: none;
+    }
+  }
+
+  .attraction-title {
+    gap: 5px;
+
+    .title-icon-wrapper {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      :deep(.el-icon) { font-size: 16px !important; }
+    }
+
+    .title-name {
+      font-size: 13px;
+      max-width: 110px;
+    }
+
+    .title-subtitle {
+      display: none;
+    }
+  }
+
+  // ---- 切换按钮组：独占第二行，两端对齐 ----
+  .topbar-right {
+    flex: 1 1 100%;
+    justify-content: space-between;
+    gap: 6px;
+    order: 3;
+  }
+
+  .topbar-info-pills {
+    display: none;
+  }
+
+  // 交通 & 推荐切换按钮：等分宽度
+  .transport-toggle,
+  .recommend-toggle {
+    flex: 1;
+    justify-content: center;
+
+    .toggle-option {
+      flex: 1;
+      justify-content: center;
+      padding: 5px 4px;
+      font-size: 12px;
+      gap: 3px;
+      .toggle-icon { font-size: 14px; }
+      .toggle-label { font-size: 11px; display: inline; }
+    }
+  }
+
+  .plan-body {
+    flex-direction: column;
+    gap: 4px;
+    padding: 2px 2px 0;
+  }
+
+  .map-section {
+    flex: 0 0 260px;
+    width: 100%;
+    min-height: 200px;
+    border-radius: 10px;
+  }
+
+  .panels-area {
+    flex: 1;
+    gap: 8px;
+    padding-right: 0;
+    padding: 0 2px;
+  }
+
+  .scroll-spacer {
+    height: 72px;
+  }
+
+  .floating-bar {
+    height: 56px;
+    padding: 0 12px;
+  }
+
+  .generate-btn {
+    padding: 10px 18px !important;
+    font-size: 13px !important;
+  }
+
+  .floating-stats {
+    gap: 0;
+  }
+
+  .stat-item {
+    font-size: 12px;
+    gap: 5px;
+  }
+
+  .stat-icon {
+    font-size: 14px;
+  }
+
+  .stat-label {
+    font-size: 0;
+    strong {
+      font-size: 12px;
+    }
+  }
+
+  .stat-divider {
+    margin: 0 8px;
+    height: 16px;
+  }
+}
+
+// ==================== 超小屏（< 375px） ====================
+@media (max-width: 400px) {
+  .attraction-title .title-name {
+    max-width: 100px;
+    font-size: 13px;
+  }
+
+  .map-section {
+    flex: 0 0 220px;
+    min-height: 180px;
+  }
+}

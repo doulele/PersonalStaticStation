@@ -1,0 +1,138 @@
+﻿.museum-page { }
+
+.museum-header {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.museum-stat {
+  text-align: center;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+}
+.museum-stat-num {
+  font-size: 28px;
+  font-weight: 700;
+  color: #d4a843;
+  display: block;
+}
+.museum-stat-label {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
+.museum-section { margin-bottom: 28px; }
+.museum-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 14px;
+}
+
+.achievement-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.achievement-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  transition: all 0.2s;
+  &.unlocked {
+    background: linear-gradient(135deg, #fef3c7, #fffdf0);
+    border-color: #d4a843;
+  }
+  &.legendary.unlocked {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border-color: #f0c060;
+    box-shadow: 0 2px 12px rgba(212, 168, 67, 0.2);
+  }
+}
+.ach-icon-wrap {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: #f1f5f9;
+}
+.unlocked .ach-icon-wrap { background: #fef3c7; }
+.ach-icon { font-size: 24px; }
+.ach-icon.shadow { font-size: 24px; opacity: 0.4; filter: grayscale(1); }
+.ach-info { flex: 1; min-width: 0; }
+.ach-name { font-size: 14px; font-weight: 600; color: #0f172a; display: block; }
+.ach-hint { font-size: 12px; color: #94a3b8; display: block; margin-top: 2px; }
+.ach-date { font-size: 11px; color: #d4a843; display: block; margin-top: 2px; }
+.ach-progress { display: flex; align-items: center; gap: 6px; min-width: 80px; }
+.ach-progress-text { font-size: 11px; color: #94a3b8; white-space: nowrap; }
+
+.fragment-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.fragment-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: linear-gradient(135deg, #ede9fe, #f5f3ff);
+  border: 1px solid #c4b5fd;
+  border-radius: 20px;
+  font-size: 13px;
+  color: #7c3aed;
+}
+
+.card-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.card-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border: 2px solid #d4a843;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(212, 168, 67, 0.2);
+}
+.card-icon { font-size: 28px; }
+.card-name { font-size: 15px; font-weight: 700; color: #92400e; }
+
+.museum-empty {
+  text-align: center;
+  padding: 80px 20px;
+  .empty-icon { font-size: 64px; display: block; margin-bottom: 16px; }
+  p { color: #94a3b8; font-size: 14px; }
+}
+
+@media (max-width: 768px) {
+  .museum-header { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .museum-stat { padding: 14px 8px; }
+  .museum-stat-num { font-size: 22px; }
+  .achievement-grid { grid-template-columns: 1fr; }
+}
+
+html.dark-mode & {
+  .museum-stat { background: #1e1e2e; border-color: #2d2d4a; }
+  .museum-stat-num { color: #f0c060; }
+  .museum-section-title { color: #e2dee9; }
+  .achievement-card { background: #1e1e2e; border-color: #2d2d4a; }
+  .achievement-card.unlocked { background: #2d2a1a; border-color: #f0c060; }
+  .ach-name { color: #e2dee9; }
+  .ach-icon-wrap { background: #252540; }
+  .fragment-chip { background: #252540; border-color: #7c3aed; }
+  .card-item { background: #2d2a1a; }
+}

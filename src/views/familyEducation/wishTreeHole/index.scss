@@ -1,0 +1,191 @@
+.wth-page {
+  padding: 40px 32px;
+  max-width: 1200px;
+  width: 80%;
+  margin: 0 auto;
+  box-sizing: border-box;
+  animation: fadeIn 0.4s ease-out;
+  min-height: 100vh;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+// ==================== 返回按钮 ====================
+.back-bar {
+  margin-bottom: 16px;
+}
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 400;
+  color: #64748b;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  &:hover { color: #6366f1; background: #f1f5f9; }
+}
+
+// Page Header — 居中风格，参考 familyEducation/index.vue
+.page-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.page-title {
+  font-size: 36px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 8px;
+  letter-spacing: -0.02em;
+}
+
+.page-desc {
+  font-size: 16px;
+  color: #64748b;
+  margin: 0;
+}
+
+// Tabs
+.wth-tabs {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #e2e8f0;
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 24px;
+  gap: 8px;
+}
+
+.wth-tabs-inner {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+// ==================== 操作栏 ====================
+.wth-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding: 0 4px;
+}
+
+.wth-action-left,
+.wth-action-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.wth-action-left {
+  :deep(.el-button) {
+    font-size: 14px;
+    color: #6366f1;
+    &:hover { background: #eef2ff; }
+  }
+}
+
+.wth-action-right {
+  :deep(.el-button) {
+    font-size: 13px;
+    color: #64748b;
+    &:hover { color: #6366f1; background: #f1f5f9; }
+  }
+}
+
+.wth-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+
+  &:hover { color: #0f172a; }
+
+  &.active {
+    background: #fff;
+    color: #6366f1;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+}
+
+.wth-content {
+  min-height: 400px;
+}
+
+.content-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 28px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (max-width: 768px) {
+  .wth-page {
+    padding: 16px 12px 80px;
+    width: 100%;
+    max-width: 100%;
+  }
+  .back-bar { margin-bottom: 8px; }
+  .page-header { margin-bottom: 20px; }
+  .page-title { font-size: 22px; }
+  .page-desc { font-size: 13px; }
+  .wth-tabs {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    padding: 3px;
+  }
+  .wth-tab {
+    padding: 9px 8px;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+  .wth-action-bar {
+    margin-bottom: 10px;
+    padding: 0;
+  }
+  .wth-action-left :deep(.el-button) {
+    font-size: 13px;
+    padding: 4px 8px;
+  }
+  .wth-action-right :deep(.el-button) {
+    font-size: 13px;
+    padding: 4px 6px;
+  }
+  .content-card {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .wth-page { padding: 12px 10px 72px; }
+  .page-header { margin-bottom: 16px; }
+  .page-title { font-size: 20px; }
+  .page-desc { font-size: 12px; }
+  .wth-tab { font-size: 12px; padding: 8px 4px; }
+  .wth-action-left :deep(.el-button) { font-size: 12px; padding: 4px 6px; }
+  .wth-action-right :deep(.el-button) { font-size: 12px; padding: 4px 4px; }
+}

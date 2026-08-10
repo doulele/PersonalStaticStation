@@ -1,4 +1,4 @@
-import { generatePlan as apiGeneratePlan } from '@/views/home/lifeServices/travelGuide/mock/data.js'
+import { generatePlan as apiGeneratePlan } from '@/views/lifeServices/travelGuide/mock/data.js'
 
 const API_BASE = '/staticTool/api/travel'
 

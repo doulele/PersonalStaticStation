@@ -1,0 +1,157 @@
+﻿.wish-detail {
+  padding: 0 4px;
+}
+
+// ====== 编辑表单 ======
+.edit-form {
+  .edit-subtasks {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    .subtask-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+  }
+  .edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #e2e8f0;
+  }
+}
+
+// ====== 查看模式 ======
+.detail-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.detail-header { margin-bottom: 20px; }
+
+.detail-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 12px;
+}
+
+.detail-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.detail-date {
+  font-size: 13px;
+  color: #64748b;
+  .days-left { color: #6366f1; }
+  .days-overdue { color: #ef4444; }
+}
+
+.detail-progress {
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    color: #64748b;
+    margin-bottom: 8px;
+  }
+}
+
+.detail-section {
+  margin-bottom: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  h4 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 12px;
+  }
+  p {
+    font-size: 14px;
+    color: #475569;
+    line-height: 1.7;
+    margin: 0;
+  }
+}
+
+.subtask-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  .subtask-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    &.done span { text-decoration: line-through; color: #94a3b8; }
+  }
+}
+
+.mood-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  .mood-card {
+    padding: 12px 16px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    .mood-mask { font-size: 12px; color: #6366f1; font-weight: 700; margin-bottom: 4px; }
+    .mood-content { font-size: 14px; color: #334155; line-height: 1.5; }
+    .mood-time { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+  }
+}
+
+.checkin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  .checkin-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    .checkin-dot { color: #10b981; font-weight: 700; }
+    .checkin-text { color: #475569; flex: 1; font-size: 14px; }
+    .checkin-time { color: #94a3b8; font-size: 12px; }
+  }
+}
+
+.detail-actions {
+  display: flex;
+  gap: 10px;
+  padding-top: 24px;
+  border-top: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .detail-title { font-size: 18px; }
+  .detail-actions {
+    flex-direction: column;
+    .el-button { width: 100%; justify-content: center; }
+  }
+  .subtask-card, .mood-card, .checkin-card { padding: 10px 12px; }
+}
+
+@media (max-width: 480px) {
+  .detail-meta { gap: 4px; }
+}

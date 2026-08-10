@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="not-found">
     <div class="content">
       <div class="error-code">404</div>

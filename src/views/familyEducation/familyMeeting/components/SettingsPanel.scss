@@ -1,0 +1,143 @@
+﻿.sp-root { max-width: 640px; }
+
+.sp-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 24px;
+  letter-spacing: -0.01em;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+// ==================== 卡片 ====================
+.sp-card {
+  border-radius: 16px;
+  margin-bottom: 16px;
+  border: 1px solid #e8ecf4;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  transition: box-shadow 0.25s;
+  &:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.05); }
+  :deep(.el-card__header) {
+    padding: 18px 24px;
+    border-bottom: 1px solid #f1f5f9;
+    background: #fafbfd;
+    border-radius: 16px 16px 0 0;
+  }
+  :deep(.el-card__body) {
+    padding: 20px 24px 24px;
+  }
+}
+
+.card-head-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.card-h {
+  font-weight: 700;
+  font-size: 15px;
+  color: #0f172a;
+  white-space: nowrap;
+}
+.card-desc {
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+// ==================== 表单字段 ====================
+.sp-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.sp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0 18px;
+  &:last-child { padding-bottom: 0; }
+}
+.sp-field-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+}
+.sp-field-desc {
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+.sp-field-danger {
+  .sp-field-label { color: #dc2626; }
+  .sp-field-desc { color: #94a3b8; }
+}
+.sp-divider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 4px 0 18px;
+}
+
+// ==================== 模式选择器 ====================
+.mode-options {
+  display: flex;
+  gap: 10px;
+}
+.mode-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 2px solid #e8ecf4;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  input { display: none; }
+  .mode-option-icon { font-size: 20px; flex-shrink: 0; }
+  .mode-option-text { font-size: 13px; font-weight: 600; color: #64748b; }
+  &:hover {
+    border-color: #c7d2fe;
+    background: #fafbff;
+    .mode-option-text { color: #475569; }
+  }
+  &.active {
+    border-color: #6366f1;
+    background: linear-gradient(135deg, #eef2ff, #f5f3ff);
+    box-shadow: 0 2px 12px rgba(99, 102, 241, 0.12);
+    .mode-option-text { color: #4f46e5; }
+  }
+}
+
+.sp-action-btn {
+  width: fit-content;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+// ==================== 响应式 ====================
+@media (max-width: 768px) {
+  .sp-root { max-width: 100%; }
+  .sp-title { font-size: 22px; margin-bottom: 20px; }
+  .sp-card {
+    border-radius: 14px; margin-bottom: 14px;
+    :deep(.el-card__header) { padding: 14px 16px; }
+    :deep(.el-card__body) { padding: 16px; }
+  }
+  .mode-options { flex-direction: column; }
+}
+
+@media (max-width: 480px) {
+  .sp-title { font-size: 20px; margin-bottom: 16px; }
+  .sp-card {
+    border-radius: 12px;
+    :deep(.el-card__header) { padding: 12px 14px; }
+    :deep(.el-card__body) { padding: 14px; }
+  }
+  .card-head-row { flex-direction: column; gap: 2px; }
+}

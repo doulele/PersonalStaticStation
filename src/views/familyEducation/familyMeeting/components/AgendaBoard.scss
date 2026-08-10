@@ -1,0 +1,372 @@
+﻿.agenda-board { display: flex; flex-direction: column; gap: 16px; }
+.agenda-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+.col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.block {
+  border-radius: 16px;
+  border: 1px solid #e8ecf4;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  transition: box-shadow 0.25s;
+  &:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.05); }
+  :deep(.el-card__header) {
+    padding: 16px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    background: #fafbfd;
+    border-radius: 16px 16px 0 0;
+  }
+  :deep(.el-card__body) { padding: 18px 20px 20px; }
+}
+.block-header { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+.block-header-actions { display: flex; align-items: center; gap: 10px; }
+.sort-select { width: 130px; }
+.block-title { font-weight: 700; color: #0f172a; font-size: 15px; letter-spacing: 0.01em; white-space: nowrap; }
+.hint { font-size: 13px; color: #94a3b8; margin: 0 0 14px; line-height: 1.6; }
+.empty { color: #94a3b8; text-align: center; padding: 32px 0; font-size: 14px; &.small { padding: 12px 0; font-size: 13px; } }
+.agenda-item {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 14px 16px; border: 1px solid #e8ecf4;
+  border-radius: 14px; margin-bottom: 10px; background: #fff;
+  transition: all 0.2s;
+  &:hover { border-color: #c7d2fe; box-shadow: 0 2px 12px rgba(99,102,241,0.06); }
+  &.locked { opacity: 0.8; background: #fafbfd; }
+  &:last-child { margin-bottom: 0; }
+}
+.ai-top { display: flex; gap: 12px; }
+.ai-bottom { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.ai-order {
+  width: 28px; height: 28px; min-width: 28px; border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(99,102,241,0.25);
+  transition: all 0.3s;
+  &.ai-order-discussing { background: linear-gradient(135deg, #f59e0b, #d97706); }
+  &.ai-order-resolved { background: linear-gradient(135deg, #10b981, #059669); }
+}
+.ai-body { flex: 1; min-width: 0; }
+.ai-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ai-title { font-weight: 700; color: #0f172a; font-size: 14px; transition: all 0.2s; }
+.ai-title-resolved { text-decoration: line-through; color: #94a3b8; }
+.ai-meta { font-size: 12px; color: #94a3b8; margin-top: 4px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.ai-emo-line { font-size: 12px; color: #f59e0b; font-weight: 600; margin-left: 8px; }
+.ai-desc { font-size: 13px; color: #475569; margin-top: 6px; word-break: break-word; line-height: 1.5; }
+.ai-resolution {
+  font-size: 13px; color: #10b981; margin-top: 6px;
+  background: #ecfdf5; padding: 6px 10px; border-radius: 8px;
+  display: flex; align-items: flex-start; gap: 4px; line-height: 1.5;
+}
+.ai-resolution-icon { flex-shrink: 0; }
+.ai-actions {
+  display: flex; flex-direction: column; gap: 6px; align-items: flex-end; flex-shrink: 0;
+}
+.ai-actions-mobile { display: none; }
+
+// 共鸣按钮
+.ai-actions :deep(.el-button--default),
+.ai-actions-mobile :deep(.el-button--default) {
+  background: #f1f5f9; border-color: #e2e8f0; color: #475569;
+  &:hover { background: #e0e7ff; border-color: #c7d2fe; color: #4338ca; }
+}
+
+// 状态流转条
+.ai-status-bar {
+  display: flex; align-items: center; gap: 0; flex-wrap: wrap;
+  font-size: 12px;
+}
+.ai-status-label { color: #94a3b8; font-size: 12px; margin-right: 6px; }
+.ai-status-btn {
+  padding: 3px 10px; border-radius: 14px;
+  cursor: pointer; transition: all 0.2s;
+  color: #94a3b8; background: #f1f5f9;
+  user-select: none; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 3px;
+  &:hover { color: #6366f1; background: #eef2ff; }
+  &.active {
+    color: #fff; font-weight: 600;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    box-shadow: 0 2px 8px rgba(99,102,241,0.25);
+    &:has(+ .ai-status-sep) { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 2px 8px rgba(245,158,11,0.25); }
+  }
+  &.active:last-child { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 2px 8px rgba(16,185,129,0.25); }
+}
+.ai-status-sep {
+  color: #cbd5e1; font-size: 11px; padding: 0 3px;
+}
+.ai-status-icon { font-size: 12px; }
+.ai-bottom-actions {
+  display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+}
+.thermo {
+  display: flex; align-items: center; gap: 16px;
+  margin: 8px 0 14px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 14px;
+}
+.thermo-val {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  font-size: 28px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  transition: color 0.3s;
+  flex-shrink: 0;
+}
+.tv-num { font-size: 16px; line-height: 1.2; }
+.emo-val {
+  margin-left: 10px; font-weight: 700; font-size: 14px;
+  display: flex; flex-direction: column; align-items: center;
+}
+.emo-val-icon { font-size: 24px; line-height: 1.1; }
+.emo-val-num { font-size: 13px; line-height: 1.2; }
+
+// 情绪保存
+.emo-note { margin-bottom: 0; }
+.emo-save-row {
+  display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 10px;
+}
+.emo-save-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 18px;
+  border: none; border-radius: 20px;
+  font-size: 14px; font-weight: 600; color: #fff;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  box-shadow: 0 2px 10px rgba(99,102,241,0.25);
+  cursor: pointer; transition: all 0.2s;
+  &:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(99,102,241,0.35); }
+  &:active { transform: translateY(0); }
+  &:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+}
+// 家庭情绪总览 - 水平条形图
+.family-emotion {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid #f1f5f9;
+}
+.fe-title { font-size: 14px; font-weight: 700; color: #475569; margin-bottom: 14px; }
+.fe-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  &:last-child { margin-bottom: 0; }
+}
+.fe-name {
+  width: 56px; flex-shrink: 0;
+  font-size: 13px; font-weight: 600; color: #475569;
+  text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.fe-bar-wrap {
+  flex: 1; height: 8px; border-radius: 4px;
+  background: #e8ecf4; overflow: hidden;
+}
+.fe-bar {
+  height: 100%; border-radius: 4px;
+  min-width: 2px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.fe-val {
+  width: 56px; flex-shrink: 0; text-align: center;
+  font-size: 13px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  display: flex; align-items: center; gap: 2px; justify-content: center;
+}
+.fe-emoji { font-size: 16px; line-height: 1; }
+.emo-icon { font-size: 26px; line-height: 1; }
+
+// 情绪日记时间线
+.emotion-timeline {
+  margin-top: 18px; padding-top: 14px; border-top: 1px solid #f1f5f9;
+}
+.et-list {
+  max-height: 260px; overflow-y: auto;
+}
+.et-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 0; position: relative;
+  & + .et-item { border-top: 1px dashed #e8ecf4; }
+}
+.et-bar {
+  width: 4px; min-width: 4px; border-radius: 2px;
+  align-self: stretch; opacity: 0.6;
+}
+.et-emoji { font-size: 22px; line-height: 1; flex-shrink: 0; }
+.et-body { flex: 1; min-width: 0; }
+.et-top-row {
+  display: flex; align-items: baseline; gap: 8px;
+}
+.et-time { font-size: 12px; color: #94a3b8; }
+.et-level { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.et-note {
+  font-size: 12px; color: #475569; margin-top: 2px; line-height: 1.4;
+  word-break: break-word;
+}
+.et-note-empty { color: #cbd5e1; font-style: italic; }
+
+// 滑块圆钮：用表情图标替代默认蓝色圆圈
+:deep(.el-slider__button) {
+  width: 28px;
+  height: 28px;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  &::before {
+    content: '🙂';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 22px;
+    line-height: 1;
+    pointer-events: none;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15));
+    transition: transform 0.15s;
+  }
+  &:hover::before,
+  &:active::before {
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  // 拖拽状态也放大
+  &[aria-valuenow]::before {
+    // fallback
+  }
+}
+:deep(.el-slider__button:hover),
+:deep(.el-slider__button:active) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.thermo-emo-excited :deep(.el-slider__button)::before { content: '🥳'; }
+.thermo-emo-happy :deep(.el-slider__button)::before { content: '😄'; }
+.thermo-emo-ok :deep(.el-slider__button)::before { content: '🙂'; }
+.thermo-emo-worried :deep(.el-slider__button)::before { content: '😟'; }
+.thermo-emo-sad :deep(.el-slider__button)::before { content: '😢'; }
+
+// 进度条颜色随心情变化
+:deep(.el-slider__bar) {
+  background: var(--bar-color) !important;
+  transition: background 0.3s;
+}
+
+
+// ===== 提交表单：label 与输入框同行 =====
+.agenda-form :deep(.el-form-item) {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.agenda-form :deep(.el-form-item__label) {
+  flex-shrink: 0;
+  width: 72px;
+  padding-right: 12px;
+  text-align: right;
+  line-height: 32px;
+  margin-bottom: 0;
+  white-space: nowrap;
+}
+.agenda-form :deep(.el-form-item__content) {
+  flex: 1;
+  min-width: 0;
+  line-height: 32px;
+}
+
+// 表单行：分类 + 优先级并排，各自独立 form-item
+.form-row :deep(.el-form-item) {
+  flex-wrap: nowrap;
+}
+.form-row :deep(.el-form-item__label) {
+  width: 62px;
+}
+.form-row :deep(.el-select) {
+  width: 100%;
+}
+
+// 议题情绪行
+.emotion-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  .el-slider { flex: 1; }
+}
+
+// 提交按钮右对齐
+.form-submit {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+
+// ===== 响应式 =====
+@media (max-width: 1024px) {
+  .agenda-cols { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .agenda-cols { grid-template-columns: 1fr; gap: 14px; }
+  .agenda-item {
+    .ai-top { flex-direction: row; gap: 10px; align-items: flex-start; }
+    .ai-actions { display: none; }
+    .ai-actions-mobile { display: flex; align-items: center; gap: 6px; flex-shrink: 0; margin-left: auto; }
+    .ai-body { min-width: 0; }
+    .ai-head { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
+  }
+  .hide-mobile { display: none !important; }
+  .ai-bottom { flex-direction: row; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .ai-bottom-actions { margin-left: auto; flex-shrink: 0; }
+  .ai-status-label { font-size: 11px; margin-right: 2px; }
+  .thermo-val { font-size: 24px; }
+  .block :deep(.el-card__body) { padding: 14px 16px 16px; }
+  .block :deep(.el-card__header) { padding: 14px 16px; }
+  .block-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .block-header-actions { width: 100%; flex-wrap: wrap; }
+  .sort-select { flex: 1; min-width: 100px; }
+  .ai-status-btn { font-size: 11px; padding: 3px 8px; }
+  .ai-status-sep { padding: 0 1px; font-size: 10px; }
+  // 小屏下 label 回到上方
+  .agenda-form :deep(.el-form-item) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .agenda-form :deep(.el-form-item__label) {
+    width: auto;
+    text-align: left;
+    padding-right: 0;
+    line-height: 1.5;
+    margin-bottom: 4px;
+    font-size: 13px;
+  }
+  .form-row :deep(.el-col) {
+    max-width: 100% !important;
+    flex: 0 0 100% !important;
+    margin-bottom: 0;
+  }
+  .et-list { max-height: 200px; }
+}
+
+@media (max-width: 480px) {
+  .agenda-board { gap: 12px; }
+  .col { gap: 12px; }
+  .agenda-item { padding: 12px; border-radius: 12px; }
+  .block { border-radius: 14px; }
+  .ai-head { gap: 4px; }
+  .ai-title { font-size: 14px; }
+  .ai-order { width: 24px; height: 24px; min-width: 24px; font-size: 12px; }
+  .ai-meta { font-size: 11px; }
+  .ai-emo-line { font-size: 11px; }
+  .ai-desc { font-size: 12px; }
+  .ai-resolution { font-size: 12px; padding: 5px 8px; }
+  .thermo { padding: 12px; gap: 12px; }
+  .thermo-val { font-size: 22px; }
+  .fe-name { width: 44px; font-size: 12px; }
+  .fe-val { font-size: 12px; }
+  .ai-status-btn { font-size: 10px; padding: 2px 6px; gap: 2px; }
+  .ai-status-icon { font-size: 11px; }
+  .ai-status-sep { padding: 0 1px; font-size: 9px; }
+  .ai-status-label { font-size: 10px; margin-right: 1px; }
+  .ai-bottom-actions { gap: 2px; margin-left: auto; .el-button { font-size: 12px; } }
+  .emo-save-btn { font-size: 13px; padding: 6px 14px; }
+  .et-emoji { font-size: 18px; }
+  .et-level { font-size: 13px; }
+  .et-list { max-height: 180px; }
+  .fe-care { font-size: 12px; padding: 6px 10px; }
+}

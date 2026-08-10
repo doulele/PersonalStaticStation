@@ -1,0 +1,210 @@
+﻿.ta-page {
+  padding: 40px 32px;
+  max-width: 1200px;
+  width: 80%;
+  margin: 0 auto;
+  box-sizing: border-box;
+  animation: fadeIn 0.4s ease-out;
+  min-height: 100vh;
+  padding-bottom: 100px;
+  position: relative;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+// ==================== 返回按钮 ====================
+.back-bar { margin-bottom: 16px; }
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 400;
+  color: #64748b;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  &:hover { color: #6366f1; background: #f1f5f9; }
+}
+
+// ==================== 页面头部 ====================
+.page-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.page-title {
+  font-size: 36px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 8px;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #d4a843, #f0c060, #d4a843);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.page-desc {
+  font-size: 16px;
+  color: #64748b;
+  margin: 0;
+}
+
+// ==================== Tabs ====================
+.ta-tabs {
+  display: flex;
+  align-items: center;
+  background: #e2e8f0;
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 24px;
+  gap: 4px;
+}
+.ta-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  position: relative;
+  &:hover { color: #0f172a; }
+  &.active {
+    background: #fff;
+    color: #d4a843;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+}
+.tab-badge {
+  background: #d4a843;
+  color: #fff;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.ta-content {
+  min-height: 400px;
+}
+
+// ==================== 悬浮伙伴按钮 ====================
+.partner-fab {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #d4a843, #f0c060);
+  box-shadow: 0 4px 16px rgba(212, 168, 67, 0.4);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 100;
+  &:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 24px rgba(212, 168, 67, 0.5);
+  }
+  &.active {
+    transform: scale(1.05);
+    box-shadow: 0 6px 24px rgba(212, 168, 67, 0.6);
+  }
+}
+.partner-avatar {
+  font-size: 28px;
+  line-height: 1;
+}
+.partner-notification-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 10px;
+  height: 10px;
+  background: #ef4444;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+}
+
+// ==================== 盲盒提示 ====================
+.blind-box-toast {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(30, 30, 46, 0.92);
+  backdrop-filter: blur(8px);
+  color: #e2dee9;
+  border: 1px solid rgba(212, 168, 67, 0.4);
+  border-radius: 12px;
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  z-index: 99;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  max-width: 400px;
+  white-space: nowrap;
+}
+.blind-icon { font-size: 18px; flex-shrink: 0; }
+.blind-fade-enter-active { transition: all 0.4s ease-out; }
+.blind-fade-leave-active { transition: all 0.3s ease-in; }
+.blind-fade-enter-from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+.blind-fade-leave-to { opacity: 0; transform: translateX(-50%) translateY(10px); }
+
+// ==================== 响应式 ====================
+@media (max-width: 768px) {
+  .ta-page {
+    padding: 16px 12px 80px;
+    width: 100%;
+    max-width: 100%;
+  }
+  .back-bar { margin-bottom: 8px; }
+  .page-header { margin-bottom: 20px; }
+  .page-title { font-size: 24px; }
+  .page-desc { font-size: 13px; }
+  .ta-tabs {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    padding: 3px;
+  }
+  .ta-tab {
+    padding: 9px 6px;
+    font-size: 12px;
+    border-radius: 8px;
+    gap: 3px;
+  }
+  .partner-fab {
+    bottom: 24px;
+    right: 16px;
+    width: 48px;
+    height: 48px;
+  }
+  .partner-avatar { font-size: 24px; }
+  .blind-box-toast {
+    bottom: 88px;
+    right: 16px;
+    left: 16px;
+    max-width: none;
+  }
+}

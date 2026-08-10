@@ -208,21 +208,11 @@ const navList = [
 
 const isActive = (item) => {
   if (item.match === 'home') {
-    return route.path === '/home'
+    return route.path === '/home' || route.path === '/'
   }
-  if (item.match === 'fund') {
-    return route.path.startsWith('/home/fund')
-  }
-  if (item.match === 'media') {
-    return route.path.startsWith('/home/audioVideoImagesTools')
-  }
-  if (item.match === 'life') {
-    return route.path.startsWith('/home/lifeServices')
-  }
-  if (item.match === 'family') {
-    return route.path.startsWith('/home/familyEducation')
-  }
-  return false
+  // 通用匹配：使用 TOOL_CATEGORIES 中定义的路径
+  const categoryPath = item.path
+  return route.path === categoryPath || route.path.startsWith(categoryPath + '/')
 }
 
 function toggleTheme() {

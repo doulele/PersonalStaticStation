@@ -1,0 +1,656 @@
+﻿<template>
+  <teleport to="body" :disabled="!isFloating">
+    <!-- PC 悬浮遮罩层 -->
+    <transition name="float-fade">
+      <div v-if="isFloating && !panelCollapsed" class="float-backdrop" @click="panelCollapsed = true"></div>
+    </transition>
+
+    <div
+      class="region-map-container"
+      :class="{
+        floating: isFloating,
+        'panel-open': isFloating && !panelCollapsed,
+        collapsed: isFloating && panelCollapsed,
+        mobile: !isFloating,
+        'mobile-collapsed': !isFloating && mobileCollapsed
+      }"
+    >
+      <!-- ===== PC 折叠态：右下角圆形悬浮按钮 ===== -->
+      <transition name="float-btn-pop">
+        <button
+          v-if="isFloating && panelCollapsed"
+          class="float-toggle-btn"
+          @click="panelCollapsed = false"
+          title="区域导航"
+        >
+          <span class="float-btn-icon">🗺️</span>
+          <span class="float-btn-label">区域</span>
+        </button>
+      </transition>
+
+      <!-- ===== 移动端折叠态 ===== -->
+      <button v-if="!isFloating && mobileCollapsed" class="mobile-toggle-bar" @click="mobileCollapsed = false">
+        <span>🗺️ 区域导航</span><span class="toggle-arrow">▼</span>
+      </button>
+
+      <!-- ===== PC 展开态：右下角悬浮面板 ===== -->
+      <transition name="float-panel-slide">
+        <div v-if="isFloating && !panelCollapsed" class="map-panel floating-panel">
+          <div class="panel-header">
+            <span class="panel-title"><span class="title-icon">🗺️</span> 区域导航</span>
+            <button class="panel-close-btn" @click="panelCollapsed = true" title="收起">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+          <div class="map-body">
+            <div class="map-legend">
+              <button class="legend-item all-item" :class="{ active: activeRegion === '全部' }" @click="$emit('select-region', '全部')">
+                <span class="legend-dot all-dot"></span>
+                <span class="legend-text">全部</span>
+              </button>
+              <button
+                v-for="r in legendItems" :key="r.name"
+                class="legend-item" :class="{ active: activeRegion === r.name }"
+                @click="$emit('select-region', r.name)"
+              >
+                <span class="legend-dot" :style="{ background: r.color }"></span>
+                <span class="legend-text">{{ r.name }}</span>
+              </button>
+            </div>
+            <div v-if="mapLoadError" class="map-error-tip">
+              <span class="error-icon">⚠️</span>
+              <span>地图数据加载失败，请刷新页面重试</span>
+            </div>
+            <div ref="chartRef" class="echarts-map" v-show="!mapLoadError"></div>
+          </div>
+        </div>
+      </transition>
+
+      <!-- ===== 移动端面板 ===== -->
+      <div v-if="!isFloating && !mobileCollapsed" class="map-panel">
+        <div class="panel-header">
+          <span class="panel-title"><span class="title-icon">🗺️</span> 区域导航</span>
+          <button class="action-btn" @click="mobileCollapsed = true" title="收起">▲</button>
+        </div>
+        <div class="map-body">
+          <div class="map-legend">
+            <button class="legend-item all-item" :class="{ active: activeRegion === '全部' }" @click="$emit('select-region', '全部')">
+              <span class="legend-dot all-dot"></span>
+              <span class="legend-text">全部</span>
+            </button>
+            <button
+              v-for="r in legendItems" :key="r.name"
+              class="legend-item" :class="{ active: activeRegion === r.name }"
+              @click="$emit('select-region', r.name)"
+            >
+              <span class="legend-dot" :style="{ background: r.color }"></span>
+              <span class="legend-text">{{ r.name }}</span>
+            </button>
+          </div>
+          <div v-if="mapLoadError" class="map-error-tip">
+            <span class="error-icon">⚠️</span>
+            <span>地图数据加载失败，请刷新页面重试</span>
+          </div>
+          <div ref="chartRefMobile" class="echarts-map" v-show="!mapLoadError"></div>
+        </div>
+      </div>
+    </div>
+  </teleport>
+</template>
+
+<script setup>
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import * as echarts from 'echarts'
+
+const props = defineProps({ activeRegion: { type: String, default: '全部' }, activeProvince: { type: String, default: '' } })
+const emit = defineEmits(['select-region', 'select-province'])
+
+// ========== 响应式 & 面板状态 ==========
+const windowWidth = ref(window.innerWidth)
+const isFloating = computed(() => windowWidth.value >= 1024)
+const panelCollapsed = ref(true)
+const mobileCollapsed = ref(true)
+
+function onResize() {
+  windowWidth.value = window.innerWidth
+  pcChartInstance?.resize()
+  mobileChartInstance?.resize()
+}
+onMounted(() => window.addEventListener('resize', onResize))
+onUnmounted(() => window.removeEventListener('resize', onResize))
+
+// ========== 区域配置 ==========
+const regionColors = {
+  '华北': '#e74c3c', '东北': '#3b82f6', '西北': '#eab308',
+  '西南': '#22c55e', '华东': '#8b5cf6', '华中': '#ec4899', '华南': '#06b6d4'
+}
+
+const provinceRegionMap = {
+  '黑龙江': '东北','吉林': '东北','辽宁': '东北',
+  '内蒙古': '华北','河北': '华北','北京': '华北','天津': '华北','山西': '华北',
+  '新疆': '西北','甘肃': '西北','青海': '西北','宁夏': '西北','陕西': '西北',
+  '西藏': '西南','四川': '西南','重庆': '西南','云南': '西南','贵州': '西南',
+  '山东': '华东','江苏': '华东','上海': '华东','安徽': '华东',
+  '浙江': '华东','江西': '华东','福建': '华东','台湾': '华东',
+  '河南': '华中','湖北': '华中','湖南': '华中',
+  '广东': '华南','广西': '华南','海南': '华南',
+  '香港': '华南','澳门': '华南'
+}
+
+const legendItems = computed(() =>
+  Object.entries(regionColors).map(([name, color]) => ({ name, color }))
+)
+
+/**
+ * GeoJSON 返回的省名（全称）→ provinceRegionMap 中的简称 映射表
+ * DataV GeoJSON 格式: "北京市"/"内蒙古自治区"/"新疆维吾尔自治区"
+ * provinceRegionMap key 格式:   "北京"/"内蒙古"/"新疆"
+ */
+const GEO_NAME_TO_SHORT = {
+  '北京市': '北京', '天津市': '天津', '上海市': '上海', '重庆市': '重庆',
+  '黑龙江省': '黑龙江', '吉林省': '吉林', '辽宁省': '辽宁',
+  '河北省': '河北', '山西省': '山西', '山东省': '山东', '河南省': '河南',
+  '江苏省': '江苏', '安徽省': '安徽', '浙江省': '浙江', '江西省': '江西',
+  '福建省': '福建', '湖北省': '湖北', '湖南省': '湖南', '广东省': '广东',
+  '海南省': '海南', '四川省': '四川', '贵州省': '贵州', '云南省': '云南',
+  '陕西省': '陕西', '甘肃省': '甘肃', '青海省': '青海', '台湾省': '台湾',
+  '内蒙古自治区': '内蒙古', '广西壮族自治区': '广西', '西藏自治区': '西藏',
+  '宁夏回族自治区': '宁夏', '新疆维吾尔自治区': '新疆',
+  '香港特别行政区': '香港', '澳门特别行政区': '澳门',
+  // 无后缀的简称（兜底）
+  '北京': '北京', '天津': '天津', '上海': '上海', '重庆': '重庆',
+  '黑龙江': '黑龙江', '吉林': '吉林', '辽宁': '辽宁',
+  '河北': '河北', '山西': '山西', '山东': '山东', '河南': '河南',
+  '江苏': '江苏', '安徽': '安徽', '浙江': '浙江', '江西': '江西',
+  '福建': '福建', '湖北': '湖北', '湖南': '湖南', '广东': '广东',
+  '海南': '海南', '四川': '四川', '贵州': '贵州', '云南': '云南',
+  '陕西': '陕西', '甘肃': '甘肃', '青海': '青海', '台湾': '台湾',
+  '内蒙古': '内蒙古', '广西': '广西', '西藏': '西藏',
+  '宁夏': '宁夏', '新疆': '新疆', '香港': '香港', '澳门': '澳门'
+}
+
+/** 将 GeoJSON 省名转为简称 */
+function geoNameToShort(name) {
+  return GEO_NAME_TO_SHORT[name] || name
+}
+
+/** 各区域文字标注位置 [lng, lat]，靠近区域但放在空白处 */
+const REGION_LABELS = {
+  '华北': [112, 42.5],
+  '东北': [126, 48],
+  '西北': [96, 39],
+  '西南': [100, 27],
+  '华东': [119, 29.5],
+  '华中': [110, 28.5],
+  '华南': [109, 21],
+}
+
+// ========== ECharts 地图 ==========
+const chartRef = ref(null)
+const chartRefMobile = ref(null)
+let pcChartInstance = null
+let mobileChartInstance = null
+let geoJsonData = null
+const mapLoadError = ref(false) // 地图数据加载失败时的错误状态
+let labelScheduleId = 0 // 递增 ID，用于取消过时的 setTimeout
+let labelTimerPc = null
+let labelTimerMobile = null
+
+// ===== 暗色模式 =====
+let isDark = false
+let darkModeObserver = null
+
+function checkDark() {
+  return document.documentElement.classList.contains('dark-mode')
+}
+
+function watchDarkModeForChart() {
+  darkModeObserver = new MutationObserver(() => {
+    const wasDark = isDark
+    isDark = checkDark()
+    if (wasDark !== isDark) {
+      updateRegion(props.activeRegion, props.activeProvince)
+    }
+  })
+  darkModeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['class']
+  })
+}
+
+async function loadChinaMap() {
+  if (geoJsonData) return geoJsonData
+  const base = import.meta.env.BASE_URL
+  const res = await fetch(`${base}data/china-geo.json`)
+  if (!res.ok) throw new Error(`GeoJSON 加载失败: ${res.status}`)
+  geoJsonData = await res.json()
+  echarts.registerMap('china', geoJsonData)
+  return geoJsonData
+}
+
+/**
+ * 区域色 → 对应淡化色（浅色 hex，避免 ECharts map 对 rgba 的不兼容问题）
+ * 用于"区域选中"模式下非选中区域；极淡，强对比
+ */
+const DIM_COLOR_MAP = {
+  '#e74c3c': '#fce4e4', '#3b82f6': '#e3eefd', '#eab308': '#fdf7d0',
+  '#22c55e': '#daf5e3', '#8b5cf6': '#ebe3fd', '#ec4899': '#fde4f0', '#06b6d4': '#d4f5fa'
+}
+
+/**
+ * 区域色 → 半柔和色（比 DIM 更深，比原色浅）
+ * 用于"省份选中"模式下非选中省份：保留区域辨识度，方便切换点击
+ */
+const SOFT_COLOR_MAP = {
+  '#e74c3c': '#efb0b0', '#3b82f6': '#a0c4f7', '#eab308': '#e0ca60',
+  '#22c55e': '#8ed4a5', '#8b5cf6': '#b4a3f5', '#ec4899': '#f0a0c3', '#06b6d4': '#8ed7e6'
+}
+
+function buildColoredData(activeRegionVal, activeProvinceVal) {
+  const features = geoJsonData.features || []
+  const defaultDim = isDark ? '#2a2a3c' : '#eceef2'  // 无区域匹配的淡化色
+  const defaultBorder = isDark ? '#3d3d5c' : '#c8d2dc'
+  const allBorderColor = isDark ? '#4a4a6a' : '#bcc6d4'
+  const noMatchFill = isDark ? '#252540' : '#f1f3f6'
+  const noMatchBorder = isDark ? '#3d3d5c' : '#d0d7e0'
+  const labelColor = isDark ? '#e2dee9' : '#0f172a'
+  const highlightBorder = isDark ? '#6366f1' : '#1e1e20'
+
+  return features.map(f => {
+    const pname = f.properties.name
+    const shortName = geoNameToShort(pname)
+    const preg = provinceRegionMap[shortName] || ''
+    const rc = regionColors[preg]
+
+    // 省份优先：如果指定了省份，只有该省份高亮
+    if (activeProvinceVal) {
+      if (shortName === activeProvinceVal) {
+        return {
+          name: pname, value: 3,
+          itemStyle: {
+            areaColor: rc, borderColor: highlightBorder, borderWidth: 2.5,
+            shadowBlur: 12, shadowOffsetX: 2, shadowOffsetY: 2,
+            shadowColor: 'rgba(0,0,0,0.25)'
+          },
+          label: { show: true, fontSize: 14, fontWeight: 800, color: labelColor }
+        }
+      }
+      // 非选中省份：用柔和色，保留区域辨识度，方便点击切换
+      return {
+        name: pname, value: 0,
+        itemStyle: {
+          areaColor: (rc && SOFT_COLOR_MAP[rc]) ? SOFT_COLOR_MAP[rc] : defaultDim,
+          borderColor: defaultBorder, borderWidth: 0.6
+        },
+        label: { show: false }
+      }
+    }
+
+    // 全部模式
+    if (activeRegionVal === '全部') {
+      return {
+        name: pname, value: 1,
+        itemStyle: rc
+          ? { areaColor: rc, borderColor: allBorderColor, borderWidth: 0.8, shadowBlur: 0 }
+          : { areaColor: noMatchFill, borderColor: noMatchBorder, borderWidth: 0.5 }
+      }
+    }
+
+    // 选中区域高亮
+    if (preg === activeRegionVal) {
+      return {
+        name: pname, value: 2,
+        itemStyle: {
+          areaColor: rc, borderColor: isDark ? '#6366f1' : '#3d3d40', borderWidth: 2,
+          shadowBlur: 8, shadowOffsetX: 1, shadowOffsetY: 1,
+          shadowColor: 'rgba(0,0,0,0.18)'
+        },
+        label: { show: true, fontSize: 14, fontWeight: 800, color: labelColor }
+      }
+    }
+
+    // 非选中区域：用柔和色，保留辨识度
+    return {
+      name: pname, value: 0,
+      itemStyle: {
+        areaColor: (rc && SOFT_COLOR_MAP[rc]) ? SOFT_COLOR_MAP[rc] : defaultDim,
+        borderColor: defaultBorder, borderWidth: 0.6
+      },
+      label: { show: false }
+    }
+  })
+}
+
+function getBaseOption(region, province) {
+  const isAll = region === '全部' && !province
+  const bgColor = isDark ? '#1a1a2e' : '#eeeff1'
+  const labelColor = isDark ? '#94a3b8' : '#475569'
+  const emphasisLabelColor = isDark ? '#e2dee9' : '#0f172a'
+  const emphasisBorderColor = isDark ? '#6366f1' : '#475569'
+  const itemBorderColor = isDark ? '#3d3d5c' : '#c8d2dc'
+  const emphasisAreaColor = (isAll && !isDark) ? '#d0d7e0' : undefined
+
+  return {
+    backgroundColor: bgColor,
+    tooltip: {
+      trigger: 'item',
+      formatter: p => {
+        const shortName = geoNameToShort(p.name)
+        const preg = provinceRegionMap[shortName]
+        return preg ? `<b>${p.name}</b><br/>所属区域：${preg}` : p.name
+      },
+      textStyle: { fontSize: 13 },
+      backgroundColor: isDark ? 'rgba(30,30,50,0.96)' : 'rgba(255,255,255,0.96)',
+      borderColor: isDark ? '#3d3d5c' : '#e2e8f0',
+      borderWidth: 1,
+      padding: [8, 14],
+      extraCssText: isDark ? 'box-shadow: 0 4px 16px rgba(0,0,0,0.4);border-radius:8px;' : 'box-shadow: 0 4px 16px rgba(0,0,0,0.1);border-radius:8px;'
+    },
+    series: [{
+      name: 'china',
+      type: 'map',
+      map: 'china',
+      roam: false,
+      center: [104, 36],
+      zoom: 1.25,
+      aspectScale: 1.0,
+      label: {
+        show: isAll,
+        color: labelColor,
+        fontSize: isAll ? 11 : 10,
+        fontWeight: 600
+      },
+      itemStyle: {
+        borderColor: itemBorderColor,
+        borderWidth: 0.8
+      },
+      emphasis: {
+        label: { show: true, color: emphasisLabelColor, fontSize: 15, fontWeight: 800 },
+        itemStyle: {
+          areaColor: emphasisAreaColor,
+          borderColor: emphasisBorderColor,
+          borderWidth: 2,
+          shadowBlur: isAll ? 0 : 12,
+          shadowColor: isAll ? 'transparent' : (isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.25)'),
+          shadowOffsetX: isAll ? 0 : 2,
+          shadowOffsetY: isAll ? 0 : 3
+        }
+      },
+      data: buildColoredData(region, province)
+    }]
+  }
+}
+
+function initChart(domRef, isPC) {
+  if (!domRef) return
+  isDark = checkDark()
+  const inst = echarts.init(domRef, isDark ? 'dark' : undefined)
+  if (isPC) pcChartInstance = inst
+  else mobileChartInstance = inst
+
+  // 一次性设置完整 option（含着色数据）
+  inst.setOption(getBaseOption(props.activeRegion, props.activeProvince))
+
+  // 注册点击事件：点击省份 → 以省份筛选
+  inst.on('click', params => {
+    const name = params.name || (params.data && params.data.name)
+    if (!name) return
+    const shortName = geoNameToShort(name)
+    const preg = provinceRegionMap[shortName]
+    if (preg && shortName) {
+      emit('select-province', { province: shortName, region: preg })
+    }
+  })
+}
+
+function updateRegion(region, province) {
+  const data = buildColoredData(region, province)
+  const isAll = region === '全部' && !province
+  const labelColor = isDark ? '#94a3b8' : '#475569'
+  const emphasisLabelColor = isDark ? '#e2dee9' : '#0f172a'
+  const emphasisBorderColor = isDark ? '#6366f1' : '#475569'
+  const itemBorderColor = isDark ? '#3d3d5c' : '#c8d2dc'
+  const emphasisAreaColor = (isAll && !isDark) ? '#d0d7e0' : undefined
+  const bgColor = isDark ? '#1a1a2e' : '#eeeff1'
+
+  // 必须包含 type/map 等完整 series 定义，否则 replaceMerge 会丢失坐标系
+  const opt = {
+    backgroundColor: bgColor,
+    series: [{
+      name: 'china',
+      type: 'map',
+      map: 'china',
+      roam: false,
+      center: [104, 36],
+      zoom: 1.25,
+      aspectScale: 1.0,
+      data,
+      label: {
+        show: isAll, color: labelColor,
+        fontSize: isAll ? 11 : 10, fontWeight: 600
+      },
+      itemStyle: {
+        borderColor: itemBorderColor,
+        borderWidth: 0.8
+      },
+      emphasis: {
+        label: { show: true, color: emphasisLabelColor, fontSize: 15, fontWeight: 800 },
+        itemStyle: {
+          areaColor: emphasisAreaColor,
+          borderColor: emphasisBorderColor, borderWidth: 2,
+          shadowBlur: isAll ? 0 : 12,
+          shadowColor: isAll ? 'transparent' : (isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.25)'),
+          shadowOffsetX: isAll ? 0 : 2,
+          shadowOffsetY: isAll ? 0 : 3
+        }
+      }
+    }]
+  }
+
+  function applyTo(inst) {
+    if (!inst || inst.isDisposed()) return
+    // 取消旧标签定时器
+    labelScheduleId++
+    clearTimeout(labelTimerPc)
+    clearTimeout(labelTimerMobile)
+
+    // 使用 replaceMerge: ['series'] 强制替换整个 series，
+    // 确保省份高亮 → 区域高亮切换时，旧样式彻底清除
+    inst.setOption(opt, { replaceMerge: ['series'] })
+
+    // 区域选中模式：叠加区域名称标签
+    if (region && region !== '全部' && !province) {
+      const isPc = inst === pcChartInstance
+      const timer = addRegionLabel(inst, region, labelScheduleId)
+      if (isPc) labelTimerPc = timer
+      else labelTimerMobile = timer
+    } else {
+      inst.setOption({ graphic: [] }, { replaceMerge: ['graphic'] })
+    }
+    inst.resize()
+  }
+
+  applyTo(pcChartInstance)
+  applyTo(mobileChartInstance)
+}
+
+/** 在地图上叠加区域名称文字 */
+function addRegionLabel(inst, region, scheduleId) {
+  const pos = REGION_LABELS[region]
+  if (!pos) return null
+
+  return setTimeout(() => {
+    // 如果在这期间有新调度，跳过
+    if (labelScheduleId !== scheduleId) return
+    if (inst.isDisposed()) return
+    try {
+      const pixel = inst.convertToPixel({ seriesIndex: 0 }, pos)
+      if (!pixel || isNaN(pixel[0]) || isNaN(pixel[1])) return
+      const [lx, ly] = pixel
+
+      inst.setOption({
+        graphic: [{
+          type: 'text',
+          style: {
+            text: region,
+            fill: '#fff',
+            fontSize: 15,
+            fontWeight: 900,
+            fontFamily: 'system-ui, "PingFang SC", "Microsoft YaHei", sans-serif',
+            textAlign: 'center',
+            textVerticalAlign: 'middle',
+            textShadowColor: 'rgba(0,0,0,0.35)',
+            textShadowBlur: 4
+          },
+          left: lx,
+          top: ly - 10,
+          z: 100
+        }]
+      })
+    } catch {
+      inst.setOption({ graphic: [] })
+    }
+  }, 120)
+}
+
+watch([() => props.activeRegion, () => props.activeProvince], async ([region, province]) => {
+  await nextTick()
+  updateRegion(region, province)
+})
+
+// 面板折叠/展开变化时初始化或 resize
+// 收起时必须销毁实例，因为 v-if 会移除 DOM，旧实例持有失效 DOM 引用
+let mapDataLoaded = false
+watch(panelCollapsed, async (collapsed) => {
+  if (collapsed) {
+    clearTimeout(labelTimerPc)
+    pcChartInstance?.dispose()
+    pcChartInstance = null
+    return
+  }
+  await nextTick()
+  await ensureMapLoaded()
+  if (mapLoadError.value) return
+  setTimeout(async () => {
+    await nextTick()
+    if (!pcChartInstance && chartRef.value) {
+      initChart(chartRef.value, true)
+    } else {
+      pcChartInstance?.resize()
+    }
+  }, 350)
+})
+watch(mobileCollapsed, async (collapsed) => {
+  if (collapsed) {
+    clearTimeout(labelTimerMobile)
+    mobileChartInstance?.dispose()
+    mobileChartInstance = null
+    return
+  }
+  await nextTick()
+  await ensureMapLoaded()
+  if (mapLoadError.value) return
+  setTimeout(async () => {
+    await nextTick()
+    if (!mobileChartInstance && chartRefMobile.value) {
+      initChart(chartRefMobile.value, false)
+    } else {
+      mobileChartInstance?.resize()
+    }
+  }, 350)
+})
+
+async function ensureMapLoaded() {
+  if (mapDataLoaded) return
+  try {
+    await loadChinaMap()
+    mapDataLoaded = true
+    mapLoadError.value = false
+  } catch (e) {
+    console.error('加载中国地图失败:', e)
+    mapLoadError.value = true
+  }
+}
+
+onMounted(() => {
+  isDark = checkDark()
+  watchDarkModeForChart()
+  // 预加载地图数据，不初始化图表（面板折叠时 DOM 不存在）
+  ensureMapLoaded()
+})
+
+onUnmounted(() => {
+  if (darkModeObserver) {
+    darkModeObserver.disconnect()
+    darkModeObserver = null
+  }
+  pcChartInstance?.dispose()
+  pcChartInstance = null
+  mobileChartInstance?.dispose()
+  mobileChartInstance = null
+})
+</script>
+
+<style lang="scss" scoped src="./RegionMap.scss"></style>
+
+<style lang="scss">
+// ==================== 夜间模式 ====================
+html.dark-mode {
+  .float-backdrop {
+    background: rgba(0,0,0,0.4);
+  }
+
+  .map-panel {
+    background: rgba(19, 19, 42, 0.98);
+    border-color: #2d2d4a;
+    box-shadow: 0 12px 50px rgba(0,0,0,0.4);
+  }
+
+  .panel-header {
+    background: linear-gradient(135deg, #1a1a36, #181830);
+    border-bottom-color: #2d2d4a;
+  }
+  .panel-title { color: #e2dee9; }
+  .panel-close-btn {
+    background: #1a1a2e; border-color: #2d2d4a; color: #64748b;
+    &:hover { background: #3b1010; color: #f87171; border-color: #5c2020; }
+  }
+  .action-btn {
+    background: #1a1a2e; border-color: #2d2d4a; color: #94a3b8;
+    &:hover { background: #252540; color: #e2dee9; }
+  }
+
+  .map-body {
+    &::-webkit-scrollbar-thumb { background: #3d3d5c; }
+  }
+
+  .echarts-map {
+    border: 1px solid #2d2d4a;
+  }
+
+  .map-legend { border-top-color: #2d2d4a; }
+
+  .legend-item {
+    color: #94a3b8;
+    &:hover { background: #1a1a2e; border-color: #3d3d5c; }
+    &.active { background: #1e1e3c; border-color: #3d3d6c; color: #a78bfa; }
+  }
+
+  .all-item {
+    &.active { background: #1a1a2e; border-color: #3d3d5c; color: #e2dee9; }
+  }
+
+  .map-error-tip { color: #64748b; }
+
+  .mobile-toggle-bar {
+    background: linear-gradient(135deg, #1a1a2e, #17172a);
+    border-color: #3d3d5c;
+    color: #a78bfa;
+    &:hover { background: #1e1e3c; border-color: #5c4db8; }
+  }
+
+  .float-toggle-btn {
+    border-color: rgba(255,255,255,0.1);
+  }
+}
+</style>

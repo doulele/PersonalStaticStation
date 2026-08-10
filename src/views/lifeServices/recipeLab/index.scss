@@ -1,0 +1,143 @@
+﻿.rl-page {
+  padding: 40px 32px;
+  max-width: 900px;
+  width: 80%;
+  margin: 0 auto;
+  box-sizing: border-box;
+  animation: fadeIn 0.4s ease-out;
+  min-height: 100vh;
+  padding-bottom: 60px;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.back-bar { margin-bottom: 16px; }
+.back-btn { display: inline-flex; align-items: center; gap: 4px; font-size: 14px; color: #64748b; padding: 4px 8px; border-radius: 8px; &:hover { color: #ef4444; background: #fef2f2; } }
+
+.page-header { text-align: center; margin-bottom: 28px; }
+.page-title { font-size: 32px; font-weight: 700; color: #0f172a; margin: 0 0 6px; }
+.page-desc { font-size: 15px; color: #64748b; margin: 0; }
+
+// 输入卡片
+.input-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; }
+.input-row { display: flex; gap: 8px; align-items: center; }
+.ingredient-input { flex: 1; :deep(.el-input__wrapper) { border-radius: 10px; background: #f8fafc; } }
+.add-btn { background: linear-gradient(135deg, #ef4444, #f97316); border: none; white-space: nowrap; &:hover { background: linear-gradient(135deg, #dc2626, #ea580c); } }
+.clear-btn { color: #94a3b8; white-space: nowrap; }
+
+.tag-area { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.ing-tag {
+  padding: 4px 12px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 20px; font-size: 13px; color: #dc2626;
+  cursor: pointer; transition: all 0.2s; &:hover { background: #fee2e2; }
+}
+.tag-x { margin-left: 4px; font-weight: 700; }
+
+.quick-fridge { margin-top: 12px; padding-top: 10px; border-top: 1px solid #f1f5f9; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.fridge-label { font-size: 12px; color: #94a3b8; white-space: nowrap; }
+.fridge-chip {
+  padding: 3px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; font-size: 12px; color: #64748b;
+  cursor: pointer; transition: all 0.2s; white-space: nowrap; &:hover { border-color: #f97316; color: #f97316; background: #fff7ed; }
+}
+
+.suggestions-drop {
+  position: absolute; z-index: 10; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.1); margin-top: 4px; overflow: hidden; width: calc(100% - 40px);
+}
+.sug-item { padding: 10px 14px; cursor: pointer; display: flex; justify-content: space-between; font-size: 13px; color: #0f172a; &:hover { background: #f8fafc; } }
+.sug-partner { font-size: 11px; color: #94a3b8; }
+
+// 筛选条
+.filter-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.filter-label { font-size: 13px; color: #64748b; white-space: nowrap; }
+
+// 操作按钮
+.action-row { display: flex; gap: 12px; margin-bottom: 14px; }
+.act-recommend { background: linear-gradient(135deg, #ef4444, #f97316); border: none; &:hover { background: linear-gradient(135deg, #dc2626, #ea580c); } }
+.act-random { border: 2px dashed #f97316; color: #f97316; &:hover { background: #fff7ed; } }
+
+.random-modes { margin-bottom: 18px; }
+
+// 加载
+.loading-area { text-align: center; padding: 60px 20px; }
+.loader-icon { font-size: 48px; display: block; margin-bottom: 12px; animation: bounce 1s infinite; }
+@keyframes bounce { 0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)} }
+
+// 结果
+.results-section { margin-top: 20px; }
+.section-title { font-size: 16px; font-weight: 600; color: #0f172a; margin: 0 0 12px; }
+.recipe-grid { display: flex; flex-direction: column; gap: 10px; }
+.recipe-card {
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px 18px; cursor: pointer;
+  transition: all 0.25s; animation: cardIn 0.4s ease-out both;
+  &:hover { border-color: #f97316; box-shadow: 0 4px 16px rgba(249,115,22,0.1); transform: translateY(-1px); }
+}
+@keyframes cardIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.card-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.card-icon { font-size: 32px; }
+.card-info { flex: 1; }
+.card-name { font-size: 15px; font-weight: 600; color: #0f172a; margin: 0 0 4px; }
+.card-tags { display: flex; gap: 6px; }
+.card-tag { font-size: 11px; padding: 2px 8px; border-radius: 6px; background: #f1f5f9; color: #64748b; }
+.match-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.match-label { font-size: 12px; color: #94a3b8; white-space: nowrap; }
+.missing-hint { font-size: 12px; color: #f59e0b; display: flex; align-items: center; gap: 4px; }
+.missing-icon { font-size: 14px; }
+
+// 随机结果弹窗
+.random-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 200; }
+.random-card { background: #fff; border-radius: 20px; padding: 32px; text-align: center; max-width: 400px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.2); animation: popIn 0.4s ease-out; }
+@keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.random-emoji { font-size: 56px; display: block; margin-bottom: 12px; }
+.random-name { font-size: 22px; font-weight: 700; color: #0f172a; margin: 0 0 8px; }
+.random-quote { font-size: 13px; color: #64748b; margin: 0 0 14px; font-style: italic; }
+.random-detail { display: flex; justify-content: center; gap: 16px; font-size: 13px; color: #94a3b8; margin-bottom: 18px; }
+.random-actions { display: flex; gap: 10px; justify-content: center; }
+
+// 详情弹窗
+.detail-body { }
+.detail-meta { display: flex; gap: 16px; font-size: 13px; color: #94a3b8; margin-bottom: 18px; }
+.detail-section { margin-bottom: 18px; h4 { font-size: 14px; font-weight: 600; color: #0f172a; margin: 0 0 8px; } }
+.ing-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.ing-chip { padding: 3px 10px; border-radius: 14px; font-size: 12px; background: #f0fdf4; color: #16a34a; &.missing { background: #fef2f2; color: #dc2626; } }
+.sub-hint { font-size: 12px; color: #f59e0b; margin: 8px 0 0; }
+.step-item { display: flex; gap: 10px; padding: 8px 0; font-size: 13px; color: #0f172a; line-height: 1.6; border-bottom: 1px solid #f1f5f9; &:last-child { border: none; } }
+.step-num { width: 22px; height: 22px; border-radius: 50%; background: #f97316; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+
+// 历史
+.history-bar { margin-top: 28px; }
+.history-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.history-chip { padding: 6px 14px; background: #f1f5f9; border-radius: 18px; font-size: 13px; color: #64748b; cursor: pointer; &:hover { background: #e2e8f0; } }
+
+.slot-fade-enter-active { transition: all 0.3s ease-out; }
+.slot-fade-leave-active { transition: all 0.2s ease-in; }
+.slot-fade-enter-from, .slot-fade-leave-to { opacity: 0; }
+
+@media (max-width: 768px) {
+  .rl-page { padding: 16px 12px 60px; width: 100%; max-width: 100%; }
+  .page-title { font-size: 24px; }
+  .input-row { flex-wrap: wrap; }
+  .add-btn, .clear-btn { font-size: 13px; }
+  .action-row { flex-direction: column; }
+  .filter-bar { gap: 4px; }
+  .recipe-card { padding: 12px 14px; }
+  .random-modes :deep(.el-radio-button__inner) { padding: 5px 8px; font-size: 12px; }
+}
+
+html.dark-mode & {
+  .page-title { color: #e2dee9; }
+  .page-desc { color: #94a3b8; }
+  .input-card { background: #1e1e2e; border-color: #2d2d4a; }
+  .ingredient-input :deep(.el-input__wrapper) { background: #252540; }
+  .quick-fridge { border-color: #2d2d4a; }
+  .fridge-chip { background: #252540; border-color: #2d2d4a; }
+  .recipe-card { background: #1e1e2e; border-color: #2d2d4a; }
+  .card-name { color: #e2dee9; }
+  .card-tag { background: #252540; }
+  .section-title { color: #e2dee9; }
+  .random-card { background: #1e1e2e; }
+  .random-name { color: #e2dee9; }
+  .ing-chip { background: #1a2d1a; &.missing { background: #2d1a1a; } }
+  .step-item { border-color: #2d2d4a; color: #e2dee9; }
+  .history-chip { background: #252540; }
+  .suggestions-drop { background: #1e1e2e; border-color: #2d2d4a; }
+  .sug-item { color: #e2dee9; &:hover { background: #252540; } }
+}

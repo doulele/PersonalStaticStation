@@ -1,0 +1,335 @@
+﻿// ==================== 发布按钮 ====================
+.post-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.post-btn-text {
+  position: relative;
+  z-index: 1;
+}
+
+// 涟漪
+.ripple-ring {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  animation: rippleExpand 0.8s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes rippleExpand {
+  0% { transform: scale(0); opacity: 1; }
+  100% { transform: scale(4); opacity: 0; }
+}
+
+// ==================== 输入框区域 ====================
+.input-wrapper {
+  position: relative;
+}
+
+// 打字粒子
+.type-particle {
+  position: absolute;
+  pointer-events: none;
+  z-index: 10;
+  font-size: 16px;
+  animation: typeParticleFloat 0.8s ease-out forwards;
+}
+
+@keyframes typeParticleFloat {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(0.5) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--tx), var(--ty)) scale(1.2) rotate(var(--rot));
+  }
+}
+
+// ==================== 字数进度条 ====================
+.char-progress-bar {
+  height: 4px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.char-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  border-radius: 2px;
+  transition: width 0.3s ease, background 0.3s ease;
+
+  &.warning {
+    background: linear-gradient(90deg, #f59e0b, #f97316);
+  }
+  &.near-limit {
+    background: linear-gradient(90deg, #ef4444, #dc2626);
+    animation: progressPulse 0.8s ease-in-out infinite;
+  }
+}
+
+@keyframes progressPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+// ==================== 主容器 ====================
+.mood-post {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  :deep(.el-textarea__inner) {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    color: #0f172a;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:hover {
+      border-color: #6366f1;
+    }
+
+    &:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    &::placeholder {
+      color: #94a3b8;
+    }
+  }
+}
+
+.mood-options {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.option-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.option-label {
+  font-size: 13px;
+  color: #64748b;
+  min-width: 110px;
+}
+
+// ==================== 心情天气 ====================
+.weather-options {
+  display: flex;
+  gap: 8px;
+}
+
+.weather-item {
+  font-size: 24px;
+  cursor: pointer;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    border-color: #6366f1;
+    background: #ffffff;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.08);
+    transform: translateY(-2px);
+  }
+
+  &.active {
+    border-color: #6366f1;
+    background: #eef2ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.12);
+  }
+
+  &.bounce {
+    animation: weatherBounce 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+  }
+}
+
+@keyframes weatherBounce {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.35); }
+  50% { transform: scale(0.9); }
+  70% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+// 选中粒子
+.weather-sparkle {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.sparkle-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #6366f1;
+  animation: sparkleBurst 1.2s ease-out infinite;
+  animation-delay: calc(var(--sd) * 0.25s);
+}
+
+@keyframes sparkleBurst {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(
+      calc(-50% + (var(--sd) - 2.5) * 14px),
+      calc(-50% + (var(--sd) - 2.5) * 14px)
+    ) scale(1);
+    opacity: 0;
+  }
+}
+
+// ==================== 匿名切换 ====================
+.anonymous-switch-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.anonymous-track {
+  width: 52px;
+  height: 28px;
+  border-radius: 14px;
+  background: #e2e8f0;
+  transition: background 0.4s ease;
+  position: relative;
+  flex-shrink: 0;
+
+  &.on {
+    background: #6366f1;
+  }
+}
+
+.anonymous-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: left 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55), background 0.4s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+
+  &.on {
+    left: 27px;
+  }
+}
+
+.thumb-icon {
+  font-size: 12px;
+  transition: transform 0.3s ease;
+
+  &.spin {
+    animation: thumbSpin 0.5s ease-in-out;
+  }
+}
+
+@keyframes thumbSpin {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.4); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
+.anonymous-label {
+  font-size: 13px;
+  color: #94a3b8;
+  transition: color 0.3s ease;
+
+  &.active {
+    color: #6366f1;
+    font-weight: 600;
+  }
+}
+
+// 匿名时动物漂浮
+.mask-animals {
+  display: flex;
+  gap: 2px;
+}
+
+.animal-float {
+  font-size: 12px;
+  animation: animalFloat 2.4s ease-in-out infinite;
+  opacity: 0.5;
+}
+
+@keyframes animalFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-4px) rotate(5deg); }
+  75% { transform: translateY(2px) rotate(-5deg); }
+}
+
+.mask-preview {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+// ==================== 庆祝效果 ====================
+.celebrate-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  pointer-events: none;
+}
+
+.celebrate-item {
+  position: absolute;
+  top: 50%;
+  pointer-events: none;
+  animation: celebratePop var(--dur) ease-out forwards;
+  animation-delay: var(--delay);
+}
+
+@keyframes celebratePop {
+  0% {
+    transform: translate(-50%, -50%) scale(0) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(var(--cx) - 50%), calc(var(--cy) - 50%)) scale(1.2) rotate(var(--rot));
+    opacity: 0;
+  }
+}
+
+// ==================== 移动端 ====================
+@media (max-width: 768px) {
+  .option-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .option-label { min-width: auto; font-size: 12px; }
+  .weather-item { font-size: 20px; padding: 6px 10px; }
+  .anonymous-switch-wrap { gap: 6px; }
+  .anonymous-label { font-size: 12px; }
+  .celebrate-item { font-size: 14px !important; }
+}

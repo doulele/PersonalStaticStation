@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="other-page">
     <div class="page-header">
       <h1 class="page-title">其他</h1>

@@ -1,0 +1,187 @@
+﻿.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-color);
+  padding: 24px;
+  transition: background 0.4s ease;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--bg-white);
+  border-radius: 16px;
+  padding: 40px 36px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border-color);
+  transition: background 0.4s ease, border-color 0.4s ease;
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.auth-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--heading-color);
+  margin-bottom: 20px;
+
+  img {
+    width: 28px;
+    height: 28px;
+  }
+
+  .highlight {
+    color: var(--primary-color);
+  }
+}
+
+.auth-header h2 {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--heading-color);
+  margin: 0 0 8px;
+}
+
+.auth-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.auth-card :deep(.el-form-item__label) {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.forgot-pwd-row {
+  text-align: right;
+  margin-top: -2px;
+
+  .forgot-link {
+    font-size: 13px;
+    color: var(--primary-color);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.submit-btn {
+  width: 100%;
+  height: 44px;
+  font-size: 16px;
+  font-weight: 500;
+  border-radius: 8px;
+}
+
+.error-msg {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: #fef0f0;
+  border: 1px solid #fde2e2;
+  border-radius: 8px;
+  color: #f56c6c;
+  font-size: 13px;
+  margin-top: -8px;
+}
+
+.auth-footer {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 14px;
+  color: var(--text-secondary);
+
+  .link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+    margin-left: 4px;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.auth-back {
+  text-align: center;
+  margin-top: 16px;
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--primary-color);
+    }
+  }
+}
+
+// ==================== 移动端适配 ====================
+@media (max-width: 768px) {
+  .auth-page {
+    padding: 16px;
+    align-items: flex-start;
+    padding-top: 60px;
+  }
+
+  .auth-card {
+    max-width: 100%;
+    padding: 28px 20px 32px;
+    border-radius: 12px;
+  }
+
+  .auth-header {
+    margin-bottom: 24px;
+  }
+
+  .auth-logo {
+    font-size: 18px;
+    img { width: 24px; height: 24px; }
+  }
+
+  .auth-header h2 {
+    font-size: 20px;
+  }
+
+  .auth-subtitle {
+    font-size: 13px;
+  }
+
+  .auth-card :deep(.el-form-item__label) {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 400px) {
+  .auth-page {
+    padding: 12px;
+    padding-top: 40px;
+  }
+
+  .auth-card {
+    padding: 22px 16px 28px;
+  }
+
+  .submit-btn {
+    height: 42px;
+    font-size: 15px;
+  }
+}

@@ -1,0 +1,131 @@
+﻿.timeline-panel {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+// ===== 面板头部 =====
+.panel-header { margin-bottom: 20px; }
+
+.panel-title-row {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
+}
+
+.panel-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  &.timeline-icon { background: #eef2ff; color: #6366f1; }
+}
+
+.panel-title { font-size: 17px; font-weight: 700; color: #0f172a; margin: 0; }
+
+.panel-badge {
+  font-size: 12px; font-weight: 500; color: #64748b;
+  background: #f1f5f9; padding: 3px 10px; border-radius: 20px;
+}
+
+.panel-hint {
+  font-size: 12px; color: #94a3b8; margin-left: 46px;
+}
+
+// ===== 空状态 =====
+.empty-state {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 32px 20px; color: #94a3b8; gap: 8px;
+  border: 2px dashed #e2e8f0; border-radius: 12px;
+}
+
+// ===== 预览列表 =====
+.preview-list {
+  display: flex; flex-direction: column; gap: 6px;
+  touch-action: pan-y; /* 移动端：覆盖 vuedraggable 的 touch-action:none，允许垂直滚动 */
+}
+
+.preview-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: 10px; transition: all 0.2s;
+
+  &.preview-hotel { background: #eff6ff; border: 1px solid #bfdbfe; }
+  &.preview-spot  { background: #fef2f2; border: 1px solid #fecaca; }
+  &.preview-food  { background: #f0fdf4; border: 1px solid #bbf7d0; }
+}
+
+.preview-ghost { opacity: 0.4; border: 2px dashed #6366f1 !important; }
+
+.preview-drag-handle {
+  color: #94a3b8; cursor: grab; padding: 4px; flex-shrink: 0;
+  border-radius: 6px; transition: all 0.15s;
+  &:hover { color: #6366f1; background: #eef2ff; }
+  &:active { cursor: grabbing; }
+}
+
+.preview-index {
+  width: 24px; height: 24px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0;
+  &.index-hotel { background: #3b82f6; }
+  &.index-spot  { background: #ef4444; }
+  &.index-food  { background: #10b981; }
+}
+
+.preview-info {
+  flex: 1; min-width: 0;
+}
+
+.preview-name {
+  font-size: 14px; font-weight: 600; color: #0f172a;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.preview-type-tag {
+  font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 4px;
+  margin-right: 4px; vertical-align: middle;
+  &.tag-hotel { background: #dbeafe; color: #2563eb; }
+  &.tag-spot  { background: #fee2e2; color: #dc2626; }
+  &.tag-food  { background: #dcfce7; color: #059669; }
+}
+
+.preview-time {
+  font-size: 11px; color: #64748b; display: flex; align-items: center;
+  gap: 3px; margin-top: 2px;
+}
+
+.preview-duration {
+  color: #94a3b8; font-size: 10px;
+}
+
+.preview-meal-tag {
+  font-size: 10px; font-weight: 500; padding: 1px 6px; border-radius: 8px;
+  margin-top: 2px; display: inline-block;
+  &.meal-early { background: #fef3c7; color: #92400e; }
+  &.meal-late  { background: #fee2e2; color: #dc2626; }
+}
+
+.preview-remove-btn {
+  flex-shrink: 0; color: #94a3b8; opacity: 0.5;
+  &:hover { opacity: 1; color: #ef4444; }
+}
+
+// ===== 预估总结 =====
+.preview-summary {
+  margin-top: 16px; padding: 14px 16px;
+  background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0;
+}
+
+.summary-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 4px 0;
+  &:not(:last-child) { border-bottom: 1px dashed #e2e8f0; padding-bottom: 6px; }
+}
+
+.summary-label { font-size: 12px; color: #94a3b8; }
+
+.summary-value { font-size: 13px; font-weight: 600; color: #0f172a;
+  &.price { color: #6366f1; }
+}
+
+@media (max-width: 768px) {
+  .timeline-panel { padding: 14px; border-radius: 12px; }
+}

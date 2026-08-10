@@ -1,0 +1,343 @@
+﻿.parse-fused-wrap { position: relative; }
+.parse-fused {
+  display: flex;
+  align-items: stretch;
+  background: #fff;
+  border: 2px solid #e2e8f0;
+  border-radius: 14px;
+  transition: all 0.25s ease;
+  margin-bottom: 12px;
+}
+.input-icon { color: #94a3b8; margin: 0 12px 0 16px; flex-shrink: 0; align-self: center; }
+.url-parse-input {
+  flex: 1; border: none; outline: none; font-size: 16px; color: #0f172a; background: transparent; min-width: 0; padding: 14px 16px;
+  &::placeholder { color: #94a3b8; }
+}
+.clear-icon { color: #94a3b8; cursor: pointer; flex-shrink: 0; align-self: center; margin-right: 12px; &:hover { color: #64748b; } }
+
+// 融合搜索框分割线
+.fused-divider {
+  width: 1px;
+  background: #e2e8f0;
+  margin: 10px 0;
+  flex-shrink: 0;
+}
+
+// 线路选择（与 VIP 线路样式一致：无边框、文字加粗、hover 背景）
+.line-select-dropdown { position: relative; display: flex; align-items: center; flex-shrink: 0; }
+.line-select-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 14px;
+  color: #475569;
+  transition: background 0.2s;
+  height: 100%;
+  &:hover, &.open { background: #f8fafc; }
+  &:hover .selected-line-name, &.open .selected-line-name { color: #6366f1; }
+}
+.selected-line-name { font-weight: 600; display: flex; align-items: center; gap: 6px; color: #475569; white-space: nowrap; transition: color 0.2s; }
+.dropdown-arrow { color: #94a3b8; transition: transform 0.2s, color 0.2s; &.rotated { transform: rotate(180deg); } }
+
+.line-select-options {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 260px;
+  max-width: 100%;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 6px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  z-index: 200;
+  max-height: 240px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+  animation: platformFadeIn 0.15s ease;
+  &::-webkit-scrollbar { width: 6px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    background-clip: padding-box;
+  }
+  &::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+}
+@keyframes platformFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.line-option {
+  padding: 9px 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-radius: 8px;
+  &:hover { background: #eef2ff; }
+  &:hover .line-option-name { color: #6366f1; }
+  &.active { background: #eef2ff; .line-option-name { color: #6366f1; } }
+}
+.dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px 8px;
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 500;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 4px;
+}
+.refresh-health {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  color: #6366f1;
+  font-size: 11px;
+  &:hover { color: #4f46e5; }
+  &.refreshing { opacity: 0.6; cursor: not-allowed; }
+}
+.line-option-top { display: flex; align-items: center; gap: 6px; }
+.line-option-name { font-size: 14px; font-weight: 500; color: #0f172a; transition: color 0.15s; }
+.line-option-ping { font-size: 11px; color: #94a3b8; margin-left: auto; }
+.line-option-api { font-size: 11px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 14px; max-width: 260px; }
+
+// 健康状态指示点
+.status-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  background: #cbd5e1;
+  transition: all 0.3s;
+  &.online { background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,0.4); }
+  &.offline { background: #ef4444; box-shadow: 0 0 6px rgba(239,68,68,0.4); }
+  &.unknown { background: #cbd5e1; }
+}
+
+.manage-lines-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.2s;
+  &:hover { color: #6366f1; background: #f8fafc; }
+}
+
+.dropdown-fade-enter-active, .dropdown-fade-leave-active { transition: all 0.2s ease; }
+.dropdown-fade-enter-from, .dropdown-fade-leave-to { opacity: 0; transform: translateY(-6px); }
+
+.parse-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 20px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  border: none;
+  border-radius: 0 12px 12px 0;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
+  transition: all 0.25s ease;
+  &:hover:not(:disabled) { background: linear-gradient(135deg, #4f46e5, #7c3aed); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+// 历史记录（与 VIP 视频历史样式一致）
+.history-line {
+  margin-top: 8px;
+  padding-left: 4px;
+  font-size: 12px;
+  color: #333;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  animation: fadeIn 0.2s ease;
+}
+.history-label {
+  color: #999;
+  flex-shrink: 0;
+}
+.history-item {
+  cursor: pointer;
+  transition: color 0.15s;
+  &::after { content: '、'; color: #ccc; }
+  &:last-of-type::after { content: ''; }
+  &:hover { color: #6366f1; }
+}
+.history-line-clear {
+  flex-shrink: 0;
+  margin-left: 8px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 11px;
+  color: #bbb;
+  cursor: pointer;
+  &:hover { color: #ef4444; }
+}
+
+// 快捷跳转
+.quick-jump-section {
+  margin-top: 12px;
+  padding: 18px 20px;
+  background: #fff;
+  border: 1px solid #e8ecf4;
+  border-radius: 12px;
+}
+.quick-jump-header {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 14px;
+}
+.quick-jump-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+}
+.quick-jump-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  &:nth-child(1) { background: linear-gradient(135deg, #0ea5e9, #06b6d4); }
+  &:nth-child(2) { background: linear-gradient(135deg, #10b981, #34d399); }
+  &:nth-child(3) { background: linear-gradient(135deg, #3b82f6, #6366f1); }
+  &:nth-child(4) { background: linear-gradient(135deg, #f59e0b, #f97316); }
+  &:nth-child(5) { background: linear-gradient(135deg, #ec4899, #f472b6); }
+  &:nth-child(6) { background: linear-gradient(135deg, #d97706, #fbbf24); }
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+.quick-jump-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.quick-jump-name {
+  white-space: nowrap;
+}
+
+// 使用指南（与 VIP 视频保持一致）
+.search-guide {
+  margin-top: 20px;
+  margin-bottom: 28px;
+  padding: 18px 20px;
+  background: #fff;
+  border: 1px solid #e8ecf4;
+  border-radius: 12px;
+}
+.guide-header {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 14px;
+}
+.guide-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.guide-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+}
+.guide-step {
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #475569;
+}
+.guide-body {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.guide-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.guide-desc {
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+// 响应式
+@media (max-width: 768px) {
+  .parse-fused { border-radius: 12px; }
+  .url-parse-input { font-size: 15px; }
+  .input-icon { margin-right: 8px; }
+  .parse-btn { padding: 0 14px; font-size: 14px; }
+  .line-select-trigger { padding: 0 12px; font-size: 13px; }
+  .manage-lines-btn { width: 36px; }
+  .history-section { padding: 14px; margin-bottom: 20px; }
+  .history-header h3 { font-size: 14px; }
+  .history-item { padding: 8px 10px; }
+  .history-title { font-size: 13px; }
+  .history-time { font-size: 11px; }
+  .search-guide { padding: 14px; }
+  .guide-header { font-size: 14px; }
+  .guide-step { font-size: 13px; }
+  .guide-title { font-size: 13px; }
+  .guide-desc { font-size: 12px; }
+}
+
+@media (max-width: 480px) {
+  .parse-fused { border-radius: 12px; }
+  .url-parse-input { font-size: 14px; &::placeholder { font-size: 12px; } }
+  .input-icon { margin-right: 6px; }
+  .parse-btn { padding: 0 12px; font-size: 13px; gap: 4px; }
+  .line-select-trigger { font-size: 12px; padding: 0 10px; }
+  .manage-lines-btn { width: 32px; }
+  .fused-divider { margin: 8px 0; }
+  .history-section { margin-bottom: 16px; padding: 12px; }
+  .history-index { width: 22px; height: 22px; font-size: 11px; }
+  .history-play { display: none; }
+  .history-time { display: none; }
+  .search-guide { padding: 12px; margin-top: 14px; margin-bottom: 20px; }
+  .guide-header { font-size: 14px; margin-bottom: 12px; }
+  .guide-list { gap: 8px; }
+  .guide-step { font-size: 13px; }
+  .guide-title { font-size: 13px; }
+  .guide-desc { font-size: 11px; }
+  .guide-body {
+    flex-direction: column;
+    gap: 2px;
+  }
+  .guide-title { white-space: normal; }
+}
+
+// 深色模式已迁移至下方独立 <style lang="scss"> 块（不 scoped），与 VideoName.vue 保持一致
