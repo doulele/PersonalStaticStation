@@ -28,7 +28,7 @@
           </button>
         </div>
         <button
-          v-show="activeTab === 'search'"
+          v-show="activeTab === 'search' && isSiteLoggedIn"
           class="bili-login-btn"
           :class="{ 'bili-expired': biliLogged && biliCookieValid === false }"
           @click="openBiliLogin"
@@ -154,6 +154,7 @@
     <div v-if="activeTab === 'search'" class="search-video-below-player" :class="{ 'has-player': showPlayer }">
       <SearchVideo
         ref="searchVideoRef"
+        :is-site-logged-in="isSiteLoggedIn"
         @switch-mode="switchTab"
         @play-episode="onSearchPlayEpisode"
         @close-player="closePlayer"
@@ -417,6 +418,7 @@ import {
 import { ElMessage, ElMessageBox } from 'element-plus'
 import Hls from 'hls.js'
 import QRCode from 'qrcode'
+import { useStore } from 'vuex'
 import SearchVideo from './components/SearchVideo.vue'
 import UrlParse from './components/UrlParse.vue'
 import VideoName from './components/VideoName.vue'
@@ -429,6 +431,10 @@ const tabs = [
 ]
 const activeTab = ref('name')
 const searchVideoRef = ref(null)
+
+// ==================== 网站登录状态 ====================
+const store = useStore()
+const isSiteLoggedIn = computed(() => store.getters['auth/isLoggedIn'])
 
 function switchTab(key) {
   // 切换 tab 时关闭播放器（播放器不跨 tab）

@@ -221,6 +221,9 @@ import { Search, CircleClose, Loading, WarningFilled, ArrowDown, VideoPlay } fro
 import { ElMessage } from 'element-plus'
 
 const emit = defineEmits(['switchMode', 'playEpisode', 'closePlayer'])
+const props = defineProps({
+  isSiteLoggedIn: { type: Boolean, default: true }
+})
 
 // ==================== 搜索状态 ====================
 const searchQuery = ref('')
@@ -419,7 +422,8 @@ async function handleSearch() {
       body: JSON.stringify({
         query: q,
         platform: searchPlatform.value,
-        limit: 10
+        limit: 10,
+        useCookie: props.isSiteLoggedIn
       })
     })
     const data = await res.json()
