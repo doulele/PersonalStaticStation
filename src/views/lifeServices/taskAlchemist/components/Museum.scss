@@ -129,10 +129,37 @@ html.dark-mode & {
   .museum-stat { background: #1e1e2e; border-color: #2d2d4a; }
   .museum-stat-num { color: #f0c060; }
   .museum-section-title { color: #e2dee9; }
+  .museum-stat-label { color: #64748b; }
+  // 成就卡片
   .achievement-card { background: #1e1e2e; border-color: #2d2d4a; }
-  .achievement-card.unlocked { background: #2d2a1a; border-color: #f0c060; }
+  .achievement-card.unlocked { 
+    background: #2d2a1a; 
+    border-color: #f0c060; 
+  }
+  .achievement-card.legendary.unlocked {
+    background: linear-gradient(135deg, #2d2a1a, #3d3020);
+    border-color: #f0c060;
+    box-shadow: 0 2px 12px rgba(240, 192, 96, 0.25);
+  }
   .ach-name { color: #e2dee9; }
+  .ach-hint { color: #64748b; }
+  .ach-date { color: #f0c060; }
+  .ach-progress-text { color: #64748b; }
   .ach-icon-wrap { background: #252540; }
-  .fragment-chip { background: #252540; border-color: #7c3aed; }
-  .card-item { background: #2d2a1a; }
+  .unlocked .ach-icon-wrap { background: rgba(240, 192, 96, 0.15); }
+  // 碎片
+  .fragment-chip { 
+    background: linear-gradient(135deg, #1e1e2e, #252540); 
+    border-color: #7c3aed; 
+    color: #a78bfa; 
+  }
+  // 卡片物品
+  .card-item { 
+    background: linear-gradient(135deg, #2d2a1a, #3d3020); 
+    border-color: #f0c060; 
+    box-shadow: 0 2px 8px rgba(240, 192, 96, 0.15); 
+  }
+  .card-name { color: #f0c060; }
+  // 空状态
+  .museum-empty p { color: #64748b; }
 }

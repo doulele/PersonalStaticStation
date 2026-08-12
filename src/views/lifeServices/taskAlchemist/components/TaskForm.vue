@@ -3,7 +3,7 @@
     :model-value="visible"
     @update:model-value="$emit('update:visible', $event)"
     :title="editTask ? '编辑炼金任务' : '创建炼金任务'"
-    :width="isMobile ? '92vw' : '520px'"
+    :width="isMobile ? '92vw' : '560px'"
     :close-on-click-modal="false"
     class="task-form-dialog"
   >
@@ -34,17 +34,6 @@
       <el-form-item label="精力消耗指数" required>
         <div class="energy-selector">
           <div
-            class="energy-option high"
-            :class="{ active: form.energy === 'high' }"
-            @click="form.energy = 'high'"
-          >
-            <span class="energy-icon">⚡</span>
-            <div>
-              <span class="energy-label">高能耗</span>
-              <span class="energy-desc">深度思考·执行力强</span>
-            </div>
-          </div>
-          <div
             class="energy-option low"
             :class="{ active: form.energy === 'low' }"
             @click="form.energy = 'low'"
@@ -55,25 +44,65 @@
               <span class="energy-desc">机械重复·碎片化</span>
             </div>
           </div>
+          <div
+            class="energy-option medium"
+            :class="{ active: form.energy === 'medium' }"
+            @click="form.energy = 'medium'"
+          >
+            <span class="energy-icon">🔥</span>
+            <div>
+              <span class="energy-label">一般能耗</span>
+              <span class="energy-desc">常规工作·需要专注</span>
+            </div>
+          </div>
+          <div
+            class="energy-option high"
+            :class="{ active: form.energy === 'high' }"
+            @click="form.energy = 'high'"
+          >
+            <span class="energy-icon">⚡</span>
+            <div>
+              <span class="energy-label">高能耗</span>
+              <span class="energy-desc">深度思考·执行力强</span>
+            </div>
+          </div>
         </div>
       </el-form-item>
 
       <!-- 专注时长 -->
       <el-form-item label="任务重量（专注时长）">
-        <el-radio-group v-model="form.duration">
-          <el-radio-button :value="15">15分钟</el-radio-button>
-          <el-radio-button :value="30">30分钟</el-radio-button>
-          <el-radio-button :value="60">1小时</el-radio-button>
-          <el-radio-button :value="120">2小时+</el-radio-button>
-        </el-radio-group>
+        <div class="duration-row">
+          <el-radio-group v-model="form.durationPreset" class="duration-presets" @change="onPresetChange">
+            <el-radio-button :value="15">15分钟</el-radio-button>
+            <el-radio-button :value="30">30分钟</el-radio-button>
+            <el-radio-button :value="60">1小时</el-radio-button>
+            <el-radio-button :value="120">2小时+</el-radio-button>
+            <el-radio-button value="custom">自定义</el-radio-button>
+          </el-radio-group>
+          <transition name="fade">
+            <div v-if="form.durationPreset === 'custom'" class="duration-custom">
+              <input
+                v-model.number="form.customMinutes"
+                type="number"
+                min="1"
+                max="480"
+                step="5"
+                class="duration-input"
+                placeholder="分钟"
+                @input="onCustomChange"
+              />
+              <span class="duration-custom-unit">分钟</span>
+            </div>
+          </transition>
+        </div>
       </el-form-item>
 
       <!-- 重要等级 / 紧急度 -->
       <el-form-item label="优先级">
         <el-radio-group v-model="form.priority">
-          <el-radio-button value="urgent">🔴 紧急重要</el-radio-button>
-          <el-radio-button value="important">🟡 重要不紧急</el-radio-button>
           <el-radio-button value="normal">🟢 普通</el-radio-button>
+          <el-radio-button value="important">🟡 重要不紧急</el-radio-button>
+          <el-radio-button value="urgent">🔴 紧急重要</el-radio-button>
         </el-radio-group>
       </el-form-item>
 
@@ -128,8 +157,10 @@ const emit = defineEmits(['update:visible', 'save'])
 const defaultForm = {
   title: '',
   description: '',
-  energy: 'high',
+  energy: 'low',
   duration: 30,
+  durationPreset: 30,
+  customMinutes: 45,
   priority: 'normal',
   deadline: null,
   timeTax: true
@@ -137,15 +168,47 @@ const defaultForm = {
 
 const form = ref({ ...defaultForm })
 
-const canSave = computed(() => form.value.title.trim() && form.value.energy)
+const canSave = computed(() => {
+  if (!form.value.title.trim() || !form.value.energy) return false
+  // 自定义模式下必须有有效分钟数
+  if (form.value.durationPreset === 'custom') {
+    return form.value.customMinutes >= 1 && form.value.customMinutes <= 480
+  }
+  return true
+})
+
+function resolveDuration() {
+  if (form.value.durationPreset === 'custom') {
+    return form.value.customMinutes
+  }
+  return Number(form.value.durationPreset)
+}
+
+function onPresetChange(val) {
+  if (val !== 'custom') {
+    form.value.duration = Number(val)
+  } else {
+    form.value.duration = form.value.customMinutes
+  }
+}
+
+function onCustomChange(val) {
+  if (form.value.durationPreset === 'custom' && val) {
+    form.value.duration = val
+  }
+}
 
 watch(() => props.editTask, (task) => {
   if (task) {
+    const taskDuration = task.duration || 30
+    const isPreset = [15, 30, 60, 120].includes(taskDuration)
     form.value = {
       title: task.title || '',
       description: task.description || '',
       energy: task.energy || 'high',
-      duration: task.duration || 30,
+      duration: taskDuration,
+      durationPreset: isPreset ? taskDuration : 'custom',
+      customMinutes: isPreset ? 45 : taskDuration,
       priority: task.priority || 'normal',
       deadline: task.deadline || null,
       timeTax: task.timeTax !== false
@@ -172,11 +235,16 @@ function handleSave() {
     ElMessage.warning('请选择精力消耗指数')
     return
   }
+  const duration = resolveDuration()
+  if (!duration || duration < 1) {
+    ElMessage.warning('请填写有效的任务时长')
+    return
+  }
   emit('save', {
     title: form.value.title.trim(),
     description: form.value.description.trim(),
     energy: form.value.energy,
-    duration: form.value.duration,
+    duration,
     priority: form.value.priority,
     deadline: form.value.deadline ? new Date(form.value.deadline).toISOString() : null,
     timeTax: form.value.timeTax
@@ -193,46 +261,93 @@ function handleCancel() {
   :deep(.el-form-item__label) {
     font-weight: 600;
     color: #0f172a;
+    font-size: 14px;
   }
 }
 
 .energy-selector {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
 }
 .energy-option {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 14px 16px;
+  gap: 8px;
+  padding: 12px 12px;
   border: 2px solid #e2e8f0;
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
+  min-width: 0;
   &.high {
     &:hover, &.active { border-color: #ef4444; background: #fef2f2; }
     .energy-label { color: #dc2626; }
+  }
+  &.medium {
+    &:hover, &.active { border-color: #f59e0b; background: #fffbeb; }
+    .energy-label { color: #d97706; }
   }
   &.low {
     &:hover, &.active { border-color: #16a34a; background: #f0fdf4; }
     .energy-label { color: #16a34a; }
   }
 }
-.energy-icon { font-size: 24px; }
-.energy-label { font-size: 14px; font-weight: 600; display: block; }
-.energy-desc { font-size: 12px; color: #94a3b8; }
+.energy-icon { font-size: 22px; flex-shrink: 0; }
+.energy-label { font-size: 13px; font-weight: 600; display: block; }
+.energy-desc { font-size: 11px; color: #94a3b8; display: block; margin-top: 2px; }
 
-html.dark-mode & {
-  :deep(.el-form-item__label) { color: #e2dee9; }
-  .energy-option {
-    border-color: #2d2d4a;
-    &.high:hover, &.high.active { background: #2d1a1a; }
-    &.low:hover, &.low.active { background: #1a2d1a; }
-  }
-  .energy-desc { color: #64748b; }
+.duration-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
 }
+.duration-presets {
+  flex-wrap: wrap;
+  display: flex;
+}
+.duration-custom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+.duration-input {
+  width: 80px;
+  padding: 6px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s;
+  &::placeholder { color: #94a3b8; font-weight: 400; }
+  &:focus { border-color: #d4a843; box-shadow: 0 0 0 2px rgba(212, 168, 67, 0.15); }
+  /* 隐藏原生 number 箭头 */
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  -moz-appearance: textfield;
+}
+.duration-custom-unit {
+  font-size: 13px;
+  color: #64748b;
+}
+
+// 自定义时长淡入动画
+.fade-enter-active { transition: all 0.2s ease-out; }
+.fade-leave-active { transition: all 0.15s ease-in; }
+.fade-enter-from { opacity: 0; transform: translateX(-8px); }
+.fade-leave-to { opacity: 0; transform: translateX(-8px); }
+
+// 暗色模式已迁移到 common.scss 的 .task-form-dialog 块
 
 // ==================== 移动端弹窗适配 ====================
 @media (max-width: 768px) {
@@ -240,8 +355,13 @@ html.dark-mode & {
   :deep(.el-dialog__header) { padding: 14px 14px 10px !important; }
   :deep(.el-dialog__footer) { padding: 10px 14px 14px !important; }
   :deep(.el-radio-button__inner) { padding: 5px 8px; font-size: 12px; }
-  .energy-option { padding: 10px 12px; gap: 6px; }
+  .energy-selector { gap: 6px; }
+  .energy-option { padding: 8px; gap: 6px; flex-direction: column; align-items: flex-start; text-align: left; }
   .energy-icon { font-size: 20px; }
   .energy-label { font-size: 12px; }
+  .energy-desc { font-size: 10px; }
+  .duration-row { flex-direction: column; align-items: stretch; }
+  .duration-presets { width: 100%; }
+  :deep(.el-radio-button) { flex: 1; }
 }
 </style>

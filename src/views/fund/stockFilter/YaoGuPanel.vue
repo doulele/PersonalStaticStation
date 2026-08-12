@@ -114,77 +114,77 @@
         :default-sort="{ prop: 'score', order: 'descending' }"
         @sort-change="handleSortChange"
       >
-        <el-table-column prop="code" label="代码" width="100" sortable="custom" fixed />
-        <el-table-column prop="name" label="名称" width="110" fixed />
-        <el-table-column prop="price" label="最新价" width="90" sortable="custom">
+        <el-table-column prop="code" label="代码" width="90" sortable="custom" fixed />
+        <el-table-column prop="name" label="名称" min-width="90" fixed />
+        <el-table-column prop="price" label="最新价" width="80" sortable="custom">
           <template #default="{ row }">
             <span>{{ row.price?.toFixed(2) }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="changePct" label="涨跌幅" width="100" sortable="custom">
+        <el-table-column prop="changePct" label="涨跌幅" width="85" sortable="custom">
           <template #default="{ row }">
             <span :class="row.changePct >= 0 ? 'text-up' : 'text-down'">
               {{ row.changePct >= 0 ? '+' : '' }}{{ row.changePct?.toFixed(2) }}%
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="turnover" label="换手率%" width="100" sortable="custom">
+        <el-table-column prop="turnover" label="换手率%" width="80" sortable="custom">
           <template #default="{ row }">
             <span>{{ row.turnover?.toFixed(1) }}%</span>
           </template>
         </el-table-column>
-        <el-table-column prop="volumeRatio" label="量比" width="80" sortable="custom">
+        <el-table-column prop="volumeRatio" label="量比" width="70" sortable="custom">
           <template #default="{ row }">
             <span>{{ row.volumeRatio?.toFixed(2) }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="gain5d" label="5日涨幅" width="100" sortable="custom">
+        <el-table-column prop="gain5d" label="5日涨幅" width="85" sortable="custom">
           <template #default="{ row }">
             <span :class="row.gain5d >= 0 ? 'text-up' : 'text-down'">
               {{ row.gain5d >= 0 ? '+' : '' }}{{ row.gain5d?.toFixed(1) }}%
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="marketCap" label="流通市值(亿)" width="120" sortable="custom">
+        <el-table-column prop="marketCap" label="流通市值(亿)" width="100" sortable="custom">
           <template #default="{ row }">
             <span>{{ row.marketCap?.toFixed(1) }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="amplitude" label="振幅%" width="90" sortable="custom">
+        <el-table-column prop="amplitude" label="振幅%" width="75" sortable="custom">
           <template #default="{ row }">
             <span :class="row.amplitude >= 6 ? 'text-up' : row.amplitude >= 3 ? 'text-warn' : ''">
               {{ row.amplitude?.toFixed(1) }}%
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="stageName" label="启动阶段" width="150">
+        <el-table-column prop="stageName" label="启动阶段" min-width="120">
           <template #default="{ row }">
             <el-tag :type="getStageTagType(row.stageType)" size="small" effect="dark">
               {{ row.stageName }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="score" label="评分" width="90" sortable="custom">
+        <el-table-column prop="score" label="评分" width="75" sortable="custom">
           <template #default="{ row }">
             <span :class="getScoreClass(row.score)" class="score-cell">{{ row.score }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="recommendLevel" label="推荐度" width="110" sortable="custom">
+        <el-table-column prop="recommendLevel" label="推荐度" width="90" sortable="custom">
           <template #default="{ row }">
             <span :style="{ color: row.recommendColor, fontWeight: 700 }">
               {{ row.recommendEmoji }} {{ row.recommendLevel }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="themeHeat" label="题材热度" width="100" sortable="custom">
+        <el-table-column prop="themeHeat" label="题材热度" min-width="100">
           <template #default="{ row }">
             <el-progress :percentage="row.themeHeat" :stroke-width="6" :show-text="true" :color="row.themeHeat > 70 ? '#f97316' : row.themeHeat > 50 ? '#eab308' : '#94a3b8'" />
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="120" fixed="right">
+        <el-table-column label="操作" width="80" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" size="small" link @click="goDetail(row)">
-              <el-icon><DataAnalysis /></el-icon> 详情
+              <el-icon><DataAnalysis /></el-icon>
             </el-button>
           </template>
         </el-table-column>

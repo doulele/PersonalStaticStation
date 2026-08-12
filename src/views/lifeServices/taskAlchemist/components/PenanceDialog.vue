@@ -55,8 +55,40 @@ const props = defineProps({
 
 const emit = defineEmits(['update:visible', 'complete'])
 
+// 完成提示音
+function playPenanceSound() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext
+    const ctx = new AudioCtx()
+    if (ctx.state === 'suspended') ctx.resume()
+    const now = ctx.currentTime
+
+    // 赎罪完成音效：低音鼓点 + 铃铛
+    const notes = [392, 523.25, 659.25, 783.99] // G4 C5 E5 G5
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.type = 'triangle'
+      osc.frequency.value = freq
+      const t = now + i * 0.12
+      gain.gain.setValueAtTime(0.2, t)
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.5)
+      osc.start(t)
+      osc.stop(t + 0.5)
+    })
+
+    // 振动
+    if (navigator.vibrate) {
+      navigator.vibrate([150, 80, 300])
+    }
+  } catch { }
+}
+
 function handleComplete() {
-  ElMessage.success('赎罪完成！原任务已解除封印 ✅')
+  playPenanceSound()
+  ElMessage.success('赎罪完成！原任务已解除封印')
   emit('complete')
 }
 
@@ -120,9 +152,10 @@ html.dark-mode & {
   .penance-alert { background: #2d1a1a; border-color: #7f1d1d; }
   .penance-title { color: #f87171; }
   .penance-desc { color: #ef4444; }
-  .penance-task-card { background: #2d2a1a; border-color: #f0c060; }
+  .penance-task-card { background: linear-gradient(135deg, #2d2a1a, #252520); border-color: #f0c060; }
   .penance-task-title { color: #f0c060; }
   .penance-task-hint { color: #d4a843; }
+  .penance-note { color: #64748b; }
 }
 
 @media (max-width: 768px) {

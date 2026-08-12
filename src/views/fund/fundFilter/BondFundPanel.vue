@@ -43,50 +43,50 @@
 
     <!-- PC端表格 -->
     <el-table v-loading="loading" element-loading-text="努力加载中..." :data="filteredList" stripe border highlight-current-row class="pc-table">
-      <el-table-column prop="code" label="编号" width="80" fixed />
-      <el-table-column prop="name" label="基金名称" width="200" fixed>
+      <el-table-column prop="code" label="编号" width="75" fixed />
+      <el-table-column prop="name" label="基金名称" min-width="160" fixed show-overflow-tooltip>
         <template #default="{ row }"><span class="fund-name">{{ row.name }}</span></template>
       </el-table-column>
-      <el-table-column prop="type" label="类型" width="100">
+      <el-table-column prop="type" label="类型" width="80">
         <template #default="{ row }">
           <el-tag size="small" type="warning" effect="plain">{{ row.type }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="dwjz" label="当前净值" width="95" sortable>
+      <el-table-column prop="dwjz" label="净值" width="85" sortable>
         <template #default="{ row }">{{ row.dwjz ? row.dwjz.toFixed(4) : '--' }}</template>
       </el-table-column>
-      <el-table-column prop="gsz" label="实时估值" width="100" sortable>
+      <el-table-column prop="gsz" label="估值" width="85" sortable>
         <template #default="{ row }">
           <span :style="{ color: (row.gszzl || 0) >= 0 ? '#f56c6c' : '#67c23a' }">{{ row.gsz ? row.gsz.toFixed(4) : '--' }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="gszzl" label="估算涨幅" width="95" sortable>
+      <el-table-column prop="gszzl" label="涨幅" width="85" sortable>
         <template #default="{ row }">
           <span :style="{ color: (row.gszzl || 0) >= 0 ? '#f56c6c' : '#67c23a', fontWeight: 'bold' }">{{ row.gszzl != null ? (row.gszzl >= 0 ? '+' : '') + row.gszzl.toFixed(2) + '%' : '--' }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="annualReturn3y" label="3年年化收益" sortable width="130">
+      <el-table-column prop="annualReturn3y" label="3年年化" sortable width="100">
         <template #default="{ row }">
           <span :style="{ color: row.annualReturn3y >= 0 ? '#f56c6c' : '#67c23a', fontWeight: 'bold' }">{{ row.annualReturn3y >= 0 ? '+' : '' }}{{ row.annualReturn3y.toFixed(1) }}%</span>
         </template>
       </el-table-column>
-      <el-table-column prop="maxDrawdown" label="最大回撤" sortable width="110">
+      <el-table-column prop="maxDrawdown" label="最大回撤" sortable width="90">
         <template #default="{ row }"><span :style="{ color: row.maxDrawdown >= 0 ? '#f56c6c' : '#67c23a' }">{{ row.maxDrawdown.toFixed(1) }}%</span></template>
       </el-table-column>
-      <el-table-column prop="sharpeRatio" label="夏普比率" sortable width="110">
+      <el-table-column prop="sharpeRatio" label="夏普" sortable width="80">
         <template #default="{ row }"><span :style="{ color: row.sharpeRatio >= 0 ? '#f56c6c' : '#67c23a' }">{{ row.sharpeRatio.toFixed(2) }}</span></template>
       </el-table-column>
-      <el-table-column prop="recoveryDays" label="回撤修复天数" sortable width="130">
+      <el-table-column prop="recoveryDays" label="修复天数" sortable width="90">
         <template #default="{ row }">
-          <span v-if="row.recoveryDays <= 0" style="color: #e74c3c">至今未修复</span>
+          <span v-if="row.recoveryDays <= 0" style="color: #e74c3c">未修复</span>
           <span v-else :style="{ color: row.recoveryDays <= 90 ? '#27ae60' : row.recoveryDays <= 180 ? '#f39c12' : '#e74c3c' }">{{ row.recoveryDays }}天</span>
         </template>
       </el-table-column>
-      <el-table-column prop="fundSize" label="规模(亿)" sortable width="100" />
-      <el-table-column prop="fundYears" label="成立年限" sortable width="110">
+      <el-table-column prop="fundSize" label="规模(亿)" sortable width="80" />
+      <el-table-column prop="fundYears" label="成立年限" sortable width="90">
         <template #default="{ row }"><span :style="{ color: row.fundYears >= 3 ? '#27ae60' : '#e74c3c' }">{{ row.fundYears.toFixed(1) }}年</span></template>
       </el-table-column>
-      <el-table-column prop="score" label="综合评分" sortable width="120">
+      <el-table-column prop="score" label="评分" sortable width="80">
         <template #default="{ row }"><el-tag :type="row.score >= 50 ? 'success' : 'warning'" effect="dark" size="small">{{ row.score }}</el-tag></template>
       </el-table-column>
     </el-table>

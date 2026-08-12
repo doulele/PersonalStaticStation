@@ -2384,3 +2384,469 @@ button {
 .fade-in {
   animation: fadeIn 0.5s ease-out;
 }
+
+// ============================================================
+// 任务炼金术（taskAlchemist）页面全局暗色覆盖
+// 必须在 common.scss 全局作用域，因为组件 <style scoped> 中的
+// html.dark-mode & { ... } 在 Vue scoped 编译后会带上 [data-v-hash]
+// 属性选择器，导致祖先 html.dark-mode 与组件元素无法正确匹配。
+// 这里使用组件根类 .task-list / .museum-page / .report-page /
+// .flow-workshop / .ta-page 作为作用域。
+// ============================================================
+
+html.dark-mode {
+  // ---------- 任务列表 (.task-list 根) ----------
+  .task-list {
+    .task-card {
+      background: #1e1e2e !important;
+      border-color: #2d2d4a !important;
+      &:hover { border-color: #f0c060 !important; }
+      &.status-overdue {
+        background: linear-gradient(135deg, #2d1a1a, #1e1e2e) !important;
+        border-color: #ef4444 !important;
+      }
+      &.is-recommended {
+        border-color: #f0c060 !important;
+        box-shadow: 0 0 0 2px rgba(240, 192, 96, 0.18) !important;
+      }
+      // 已完成暗色
+      &.status-completed {
+        background: #1a2d1a !important;
+        border-color: #166534 !important;
+        &:hover {
+          border-color: #22c55e !important;
+          box-shadow: 0 2px 8px rgba(22, 163, 74, 0.15) !important;
+          transform: none !important;
+        }
+        .card-main { cursor: default !important; }
+        .task-title { color: #bbf7d0 !important; }
+        .task-desc { color: #94a3b8 !important; }
+        .meta-item { color: #94a3b8 !important; }
+        .meta-ahead { color: #4ade80 !important; }
+        .meta-reward { color: #f0c060 !important; }
+        .meta-completed { color: #94a3b8 !important; }
+        .meta-done-mark {
+          color: #4ade80 !important;
+          border-color: #166534 !important;
+          background: #1a2d1a !important;
+        }
+        .card-actions { border-top-color: #166534 !important; }
+      }
+    }
+    .task-title { color: #e2dee9 !important; }
+    .task-desc { color: #94a3b8 !important; }
+    .meta-item { color: #64748b !important; }
+    .meta-item.penance { color: #f0c060 !important; }
+    .meta-item.meta-empty { color: #3d3d5c !important; }
+    .meta-ahead { color: #4ade80 !important; }
+    .meta-reward { color: #f0c060 !important; }
+    .meta-estimate { color: #d4a843 !important; }
+    .filter-label { color: #94a3b8 !important; }
+    .energy-badge.high { background: linear-gradient(135deg, #2d1a1a, #1e1e2e) !important; color: #f87171 !important; }
+    .energy-badge.medium { background: linear-gradient(135deg, #2d2410, #1e1e2e) !important; color: #fbbf24 !important; }
+    .energy-badge.low { background: linear-gradient(135deg, #1a2d1a, #1e1e2e) !important; color: #4ade80 !important; }
+    .energy-badge-text { color: #94a3b8 !important; }
+    .card-actions {
+      border-color: #2d2d4a !important;
+      background: transparent !important;
+    }
+    .act-btn {
+      background: #252540 !important;
+      border-color: #2d2d4a !important;
+      color: #64748b !important;
+      &:hover {
+        border-color: #f0c060 !important;
+        color: #f0c060 !important;
+        background: #2d2a1a !important;
+      }
+    }
+    .act-btn.primary {
+      border-color: #f0c060 !important;
+      color: #f0c060 !important;
+      background: #2d2a1a !important;
+      &:hover { background: #3d3020 !important; }
+    }
+    .recommend-label {
+      background: rgba(148, 163, 184, 0.08) !important;
+      color: #f0c060 !important;
+    }
+    .empty-text { color: #94a3b8 !important; }
+    .empty-hint { color: #64748b !important; }
+    .priority-dot.urgent { box-shadow: 0 0 0 2px #2d1a1a !important; }
+    .priority-dot.important { box-shadow: 0 0 0 2px #2d2a1a !important; }
+    .priority-dot.normal { box-shadow: 0 0 0 2px #1a2d1a !important; }
+  }
+
+  // ---------- 心流工坊 (.flow-workshop 根) ----------
+  .flow-workshop {
+    .ws-stat-card {
+      background: #1e1e2e !important;
+      border-color: #2d2d4a !important;
+    }
+    .ws-stat-value { color: #e2dee9 !important; }
+    .ws-stat-label { color: #64748b !important; }
+    .ws-section-title { color: #e2dee9 !important; }
+    .ws-task-chip {
+      background: #252540 !important;
+      border-color: #2d2d4a !important;
+      &:hover {
+        background: #1e1e2e !important;
+        border-color: #f0c060 !important;
+      }
+    }
+    .ws-task-title { color: #e2dee9 !important; }
+    .ws-task-duration { color: #64748b !important; }
+    .ws-history-item {
+      background: #252540 !important;
+      border-color: #2d2d4a !important;
+    }
+    .ws-history-title { color: #e2dee9 !important; }
+    .ws-history-time { color: #64748b !important; }
+    .efficient-badge { background: #1a2d1a !important; color: #4ade80 !important; }
+    .ws-empty { color: #64748b !important; }
+  }
+
+  // ---------- 博物志 (.museum-page 根) ----------
+  .museum-page {
+    .museum-stat {
+      background: #1e1e2e !important;
+      border-color: #2d2d4a !important;
+    }
+    .museum-stat-num { color: #f0c060 !important; }
+    .museum-section-title { color: #e2dee9 !important; }
+    .museum-stat-label { color: #64748b !important; }
+    // 成就卡片
+    .achievement-card {
+      background: #1e1e2e !important;
+      border-color: #2d2d4a !important;
+    }
+    .achievement-card.unlocked {
+      background: linear-gradient(135deg, #2d2a1a, #1e1e2e) !important;
+      border-color: #f0c060 !important;
+    }
+    .achievement-card.legendary.unlocked {
+      background: linear-gradient(135deg, #2d2a1a, #3d3020) !important;
+      border-color: #f0c060 !important;
+      box-shadow: 0 2px 12px rgba(240, 192, 96, 0.25) !important;
+    }
+    .ach-name { color: #e2dee9 !important; }
+    .ach-hint { color: #64748b !important; }
+    .ach-date { color: #f0c060 !important; }
+    .ach-progress-text { color: #64748b !important; }
+    .ach-icon-wrap { background: #252540 !important; }
+    .achievement-card.unlocked .ach-icon-wrap { background: rgba(240, 192, 96, 0.15) !important; }
+    // 碎片
+    .fragment-chip {
+      background: linear-gradient(135deg, #1e1e2e, #252540) !important;
+      border-color: #7c3aed !important;
+      color: #a78bfa !important;
+    }
+    // 卡片物品
+    .card-item {
+      background: linear-gradient(135deg, #2d2a1a, #3d3020) !important;
+      border-color: #f0c060 !important;
+      box-shadow: 0 2px 8px rgba(240, 192, 96, 0.15) !important;
+    }
+    .card-name { color: #f0c060 !important; }
+    // 空状态
+    .museum-empty p { color: #64748b !important; }
+  }
+
+  // ---------- 炼金日报 (.report-page 根) ----------
+  .report-page {
+    .report-card {
+      background: #1e1e2e !important;
+      border-color: #2d2d4a !important;
+    }
+    .today-card {
+      background: linear-gradient(135deg, #2d2a1a, #1e1e2e) !important;
+      border-color: #f0c060 !important;
+    }
+    .report-title { color: #e2dee9 !important; }
+    .report-value { color: #e2dee9 !important; }
+    .report-value.green { color: #22c55e !important; }
+    .report-value.red { color: #ef4444 !important; }
+    .report-value.gold { color: #f0c060 !important; }
+    .report-label { color: #64748b !important; }
+    // 热力图
+    .heatmap-bar-wrap { background: #252540 !important; }
+    .heatmap-bar.level-1 { background: #2d2a1a !important; }
+    .heatmap-bar.level-2 { background: #3d3020 !important; }
+    .heatmap-bar.level-3 { background: #6b5530 !important; }
+    .heatmap-bar.level-4 { background: #f0c060 !important; }
+    .heatmap-count { color: #f0c060 !important; }
+    .heatmap-label { color: #94a3b8 !important; }
+    .heatmap-empty { color: #64748b !important; }
+    // 历史
+    .history-item {
+      background: #252540 !important;
+      border-color: #2d2d4a !important;
+    }
+    .history-date { color: #e2dee9 !important; }
+    .history-stats { color: #94a3b8 !important; }
+    .history-summary { color: #64748b !important; }
+    .empty-tip { color: #64748b !important; }
+  }
+
+  // ---------- 伙伴横幅 (.partner-banner 根) ----------
+  // Vue scoped 中 html.dark-mode & {} 不生效，已从组件迁移至此
+  .partner-banner {
+    background: linear-gradient(135deg, rgba(240, 192, 96, 0.10), rgba(240, 192, 96, 0.05)) !important;
+    border-color: rgba(240, 192, 96, 0.35) !important;
+    .greeting-main { color: #e2dee9 !important; }
+    .greeting-sub { color: #94a3b8 !important; }
+    .quick-stats {
+      background: rgba(30, 30, 46, 0.6) !important;
+      backdrop-filter: blur(6px);
+    }
+    .stat-value {
+      color: #e2dee9 !important;
+      &.gold { color: #f0c060 !important; }
+    }
+    .stat-label { color: #94a3b8 !important; }
+    .stat-divider { background: #2d2d4a !important; }
+  }
+
+  // ---------- 主页 .ta-page 容器 ----------
+  .ta-page {
+    .back-btn {
+      color: #94a3b8 !important;
+      &:hover { color: #f0c060 !important; background: #252540 !important; }
+    }
+    .page-desc { color: #94a3b8 !important; }
+    .ta-tabs {
+      background: #252540 !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+    }
+    .ta-tab {
+      color: #94a3b8 !important;
+      &:hover { color: #e2dee9 !important; }
+      &.active {
+        background: #1e1e2e !important;
+        color: #f0c060 !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+      }
+    }
+    .tab-badge { background: #f0c060 !important; color: #1e1e2e !important; }
+    .partner-fab { box-shadow: 0 4px 16px rgba(212, 168, 67, 0.3) !important; }
+    .partner-notification-dot { border-color: #1e1e2e !important; }
+    .blind-box-toast {
+      background: rgba(30, 30, 46, 0.95) !important;
+      border-color: rgba(212, 168, 67, 0.5) !important;
+    }
+    // 黄金时段横幅
+    .golden-time-banner {
+      background: linear-gradient(135deg, #2d2a1a, #1e1e2e) !important;
+      border-color: #f0c060 !important;
+    }
+    .banner-text { color: #e2dee9 !important; }
+    .banner-hint { color: #94a3b8 !important; }
+  }
+
+  // ---------- 赎罪弹窗 (.penance-dialog 根) ----------
+  .penance-dialog {
+    background: #1e1e2e !important;
+    border-color: #2d2d4a !important;
+    .penance-alert {
+      background: #2d1a1a !important;
+      border-color: #7f1d1d !important;
+    }
+    .penance-title { color: #f87171 !important; }
+    .penance-desc { color: #94a3b8 !important; }
+    .penance-task-card {
+      background: linear-gradient(135deg, #2d2a1a, #252520) !important;
+      border-color: #f0c060 !important;
+    }
+    .penance-task-title { color: #f0c060 !important; }
+    .penance-task-hint { color: #d4a843 !important; }
+    .penance-note { color: #64748b !important; }
+    .penance-btn.cancel {
+      background: #252540 !important;
+      border-color: #2d2d4a !important;
+      color: #94a3b8 !important;
+      &:hover { background: #2d2d4a !important; color: #e2dee9 !important; }
+    }
+  }
+
+  // ---------- 任务表单弹窗（Element Plus dialog body） ----------
+  .task-form-dialog {
+    .el-dialog__body { background: #1e1e2e !important; }
+    .el-dialog__header { background: #1e1e2e !important; border-bottom: 1px solid #2d2d4a; }
+    .el-dialog__title { color: #f0c060 !important; }
+    .el-dialog__headerbtn .el-dialog__close { color: #94a3b8 !important; }
+    .el-dialog__footer { border-top: 1px solid #2d2d4a; }
+    .el-button:not(.el-button--primary) {
+      background: #252540 !important;
+      border-color: #2d2d4a !important;
+      color: #e2dee9 !important;
+      &:hover { background: #2d2d4a !important; border-color: #f0c060 !important; }
+    }
+
+    // Element Plus 表单 label 颜色加深（之前看着像紫色是对比度过低）
+    .el-form-item__label {
+      color: #e2dee9 !important;
+      font-weight: 600;
+    }
+    .el-input__wrapper,
+    .el-textarea__inner,
+    .el-input-number .el-input__wrapper {
+      background: #252540 !important;
+      box-shadow: 0 0 0 1px #2d2d4a inset !important;
+      &:hover { box-shadow: 0 0 0 1px #3d3d5c inset !important; }
+      &.is-focus { box-shadow: 0 0 0 1px #f0c060 inset !important; }
+    }
+    .el-input__inner,
+    .el-textarea__inner,
+    .el-input-number .el-input__inner {
+      color: #e2dee9 !important;
+      &::placeholder { color: #64748b !important; }
+    }
+    .el-input__count { color: #64748b !important; background: transparent !important; }
+
+    // Element Plus radio-button 暗色
+    .el-radio-button__inner {
+      background: #252540 !important;
+      border-color: #2d2d4a !important;
+      color: #94a3b8 !important;
+      &:hover { color: #e2dee9 !important; }
+    }
+    .el-radio-button__original-radio:checked + .el-radio-button__inner {
+      background: #f0c060 !important;
+      border-color: #f0c060 !important;
+      color: #1e1e2e !important;
+      box-shadow: -1px 0 0 0 #f0c060 !important;
+    }
+
+    // 精力消耗指数
+    .energy-option {
+      border-color: #2d2d4a !important;
+      background: #252540 !important;
+      &.high {
+        &:hover, &.active {
+          background: #2d1a1a !important;
+          border-color: #ef4444 !important;
+        }
+        .energy-label { color: #f87171 !important; }
+      }
+      &.medium {
+        &:hover, &.active {
+          background: #2d2410 !important;
+          border-color: #f59e0b !important;
+        }
+        .energy-label { color: #fbbf24 !important; }
+      }
+      &.low {
+        &:hover, &.active {
+          background: #1a2d1a !important;
+          border-color: #16a34a !important;
+        }
+        .energy-label { color: #4ade80 !important; }
+      }
+    }
+    .energy-desc { color: #64748b !important; }
+
+    // 自定义时长
+    .duration-custom {
+      background: #252540 !important;
+      border-color: #2d2d4a !important;
+    }
+    .duration-input {
+      background: #1e1e2e !important;
+      border-color: #2d2d4a !important;
+      color: #e2dee9 !important;
+      &::placeholder { color: #64748b !important; }
+      &:focus { border-color: #f0c060 !important; box-shadow: 0 0 0 2px rgba(240, 192, 96, 0.15) !important; }
+    }
+    .duration-custom-unit { color: #94a3b8 !important; }
+
+    // Element Plus date-picker
+    .el-date-editor.el-input,
+    .el-date-editor.el-input__wrapper {
+      background: #252540 !important;
+    }
+    .el-checkbox__label { color: #e2dee9 !important; }
+    .el-checkbox__input.is-checked .el-checkbox__inner {
+      background-color: #f0c060 !important;
+      border-color: #f0c060 !important;
+    }
+    .el-checkbox__input.is-checked + .el-checkbox__label { color: #f0c060 !important; }
+  }
+
+  // ---------- 炼金专注弹窗 (.focus-dialog 根) ----------
+  // Vue scoped 中 html.dark-mode & {} 不生效（scoped hash 不匹配祖先选择器），
+  // 所以这些暗色覆盖必须放在全局 common.scss。
+  .focus-dialog {
+    .el-dialog__body {
+      background: #1e1e2e !important;
+      color: #e2dee9;
+    }
+    .el-dialog__header {
+      background: #1e1e2e !important;
+      border-bottom: 1px solid #2d2d4a;
+    }
+    .el-dialog__title {
+      color: #f0c060 !important;
+    }
+    .el-dialog__headerbtn .el-dialog__close {
+      color: #94a3b8 !important;
+    }
+
+    // 顶部任务信息卡
+    .focus-task-info {
+      background: #252540 !important;
+      border: 1px solid #2d2d4a;
+    }
+    .focus-task-title { color: #e2dee9 !important; }
+    .focus-task-meta { color: #94a3b8 !important; }
+    .focus-audio-label { color: #f0c060 !important; }
+
+    // 倒计时圆环
+    .timer-bg-circle { stroke: #2d2d4a !important; }
+    .timer-display { color: #e2dee9 !important; }
+    .timer-display.timer-done { color: #22c55e !important; }
+    .timer-label { color: #94a3b8 !important; }
+    .timer-ring-finished .timer-progress { stroke: #22c55e !important; }
+
+    // 控制按钮
+    .cancel-btn {
+      color: #94a3b8 !important;
+      background: #252540 !important;
+      border-color: #2d2d4a !important;
+      &:hover {
+        color: #e2dee9 !important;
+        background: #2d2d4a !important;
+        border-color: #f0c060 !important;
+      }
+    }
+    .control-btn {
+      background: #252540 !important;
+      border-color: #2d2d4a !important;
+      color: #e2dee9 !important;
+      &:hover {
+        border-color: #f0c060 !important;
+        background: #2d2d4a !important;
+      }
+    }
+    .start-btn {
+      background: linear-gradient(135deg, #f0c060, #d4a843) !important;
+      color: #1e1e2e !important;
+      &:hover {
+        background: linear-gradient(135deg, #d4a843, #b8861e) !important;
+      }
+    }
+
+    // 白噪音选择
+    .audio-label-text { color: #94a3b8 !important; }
+    .audio-chip {
+      background: #252540 !important;
+      color: #94a3b8 !important;
+      border: 1px solid transparent;
+      &:hover { background: #2d2d4a !important; }
+      &.active {
+        background: rgba(240, 192, 96, 0.15) !important;
+        color: #f0c060 !important;
+        border-color: #f0c060 !important;
+      }
+    }
+  }
+}

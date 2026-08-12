@@ -426,8 +426,8 @@ export async function fetchStockSnapshot(codeRaw, signal) {
   }
   const url = `/staticTool/api/qt/q=${code}`
   const response = await fetch(url, { signal })
-  const buffer = await response.arrayBuffer()
-  const text = new TextDecoder('gbk').decode(buffer)
+  // 后端已将 GBK 转 UTF-8，直接用 text() 获取
+  const text = await response.text()
   const match = text.match(/="(.+)"/)
   if (!match) throw new Error('未获取到行情数据')
   const parts = match[1].split('~')
@@ -436,8 +436,9 @@ export async function fetchStockSnapshot(codeRaw, signal) {
   const price = parseFloat(parts[3]) || 0
   const yesterdayClose = parseFloat(parts[4]) || 0
   const turnoverRaw = parseFloat(parts[38]) || 0
-  const totalShares = parseFloat(parts[44]) || 0
-  const marketCapYuan = totalShares > 0 ? (totalShares * price) : 0
+  // parts[44] 是流通市值(亿)，直接使用（之前误当作总股本×价格）
+  const marketCapRaw = parseFloat(parts[44]) || 0
+  const marketCapYuan = marketCapRaw * 1e8 // 转换为元，兼容 push2 f20 字段
   const changePct = (price && yesterdayClose)
     ? +((price - yesterdayClose) / yesterdayClose * 100).toFixed(2)
     : 0

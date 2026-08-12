@@ -95,26 +95,22 @@
       @complete="handlePenanceComplete"
     />
 
-    <!-- AI伙伴对话框 -->
-    <PartnerChat
-      ref="partnerChatRef"
-      :partner="partner"
-      :stats="todayStats"
-      @command="handlePartnerCommand"
-    />
 
-    <!-- 右下角悬浮伙伴按钮 -->
-    <div class="partner-fab" @click="togglePartnerChat">
-      <div class="partner-avatar">{{ partnerEmoji }}</div>
-      <span v-if="partnerNotification" class="partner-notification-dot"></span>
-    </div>
 
-    <!-- 每日盲盒提示（5秒后自动消失） -->
+    <!-- 每日盲盒提示 -->
     <transition name="blind-fade">
       <div v-if="showBlindBox" class="blind-box-toast">
-        <span class="blind-icon">🎁</span>
-        <span>今日盲盒已就位，去完成隐藏任务赢3倍自由币吧！</span>
-        <el-button text size="small" @click="dismissBlindBox">知道了</el-button>
+        <div class="blind-box-content">
+          <span class="blind-icon">🎁</span>
+          <div class="blind-box-text">
+            <span class="blind-box-title">今日盲盒</span>
+            <span>关键词：<strong>{{ blindBoxKeyword }}</strong>，完成含该词的任务赢 <strong>3倍自由币</strong>！</span>
+          </div>
+        </div>
+        <div class="blind-box-actions">
+          <el-button size="small" type="primary" @click="createBlindBoxTask">去创建</el-button>
+          <el-button size="small" @click="dismissBlindBox">知道了</el-button>
+        </div>
       </div>
     </transition>
 
@@ -136,7 +132,6 @@ import FocusTimer from './components/FocusTimer.vue'
 import Museum from './components/Museum.vue'
 import DailyReport from './components/DailyReport.vue'
 import PenanceDialog from './components/PenanceDialog.vue'
-import PartnerChat from './components/PartnerChat.vue'
 import CoinBurst from './components/CoinBurst.vue'
 import * as taApi from '@/api/taskAlchemist'
 
@@ -158,8 +153,6 @@ const partnerTypes = {
 
 const partner = ref(loadPartner())
 const partnerEmoji = computed(() => partner.value.emoji || '🦊')
-const partnerChatRef = ref(null)
-const partnerNotification = ref(false)
 
 function loadPartner() {
   const saved = localStorage.getItem('ta_partner')
@@ -172,77 +165,12 @@ function loadPartner() {
   return defaultPartner
 }
 
-function togglePartnerChat() {
-  partnerNotification.value = false
-  partnerChatRef.value?.toggle()
+function saveTasks() {
+  localStorage.setItem('ta_tasks', JSON.stringify(tasks.value))
+  updateStats()
+  syncToBackend()
 }
 
-function handlePartnerCommand(cmd) {
-  switch (cmd) {
-    case 'snooze':
-      // 再睡5分钟 - 每日限3次
-      const snoozeCount = parseInt(localStorage.getItem('ta_snooze_today') || '0')
-      if (snoozeCount >= 3) {
-        partnerChatRef.value?.addMessage('partner', getPartnerLine('snooze_limit'))
-        return
-      }
-      localStorage.setItem('ta_snooze_today', String(snoozeCount + 1))
-      partnerChatRef.value?.addMessage('partner', getPartnerLine('snooze_ok'))
-      break
-    case 'silence':
-      // 别烦我 - 30分钟免打扰
-      localStorage.setItem('ta_silence_until', String(Date.now() + 30 * 60 * 1000))
-      partnerChatRef.value?.addMessage('partner', getPartnerLine('silence'))
-      showPartnerChat.value = false
-      break
-    case 'proud':
-      // 我飘了
-      const count = todayStats.value.completed
-      partnerChatRef.value?.addMessage('partner', getPartnerLine('proud', count))
-      break
-  }
-}
-
-function getPartnerLine(key, extra) {
-  const lines = {
-    tsundere: {
-      snooze_limit: '喂喂喂！今天已经给你三次机会了，别太得寸进尺啊！',
-      snooze_ok: '哼，就5分钟，多一秒都不行！',
-      silence: '……行吧，我闭嘴。30分钟后再来烦你。',
-      proud: `哟，才完成${extra}个任务就飘了？不过…干得还行。`,
-      morning: '太阳晒屁股了！赶紧看看今天要炼化哪些任务吧！',
-      afternoon: '午后了，别摸鱼了，挑个简单的收收尾。',
-      evening: '晚上就别折腾高能耗了，规划一下明天吧。',
-      complete: '不错嘛，居然提前搞定了？赏你点自由币！',
-      overdue: '啧，又拖延了吧？快去完成赎罪任务，别让我等太久！'
-    },
-    gentle: {
-      snooze_limit: '今天已经休息够多了呢，我们一起开始吧？',
-      snooze_ok: '好的，再休息5分钟，我等你~',
-      silence: '好的，我先安静一会儿，你需要我的时候随时叫我。',
-      proud: `你已经完成了${extra}个任务，真的很棒呢！`,
-      morning: '早安！今天也是充满希望的一天，来看看有什么可以完成的吧~',
-      afternoon: '午后时光，做点轻松的事情吧，我陪着你。',
-      evening: '晚上好，今天辛苦了，整理一下明天要做的事吧。',
-      complete: '太厉害了！提前完成的感觉真好，自由币收好哦~',
-      overdue: '没关系，每个人都会有拖延的时候。做个赎罪小任务，然后继续前进吧。'
-    },
-    hotblood: {
-      snooze_limit: '三次了！勇士可不能一直赖床！燃起来吧！',
-      snooze_ok: '好！5分钟后，让我们一鼓作气冲上去！',
-      silence: '明白了！我会保持安静，但内心的火焰不会熄灭！',
-      proud: `🔥 完成了${extra}个任务！这就是炼金术士的实力！继续燃烧吧！`,
-      morning: '燃烧吧！黄金时段已到，去征服那些高能耗任务！',
-      afternoon: '午后战斗继续！低能耗任务也是通往胜利的一步！',
-      evening: '夜晚属于复盘和规划，为明天的战斗做好准备！',
-      complete: '漂亮！提前交付！你是最强的炼金术士！金币爆裂！！',
-      overdue: '居然超时了？！别灰心，完成赎罪任务，我们重新来过！'
-    }
-  }
-  return lines[partner.value.type]?.[key] || lines.tsundere[key] || '……'
-}
-
-// ==================== 时间和统计 ====================
 const currentHour = ref(new Date().getHours())
 let hourTimer = null
 
@@ -261,6 +189,7 @@ const activeTab = ref('tasks')
 const showTaskForm = ref(false)
 const editingTask = ref(null)
 const showBlindBox = ref(calcBlindBoxVisible())
+const blindBoxKeyword = ref('')
 
 const tabs = [
   { key: 'tasks', label: '炼金任务', icon: List, badge: computed(() => tasks.value.filter(t => t.status === 'active').length) },
@@ -319,14 +248,6 @@ function loadTasks() {
   return []
 }
 
-function saveTasks() {
-  localStorage.setItem('ta_tasks', JSON.stringify(tasks.value))
-  updateStats()
-  // 同步到后端
-  syncToBackend()
-}
-
-// 后端同步（节流防抖）
 let syncTimer = null
 function syncToBackend() {
   if (!useBackend.value) return
@@ -505,22 +426,6 @@ function handleCompleteTask(task) {
     coinBurstRef.value?.burst(coinReward)
   }
 
-  // 伙伴反馈
-  if (coinReward >= 20) {
-    partnerChatRef.value?.addMessage('partner', getPartnerLine('complete'))
-    partnerNotification.value = true
-  }
-
-  // 顺手牵羊推荐：完成后推荐低能耗任务
-  if (t.energy === 'high') {
-    const lowTask = tasks.value.find(lt => lt.status === 'active' && lt.energy === 'low')
-    if (lowTask) {
-      setTimeout(() => {
-        partnerChatRef.value?.addMessage('partner', `趁热打铁！要不要顺手把「${lowTask.title}」也做了？只需${lowTask.duration}分钟~`)
-        partnerNotification.value = true
-      }, 1500)
-    }
-  }
 }
 
 function handleDelayTask(task) {
@@ -548,8 +453,7 @@ function handleDelayTask(task) {
       createdAt: new Date().toISOString()
     }
     saveTasks()
-    partnerChatRef.value?.addMessage('partner', getPartnerLine('overdue'))
-    partnerNotification.value = true
+
     return
   }
 
@@ -616,6 +520,41 @@ function handleFocusComplete(actualMinutes) {
   focusSessions.value.unshift(session)
   saveFocusSessions()
 
+  // 自动完成任务
+  if (session.taskId) {
+    const taskIdx = tasks.value.findIndex(t => t.id === session.taskId)
+    if (taskIdx >= 0 && tasks.value[taskIdx].status !== 'completed') {
+      const t = tasks.value[taskIdx]
+      t.status = 'completed'
+      t.completedAt = new Date().toISOString()
+
+      // 计算完成奖励（与 handleCompleteTask 逻辑一致）
+      let coinReward = 0
+      if (t.deadline) {
+        const dl = new Date(t.deadline)
+        const now = new Date()
+        const hoursAhead = (dl - now) / (1000 * 60 * 60)
+        if (hoursAhead > 0) {
+          if (hoursAhead > 48) coinReward = 50
+          else if (hoursAhead > 24) coinReward = 30
+          else if (hoursAhead > 12) coinReward = 20
+          else if (hoursAhead > 2) coinReward = 10
+          else coinReward = 5
+        }
+      } else {
+        coinReward = t.energy === 'high' ? 15 : t.energy === 'medium' ? 10 : 5
+      }
+      addFreeCoins(coinReward)
+      if (coinReward > 0) {
+        coinBurstRef.value?.burst(coinReward)
+      }
+
+      todayStats.value.completed++
+      todayStats.value.aheadCount++
+      saveTasks()
+    }
+  }
+
   // 高效红利：实际耗时低于预估
   const estimated = session.duration || 25
   if (actualMinutes < estimated * 0.8) {
@@ -628,6 +567,8 @@ function handleFocusComplete(actualMinutes) {
   const minutes = parseInt(localStorage.getItem('ta_partnerMinutes') || '0')
   localStorage.setItem('ta_partnerMinutes', String(minutes + actualMinutes))
   todayStats.value.partnerMinutes = minutes + actualMinutes
+
+
 
   showFocusTimer.value = false
   activeFocusSession.value = null
@@ -653,6 +594,7 @@ function handlePenanceComplete() {
       tasks.value[idx].penanceTask.status = 'completed'
       tasks.value[idx].status = 'active'
     }
+    const taskTitle = penanceTask.value.title
     penanceTask.value = null
     showPenance.value = false
     saveTasks()
@@ -721,11 +663,13 @@ function checkAchievements() {
 
   // 检查解锁
   let changed = false
+  const newlyUnlocked = []
   achievements.value.forEach(a => {
     if (updates[a.id] !== undefined && updates[a.id] >= a.target && !a.unlocked) {
       a.unlocked = true
       a.unlockedAt = new Date().toISOString()
       changed = true
+      newlyUnlocked.push(a)
       // 掉落碎片
       if (Math.random() < 0.5) {
         dropFragment(a.id)
@@ -815,15 +759,16 @@ function generateDailyReport() {
   const existing = reportHistory.value.find(r => r.date === today)
   if (existing) return
 
+  const s = todayStats.value
   const report = {
     date: today,
-    total: todayStats.value.total,
-    completed: todayStats.value.completed,
-    aheadCount: todayStats.value.aheadCount,
-    overdue: todayStats.value.overdue,
-    partnerMinutes: todayStats.value.partnerMinutes,
-    freeCoins: todayStats.value.freeCoins,
-    summary: getPartnerLine('proud', todayStats.value.completed)
+    total: s.total,
+    completed: s.completed,
+    aheadCount: s.aheadCount,
+    overdue: s.overdue,
+    partnerMinutes: s.partnerMinutes,
+    freeCoins: s.freeCoins,
+    summary: `今日完成 ${s.completed}/${s.total} 个任务`
   }
   reportHistory.value.unshift(report)
   if (reportHistory.value.length > 30) reportHistory.value.pop()
@@ -835,6 +780,14 @@ function generateDailyReport() {
 function calcBlindBoxVisible() {
   const today = new Date().toISOString().slice(0, 10)
   const shown = localStorage.getItem('ta_blindbox_shown')
+  // 读取当前盲盒关键词
+  const saved = localStorage.getItem('ta_blindbox_task')
+  if (saved) {
+    try {
+      const bt = JSON.parse(saved)
+      if (bt.date === today) blindBoxKeyword.value = bt.keyword
+    } catch { }
+  }
   return shown !== today
 }
 
@@ -842,6 +795,24 @@ function dismissBlindBox() {
   showBlindBox.value = false
   const today = new Date().toISOString().slice(0, 10)
   localStorage.setItem('ta_blindbox_shown', today)
+}
+
+function createBlindBoxTask() {
+  dismissBlindBox()
+  activeTab.value = 'tasks'
+  // 先打开弹窗，nextTick 后再赋值确保 watch 能捕获
+  showTaskForm.value = true
+  nextTick(() => {
+    editingTask.value = {
+      title: blindBoxKeyword.value,
+      description: '',
+      energy: 'low',
+      duration: 15,
+      priority: 'normal',
+      deadline: null,
+      timeTax: true
+    }
+  })
 }
 
 function checkBlindBox(taskData) {
@@ -854,10 +825,7 @@ function checkBlindBox(taskData) {
         addFreeCoins(30)
         coinBurstRef.value?.burst(30, '盲盒爆破·3倍奖励')
         dismissBlindBox()
-        setTimeout(() => {
-          partnerChatRef.value?.addMessage('partner', '天哪！你居然完成了今天的盲盒任务！3倍自由币已到账！🎉')
-          partnerNotification.value = true
-        }, 1000)
+
       }
     } catch { }
   }
@@ -888,6 +856,7 @@ function generateDailyBlindBox() {
   const randomKeyword = keywords[Math.floor(Math.random() * keywords.length)]
   const blindTask = { date: today, keyword: randomKeyword }
   localStorage.setItem('ta_blindbox_task', JSON.stringify(blindTask))
+  blindBoxKeyword.value = randomKeyword
 }
 
 // 重置每日计数
@@ -969,14 +938,6 @@ onMounted(async () => {
     generateDailyReport()
     setInterval(generateDailyReport, 24 * 60 * 60 * 1000)
   }, msUntilReport)
-
-  // 伙伴早间问候
-  if (currentHour.value >= 6 && currentHour.value < 10) {
-    setTimeout(() => {
-      partnerChatRef.value?.addMessage('partner', getPartnerLine('morning'))
-      partnerNotification.value = true
-    }, 2000)
-  }
 })
 
 onUnmounted(() => {

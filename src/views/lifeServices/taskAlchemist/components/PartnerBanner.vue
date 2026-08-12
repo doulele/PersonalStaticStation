@@ -146,13 +146,5 @@ const timeTip = computed(() => {
   }
   .stat-value { font-size: 18px; }
 }
-
-html.dark-mode & {
-  .greeting-main { color: #e2dee9; }
-  .greeting-sub { color: #94a3b8; }
-  .quick-stats { background: rgba(37,37,64,0.6); }
-  .stat-value { color: #e2dee9; &.gold { color: #f0c060; } }
-  .stat-label { color: #64748b; }
-  .stat-divider { background: #2d2d4a; }
-}
+// 暗色模式已迁移到 common.scss 的 html.dark-mode .partner-banner 块
 </style>

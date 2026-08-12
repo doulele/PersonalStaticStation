@@ -2,7 +2,7 @@
   <div class="report-page">
     <!-- 今日统计 -->
     <div class="report-card today-card">
-      <h3 class="report-title">📊 今日炼金报告</h3>
+      <h3 class="report-title">今日炼金报告</h3>
       <div class="report-grid">
         <div class="report-item">
           <span class="report-value">{{ stats.completed }}</span>
@@ -33,7 +33,7 @@
 
     <!-- 周精力热力图 -->
     <div class="report-card">
-      <h3 class="report-title">🔥 本周精力热力图</h3>
+      <h3 class="report-title">本周精力热力图</h3>
       <div class="heatmap">
         <div v-for="day in heatmap" :key="day.date" class="heatmap-day">
           <span class="heatmap-label">{{ day.day }}</span>

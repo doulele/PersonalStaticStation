@@ -22,12 +22,10 @@
 .add-btn {
   background: linear-gradient(135deg, #d4a843, #c9952e);
   border: none;
-  &:hover {
-    background: linear-gradient(135deg, #c9952e, #b8861e);
-  }
+  &:hover { background: linear-gradient(135deg, #c9952e, #b8861e); }
 }
 
-// ==================== 推荐标签（居中低调） ====================
+// ==================== 推荐标签 ====================
 .recommend-label {
   display: flex;
   justify-content: center;
@@ -69,11 +67,34 @@
     box-shadow: 0 0 0 2px rgba(212, 168, 67, 0.18);
   }
 
+  // ===== 已完成状态 =====
   &.status-completed {
-    opacity: 0.55;
-    .task-title { text-decoration: line-through; }
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+    opacity: 0.85;
+    cursor: default;
+    &:hover {
+      border-color: #86efac;
+      transform: none;
+      box-shadow: 0 2px 8px rgba(22, 163, 74, 0.08);
+    }
+    .card-main { cursor: default; }
+    .task-title { color: #166534; }
+    .task-desc { color: #6b7280; }
+    .meta-item { color: #6b7280; }
+    .meta-done-mark {
+      color: #16a34a;
+      font-size: 11px;
+      padding: 1px 8px;
+      border: 1px solid #bbf7d0;
+      border-radius: 10px;
+      background: #dcfce7;
+    }
+    .meta-ahead { color: #16a34a; font-weight: 600; }
+    .meta-reward { color: #d4a843; font-weight: 600; }
   }
 
+  // ===== 逾期状态 =====
   &.status-overdue {
     border-color: #ef4444;
     background: linear-gradient(135deg, #fef2f2, #fff);
@@ -96,6 +117,8 @@
   width: 40px;
   padding-top: 2px;
 }
+
+// 能耗 badge
 .energy-badge {
   display: flex;
   flex-direction: column;
@@ -106,11 +129,21 @@
   height: 42px;
   border-radius: 10px;
   font-weight: 600;
-  &.high { background: linear-gradient(135deg, #fef2f2, #fee2e2); color: #dc2626; }
-  &.low { background: linear-gradient(135deg, #f0fdf4, #dcfce7); color: #16a34a; }
+  &.high {
+    background: linear-gradient(135deg, #fef2f2, #fee2e2);
+    color: #dc2626;
+  }
+  &.medium {
+    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    color: #d97706;
+  }
+  &.low {
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    color: #16a34a;
+  }
 }
 .energy-icon-text { font-size: 17px; line-height: 1; }
-.energy-name { font-size: 10px; line-height: 1; }
+.energy-name { font-size: 10px; line-height: 1; margin-top: 4px;}
 
 .task-body {
   flex: 1;
@@ -168,24 +201,31 @@
   &.deadline-near { color: #ef4444; font-weight: 600; }
   &.penance { color: #f59e0b; font-weight: 500; }
   &.meta-empty { color: #cbd5e1; font-style: italic; }
+  &.meta-estimate { color: #b8861e; }
+  &.meta-ahead { color: #16a34a; font-weight: 600; }
+  &.meta-reward { color: #d4a843; font-weight: 600; }
+  &.meta-completed { color: #6b7280; }
 }
 
-// 下部分：操作栏独占一行靠右
+// 下部分：操作栏
 .card-actions {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   padding: 6px 16px 12px;
   border-top: 1px solid #f1f5f9;
 }
 .act-btn {
   font-size: 12px;
-  padding: 4px 12px;
+  padding: 4px 10px;
   border-radius: 6px;
   border: 1px solid #e2e8f0;
   background: #f8fafc;
   color: #64748b;
+  min-width: 64px;
+  text-align: center;
+  justify-content: center;
   &:hover {
     border-color: #d4a843;
     color: #d4a843;
@@ -197,6 +237,10 @@
     background: #fef3c7;
     &:hover { background: #fde68a; }
   }
+}
+// 已完成卡片的操作栏分隔线
+.status-completed .card-actions {
+  border-top-color: #bbf7d0;
 }
 
 // ==================== 空状态 ====================
@@ -210,15 +254,8 @@
 
 // ==================== 响应式 ====================
 @media (max-width: 768px) {
-  .action-bar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .filter-group {
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
+  .action-bar { flex-direction: column; align-items: stretch; }
+  .filter-group { justify-content: space-between; flex-wrap: wrap; gap: 6px; }
   .filter-label { display: none; }
   .card-main { padding: 12px 12px 6px; gap: 10px; }
   .card-side { width: 34px; }
@@ -227,32 +264,21 @@
   .task-title { font-size: 14px; }
   .task-meta { gap: 10px; }
   .card-actions {
-    gap: 6px;
+    gap: 4px;
     padding: 6px 12px 10px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
   }
-  .act-btn { font-size: 11px; padding: 3px 10px; }
+  .act-btn {
+    font-size: 11px;
+    padding: 3px 8px;
+    min-width: 56px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .completed-tag { font-size: 10px; padding: 1px 6px; }
 }
 
-html.dark-mode & {
-  .task-card {
-    background: #1e1e2e;
-    border-color: #2d2d4a;
-    &:hover { border-color: #f0c060; }
-    &.status-overdue { background: linear-gradient(135deg, #2d1a1a, #1e1e2e); border-color: #ef4444; }
-  }
-  .energy-badge.high { background: linear-gradient(135deg, #2d1a1a, #1e1e2e); }
-  .energy-badge.low { background: linear-gradient(135deg, #1a2d1a, #1e1e2e); }
-  .task-title { color: #e2dee9; }
-  .task-desc { color: #94a3b8; }
-  .meta-item { color: #64748b; }
-  .card-actions { border-color: #2d2d4a; }
-  .act-btn { background: #252540; border-color: #2d2d4a; color: #64748b; &:hover { border-color: #f0c060; color: #f0c060; background: #2d2a1a; } }
-  .act-btn.primary { border-color: #f0c060; color: #f0c060; background: #2d2a1a; }
-  .recommend-label { background: rgba(148, 163, 184, 0.06); color: #64748b; }
-  .empty-text { color: #94a3b8; }
-  .empty-hint { color: #64748b; }
-  .priority-dot.urgent { box-shadow: 0 0 0 2px #2d1a1a; }
-  .priority-dot.important { box-shadow: 0 0 0 2px #2d2a1a; }
-  .priority-dot.normal { box-shadow: 0 0 0 2px #1a2d1a; }
-}
+// ==================== 暗色模式 ====================
+// 注：全局 common.scss 中已有 .task-list 暗色覆盖
+// 这里补充 scoped 层面的特殊状态

@@ -148,22 +148,42 @@
   bottom: 100px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(30, 30, 46, 0.92);
-  backdrop-filter: blur(8px);
+  background: rgba(30, 30, 46, 0.95);
+  backdrop-filter: blur(10px);
   color: #e2dee9;
-  border: 1px solid rgba(212, 168, 67, 0.4);
-  border-radius: 12px;
-  padding: 10px 18px;
+  border: 1px solid rgba(212, 168, 67, 0.5);
+  border-radius: 14px;
+  padding: 14px 18px;
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 10px;
   font-size: 13px;
   z-index: 99;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-  max-width: 400px;
-  white-space: nowrap;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+  max-width: 420px;
 }
-.blind-icon { font-size: 18px; flex-shrink: 0; }
+.blind-box-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.blind-icon { font-size: 24px; flex-shrink: 0; margin-top: 2px; }
+.blind-box-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  strong { color: #f0c060; }
+}
+.blind-box-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #f0c060;
+}
+.blind-box-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
 .blind-fade-enter-active { transition: all 0.4s ease-out; }
 .blind-fade-leave-active { transition: all 0.3s ease-in; }
 .blind-fade-enter-from { opacity: 0; transform: translateX(-50%) translateY(20px); }
@@ -203,8 +223,48 @@
   .partner-avatar { font-size: 24px; }
   .blind-box-toast {
     bottom: 88px;
-    right: 16px;
-    left: 16px;
+    right: 12px;
+    left: 12px;
     max-width: none;
+    border-radius: 12px;
+    padding: 12px 14px;
+  }
+}
+
+// ==================== 暗色模式 ====================
+html.dark-mode & {
+  .back-btn {
+    color: #94a3b8;
+    &:hover { color: #d4a843; background: #252540; }
+  }
+  .page-title { 
+    background: linear-gradient(135deg, #f0c060, #f5d080, #f0c060);
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+  .page-desc { color: #94a3b8; }
+  .ta-tabs {
+    background: #252540;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+  .ta-tab {
+    color: #94a3b8;
+    &:hover { color: #e2dee9; }
+    &.active {
+      background: #1e1e2e;
+      color: #d4a843;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+  }
+  .tab-badge { background: #d4a843; color: #1e1e2e; }
+  .partner-fab {
+    box-shadow: 0 4px 16px rgba(212, 168, 67, 0.3);
+  }
+  .partner-notification-dot {
+    border-color: #1e1e2e;
+  }
+  .blind-box-toast {
+    background: rgba(30, 30, 46, 0.95);
+    border-color: rgba(212, 168, 67, 0.5);
   }
 }

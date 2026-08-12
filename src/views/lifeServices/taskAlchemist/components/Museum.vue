@@ -18,7 +18,7 @@
 
     <!-- 成就卡牌陈列架 -->
     <div class="museum-section">
-      <h3 class="museum-section-title">🏆 成就徽章</h3>
+      <h3 class="museum-section-title">成就徽章</h3>
       <div class="achievement-grid">
         <div
           v-for="ach in achievements"

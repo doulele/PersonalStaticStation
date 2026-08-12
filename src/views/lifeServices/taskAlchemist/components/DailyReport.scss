@@ -130,13 +130,33 @@
   .history-summary { text-align: left; }
 }
 
+// ==================== 暗色模式 ====================
 html.dark-mode & {
   .report-card { background: #1e1e2e; border-color: #2d2d4a; }
-  .today-card { background: #2d2a1a; border-color: #f0c060; }
+  .today-card { 
+    background: linear-gradient(135deg, #2d2a1a, #1e1e2e); 
+    border-color: #f0c060; 
+  }
   .report-title { color: #e2dee9; }
   .report-value { color: #e2dee9; }
+  .report-value.green { color: #22c55e; }
+  .report-value.red { color: #ef4444; }
+  .report-value.gold { color: #f0c060; }
+  .report-label { color: #64748b; }
+  // 热力图暗色
   .heatmap-bar-wrap { background: #252540; }
+  .heatmap-bar {
+    &.level-1 { background: #2d2a1a; }
+    &.level-2 { background: #3d3020; }
+    &.level-3 { background: #6b5530; }
+    &.level-4 { background: #f0c060; }
+  }
+  .heatmap-count { color: #f0c060; }
+  .heatmap-label { color: #94a3b8; }
+  .heatmap-empty { color: #64748b; }
+  // 历史
   .history-item { background: #252540; }
   .history-date { color: #e2dee9; }
+  .history-stats { color: #94a3b8; }
   .history-summary { color: #64748b; }
 }

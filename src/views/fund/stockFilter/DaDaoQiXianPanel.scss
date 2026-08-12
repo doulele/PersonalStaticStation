@@ -204,6 +204,11 @@
 .table-card {
   border-radius: 16px;
   border: 1px solid #e2e8f0;
+  overflow: hidden;
+
+  :deep(.el-card__body) {
+    overflow-x: auto;
+  }
 }
 
 .pc-table { display: block; }

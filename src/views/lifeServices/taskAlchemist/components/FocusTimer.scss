@@ -40,7 +40,16 @@
   height: 100%;
 }
 .timer-progress {
-  transition: stroke-dashoffset 1s linear;
+  transition: stroke-dashoffset 0.15s linear, stroke 0.3s ease;
+}
+/* 计时完成时的脉冲动画 */
+.timer-ring-finished .timer-progress {
+  animation: completePulse 0.8s ease-in-out 3;
+  filter: drop-shadow(0 0 8px rgba(22, 163, 74, 0.5));
+}
+@keyframes completePulse {
+  0%, 100% { opacity: 1; stroke-width: 6; }
+  50% { opacity: 0.5; stroke-width: 10; }
 }
 .timer-center {
   position: absolute;
@@ -56,6 +65,16 @@
   color: #0f172a;
   font-variant-numeric: tabular-nums;
   letter-spacing: 2px;
+  &.timer-done {
+    color: #16a34a;
+    font-size: 28px;
+    font-weight: 800;
+    animation: fadeInUp 0.5s ease-out;
+  }
+}
+@keyframes fadeInUp {
+  0% { transform: translateY(10px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
 }
 .timer-label {
   font-size: 13px;
@@ -104,12 +123,8 @@
   }
 }
 
-html.dark-mode & {
-  .focus-task-info { background: #252540; }
-  .focus-task-title { color: #e2dee9; }
-  .timer-display { color: #e2dee9; }
-  .audio-chip { background: #252540; color: #64748b; &:hover { background: #2d2d4a; } }
-}
+// 暗色模式覆盖已迁移到全局 common.scss（html.dark-mode .focus-dialog {}）
+// 因为 Vue scoped 中 html.dark-mode & { ... } 因 data-v-hash 不匹配而失效。
 
 @media (max-width: 768px) {
   .focus-container { gap: 16px; }

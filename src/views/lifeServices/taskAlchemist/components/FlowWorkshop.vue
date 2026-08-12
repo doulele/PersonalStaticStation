@@ -182,11 +182,15 @@ function isEfficient(session) {
 html.dark-mode & {
   .ws-stat-card { background: #1e1e2e; border-color: #2d2d4a; }
   .ws-stat-value { color: #e2dee9; }
+  .ws-stat-label { color: #64748b; }
   .ws-section-title { color: #e2dee9; }
-  .ws-task-chip { background: #252540; border-color: #2d2d4a; &:hover { background: #1e1e2e; } }
+  .ws-task-chip { background: #252540; border-color: #2d2d4a; &:hover { background: #1e1e2e; border-color: #f0c060; } }
   .ws-task-title { color: #e2dee9; }
+  .ws-task-duration { color: #64748b; }
   .ws-history-item { background: #252540; }
   .ws-history-title { color: #e2dee9; }
+  .ws-history-time { color: #64748b; }
   .efficient-badge { background: #1a2d1a; }
+  .ws-empty { color: #64748b; }
 }
 </style>

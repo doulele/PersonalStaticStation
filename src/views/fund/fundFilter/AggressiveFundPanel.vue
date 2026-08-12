@@ -43,45 +43,45 @@
 
     <!-- PC端表格 -->
     <el-table v-loading="loading" element-loading-text="努力加载中..." :data="filteredList" stripe border class="pc-table">
-      <el-table-column prop="code" label="编号" width="80" fixed />
-      <el-table-column prop="name" label="基金名称" width="200" fixed />
-      <el-table-column prop="theme" label="类型" width="90" />
-      <el-table-column prop="dwjz" label="当前净值" width="95" sortable>
+      <el-table-column prop="code" label="编号" width="75" fixed />
+      <el-table-column prop="name" label="基金名称" min-width="150" fixed show-overflow-tooltip />
+      <el-table-column prop="theme" label="类型" width="75" />
+      <el-table-column prop="dwjz" label="净值" width="85" sortable>
         <template #default="{ row }">{{ row.dwjz ? row.dwjz.toFixed(4) : '--' }}</template>
       </el-table-column>
-      <el-table-column prop="gsz" label="实时估值" width="100" sortable>
+      <el-table-column prop="gsz" label="估值" width="85" sortable>
         <template #default="{ row }">
           <span :style="{ color: (row.gszzl || 0) >= 0 ? '#f56c6c' : '#67c23a' }">{{ row.gsz ? row.gsz.toFixed(4) : '--' }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="gszzl" label="估算涨幅" width="95" sortable>
+      <el-table-column prop="gszzl" label="涨幅" width="85" sortable>
         <template #default="{ row }">
           <span :style="{ color: (row.gszzl || 0) >= 0 ? '#f56c6c' : '#67c23a', fontWeight: 'bold' }">{{ row.gszzl != null ? (row.gszzl >= 0 ? '+' : '') + row.gszzl.toFixed(2) + '%' : '--' }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="ret1m" label="近1月" sortable width="80">
+      <el-table-column prop="ret1m" label="近1月" sortable width="70">
         <template #default="{ row }"><span :style="{ color: row.ret1m >= 0 ? '#f56c6c' : '#67c23a' }">{{ row.ret1m.toFixed(1) }}%</span></template>
       </el-table-column>
-      <el-table-column prop="ret3m" label="近3月" sortable width="80">
+      <el-table-column prop="ret3m" label="近3月" sortable width="70">
         <template #default="{ row }"><span :style="{ color: row.ret3m >= 0 ? '#f56c6c' : '#67c23a' }">{{ row.ret3m.toFixed(1) }}%</span></template>
       </el-table-column>
-      <el-table-column prop="ret6m" label="近6月" sortable width="80">
+      <el-table-column prop="ret6m" label="近6月" sortable width="70">
         <template #default="{ row }"><span :style="{ color: row.ret6m >= 0 ? '#f56c6c' : '#67c23a' }">{{ row.ret6m.toFixed(1) }}%</span></template>
       </el-table-column>
-      <el-table-column prop="ret1y" label="近1年" sortable width="80">
+      <el-table-column prop="ret1y" label="近1年" sortable width="70">
         <template #default="{ row }"><span :style="{ color: row.ret1y >= 0 ? '#f56c6c' : '#67c23a' }">{{ row.ret1y.toFixed(1) }}%</span></template>
       </el-table-column>
-      <el-table-column prop="maxDrawdown" label="最大回撤" sortable width="90">
+      <el-table-column prop="maxDrawdown" label="最大回撤" sortable width="85">
         <template #default="{ row }"><span :style="{ color: (row.maxDrawdown || 0) >= 0 ? '#f56c6c' : '#67c23a' }">{{ (row.maxDrawdown || 0).toFixed(1) }}%</span></template>
       </el-table-column>
-      <el-table-column prop="fundSize" label="规模(亿)" width="90" sortable />
-      <el-table-column prop="fundYears" label="成立年限" sortable width="100">
+      <el-table-column prop="fundSize" label="规模(亿)" width="80" sortable />
+      <el-table-column prop="fundYears" label="成立年限" sortable width="80">
         <template #default="{ row }"><span :style="{ color: row.fundYears < 3 ? '#27ae60' : '#e74c3c' }">{{ row.fundYears.toFixed(1) }}年</span></template>
       </el-table-column>
-      <el-table-column prop="momentumScore" label="势头改善分" sortable width="100">
+      <el-table-column prop="momentumScore" label="势头改善" sortable width="85">
         <template #default="{ row }"><el-tag :type="row.momentumScore >= 0 ? 'danger' : 'success'" size="small">{{ row.momentumScore }}</el-tag></template>
       </el-table-column>
-      <el-table-column prop="aggScore" label="进取综合分" sortable width="100">
+      <el-table-column prop="aggScore" label="综合分" sortable width="75">
         <template #default="{ row }"><el-tag :type="row.aggScore >= 0 ? 'danger' : 'success'" size="small">{{ row.aggScore }}</el-tag></template>
       </el-table-column>
     </el-table>

@@ -1,0 +1,375 @@
+.position-manager {
+  margin-bottom: 20px;
+  border-radius: 12px;
+  border: 1px solid var(--el-border-color-lighter, #e2e8f0);
+  background: var(--el-bg-color-overlay, #fff);
+  overflow: hidden;
+}
+
+// ===== 标题栏 =====
+.pm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+
+  &:hover {
+    background: var(--el-fill-color-light, #f8fafc);
+  }
+}
+
+.pm-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pm-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--el-text-color-primary, #1e293b);
+}
+
+.pm-header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--el-text-color-secondary, #94a3b8);
+  font-size: 0.8rem;
+}
+
+.pm-count {
+  font-size: 0.78rem;
+}
+
+.pm-arrow-rotated {
+  transform: rotate(180deg);
+}
+
+// ===== 主体 =====
+.pm-body {
+  border-top: 1px solid var(--el-border-color-lighter, #e2e8f0);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+// ===== 顶部高亮持仓信息 =====
+.pm-pos-highlight {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 14px 12px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(248,113,113,.08), rgba(248,113,113,.02));
+  border: 1px solid rgba(248,113,113,.15);
+}
+
+.pm-pos-highlight-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.pm-pos-highlight-label {
+  font-size: 0.7rem;
+  color: var(--el-text-color-secondary, #94a3b8);
+}
+
+.pm-pos-highlight-value {
+  font-size: 1.1rem;
+  font-weight: 800;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  color: var(--el-text-color-primary, #1e293b);
+}
+
+.pm-pos-highlight-divider {
+  width: 1px;
+  height: 32px;
+  background: var(--el-border-color-light, #e2e8f0);
+}
+
+// ===== 持仓概览 =====
+.pm-overview {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding: 14px;
+  border-radius: 10px;
+  background: var(--el-fill-color-light, #f8fafc);
+  min-width: 0;
+}
+
+.pm-overview-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pm-ov-label {
+  font-size: 0.7rem;
+  color: var(--el-text-color-secondary, #94a3b8);
+}
+
+.pm-ov-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  color: var(--el-text-color-primary, #1e293b);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pm-ov-none {
+  color: var(--el-text-color-placeholder, #c0c4cc) !important;
+}
+
+.pm-ov-fee {
+  font-size: 0.78rem;
+  color: var(--el-text-color-secondary, #94a3b8);
+}
+
+// 盈亏/涨跌颜色（A股惯例：盈利/上涨=红，亏损/下跌=绿）
+.text-up {
+  color: #f87171;
+}
+.text-down {
+  color: #4ade80;
+}
+.text-warn {
+  color: #facc15;
+}
+
+// ===== 交易列表 =====
+.pm-tx-list {
+  display: flex;
+  flex-direction: column;
+  overflow-x: auto;
+}
+
+.pm-tx-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 6px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  transition: background 0.15s;
+
+  &:hover {
+    background: var(--el-fill-color-light, #f8fafc);
+  }
+}
+
+.pm-tx-header-row {
+  color: var(--el-text-color-secondary, #94a3b8);
+  font-size: 0.72rem;
+  padding: 4px 6px 6px;
+  border-bottom: 1px solid var(--el-border-color-lighter, #e2e8f0);
+  margin-bottom: 2px;
+
+  &:hover {
+    background: transparent;
+  }
+}
+
+.pm-tx-date {
+  width: 55px;
+  flex-shrink: 0;
+  color: var(--el-text-color-secondary, #94a3b8);
+  font-size: 0.78rem;
+}
+
+.pm-tx-type {
+  width: 52px;
+  flex-shrink: 0;
+}
+
+.pm-tx-price {
+  width: 70px;
+  flex-shrink: 0;
+  text-align: right;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+}
+
+.pm-tx-shares {
+  width: 65px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.pm-tx-fee {
+  width: 72px;
+  flex-shrink: 0;
+  text-align: right;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  color: var(--el-text-color-secondary, #94a3b8);
+}
+
+.pm-tx-amount {
+  width: 85px;
+  flex-shrink: 0;
+  text-align: right;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-weight: 600;
+}
+
+.pm-tx-act {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.pm-tx-pagination {
+  display: flex;
+  justify-content: center;
+  padding: 10px 0 2px;
+}
+
+// 不同交易类型行背景
+.pm-tx-buy {
+  background: rgba(248, 113, 113, 0.04);
+}
+.pm-tx-sell {
+  background: rgba(74, 222, 128, 0.04);
+}
+.pm-tx-dividend {
+  background: rgba(234, 179, 8, 0.04);
+}
+.pm-tx-bonus {
+  background: rgba(167, 139, 250, 0.04);
+}
+
+// ===== 添加栏 =====
+.pm-add-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
+
+.pm-add-stock-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--el-text-color-primary, #1e293b);
+  white-space: nowrap;
+}
+
+.pm-stock-br { display: none; }
+
+.pm-add-stock-code {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--el-text-color-secondary, #94a3b8);
+}
+
+.pm-add-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.pm-btn-short { display: none; }
+
+@media (max-width: 640px) {
+  .pm-btn-text { display: none; }
+  .pm-btn-short { display: inline; }
+}
+
+.pm-form-hint {
+  font-size: 0.72rem;
+  color: var(--el-text-color-secondary, #94a3b8);
+  margin-top: 4px;
+  display: block;
+}
+
+// ===== 暗黑模式 =====
+html.dark-mode {
+  .position-manager {
+    border-color: #334155;
+  }
+
+  .pm-pos-highlight {
+    background: linear-gradient(135deg, rgba(248,113,113,.12), rgba(248,113,113,.04));
+    border-color: rgba(248,113,113,.2);
+  }
+
+  .pm-pos-highlight-divider {
+    background: #334155;
+  }
+
+  .pm-tx-buy {
+    background: rgba(248, 113, 113, 0.08);
+  }
+  .pm-tx-sell {
+    background: rgba(74, 222, 128, 0.08);
+  }
+  .pm-tx-dividend {
+    background: rgba(234, 179, 8, 0.08);
+  }
+  .pm-tx-bonus {
+    background: rgba(167, 139, 250, 0.08);
+  }
+}
+
+// ===== 响应式 =====
+@media (max-width: 640px) {
+  // 移动端 Hero 已展示持仓信息，这里隐藏顶部高亮行避免重复
+  .pm-pos-highlight { display: none; }
+
+  .pm-add-bar {
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .pm-add-stock-name {
+    font-size: 0.78rem;
+    flex-shrink: 0;
+    line-height: 1.2;
+  }
+
+  .pm-stock-br { display: block; }
+
+  .pm-add-stock-code {
+    font-size: 0.68rem;
+    font-weight: 400;
+    color: var(--el-text-color-secondary, #94a3b8);
+  }
+
+  .pm-add-actions {
+    gap: 3px;
+  }
+
+  .pm-add-actions .el-button {
+    padding: 4px 7px;
+    font-size: 0.72rem;
+    min-height: 26px;
+  }
+
+  .pm-overview {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .pm-tx-row {
+    gap: 4px;
+    font-size: 0.75rem;
+  }
+
+  .pm-tx-date { width: 48px; font-size: 0.7rem; }
+  .pm-tx-type { width: 44px; }
+  .pm-tx-price { width: 60px; }
+  .pm-tx-shares { width: 50px; }
+  .pm-tx-fee { width: 60px; }
+  .pm-tx-amount { width: 70px; }
+}

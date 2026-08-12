@@ -77,32 +77,34 @@
 
 /* ========== PC端表格 ========== */
 .pc-table { display: none; }
-:deep(.pc-table.el-table) {
+::deep(.pc-table.el-table) {
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 2px 16px rgba(0,0,0,0.05);
 }
-:deep(.pc-table .el-table__header th) {
+::deep(.pc-table .el-table__header th) {
   background: #fbfdff;
   color: #1e2f40;
   font-weight: 700;
   border-bottom: 2px solid #e8edf2;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
+  padding: 8px 4px;
 }
-:deep(.pc-table .el-table__body tr:hover > td) {
+::deep(.pc-table .el-table__body tr:hover > td) {
   background: #f0fdf6 !important;
 }
-:deep(.pc-table .el-table__body td) {
+::deep(.pc-table .el-table__body td) {
   border-bottom: 1px solid #eff2f7;
+  padding: 6px 4px;
 }
-:deep(.pc-table .el-tag--danger) {
+::deep(.pc-table .el-tag--danger) {
   background: #fdeaea;
   color: #c0392b;
   border-color: transparent;
   font-weight: bold;
   border-radius: 20px;
 }
-:deep(.pc-table .el-tag--success) {
+::deep(.pc-table .el-tag--success) {
   background: #eaf7ea;
   color: #27ae60;
   border-color: transparent;
