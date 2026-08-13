@@ -5,7 +5,7 @@
       <div class="hero-top">
         <h1 class="hero-title">
           <span v-if="activeModel === 'yaogu'">🔥 妖股潜力筛选</span>
-          <span v-else-if="activeModel === 'normal'">📈 普通股票筛选</span>
+          <span v-else-if="activeModel === 'normal'">🎯 普通股票筛选</span>
           <span v-else>⚡ 大道七线 · 智能解盘</span>
           <span v-if="activeModel === 'yaogu'" class="hero-badge yaogu-badge">多因子量化模型</span>
           <span v-else-if="activeModel === 'normal'" class="hero-badge normal-badge">通用条件选股</span>
@@ -29,7 +29,7 @@
           class="model-tab normal-tab"
           :class="{ active: activeModel === 'normal' }"
           @click="activeModel = 'normal'"
-        >📈 普通股票筛选</button>
+        >🎯 普通股票筛选</button>
         <button
           class="model-tab yaogu-tab"
           :class="{ active: activeModel === 'yaogu' }"

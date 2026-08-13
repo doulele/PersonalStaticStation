@@ -47,6 +47,11 @@ export async function apiRequest(endpoint, options = {}) {
     headers
   }
 
+  // 支持外部传入 signal（用于路由切换时中止请求，释放连接）
+  if (options.signal) {
+    config.signal = options.signal
+  }
+
   try {
     const response = await fetch(url, config)
 
@@ -93,7 +98,7 @@ function getOldAuthToken() {
 /**
  * GET 请求
  */
-export function get(endpoint, params = {}) {
+export function get(endpoint, params = {}, options = {}) {
   let url = endpoint
   // 过滤掉 undefined/null 值，避免序列化为 "undefined" 字符串
   const cleanParams = Object.fromEntries(
@@ -103,7 +108,7 @@ export function get(endpoint, params = {}) {
   if (query) {
     url += `?${query}`
   }
-  return apiRequest(url, { method: 'GET' })
+  return apiRequest(url, { method: 'GET', ...options })
 }
 
 /**

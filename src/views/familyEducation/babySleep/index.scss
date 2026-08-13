@@ -5,6 +5,7 @@
   animation: fadeIn 0.5s ease-out;
   min-height: 100vh;
   background: #ffffff; // 纯白背景，与深色播放器对比明显
+  overflow-x: hidden;  // 防止移动端内容横向溢出出现横向滚动条
 }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -340,7 +341,7 @@
   display: flex; gap: 6px; align-items: center;
 }
 .search-input-wrap {
-  flex: 1; display: flex; align-items: center; gap: 8px;
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px;
   padding: 8px 10px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 8px;
   transition: border-color 0.2s;
   &:focus-within { border-color: #6366f1; background: #fff; }
@@ -522,6 +523,10 @@
     padding-top: 4px;
     border-top: 1px solid rgba(255,255,255,0.06);
     margin-top: 2px;
+    flex-wrap: wrap;  // 窄屏按钮自动换行，防止横向溢出视口
+    min-width: 0;     // 允许收缩，避免 min-width:auto 撑宽页面
+    max-width: 100%;
+    row-gap: 4px;
   }
   .player-lyrics {
     height: 30px; line-height: 30px;
@@ -825,6 +830,14 @@
   .dropdown-item { padding: 10px 14px; font-size: 13px; }
   .dropdown-menu { min-width: 110px; left: auto; right: 0; transform: none; }
   .voice-menu { min-width: 160px; }
+}
+@media (max-width: 360px) {
+  // 进一步压缩播放器按钮，确保 320px 窄屏也能单行放下
+  .player-inner { padding: 8px 8px 10px; gap: 4px; }
+  .player-controls { gap: 2px; }
+  .player-nav { gap: 2px; }
+  .ctrl-pill { height: 34px; padding: 0 8px; min-width: 32px; }
+  .player-cover { width: 34px; height: 34px; min-width: 34px; }
 }
 
 // ====== 深色模式（晚上8点 ~ 早上7点自动切换） ======

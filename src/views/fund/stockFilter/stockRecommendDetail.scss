@@ -1,0 +1,550 @@
+.sr-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ==================== 顶部工具条 ==================== */
+.sr-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px 14px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.back-btn {
+  border: 1.5px solid #dde5ec;
+  background: #f8fafc;
+  color: #475569;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.back-btn:hover { border-color: #f59e0b; color: #f59e0b; }
+.horizon-switch {
+  display: flex;
+  gap: 6px;
+  background: #eef2f7;
+  border-radius: 10px;
+  padding: 4px;
+}
+.horizon-btn {
+  border: none;
+  background: transparent;
+  padding: 7px 16px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #5b6b7c;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.horizon-btn:hover { color: #b45309; }
+.horizon-btn.active {
+  background: #f59e0b;
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(245, 158, 11, 0.35);
+}
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+.update-time { font-size: 0.68rem; color: #94a3b8; white-space: nowrap; }
+.tool-btn {
+  border: 1.5px solid #dde5ec;
+  background: #f8fafc;
+  color: #475569;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.tool-btn:hover { border-color: #f59e0b; color: #f59e0b; }
+.tool-btn.refresh:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ==================== 加载 / 错误 ==================== */
+.loading-mask {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  padding: 60px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 360px;
+}
+.loading-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.spinner {
+  width: 46px;
+  height: 46px;
+  border: 4px solid #e6f7f0;
+  border-top-color: #f59e0b;
+  border-radius: 50%;
+  animation: sr-spin 0.8s linear infinite;
+}
+@keyframes sr-spin {
+  to { transform: rotate(360deg); }
+}
+.loading-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #1f2937;
+}
+.loading-desc {
+  font-size: 0.76rem;
+  color: #94a3b8;
+  text-align: center;
+  line-height: 1.6;
+}
+.loading-stage {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.stage-item {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  padding: 5px 12px;
+  border-radius: 16px;
+  background: #f8fafc;
+  border: 1px solid #eef2f7;
+  transition: all 0.3s;
+}
+.stage-item.done {
+  color: #d97706;
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+.stage-arrow { color: #cbd5e1; font-size: 0.8rem; }
+.loading-box {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #b45309;
+  border-radius: 12px;
+  padding: 30px;
+  text-align: center;
+  font-size: 0.8rem;
+}
+.error-box {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  border-radius: 12px;
+  padding: 30px;
+  text-align: center;
+  font-size: 0.8rem;
+}
+
+/* ==================== 卡片通用 ==================== */
+.card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+.card-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ==================== 基本信息卡 ==================== */
+.sr-overview {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap: 14px;
+}
+.basic-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.stock-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.stock-name { font-size: 1.25rem; font-weight: 800; color: #1f2937; }
+.stock-code { font-size: 0.75rem; color: #94a3b8; font-family: Consolas, monospace; }
+.st-tag {
+  background: #fee2e2; color: #dc2626; border: 1px solid #fecaca;
+  padding: 1px 7px; border-radius: 6px; font-size: 0.65rem; font-weight: 800;
+}
+.industry-tag {
+  background: #fffbeb; color: #d97706; border: 1px solid #fde68a;
+  padding: 4px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: 700;
+  white-space: nowrap;
+}
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.metric-item {
+  background: #f8fafc;
+  border: 1px solid #eef2f7;
+  border-radius: 10px;
+  padding: 9px 12px;
+}
+.m-label { font-size: 0.64rem; color: #94a3b8; margin-bottom: 3px; }
+.m-value { font-size: 0.85rem; font-weight: 700; color: #1f2937; font-family: Consolas, monospace; }
+.m-value.small { font-size: 0.7rem; }
+.m-value.price { font-size: 1.1rem; }
+.m-sub { font-size: 0.68rem; font-weight: 600; font-family: Consolas, monospace; }
+
+/* ==================== 评分总览卡 ==================== */
+.score-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: center;
+}
+.score-top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.score-badge {
+  min-width: 92px;
+  height: 92px;
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex: none;
+}
+.sb-label { font-size: 0.62rem; opacity: 0.9; }
+.sb-num { font-size: 2rem; font-weight: 900; line-height: 1.1; font-family: Consolas, monospace; }
+.sc-green { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 6px 18px rgba(245, 158, 11, 0.35); }
+.sc-yellow { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 6px 18px rgba(245, 158, 11, 0.35); }
+.sc-red { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 6px 18px rgba(239, 68, 68, 0.35); }
+.score-summary { display: flex; flex-direction: column; gap: 8px; }
+.stars { font-size: 1.15rem; letter-spacing: 2px; }
+.star-full { color: #f59e0b; }
+.star-empty { color: #e2e8f0; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.conclusion-tag {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.cc-hot { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+.cc-buy { background: #fef3c7; color: #d97706; border: 1px solid #fde68a; }
+.cc-mid { background: #f8fafc; color: #64748b; border: 1px solid #e2e8f0; }
+.cc-warn { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+.cc-avoid { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+.risk-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+.risk-低 { background: #fef3c7; color: #d97706; }
+.risk-中 { background: #fffbeb; color: #b45309; }
+.risk-高 { background: #fef2f2; color: #dc2626; }
+.ma60-tag {
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+.ma60-tag.no { background: #f8fafc; color: #94a3b8; border-color: #e2e8f0; }
+.veto-warn {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+.reason-short {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.07), rgba(245, 158, 11, 0.02));
+  border: 1px dashed rgba(245, 158, 11, 0.35);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.74rem;
+  color: #0f766e;
+  line-height: 1.6;
+}
+
+/* ==================== 六维评分区 ==================== */
+.sr-dims {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.dims-bars { display: flex; flex-direction: column; gap: 12px; }
+.dim-bar-row { display: flex; flex-direction: column; gap: 5px; }
+.dim-bar-head { display: flex; align-items: center; gap: 8px; }
+.dim-name { font-size: 0.76rem; font-weight: 700; color: #334155; min-width: 52px; }
+.dim-weight { font-size: 0.64rem; color: #94a3b8; margin-left: auto; }
+.dim-score { font-size: 0.85rem; font-weight: 800; font-family: Consolas, monospace; min-width: 28px; text-align: right; }
+.sc-t-green { color: #d97706; }
+.sc-t-yellow { color: #d97706; }
+.sc-t-red { color: #dc2626; }
+.dim-bar { height: 9px; background: #eef2f7; border-radius: 10px; overflow: hidden; }
+.dim-bar-fill {
+  height: 100%;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+  transition: width 0.4s ease;
+}
+.dim-bar-fill.dim-valuation { background: linear-gradient(90deg, #0e7490, #06b6d4); }
+.dim-bar-fill.dim-growth { background: linear-gradient(90deg, #b45309, #f59e0b); }
+.dim-bar-fill.dim-quality { background: linear-gradient(90deg, #15803d, #22c55e); }
+.dim-bar-fill.dim-technical { background: linear-gradient(90deg, #7c3aed, #a855f7); }
+.dim-bar-fill.dim-sentiment { background: linear-gradient(90deg, #e11d48, #fb7185); }
+.dim-bar-fill.dim-risk { background: linear-gradient(90deg, #64748b, #94a3b8); }
+.radar-card { min-height: 280px; display: flex; flex-direction: column; }
+.radar-chart { flex: 1; min-height: 250px; }
+
+/* ==================== K线图 ==================== */
+.kline-card { display: flex; flex-direction: column; }
+.kline-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.kline-note { font-size: 0.66rem; color: #94a3b8; }
+.kline-chart { width: 100%; height: 560px; }
+
+/* ==================== 六维明细 ==================== */
+.dim-details {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+.dim-card { padding: 14px; }
+.dim-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.dim-card-name { font-size: 0.8rem; font-weight: 800; color: #1f2937; }
+.dim-card-score { font-size: 0.78rem; font-weight: 800; font-family: Consolas, monospace; }
+.dim-card-weight { margin-left: auto; font-size: 0.66rem; color: #94a3b8; }
+.sub-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.7rem;
+}
+.sub-table th {
+  background: #f8fafc;
+  padding: 7px 8px;
+  text-align: left;
+  font-weight: 700;
+  color: #64748b;
+  border-bottom: 1.5px solid #e2e8f0;
+  font-size: 0.66rem;
+  white-space: nowrap;
+}
+.sub-table td {
+  padding: 7px 8px;
+  border-bottom: 1px solid #f0f4f8;
+  color: #334155;
+}
+.sub-name { color: #475569; }
+.sub-value { font-family: Consolas, monospace; color: #334155; white-space: nowrap; }
+.sub-score { font-weight: 700; font-family: Consolas, monospace; }
+.sub-weight { color: #94a3b8; font-family: Consolas, monospace; }
+.sub-empty { text-align: center; color: #94a3b8; }
+
+/* ==================== 推荐理由 ==================== */
+.reason-text {
+  font-size: 0.76rem;
+  color: #475569;
+  line-height: 1.9;
+  background: #f8fafc;
+  border: 1px solid #eef2f7;
+  border-radius: 10px;
+  padding: 12px 14px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ==================== 风险提示 ==================== */
+.risk-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.risk-item {
+  background: #f8fafc;
+  border: 1px solid #eef2f7;
+  border-radius: 10px;
+  padding: 10px 12px;
+  text-align: center;
+}
+.r-label { font-size: 0.64rem; color: #94a3b8; margin-bottom: 4px; }
+.r-value { font-size: 0.82rem; font-weight: 800; font-family: Consolas, monospace; color: #1f2937; }
+.r-value.warn { color: #dc2626; }
+.veto-block { margin-bottom: 12px; }
+.risk-note { font-size: 0.64rem; color: #94a3b8; line-height: 1.6; }
+
+/* ==================== 财务指标 ==================== */
+.fin-report { font-size: 0.62rem; font-weight: 400; color: #94a3b8; }
+.fin-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+.fin-item {
+  background: #f8fafc;
+  border: 1px solid #eef2f7;
+  border-radius: 10px;
+  padding: 10px 12px;
+  text-align: center;
+}
+.f-label { font-size: 0.62rem; color: #94a3b8; margin-bottom: 4px; line-height: 1.3; }
+.f-value { font-size: 0.78rem; font-weight: 800; font-family: Consolas, monospace; color: #1f2937; }
+.up { color: #dc2626; }
+.down { color: #059669; }
+
+/* ==================== 资金情绪 ==================== */
+.fund-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.fund-panel { border: 1px solid #eef2f7; border-radius: 10px; padding: 10px; min-width: 0; }
+.fund-title { font-size: 0.72rem; font-weight: 700; color: #334155; margin-bottom: 8px; }
+.fund-table { width: 100%; border-collapse: collapse; font-size: 0.66rem; }
+.fund-table th {
+  text-align: left;
+  color: #94a3b8;
+  font-weight: 700;
+  padding: 5px 6px;
+  border-bottom: 1px solid #eef2f7;
+  white-space: nowrap;
+}
+.fund-table td {
+  padding: 5px 6px;
+  border-bottom: 1px solid #f0f4f8;
+  color: #475569;
+  font-family: Consolas, monospace;
+  white-space: nowrap;
+}
+.lhb-explain {
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fund-empty { font-size: 0.68rem; color: #94a3b8; padding: 20px 6px; text-align: center; }
+
+/* ==================== 免责声明 ==================== */
+.disclaimer {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 0.68rem;
+  color: #92400e;
+  line-height: 1.7;
+  text-align: center;
+}
+
+/* ==================== 响应式 ==================== */
+@media (max-width: 1100px) {
+  .risk-grid { grid-template-columns: repeat(3, 1fr); }
+  .fin-grid { grid-template-columns: repeat(3, 1fr); }
+  .fund-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 800px) {
+  .sr-overview { grid-template-columns: 1fr; }
+  .sr-dims { grid-template-columns: 1fr; }
+  .dim-details { grid-template-columns: 1fr; }
+  .metric-grid { grid-template-columns: repeat(2, 1fr); }
+  .kline-chart { height: 420px; }
+  .toolbar-right { margin-left: 0; width: 100%; }
+}
+
+/* ==================== 夜间模式 ==================== */
+/* 注意：scoped scss 中必须平铺写 html.dark-mode .xxx，
+   不能用 :global() 包裹后再嵌套（嵌套选择器会被编译丢失）。 */
+html.dark-mode .sr-detail {
+  .sr-toolbar, .card { background: #15161e; border: 1px solid #252733; box-shadow: none; }
+  .back-btn, .tool-btn { background: #1e2030; border-color: #2d3142; color: #8b93a7; }
+  .back-btn:hover, .tool-btn:hover { border-color: #f59e0b; color: #f59e0b; }
+  .horizon-switch { background: #1e2030; }
+  .horizon-btn { color: #8b93a7; }
+  .horizon-btn.active { background: #f59e0b; color: #fff; }
+  .update-time { color: #4a5166; }
+  .loading-mask { background: #15161e; border: 1px solid #252733; box-shadow: none; }
+  .loading-title { color: #e2e8f0; }
+  .loading-desc { color: #4a5166; }
+  .spinner { border-color: #1e2a25; border-top-color: #f59e0b; }
+  .stage-item { background: #1e2030; border-color: #2d3142; color: #4a5166; }
+  .stage-item.done { background: #2a1f0a; border-color: #4a3410; color: #fbbf24; }
+  .stage-arrow { color: #4a5166; }
+  .card-title { color: #e2e8f0; }
+  .stock-name { color: #e2e8f0; }
+  .stock-code { color: #4a5166; }
+  .industry-tag { background: #2a1f0a; color: #fbbf24; border-color: #4a3410; }
+  .metric-item, .risk-item, .fin-item { background: #1a1b26; border-color: #252733; }
+  .m-label, .r-label, .f-label { color: #4a5166; }
+  .m-value, .r-value, .f-value { color: #e2e8f0; }
+  .star-empty { color: #2d3142; }
+  .cc-mid { background: #1e2030; color: #94a3b8; border-color: #2d3142; }
+  .cc-avoid { background: #1e2030; color: #8b93a7; border-color: #2d3142; }
+  .reason-short { background: rgba(245, 158, 11, 0.06); border-color: rgba(245, 158, 11, 0.25); color: #fbbf24; }
+  .dim-name { color: #cbd5e1; }
+  .dim-bar { background: #2d3142; }
+  .dim-card-name { color: #e2e8f0; }
+  .dim-card-weight { color: #4a5166; }
+  .sub-table th { background: #1a1b26; color: #8b93a7; border-bottom-color: #2d3142; }
+  .sub-table td { border-bottom-color: #22232f; color: #8b93a7; }
+  .sub-name { color: #8b93a7; }
+  .sub-value { color: #cbd5e1; }
+  .sub-weight { color: #4a5166; }
+  .reason-text { background: #1a1b26; border-color: #252733; color: #8b93a7; }
+  .fund-panel { border-color: #252733; }
+  .fund-title { color: #cbd5e1; }
+  .fund-table th { color: #4a5166; border-bottom-color: #252733; }
+  .fund-table td { border-bottom-color: #22232f; color: #8b93a7; }
+  .kline-note { color: #4a5166; }
+  .disclaimer { background: #1e1a0e; border-color: #3a3217; color: #d4a74e; }
+}

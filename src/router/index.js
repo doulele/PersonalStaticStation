@@ -75,6 +75,18 @@ const routes = [
         meta: { title: '妖股详情', icon: 'DataLine' }
       },
       {
+        path: 'fund/stock-recommend-detail/:code',
+        name: 'stockRecommendDetail',
+        component: () => import('@/views/fund/stockFilter/stockRecommendDetail.vue'),
+        meta: { title: '股票测评详情', icon: 'DataLine' }
+      },
+      {
+        path: 'fund/stock-recommend-guide',
+        name: 'stockRecommendGuide',
+        component: () => import('@/views/fund/stockFilter/stockRecommendGuide.vue'),
+        meta: { title: '评分说明', icon: 'DataLine' }
+      },
+      {
         path: 'fund/national-team',
         component: () => import('@/views/fund/nationalTeam/index.vue'),
         meta: { title: '跟党走·国家队动向监测', icon: 'DataLine' }
