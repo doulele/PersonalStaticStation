@@ -38,7 +38,7 @@
             <el-icon :size="32"><TrendCharts /></el-icon>
           </div>
           <div class="tool-info">
-            <h3 class="tool-name">妖股潜力筛选</h3>
+            <h3 class="tool-name">股票筛选</h3>
             <p class="tool-desc">多因子量化筛选潜力标的，实时行情评估</p>
           </div>
           <el-icon class="tool-arrow"><ArrowRight /></el-icon>
@@ -58,19 +58,7 @@
         </div>
       </router-link>
 
-      <!-- 详情页：大道七线股诊 — 不在热门工具展示，不参与点击统计 -->
-      <router-link to="/fund/dadao-detail" class="tool-card">
-        <div class="tool-card-inner">
-          <div class="tool-icon orange">
-            <el-icon :size="32"><DataLine /></el-icon>
-          </div>
-          <div class="tool-info">
-            <h3 class="tool-name">大道七线股诊</h3>
-            <p class="tool-desc">大道七线技术分析诊断工具</p>
-          </div>
-          <el-icon class="tool-arrow"><ArrowRight /></el-icon>
-        </div>
-      </router-link>
+
     </div>
   </div>
 </template>

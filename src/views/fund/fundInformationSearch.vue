@@ -834,6 +834,31 @@ const loadHistoryData = async (code) => {
     if (item.y > maxItem.y) maxItem = item
   }
   const currentItem = trends[trends.length - 1]
+
+  // 从 netWorthTrend（单位净值）中提取最近两个净值，用于计算昨日净值和最近涨跌幅
+  const rawNetWorth = d.netWorthTrend || []
+  const netWorthTrends = rawNetWorth
+    .map((item) => ({
+      x: Array.isArray(item)
+        ? new Date(item[0]).getTime()
+        : typeof item.x === 'number'
+          ? item.x
+          : new Date(item.x).getTime(),
+      y: Array.isArray(item) ? parseFloat(item[1]) : parseFloat(item.y),
+    }))
+    .filter((item) => !isNaN(item.x) && Number.isFinite(item.y) && item.y > 0)
+  let fallbackDwjz = '—'
+  let fallbackChange = '—'
+  if (netWorthTrends.length >= 2) {
+    const last = netWorthTrends[netWorthTrends.length - 1]
+    const prev = netWorthTrends[netWorthTrends.length - 2]
+    fallbackDwjz = last.y
+    const change = ((last.y - prev.y) / prev.y) * 100
+    fallbackChange = change.toFixed(2) + '%'
+  } else if (netWorthTrends.length === 1) {
+    fallbackDwjz = netWorthTrends[0].y
+  }
+
   return {
     name,
     maxDate: rangeTrends.length > 0 ? formatDate(maxItem.x) : '—',
@@ -843,6 +868,9 @@ const loadHistoryData = async (code) => {
     drawdown: calcMaxDrawdown(trends),
     curDrawdown: calcCurDrawdown(trends, drawdownDate.value),
     rangeMaxDrawdown: calcMaxDrawdown(trends, drawdownDate.value),
+    // 兜底数据：从单位净值走势中计算
+    fallbackDwjz,
+    fallbackChange,
   }
 }
 
@@ -901,6 +929,15 @@ const loadFundFull = async (code) => {
     } else {
       data.todayChange = ((r.gsz - r.dwjz) / r.dwjz) * 100
       data.todayChange = data.todayChange.toFixed(2) + '%'
+    }
+  } else {
+    // 实时估值接口失效时，使用历史数据中的单位净值走势计算兜底数据
+    const h = historyResult.value
+    if (h.fallbackDwjz !== '—') {
+      data.dwjz = h.fallbackDwjz
+    }
+    if (h.fallbackChange !== '—') {
+      data.todayChange = h.fallbackChange
     }
   }
   return data

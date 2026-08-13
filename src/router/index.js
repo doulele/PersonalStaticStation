@@ -67,17 +67,12 @@ const routes = [
       {
         path: 'fund/stock-filter',
         component: () => import('@/views/fund/stockFilter/index.vue'),
-        meta: { title: '妖股筛选', icon: 'DataLine' }
+        meta: { title: '股票筛选', icon: 'DataLine' }
       },
       {
         path: 'fund/stock-detail',
         component: () => import('@/views/fund/stockFilter/stockDetail.vue'),
         meta: { title: '妖股详情', icon: 'DataLine' }
-      },
-      {
-        path: 'fund/dadao-detail',
-        component: () => import('@/views/fund/stockFilter/DaDaoQiXianDetail.vue'),
-        meta: { title: '大道七线股诊', icon: 'DataLine' }
       },
       {
         path: 'fund/national-team',

@@ -1,10 +1,12 @@
 .stock-selector {
   padding: 8px;
   max-width: 1500px;
+  width: 100%;
   margin: 0 auto;
   min-height: 100vh;
   background: #f0f4f8;
   overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 /* 夜间模式 */
@@ -58,6 +60,9 @@
 }
 .hero-badge.yaogu-badge {
   background: #f97316;
+}
+.hero-badge.normal-badge {
+  background: #10b981;
 }
 .hero-badge.dadao-badge {
   background: #3b82f6;
@@ -114,6 +119,13 @@
   border-color: #f97316;
   color: #fff;
   box-shadow: 0 4px 14px rgba(249, 115, 22, 0.35);
+  transform: translateY(-1px);
+}
+.model-tab.active.normal-tab {
+  background: #10b981;
+  border-color: #10b981;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
   transform: translateY(-1px);
 }
 .model-tab.active.dadao-tab {

@@ -64,7 +64,7 @@ export const ALL_TOOLS = [
   },
   {
     id: 'stock-filter',
-    name: '妖股筛选',
+    name: '股票筛选',
     desc: '多因子量化筛选潜力标的，实时行情评估',
     category: 'fund',
     path: '/fund/stock-filter',

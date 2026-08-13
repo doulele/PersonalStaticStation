@@ -1,6 +1,9 @@
 .dadao-qixian-page {
   max-width: 1400px;
+  width: 100%;
   margin: 0 auto;
+  box-sizing: border-box;
+  overflow-x: hidden;
 
   &.fade-in {
     animation: fadeIn 0.45s ease-out;
@@ -17,9 +20,12 @@
   margin-bottom: 16px;
   border-radius: 16px;
   border: 1px solid #e2e8f0;
+  max-width: 100%;
 
   :deep(.el-card__body) {
     padding: 18px 24px;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 }
 
@@ -205,9 +211,15 @@
   border-radius: 16px;
   border: 1px solid #e2e8f0;
   overflow: hidden;
+  max-width: 100%;
 
   :deep(.el-card__body) {
     overflow-x: auto;
+    max-width: 100%;
+  }
+
+  :deep(.el-table) {
+    min-width: 900px;
   }
 }
 
