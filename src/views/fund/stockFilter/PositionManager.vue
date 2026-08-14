@@ -3,7 +3,7 @@
     <!-- 折叠标题栏 -->
     <div class="pm-header" @click="expanded = !expanded">
       <div class="pm-header-left">
-        <span class="pm-title">我的交易记录</span>
+        <span class="pm-title">我的持仓</span>
         <el-tag v-if="posData?.hasPosition" size="small" :type="posData.floatPnl >= 0 ? 'danger' : 'success'" effect="dark">
           {{ posData.floatPnl >= 0 ? '+' : '-' }}{{ Math.abs(posData.floatPnlPct) }}%
         </el-tag>
@@ -92,35 +92,44 @@
             <el-button size="small" @click="openDialog('sell')" :disabled="!posData?.hasPosition">卖出</el-button>
             <el-button size="small" @click="openDialog('dividend')">分红</el-button>
             <el-button size="small" @click="openDialog('bonus')">送股</el-button>
-            <!-- 通用截图识别组件 -->
+            <!-- 通用截图识别组件（校验截图是否属于当前股票 + 重复行标灰） -->
             <ImageRecognizer
               title="交易记录识别"
+              :expected-stock="stockCode ? { code: stockCode, name: stockName } : null"
+              :existing-records="txs"
               @confirm="handleImportConfirm"
             >
               <template #trigger="{ open, loading }">
                 <el-button size="small" type="primary" plain @click="open" :loading="loading">导入截图</el-button>
               </template>
             <template #result-table="{ records }">
-              <el-table :data="records" size="small" max-height="300" style="width:100%;margin-top:10px">
-                <el-table-column prop="date" label="日期" width="100" />
-                <el-table-column label="类型" width="60">
+              <el-table :data="records" size="small" max-height="300" style="width:100%;margin-top:10px" :row-class-name="importRowClass">
+                <el-table-column prop="date" label="日期" width="90" />
+                <el-table-column label="时间" width="70">
+                  <template #default="{ row }">
+                    <span v-if="row.time" class="pm-import-time">{{ row.time }}</span>
+                    <span v-else class="pm-ov-none">—</span>
+                  </template>
+                </el-table-column>
+                <el-table-column label="类型" width="78">
                   <template #default="{ row }">
                     <el-tag size="small" :type="row.type === 'buy' ? 'danger' : 'success'" effect="light">
                       {{ row.type === 'buy' ? '买入' : '卖出' }}
                     </el-tag>
+                    <el-tag v-if="row._dup" size="small" type="info" effect="plain" class="pm-dup-tag">已存在</el-tag>
                   </template>
                 </el-table-column>
                 <el-table-column label="价格" width="80">
                   <template #default="{ row }">¥{{ row.price.toFixed(3) }}</template>
                 </el-table-column>
-                <el-table-column prop="shares" label="股数" width="80" />
-                <el-table-column label="费用" width="70">
+                <el-table-column prop="shares" label="股数" width="70" />
+                <el-table-column label="费用" width="60">
                   <template #default="{ row }">
                     <span v-if="row.fee != null">¥{{ Number(row.fee).toFixed(2) }}</span>
                     <span v-else class="pm-ov-none">—</span>
                   </template>
                 </el-table-column>
-                <el-table-column label="金额" width="100">
+                <el-table-column label="金额" width="90">
                   <template #default="{ row }">¥{{ (row.price * row.shares).toFixed(2) }}</template>
                 </el-table-column>
               </el-table>
@@ -153,7 +162,10 @@
             <span class="pm-tx-act"></span>
           </div>
           <div v-for="tx in pagedTxs" :key="tx.id" class="pm-tx-row" :class="'pm-tx-' + tx.type">
-            <span class="pm-tx-date">{{ formatDate(tx.date) }}</span>
+            <span class="pm-tx-date">
+              {{ formatDate(tx.date) }}
+              <span v-if="tx.time" class="pm-tx-time">{{ tx.time }}</span>
+            </span>
             <span class="pm-tx-type">
               <el-tag size="small" :type="txTypeTag(tx.type)" effect="light">{{ txTypeLabel(tx.type) }}</el-tag>
             </span>
@@ -238,7 +250,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { Wallet, ArrowDown, Plus, Minus, Present, Connection, Delete, Camera } from '@element-plus/icons-vue'
-import { getTransactions, addTransaction, removeTransaction, clearTransactions, calcPosition, TX_TYPES } from '@/composables/usePosition.js'
+import { getTransactions, addTransaction, addTransactions, removeTransaction, clearTransactions, calcPosition, TX_TYPES } from '@/composables/usePosition.js'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import ImageRecognizer from '@/components/ImageRecognizer.vue'
 
@@ -261,22 +273,26 @@ const pagedTxs = computed(() => {
   return txs.value.slice(start, start + pageSize)
 })
 
-// ===== 截图导入：使用通用 ImageRecognizer 组件 =====
+// ===== 截图导入：使用通用 ImageRecognizer 组件（批量去重） =====
 function handleImportConfirm(records) {
-  for (const record of records) {
-    addTransaction(props.stockCode, {
-      type: record.type,
-      price: record.price,
-      shares: record.shares,
-      date: record.date || new Date().toISOString().slice(0, 10),
-      fee: record.fee,
-      note: record.note || '截图导入'
-    })
+  const { added, skipped } = addTransactions(props.stockCode, records)
+  if (added === 0) {
+    ElMessage.error(`该截图已导入过，${skipped} 条记录均与现有记录重复，未导入`)
+    return
   }
-  ElMessage.success(`成功导入 ${records.length} 条交易记录`)
+  if (skipped > 0) {
+    ElMessage.warning(`已导入 ${added} 条，跳过 ${skipped} 条重复记录`)
+  } else {
+    ElMessage.success(`成功导入 ${added} 条交易记录`)
+  }
   expanded.value = true
   txPage.value = 1
   emit('position-change', calcPosition(props.stockCode, props.currentPrice))
+}
+
+// 识别结果表格：重复行标灰
+function importRowClass({ row }) {
+  return row._dup ? 'pm-dup-row' : ''
 }
 
 // 表单

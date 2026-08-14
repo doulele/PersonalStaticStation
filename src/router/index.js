@@ -87,6 +87,12 @@ const routes = [
         meta: { title: '评分说明', icon: 'DataLine' }
       },
       {
+        path: 'fund/dadao-detail',
+        name: 'dadaoDetail',
+        component: () => import('@/views/fund/stockFilter/DaDaoQiXianDetail.vue'),
+        meta: { title: '大道七线详情', icon: 'DataLine' }
+      },
+      {
         path: 'fund/national-team',
         component: () => import('@/views/fund/nationalTeam/index.vue'),
         meta: { title: '跟党走·国家队动向监测', icon: 'DataLine' }

@@ -46,11 +46,12 @@ export function getTransactions(stockCode) {
 /**
  * 添加交易记录
  * @param {string} stockCode 股票代码
- * @param {object} tx { type, price, shares, date, note, ratio }
+ * @param {object} tx { type, price, shares, date, time, note, ratio }
  *   - type: 'buy'|'sell'|'dividend'|'bonus'
  *   - price: 价格（分红填每股金额，送股填0）
  *   - shares: 股数/金额
  *   - date: 日期 YYYY-MM-DD
+ *   - time: 成交时间 HH:mm:ss（可选，截图导入时识别）
  *   - note: 备注
  *   - ratio: 送股比例（仅 bonus 类型，如 10送3 则 ratio=0.3）
  */
@@ -65,6 +66,7 @@ export function addTransaction(stockCode, tx) {
     price: Number(tx.price) || 0,
     shares: Number(tx.shares) || 0,
     date: tx.date || new Date().toISOString().slice(0, 10),
+    time: tx.time || '',
     note: tx.note || '',
     fee: tx.fee != null ? Number(tx.fee) : null,
     ratio: tx.type === 'bonus' ? (Number(tx.ratio) || 0) : 0,
@@ -72,6 +74,92 @@ export function addTransaction(stockCode, tx) {
   // 按日期排序（最新的在前）
   allPositions.value[stockCode].transactions.sort((a, b) => b.date.localeCompare(a.date))
   saveToStorage()
+}
+
+// ==================== 重复检测与批量导入 ====================
+
+/**
+ * 交易指纹：type|date|price|shares（price 统一 3 位小数、shares 取整）
+ * time 单独返回，匹配时采用"任一方缺失时间即宽松匹配"的规则：
+ * 手动录入无 time 的记录，可与截图识别（含 time）的同一笔交易匹配判重
+ */
+export function txFingerprint(tx) {
+  const type = tx.type || ''
+  const date = String(tx.date || '')
+  const price = (Number(tx.price) || 0).toFixed(3)
+  const shares = Math.round(Number(tx.shares) || 0)
+  return { key: `${type}|${date}|${price}|${shares}`, time: String(tx.time || '').trim() }
+}
+
+/**
+ * 创建"重复检测器"：基于已有记录做计数减配（Pool），返回判定函数。
+ * 判定函数每命中一次消耗一个配额，确保"收盘拆单"等多条完全相同记录不误判：
+ * - 截图 2 条相同 + 库 0 条 → 都判为新（都导入）
+ * - 截图 2 条相同 + 库 2 条 → 都判为重复（阻止再次导入同一截图）
+ * - 截图 2 条相同 + 库 1 条 → 1 新 1 重复（最终 2 条，正确）
+ */
+export function createDupChecker(existingRecords) {
+  const poolExact = new Map()      // key|time -> count（库记录有时间）
+  const poolExactByKey = new Map() // key -> count（聚合，供截图无时间宽松匹配）
+  const poolNoTime = new Map()     // key -> count（库记录无时间）
+
+  const inc = (map, k) => map.set(k, (map.get(k) || 0) + 1)
+  const take = (map, k) => {
+    const c = map.get(k) || 0
+    if (c > 0) { map.set(k, c - 1); return true }
+    return false
+  }
+
+  for (const t of existingRecords || []) {
+    const { key, time } = txFingerprint(t)
+    if (time) {
+      inc(poolExact, `${key}|${time}`)
+      inc(poolExactByKey, key)
+    } else {
+      inc(poolNoTime, key)
+    }
+  }
+
+  return (record) => {
+    const { key, time } = txFingerprint(record)
+    if (time) {
+      if (take(poolExact, `${key}|${time}`)) return true
+      if (take(poolNoTime, key)) return true
+      return false
+    }
+    if (take(poolNoTime, key)) return true
+    if (take(poolExactByKey, key)) return true
+    return false
+  }
+}
+
+/**
+ * 批量导入交易记录（截图导入专用，自动去重）
+ * @param {string} stockCode 股票代码
+ * @param {object[]} records 截图识别出的记录数组
+ * @returns {{ added: number, skipped: number }}
+ */
+export function addTransactions(stockCode, records) {
+  const isDup = createDupChecker(getTransactions(stockCode))
+  let added = 0
+  let skipped = 0
+  for (const r of records || []) {
+    if (isDup(r)) {
+      skipped++
+      continue
+    }
+    addTransaction(stockCode, {
+      type: r.type,
+      price: r.price,
+      shares: r.shares,
+      date: r.date,
+      time: r.time || '',
+      fee: r.fee,
+      note: r.note || '截图导入',
+    })
+    added++
+  }
+  return { added, skipped }
 }
 
 /**

@@ -75,8 +75,14 @@
           </el-tag>
         </div>
 
+        <!-- 重复记录提示 -->
+        <div v-if="dupCount > 0" class="ir-dup-hint">
+          <el-icon :size="13"><InfoFilled /></el-icon>
+          <span>{{ dupCount >= records.length ? `全部 ${records.length} 条均已存在，无法重复导入` : `其中 ${dupCount} 条与现有记录重复，导入时将自动跳过` }}</span>
+        </div>
+
         <slot name="result-table" :records="pagedRecords">
-          <el-table :data="pagedRecords" size="small" max-height="280" style="width:100%;margin-top:6px">
+          <el-table :data="pagedRecords" size="small" max-height="280" style="width:100%;margin-top:6px" :row-class-name="irRowClass">
             <el-table-column v-for="col in defaultColumns" :key="col.prop" v-bind="col" />
           </el-table>
         </slot>
@@ -101,8 +107,8 @@
 
       <template #footer>
         <el-button @click="close">取消</el-button>
-        <el-button type="primary" @click="confirm" :disabled="records.length === 0 || loading">
-          确认导入 {{ records.length }} 条
+        <el-button type="primary" @click="confirm" :disabled="records.length === 0 || loading || dupCount >= records.length">
+          {{ dupCount > 0 ? `确认导入 ${records.length - dupCount} 条` : `确认导入 ${records.length} 条` }}
         </el-button>
       </template>
     </el-dialog>
@@ -111,8 +117,9 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { Camera, Lock, Loading, CircleCheckFilled, UploadFilled, Refresh, Document, MagicStick, PictureFilled } from '@element-plus/icons-vue'
+import { Camera, Lock, Loading, CircleCheckFilled, UploadFilled, Refresh, Document, MagicStick, PictureFilled, InfoFilled } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { createDupChecker } from '@/composables/usePosition.js'
 
 const props = defineProps({
   apiEndpoint: { type: String, default: '/staticTool/api/ocr/parse-trade-records' },
@@ -126,6 +133,10 @@ const props = defineProps({
   formDataBuilder: { type: Function, default: null },
   resultParser: { type: Function, default: null },
   columns: { type: Array, default: () => [] },
+  // 期望的股票信息 { code, name }，用于校验截图是否属于当前股票
+  expectedStock: { type: Object, default: null },
+  // 库内已有交易记录，用于识别结果的重复行标灰（非空时启用）
+  existingRecords: { type: Array, default: () => [] },
 })
 
 const emit = defineEmits(['confirm', 'error'])
@@ -147,6 +158,9 @@ const pagedRecords = computed(() => {
   const start = (currentPage.value - 1) * props.pageSize
   return records.value.slice(start, start + props.pageSize)
 })
+
+// 被判定为重复（已存在）的记录数
+const dupCount = computed(() => records.value.filter(r => r._dup).length)
 
 const defaultColumns = computed(() => {
   if (props.columns.length > 0) return props.columns
@@ -234,8 +248,16 @@ async function doRecognize(file) {
 
     if (json.code === 0 && json.data) {
       const parsed = props.resultParser ? props.resultParser(json) : (json.data.records || [])
+      // 校验截图是否属于当前股票
+      const mismatch = checkStockMismatch(props.expectedStock, json.data.detectedStock || null)
+      if (mismatch) {
+        records.value = []
+        ElMessage.error(mismatch)
+        return
+      }
       records.value = parsed
       source.value = json.data.source || 'ocr'
+      markDuplicates(records.value)
       if (records.value.length === 0) {
         ElMessage.warning(json.message || '未识别到记录')
       } else {
@@ -258,6 +280,42 @@ function confirm() {
   if (records.value.length === 0) return
   emit('confirm', records.value)
   close()
+}
+
+/**
+ * 对识别结果逐条标记重复（_dup），与 usePosition 的批量导入去重逻辑保持一致
+ */
+function markDuplicates(list) {
+  const isDup = createDupChecker(props.existingRecords)
+  for (const r of list) r._dup = !!isDup(r)
+}
+
+function irRowClass({ row }) {
+  return row._dup ? 'ir-dup-row' : ''
+}
+
+/**
+ * 校验识别到的股票信息是否与期望股票一致
+ * @param {{code:string,name:string}|null} expected - 当前股票
+ * @param {{code:string,name:string}|null} detected - 截图识别到的股票
+ * @returns {string|null} 不一致时返回提示文案，否则返回 null
+ */
+function checkStockMismatch(expected, detected) {
+  if (!expected || !detected) return null
+  const expCode = String(expected.code || '').trim()
+  const expName = String(expected.name || '').trim()
+  const detCode = String(detected.code || '').trim()
+  const detName = String(detected.name || '').trim()
+  if (!expCode && !expName) return null
+  // 代码校验（最可靠）
+  if (detCode && expCode && detCode !== expCode) {
+    return `该截图识别为「${detName || detCode}」（代码 ${detCode}），与当前股票「${expName || expCode}」不符，已取消导入`
+  }
+  // 名称校验（容忍包含关系，避免简称/全称差异误伤）
+  if (detName && expName && !(expName.includes(detName) || detName.includes(expName))) {
+    return `该截图识别为「${detName}」，与当前股票「${expName}」不符，已取消导入`
+  }
+  return null
 }
 </script>
 
@@ -409,6 +467,30 @@ function confirm() {
 
 .ir-empty { padding: 20px 0; }
 
+// ===== 重复记录提示 =====
+.ir-dup-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  padding: 3px 10px;
+  font-size: .75rem;
+  border-radius: 4px;
+  color: var(--el-color-warning, #e6a23c);
+  background: var(--el-color-warning-light-9, rgba(230,162,60,.08));
+}
+
+// 重复行标灰（默认表格）
+:deep(.ir-dup-row) {
+  color: var(--el-text-color-placeholder, #c0c4cc);
+
+  td.el-table__cell {
+    background: var(--el-fill-color-light, #f5f7fa) !important;
+  }
+
+  .el-tag { opacity: .5; }
+}
+
 // ===== 暗黑 =====
 html.dark-mode {
   .ir-mode-card {
@@ -428,6 +510,19 @@ html.dark-mode {
   }
 
   .ir-status-inline { background: rgba(59,130,246,.1); }
+
+  .ir-dup-hint {
+    color: #fbbf24;
+    background: rgba(251,191,36,.08);
+  }
+
+  :deep(.ir-dup-row) {
+    color: #64748b;
+
+    td.el-table__cell {
+      background: rgba(51,65,85,.55) !important;
+    }
+  }
 }
 
 // ===== 移动端 =====

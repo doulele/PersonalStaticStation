@@ -8,15 +8,19 @@
           :key="h.key"
           class="horizon-btn"
           :class="{ active: horizon === h.key }"
+          :title="h.holdingPeriod ? '建议持仓周期：' + h.holdingPeriod : ''"
           @click="changeHorizon(h.key)"
-        >{{ h.label }}</button>
+        >
+          <span class="hb-label">{{ h.label }}</span>
+          <span v-if="h.holdingPeriod" class="hb-period">{{ h.holdingPeriod }}</span>
+        </button>
       </div>
       <div class="search-wrap">
         <input
           v-model="keyword"
           class="search-input"
           type="text"
-          placeholder="搜索股票代码 / 名称"
+          placeholder="评测股票代码 / 名称"
           @input="onKeywordInput"
           @focus="onKeywordFocus"
           @keydown.enter="submitSearch"
@@ -172,16 +176,17 @@
     <div class="table-panel">
       <div class="table-head-info">
         <span>共 <b>{{ total }}</b> 只 · 评分池 {{ meta?.poolSize ?? '--' }} 只 · 更新 {{ meta?.updateTime ? formatTime(meta.updateTime) : '--' }}</span>
-        <span v-if="loading" class="loading-text">⏳ 评分构建中，首次约需 1~2 分钟，请稍候…</span>
+        <span v-if="loading" class="loading-text">⏳ 正在加载，请稍候…</span>
         <span v-else-if="errorMsg" class="error-text">⚠️ {{ errorMsg }}</span>
+        <span v-else-if="meta?.stage === 'base'" class="base-stage-text">⏳ 基础行情已就绪，完整评分构建中，将自动刷新…</span>
       </div>
 
-      <!-- 首次加载：明显的全屏 loading 遮罩 -->
+      <!-- 首次加载：明显的全屏 loading 遮罩（新流程下基础列表秒级返回，此遮罩仅在快照未就绪时出现） -->
       <div v-if="loading && !rows.length" class="list-loading-mask">
         <div class="llm-inner">
           <div class="llm-spinner"></div>
-          <div class="llm-title">正在构建全市场评分池</div>
-          <div class="llm-desc">首次进入需拉取约 5500 只股票行情，并计算财务与技术指标</div>
+          <div class="llm-title">正在拉取全市场行情</div>
+          <div class="llm-desc">首次进入需获取约 5500 只股票快照并计算基础评分，通常数十秒</div>
           <div class="llm-stage">
             <span class="llm-item" :class="{ done: loadStage >= 1 }">① 全市场快照</span>
             <span class="llm-arrow">→</span>
@@ -191,7 +196,7 @@
             <span class="llm-arrow">→</span>
             <span class="llm-item" :class="{ done: loadStage >= 4 }">④ 六维评分</span>
           </div>
-          <div class="llm-tip">通常 1~2 分钟，请勿关闭页面</div>
+          <div class="llm-tip">基础列表就绪后即可浏览，完整评分将在后台自动更新</div>
         </div>
       </div>
 
@@ -202,8 +207,8 @@
               <th class="th-code">代码 / 名称</th>
               <th>行业</th>
               <th class="th-sort" @click="toggleSort('score')">综合评分 {{ sortIcon('score') }}</th>
-              <th>星级</th>
-              <th>推荐结论</th>
+              <th class="th-sort" @click="toggleSort('star')">星级 {{ sortIcon('star') }}</th>
+              <th class="th-sort" @click="toggleSort('conclusion')">推荐结论 {{ sortIcon('conclusion') }}</th>
               <th>风险</th>
               <th class="th-sort" @click="toggleSort('price')">最新价 {{ sortIcon('price') }}</th>
               <th class="th-sort" @click="toggleSort('changePct')">涨跌幅 {{ sortIcon('changePct') }}</th>
@@ -244,6 +249,19 @@
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <!-- ============ 移动端排序工具条 ============ -->
+      <div class="mobile-sort-bar">
+        <button
+          v-for="s in sortOptions"
+          :key="s.key"
+          class="msort-btn"
+          :class="{ active: sortBy === s.key }"
+          @click="toggleSort(s.key)"
+        >
+          {{ s.label }} {{ sortIcon(s.key) }}
+        </button>
       </div>
 
       <!-- ============ 移动端卡片列表 ============ -->
@@ -346,7 +364,15 @@ const RISK_OPTIONS = [
 ]
 
 const horizon = ref('short')
-const horizons = ref([])
+
+// 默认周期配置（接口失败时兜底，保证周期按钮可用）
+const DEFAULT_HORIZONS = [
+  { key: 'short', label: '短线', holdingPeriod: '1~2周', desc: '技术面权重35%，资金情绪权重30%，侧重量价与短线动量' },
+  { key: 'mid', label: '中长线', holdingPeriod: '1~3个月', desc: '成长与盈利质量权重各25%，兼顾估值与技术' },
+  { key: 'long', label: '长线', holdingPeriod: '6个月以上', desc: '估值与盈利质量合计权重60%，弱化短期波动' }
+]
+
+const horizons = ref([...DEFAULT_HORIZONS])
 const currentHorizon = computed(() => horizons.value.find(h => h.key === horizon.value))
 const horizonLabel = computed(() => currentHorizon.value?.label || '短线')
 
@@ -363,11 +389,26 @@ const industryRank = ref([])
 const industries = ref([])
 const sortBy = ref('score')
 const sortOrder = ref('desc')
+// 可排序字段（PC 表头 + 移动端排序按钮共用）
+const sortOptions = [
+  { key: 'score', label: '综合评分' },
+  { key: 'star', label: '星级' },
+  { key: 'conclusion', label: '推荐结论' },
+  { key: 'price', label: '最新价' },
+  { key: 'changePct', label: '涨跌幅' }
+]
 const searchTimer = ref(null)
 const loadStage = ref(0) // 首次加载阶段进度
 let searchSeq = 0
 let loadStageTimer = null
 let abortCtrl = null
+// 完整评分池轮询（meta.stage==='base' 时每 10s 静默刷新，最多 6 次）
+let pollTimer = null
+let pollCount = 0
+const POLL_INTERVAL = 10000
+const POLL_MAX = 6
+// 周期/行业切换防抖计时器
+let loadTimer = null
 
 // 筛选面板折叠状态（移动端默认收起）
 const showFilters = ref(typeof window !== 'undefined' ? window.innerWidth > 640 : true)
@@ -626,11 +667,10 @@ function stopLoadStage() {
   if (loadStageTimer) { clearInterval(loadStageTimer); loadStageTimer = null }
 }
 
-async function loadList() {
-  loading.value = true
-  errorMsg.value = ''
+async function loadList({ silent = false, attempt = 0 } = {}) {
+  if (!silent) { loading.value = true; errorMsg.value = '' }
   // 仅当无数据时显示全屏 loading（首次加载），翻页/筛选时保留旧数据
-  if (!rows.value.length) startLoadStage()
+  if (!rows.value.length && !silent) startLoadStage()
   // 中止上一次未完成的请求，释放连接
   if (abortCtrl) { abortCtrl.abort(); abortCtrl = null }
   abortCtrl = new AbortController()
@@ -648,16 +688,57 @@ async function loadList() {
       total.value = res.data.total || 0
       meta.value = res.data.meta || null
       loadStage.value = 4
+      // SWR：基础池阶段自动轮询，直到完整评分池就绪（stage==='full'）
+      if (res.data.meta?.stage === 'base') startPoll()
+      else stopPoll()
     } else {
       errorMsg.value = res.message || '加载失败'
+      stopPoll()
     }
   } catch (e) {
     if (e.name === 'AbortError') return
+    // 网络抖动/数据源限流：自动重试一次（指数退避），避免用户手动反复刷新
+    if (attempt < 1) {
+      stopPoll()
+      await new Promise(r => setTimeout(r, 1500))
+      return loadList({ silent, attempt: attempt + 1 })
+    }
     errorMsg.value = e.message || '网络错误'
+    stopPoll()
   } finally {
-    stopLoadStage()
-    loading.value = false
+    if (!silent) { stopLoadStage(); loading.value = false }
   }
+}
+
+// ---- 完整评分池轮询（stage==='base' 时静默刷新，命中 full 或超限后停止）----
+function stopPoll() {
+  if (pollTimer) { clearTimeout(pollTimer); pollTimer = null }
+  pollCount = 0
+}
+function startPoll() {
+  stopPoll()
+  pollTimer = setTimeout(pollOnce, POLL_INTERVAL)
+}
+async function pollOnce() {
+  pollTimer = null
+  if (++pollCount > POLL_MAX) { pollCount = 0; return }
+  try {
+    await loadList({ silent: true })
+    // loadList 内部已依据 meta.stage 自行 startPoll / stopPoll
+  } catch {
+    stopPoll()
+  }
+}
+
+// 周期/行业切换防抖：合并快速连续操作，减少无效请求
+function scheduleLoad(delay = 300) {
+  clearTimeout(loadTimer)
+  loadTimer = setTimeout(() => {
+    loadTimer = null
+    stopPoll()
+    loadList()
+    loadRank()
+  }, delay)
 }
 
 async function loadRank() {
@@ -682,6 +763,7 @@ async function loadIndustries() {
 }
 
 function refresh() {
+  stopPoll()
   loadList()
   loadRank()
 }
@@ -690,12 +772,23 @@ function changeHorizon(h) {
   if (horizon.value === h) return
   horizon.value = h
   page.value = 1
-  loadList()
-  loadRank()
+  // 中止进行中的旧周期请求，避免其返回后覆盖新周期数据
+  if (abortCtrl) { abortCtrl.abort(); abortCtrl = null }
+  // 周期切换后评分模型完全不同：立即清空上一周期的结果与排名，避免旧数据误导
+  rows.value = []
+  total.value = 0
+  meta.value = null
+  industryRank.value = []
+  errorMsg.value = ''
+  loading.value = true
+  loadStage.value = 0
+  // 防抖合并快速连续切换，避免对服务器发起重复构建请求
+  scheduleLoad()
 }
 
 function applyFilters() {
   page.value = 1
+  stopPoll()
   loadList()
 }
 
@@ -720,7 +813,9 @@ function resetFilters() {
 
 function toggleIndustry(ind) {
   filters.value.industry = filters.value.industry === ind ? '' : ind
-  applyFilters()
+  page.value = 1
+  // 防抖合并快速连续点击行业，避免对服务器发起重复构建请求
+  scheduleLoad()
 }
 
 // ==================== 排序 / 分页 ====================
@@ -740,10 +835,12 @@ function sortIcon(key) {
 function goPage(p) {
   if (p < 1 || p > totalPages.value) return
   page.value = p
+  stopPoll()
   loadList()
 }
 function onPageSizeChange() {
   page.value = 1
+  stopPoll()
   loadList()
 }
 
@@ -826,8 +923,10 @@ onMounted(() => {
 })
 onBeforeUnmount(() => {
   clearTimeout(searchTimer.value)
+  if (loadTimer) { clearTimeout(loadTimer); loadTimer = null }
+  stopPoll()
   stopLoadStage()
-  // 中止进行中的请求，避免路由切换后 pending 请求占用连接
+  // 中止进行中的请求，避免路由切换后 pending 请求占用连接（后端感知断开后自动取消池构建）
   if (abortCtrl) { abortCtrl.abort(); abortCtrl = null }
 })
 </script>

@@ -498,6 +498,11 @@
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
+  // 关键：作为 flex 子项默认 min-width: auto（= 所有 nowrap 按钮总宽），
+  // 旧 WebView/微信内置浏览器下会被内容撑宽父链，导致整页横向溢出。
+  // min-width: 0 允许收缩，max-width: 100% 钳制不超过父容器。
+  min-width: 0;
+  max-width: 100%;
 }
 .region-filter-btn {
   padding: 7px 16px;
@@ -585,7 +590,8 @@
 .province-filter-hint {
   color: #64748b;
   font-size: 12px;
-  white-space: nowrap;
+  white-space: normal;
+  min-width: 0;
 }
 
 .popular-grid {
@@ -1073,6 +1079,19 @@
   100% { background-position: -200% 0; }
 }
 
+@media (max-width: 1023px) {
+  // 移动端/平板：视口小于 960px 时 .search-page 已占满全宽，无需 100vw 技巧，避免横向溢出
+  .search-page {
+    // 移动端兜底：裁剪任何子元素溢出（用 hidden 而非 clip，兼容旧版 WebView / 微信内置浏览器）
+    // 仅在移动端启用，避免裁剪桌面端 100vw 通栏 hero 的左右延伸
+    overflow-x: hidden;
+  }
+  .hero-section {
+    width: 100%;
+    margin-left: 0;
+  }
+}
+
 @media (max-width: 768px) {
   .hero-section { padding: 28px 16px 26px; }
   .hero-title { font-size: 26px; }
@@ -1097,6 +1116,7 @@
   .popular-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
   .section-header-left { justify-content: space-between; }
   .region-filters {
+    width: calc(100vw - 50px);
     gap: 6px;
     flex-wrap: nowrap;
     overflow-x: auto;

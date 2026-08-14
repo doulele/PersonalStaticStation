@@ -41,7 +41,7 @@
 .horizon-btn {
   border: none;
   background: transparent;
-  padding: 7px 16px;
+  padding: 6px 16px;
   border-radius: 8px;
   font-size: 0.78rem;
   font-weight: 600;
@@ -49,7 +49,14 @@
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  line-height: 1.2;
 }
+.hb-label { font-size: 0.78rem; font-weight: 600; }
+.hb-period { font-size: 0.6rem; font-weight: 400; opacity: 0.75; }
 .horizon-btn:hover { color: #b45309; }
 .horizon-btn.active {
   background: #f59e0b;
@@ -475,6 +482,251 @@
 }
 .fund-empty { font-size: 0.68rem; color: #94a3b8; padding: 20px 6px; text-align: center; }
 
+/* ==================== 持仓操作建议 ==================== */
+.pos-advice-card {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  border-left: 4px solid #f59e0b;
+}
+.pa-success, .pa-warning { border-left-color: #f59e0b; }
+.pa-danger { border-left-color: #dc2626; }
+.pa-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.pa-title { display: flex; align-items: center; gap: 10px; }
+.pa-label { font-size: 0.82rem; font-weight: 800; color: #1f2937; }
+.pa-action {
+  display: inline-block;
+  padding: 3px 14px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
+}
+.pa-danger .pa-action { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 2px 6px rgba(220, 38, 38, 0.3); }
+.pa-summary { font-size: 0.74rem; color: #475569; font-family: Consolas, monospace; }
+.pa-pnl { font-weight: 800; }
+.pa-reasons { display: flex; flex-direction: column; gap: 5px; }
+.pa-reason {
+  font-size: 0.74rem;
+  color: #334155;
+  line-height: 1.6;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.pa-bullet {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f59e0b;
+  transform: translateY(-1px);
+}
+.pa-danger .pa-bullet { background: #dc2626; }
+.pa-refs { display: flex; flex-wrap: wrap; gap: 8px; }
+.pa-ref {
+  font-size: 0.66rem;
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-family: Consolas, monospace;
+}
+.pa-note { font-size: 0.62rem; color: #94a3b8; }
+
+/* ==================== 关键价位：支撑 / 压力 ==================== */
+.levels-card { display: flex; flex-direction: column; gap: 8px; }
+.levels-note { font-size: 0.6rem; font-weight: 400; color: #94a3b8; margin-left: auto; white-space: nowrap; }
+.levels-body { display: flex; flex-direction: column; gap: 8px; }
+
+/* 三列：压力 | 现价 | 支撑 */
+.levels-main {
+  display: grid;
+  grid-template-columns: 1fr 84px 1fr;
+  gap: 8px;
+  align-items: stretch;
+}
+.lm-col { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.lm-col-head {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 3px 8px;
+  border-radius: 7px;
+  text-align: center;
+}
+.lm-col-head.res { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+.lm-col-head.sup { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+
+.lm-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f8fafc;
+  border: 1px solid #eef2f7;
+  border-radius: 8px;
+  padding: 4px 8px;
+  min-width: 0;
+}
+.lm-item.res.nearest { border-color: #fca5a5; background: #fef2f2; }
+.lm-item.sup.nearest { border-color: #6ee7b7; background: #ecfdf5; }
+.lmi-tag {
+  flex: none;
+  font-size: 0.56rem;
+  font-weight: 800;
+  color: #64748b;
+  background: #eef2f7;
+  border-radius: 5px;
+  padding: 1px 5px;
+}
+.lmi-price {
+  flex: 1;
+  font-size: 0.74rem;
+  font-weight: 800;
+  font-family: Consolas, monospace;
+  color: #1f2937;
+  text-align: center;
+  min-width: 0;
+}
+.lmi-dist { flex: none; font-size: 0.6rem; font-weight: 700; font-family: Consolas, monospace; }
+.lmi-dist.up { color: #dc2626; }
+.lmi-dist.down { color: #059669; }
+.levels-empty { font-size: 0.64rem; color: #94a3b8; padding: 8px 6px; text-align: center; }
+
+/* 中间现价列 */
+.lm-current {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.07), rgba(245, 158, 11, 0.02));
+  border: 1px dashed rgba(245, 158, 11, 0.35);
+  border-radius: 10px;
+  padding: 6px 4px;
+  min-width: 0;
+}
+.lmc-price { font-size: 1.02rem; font-weight: 900; font-family: Consolas, monospace; color: #1f2937; line-height: 1.2; }
+.lmc-chg { font-size: 0.68rem; font-weight: 800; font-family: Consolas, monospace; }
+.lmc-chg.up { color: #dc2626; }
+.lmc-chg.down { color: #059669; }
+.lmc-label { font-size: 0.56rem; color: #92400e; font-weight: 700; letter-spacing: 2px; }
+
+/* 止损 / 清仓 / 止盈参考 */
+.levels-trade { border: 1px solid #eef2f7; border-radius: 10px; padding: 8px 10px; }
+.lt-title { font-size: 0.68rem; font-weight: 800; color: #334155; margin-bottom: 6px; }
+.lt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.lt-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f8fafc;
+  border: 1px solid #eef2f7;
+  border-radius: 8px;
+  padding: 4px 8px;
+  min-width: 0;
+}
+.lt-item.up { border-color: #fecaca; background: #fef2f2; }
+.lt-item.down { border-color: #a7f3d0; background: #ecfdf5; }
+.lt-item.danger { border-color: #fca5a5; background: #fff1f2; border-style: dashed; border-width: 1.5px; }
+.lt-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+.lt-name { flex: none; font-size: 0.58rem; color: #64748b; font-weight: 700; }
+.lt-price { flex: 1; font-size: 0.76rem; font-weight: 800; font-family: Consolas, monospace; color: #1f2937; text-align: center; min-width: 0; }
+.lt-diff { flex: none; font-size: 0.6rem; font-weight: 700; font-family: Consolas, monospace; }
+.lt-item.up .lt-diff, .lt-diff.up { color: #dc2626; }
+.lt-item.down .lt-diff, .lt-diff.down { color: #059669; }
+.lt-item.danger .lt-diff { color: #dc2626; }
+.lt-desc { font-size: 0.6rem; color: #94a3b8; line-height: 1.5; margin-top: 6px; }
+
+/* 分批止盈计划（基于持仓成本） */
+.tp-plan {
+  border: 1px dashed rgba(245, 158, 11, 0.45);
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.05), rgba(245, 158, 11, 0.015));
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+.tp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.tp-title { font-size: 0.68rem; font-weight: 800; color: #334155; }
+.tp-title small { font-weight: 400; color: #94a3b8; }
+.tp-cost { font-size: 0.62rem; font-weight: 700; color: #92400e; font-family: Consolas, monospace; white-space: nowrap; }
+.tp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.tp-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  background: #fff;
+  border: 1px solid #eef2f7;
+  border-radius: 8px;
+  padding: 6px 8px;
+  min-width: 0;
+}
+.tp-item.reached { border-color: #a7f3d0; background: #ecfdf5; }
+.tp-item.current { border-color: #f59e0b; background: #fffbeb; box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.25); }
+.tpi-head { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+.tpi-pct { font-size: 0.66rem; font-weight: 800; color: #dc2626; }
+.tpi-status { font-size: 0.56rem; font-weight: 700; color: #059669; white-space: nowrap; }
+.tp-item.current .tpi-status { color: #d97706; }
+.tpi-price { font-size: 0.82rem; font-weight: 800; font-family: Consolas, monospace; color: #1f2937; }
+.tpi-action { font-size: 0.6rem; font-weight: 700; color: #475569; }
+.tpi-dist { font-size: 0.58rem; font-weight: 700; font-family: Consolas, monospace; }
+.tpi-dist.up { color: #dc2626; }
+.tpi-dist.down { color: #059669; }
+.tpi-dist small { font-weight: 400; color: #94a3b8; }
+.tp-desc { font-size: 0.6rem; color: #94a3b8; line-height: 1.5; margin-top: 6px; }
+
+/* 技术指标快照 */
+.levels-indics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.li-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  background: #f8fafc;
+  border: 1px solid #eef2f7;
+  border-radius: 8px;
+  padding: 4px 8px;
+  min-width: 0;
+}
+.li-name { flex: none; font-size: 0.56rem; color: #64748b; }
+.li-val { font-size: 0.7rem; font-weight: 800; font-family: Consolas, monospace; color: #1f2937; text-align: right; min-width: 0; }
+.li-val.up { color: #dc2626; }
+.li-val.down { color: #059669; }
+.levels-note-bottom { font-size: 0.6rem; color: #94a3b8; line-height: 1.5; }
+
+/* ==================== 持仓信息条 ==================== */
+.position-bar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 10px 18px;
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.05), rgba(245, 158, 11, 0.015));
+  border: 1px dashed rgba(245, 158, 11, 0.35);
+  border-radius: 10px;
+}
+.pos-item { display: flex; flex-direction: column; gap: 2px; min-width: 88px; }
+.pos-label { font-size: 0.62rem; color: #94a3b8; }
+.pos-value { font-size: 0.85rem; font-weight: 800; font-family: Consolas, monospace; color: #1f2937; }
+.pos-divider { width: 1px; height: 22px; background: rgba(245, 158, 11, 0.2); }
+.position-bar .pos-value.up { color: #dc2626; }
+.position-bar .pos-value.down { color: #059669; }
+
 /* ==================== 免责声明 ==================== */
 .disclaimer {
   background: #fffbeb;
@@ -492,6 +744,8 @@
   .risk-grid { grid-template-columns: repeat(3, 1fr); }
   .fin-grid { grid-template-columns: repeat(3, 1fr); }
   .fund-grid { grid-template-columns: 1fr; }
+  .levels-indics { grid-template-columns: repeat(2, 1fr); }
+  .lt-grid.cols-4 { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 800px) {
   .sr-overview { grid-template-columns: 1fr; }
@@ -500,6 +754,8 @@
   .metric-grid { grid-template-columns: repeat(2, 1fr); }
   .kline-chart { height: 420px; }
   .toolbar-right { margin-left: 0; width: 100%; }
+  .levels-items, .lt-grid, .tp-grid { grid-template-columns: 1fr; }
+  .levels-indics { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* ==================== 夜间模式 ==================== */
@@ -548,3 +804,68 @@ html.dark-mode .sr-detail {
   .kline-note { color: #4a5166; }
   .disclaimer { background: #1e1a0e; border-color: #3a3217; color: #d4a74e; }
 }
+
+/* 持仓操作建议（夜间） */
+html.dark-mode .pos-advice-card { border-left-color: #f59e0b; }
+html.dark-mode .pa-danger { border-left-color: #f87171; }
+html.dark-mode .pa-label { color: #e2e8f0; }
+html.dark-mode .pa-summary { color: #8b93a7; }
+html.dark-mode .pa-reason { color: #cbd5e1; }
+html.dark-mode .pa-ref { background: #2a1f0a; border-color: #4a3410; color: #fbbf24; }
+html.dark-mode .pa-note { color: #4a5166; }
+
+/* 关键价位（夜间） */
+html.dark-mode .levels-note { color: #4a5166; }
+html.dark-mode .levels-side-label.res { background: #2a1216; color: #f87171; border-color: #4a1f26; }
+html.dark-mode .levels-side-label.sup { background: #0d241c; color: #34d399; border-color: #1d4a38; }
+html.dark-mode .level-item { background: #1a1b26; border-color: #252733; }
+html.dark-mode .level-item.res.nearest { border-color: #4a1f26; background: #2a1216; }
+html.dark-mode .level-item.sup.nearest { border-color: #1d4a38; background: #0d241c; }
+html.dark-mode .lv-tag { color: #4a5166; }
+html.dark-mode .lv-price { color: #e2e8f0; }
+html.dark-mode .levels-empty { color: #4a5166; }
+html.dark-mode .levels-current {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.08), rgba(245, 158, 11, 0.02));
+  border-color: rgba(245, 158, 11, 0.4);
+}
+html.dark-mode .lc-label { color: #fbbf24; }
+html.dark-mode .lc-price { color: #e2e8f0; }
+html.dark-mode .levels-trade { border-color: #252733; }
+html.dark-mode .lt-title { color: #cbd5e1; }
+html.dark-mode .lt-item { background: #1a1b26; border-color: #252733; }
+html.dark-mode .lt-item.up { border-color: #4a1f26; background: #2a1216; }
+html.dark-mode .lt-item.down { border-color: #1d4a38; background: #0d241c; }
+html.dark-mode .lt-item.danger { border-color: #7f1d1d; background: #2a1216; }
+html.dark-mode .lt-name { color: #4a5166; }
+html.dark-mode .lt-price { color: #e2e8f0; }
+html.dark-mode .lt-desc { color: #4a5166; }
+/* 分批止盈计划（夜间） */
+html.dark-mode .tp-plan { border-color: rgba(245, 158, 11, 0.35); background: rgba(245, 158, 11, 0.04); }
+html.dark-mode .tp-title { color: #cbd5e1; }
+html.dark-mode .tp-title small { color: #4a5166; }
+html.dark-mode .tp-cost { color: #fbbf24; }
+html.dark-mode .tp-item { background: #1a1b26; border-color: #252733; }
+html.dark-mode .tp-item.reached { border-color: #1d4a38; background: #0d241c; }
+html.dark-mode .tp-item.current { border-color: #4a3410; background: #2a1f0a; }
+html.dark-mode .tpi-pct { color: #f87171; }
+html.dark-mode .tpi-status { color: #34d399; }
+html.dark-mode .tp-item.current .tpi-status { color: #fbbf24; }
+html.dark-mode .tpi-price { color: #e2e8f0; }
+html.dark-mode .tpi-action { color: #8b93a7; }
+html.dark-mode .tpi-dist small { color: #4a5166; }
+html.dark-mode .tp-desc { color: #4a5166; }
+html.dark-mode .li-item { background: #1a1b26; border-color: #252733; }
+html.dark-mode .li-name { color: #4a5166; }
+html.dark-mode .li-val { color: #e2e8f0; }
+html.dark-mode .levels-note-bottom { color: #4a5166; }
+
+/* 持仓信息条（夜间） */
+html.dark-mode .position-bar {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.08), rgba(245, 158, 11, 0.02));
+  border-color: rgba(245, 158, 11, 0.4);
+}
+html.dark-mode .pos-label { color: #4a5166; }
+html.dark-mode .pos-value { color: #e2e8f0; }
+html.dark-mode .pos-value.up { color: #f87171; }
+html.dark-mode .pos-value.down { color: #34d399; }
+html.dark-mode .pos-divider { background: rgba(245, 158, 11, 0.25); }

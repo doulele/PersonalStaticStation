@@ -9,8 +9,12 @@
           :key="h.key"
           class="horizon-btn"
           :class="{ active: horizon === h.key }"
+          :title="h.holdingPeriod ? '建议持仓周期：' + h.holdingPeriod : ''"
           @click="changeHorizon(h.key)"
-        >{{ h.label }}</button>
+        >
+          <span class="hb-label">{{ h.label }}</span>
+          <span v-if="h.holdingPeriod" class="hb-period">{{ h.holdingPeriod }}</span>
+        </button>
       </div>
       <div class="toolbar-right">
         <span v-if="detail" class="update-time">更新 {{ formatTime(detail.updateTime) }}</span>
@@ -110,7 +114,174 @@
           </div>
           <div class="reason-short">{{ detail.reasonShort }}</div>
         </div>
+
+        <!-- 持仓信息条（有持仓时显示） -->
+        <!-- <div v-if="positionData?.hasPosition" class="position-bar">
+          <div class="pos-item">
+            <span class="pos-label">持仓成本</span>
+            <span class="pos-value">¥{{ positionData.avgCost.toFixed(3) }}</span>
+          </div>
+          <div class="pos-divider"></div>
+          <div class="pos-item">
+            <span class="pos-label">持仓股数</span>
+            <span class="pos-value">{{ positionData.totalShares }}股</span>
+          </div>
+          <div class="pos-divider"></div>
+          <div class="pos-item">
+            <span class="pos-label">持仓盈亏</span>
+            <span class="pos-value" :class="positionData.floatPnl >= 0 ? 'up' : 'down'">
+              {{ positionData.floatPnl >= 0 ? '+' : '-' }}¥{{ fmtMoneyShort(Math.abs(positionData.floatPnl)) }}
+            </span>
+          </div>
+          <div class="pos-divider"></div>
+          <div class="pos-item">
+            <span class="pos-label">盈亏比例</span>
+            <span class="pos-value" :class="positionData.floatPnl >= 0 ? 'up' : 'down'">
+              {{ positionData.floatPnl >= 0 ? '+' : '-' }}{{ Math.abs(positionData.floatPnlPct) }}%
+            </span>
+          </div>
+        </div> -->
       </div>
+
+      <!-- ============ 持仓操作建议（有持仓时显示） ============ -->
+      <div v-if="positionAdvice" class="card pos-advice-card" :class="'pa-' + positionAdvice.level">
+        <div class="pa-head">
+          <div class="pa-title">
+            <span class="pa-label">持仓操作建议</span>
+            <span class="pa-action">{{ positionAdvice.actionText }}</span>
+          </div>
+          <div class="pa-summary">
+            持有 {{ positionData.totalShares }} 股 · 成本 ¥{{ positionData.avgCost.toFixed(3) }}
+            <span class="pa-pnl" :class="positionData.floatPnl >= 0 ? 'up' : 'down'">
+              · {{ positionData.floatPnl >= 0 ? '+' : '' }}{{ positionData.floatPnlPct.toFixed(2) }}%
+            </span>
+          </div>
+        </div>
+        <div class="pa-reasons">
+          <div v-for="(r, i) in positionAdvice.reasons" :key="i" class="pa-reason">
+            <span class="pa-bullet" :class="'bl-' + positionAdvice.level"></span>{{ r }}
+          </div>
+        </div>
+        <div v-if="positionAdvice.refs.length" class="pa-refs">
+          <span v-for="(rf, i) in positionAdvice.refs" :key="'rf' + i" class="pa-ref">{{ rf }}</span>
+        </div>
+        <div class="pa-note">* 建议基于持仓盈亏与评分模型自动生成，仅供参考，不构成投资建议。</div>
+      </div>
+
+      <!-- ============ 关键价位：支撑 / 压力 / 止损止盈 ============ -->
+      <div v-if="keyLevels" class="card levels-card">
+        <h3 class="card-title">
+          关键价位 · 支撑压力
+          <span class="levels-note">均线 / 前高前低 / 枢轴 / 斐波那契 / ATR</span>
+        </h3>
+        <div class="levels-body">
+          <div class="levels-main">
+            <div class="lm-col res">
+              <div class="lm-col-head res">压力位</div>
+              <div
+                v-for="(r, i) in keyLevels.resistances"
+                :key="'r' + i"
+                class="lm-item res"
+                :class="{ nearest: i === 0 }"
+              >
+                <span class="lmi-tag">{{ r.label }}</span>
+                <span class="lmi-price">¥{{ r.price.toFixed(3) }}</span>
+                <span class="lmi-dist up">+{{ (((r.price - keyLevels.price) / keyLevels.price) * 100).toFixed(2) }}%</span>
+              </div>
+              <div v-if="!keyLevels.resistances.length" class="levels-empty">上方暂无有效压力位</div>
+            </div>
+
+            <div class="lm-current">
+              <div class="lmc-chg" :class="priceClass(detail.basic.changePct)">{{ fmtPct(detail.basic.changePct) }}</div>
+              <div class="lmc-price">{{ keyLevels.price.toFixed(3) }}</div>
+              <div class="lmc-label">现价</div>
+            </div>
+
+            <div class="lm-col sup">
+              <div class="lm-col-head sup">支撑位</div>
+              <div
+                v-for="(s, i) in keyLevels.supports"
+                :key="'s' + i"
+                class="lm-item sup"
+                :class="{ nearest: i === 0 }"
+              >
+                <span class="lmi-tag">{{ s.label }}</span>
+                <span class="lmi-price">¥{{ s.price.toFixed(3) }}</span>
+                <span class="lmi-dist down">-{{ (((keyLevels.price - s.price) / keyLevels.price) * 100).toFixed(2) }}%</span>
+              </div>
+              <div v-if="!keyLevels.supports.length" class="levels-empty">下方暂无有效支撑位</div>
+            </div>
+          </div>
+
+          <div v-if="keyLevels.tradeRef" class="levels-trade">
+            <div class="lt-title">{{ keyLevels.tradeRef.title }}</div>
+            <div class="lt-grid" :class="{ 'cols-4': keyLevels.tradeRef.items.length === 4 }">
+              <div v-for="(t, i) in keyLevels.tradeRef.items" :key="'t' + i" class="lt-item" :class="t.cls">
+                <span class="lt-name">{{ t.name }}</span>
+                <span class="lt-price">¥{{ t.price.toFixed(3) }}</span>
+                <span class="lt-diff" :class="t.cls">{{ t.diff >= 0 ? '+' : '' }}{{ t.diff.toFixed(2) }}%</span>
+              </div>
+            </div>
+            <div class="lt-desc">{{ keyLevels.tradeRef.desc }}</div>
+          </div>
+
+          <div v-if="keyLevels.takeProfit" class="tp-plan">
+            <div class="tp-head">
+              <span class="tp-title">分批止盈计划 <small>基于持仓成本</small></span>
+              <span class="tp-cost">成本 ¥{{ keyLevels.takeProfit.cost.toFixed(3) }}</span>
+            </div>
+            <div class="tp-grid">
+              <div
+                v-for="(t, i) in keyLevels.takeProfit.tiers"
+                :key="'tp' + i"
+                class="tp-item"
+                :class="{ reached: t.reached, current: t.current }"
+              >
+                <div class="tpi-head">
+                  <span class="tpi-pct">+{{ Math.round(t.pct * 100) }}%</span>
+                  <span v-if="t.reached" class="tpi-status">已达成</span>
+                  <span v-else-if="t.current" class="tpi-status">下一档</span>
+                </div>
+                <div class="tpi-price">¥{{ t.price.toFixed(3) }}</div>
+                <div class="tpi-action">{{ t.action }}</div>
+                <div class="tpi-dist" :class="t.dist >= 0 ? 'up' : 'down'">
+                  {{ t.dist >= 0 ? '+' : '' }}{{ t.dist.toFixed(2) }}%
+                  <small>距现价</small>
+                </div>
+              </div>
+            </div>
+            <div class="tp-desc">{{ keyLevels.takeProfit.desc }}</div>
+          </div>
+
+          <div class="levels-indics">
+            <div class="li-item">
+              <span class="li-name">ATR(14)</span>
+              <span class="li-val">{{ keyLevels.indics.atr ? keyLevels.indics.atr.toFixed(3) + '（' + ((keyLevels.indics.atr / keyLevels.price) * 100).toFixed(2) + '%）' : '--' }}</span>
+            </div>
+            <div class="li-item">
+              <span class="li-name">RSI(14)</span>
+              <span class="li-val" :class="keyLevels.indics.rsiState.cls">{{ keyLevels.indics.rsi != null ? keyLevels.indics.rsi.toFixed(1) + '（' + keyLevels.indics.rsiState.text + '）' : '--' }}</span>
+            </div>
+            <div class="li-item">
+              <span class="li-name">布林带</span>
+              <span class="li-val" :class="keyLevels.indics.bollPos != null ? (keyLevels.indics.bollPos >= 50 ? 'up' : 'down') : ''">{{ keyLevels.indics.bollPos != null ? keyLevels.indics.bollPos.toFixed(0) + '%' : '--' }}</span>
+            </div>
+            <div class="li-item">
+              <span class="li-name">量能</span>
+              <span class="li-val" :class="keyLevels.indics.volRatio != null ? (keyLevels.indics.volRatio >= 1 ? 'up' : 'down') : ''">{{ keyLevels.indics.volRatio != null ? keyLevels.indics.volRatio.toFixed(2) + 'x' : '--' }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="levels-note-bottom">* 参考区间非精确点位；止损/清仓/止盈基于 ATR 与关键位推算，仅供参考，不构成投资建议。</div>
+      </div>
+
+      <!-- ============ 我的持仓 ============ -->
+      <PositionManager
+        v-if="detail"
+        :stock-code="detail.basic.code"
+        :stock-name="detail.basic.name"
+        :current-price="detail.basic.price"
+      />
 
       <!-- ============ 六维评分：进度条 + 雷达图 ============ -->
       <div class="sr-dims">
@@ -283,6 +454,8 @@ import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as echarts from 'echarts'
 import { getStockDetail, getHorizonConfig } from '@/api/stockRecommend'
+import PositionManager from './PositionManager.vue'
+import { calcPosition } from '@/composables/usePosition.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -301,9 +474,9 @@ let stageTimer = null
 
 // 默认周期配置（接口失败时兜底，保证切换按钮可用）
 const DEFAULT_HORIZONS = [
-  { key: 'short', label: '短线', desc: '技术面35% + 资金情绪30%，侧重量价与短线动量' },
-  { key: 'mid', label: '中长线', desc: '成长与盈利质量各25%，兼顾估值与技术' },
-  { key: 'long', label: '长线', desc: '估值+盈利质量合计60%，弱化短期波动' }
+  { key: 'short', label: '短线', holdingPeriod: '1~2周', desc: '技术面35% + 资金情绪30%，侧重量价与短线动量' },
+  { key: 'mid', label: '中长线', holdingPeriod: '1~3个月', desc: '成长与盈利质量各25%，兼顾估值与技术' },
+  { key: 'long', label: '长线', holdingPeriod: '6个月以上', desc: '估值+盈利质量合计60%，弱化短期波动' }
 ]
 
 const currentHorizonLabel = computed(() => {
@@ -361,6 +534,8 @@ async function load() {
 function changeHorizon(h) {
   if (horizon.value === h) return
   horizon.value = h
+  // 周期切换后评分模型完全不同：清空旧周期数据，触发 loading 遮罩，避免旧结果误导
+  detail.value = null
   load()
 }
 
@@ -616,6 +791,383 @@ const fundFlow = computed(() => {
   }
 })
 
+// ==================== 关键技术位 / 指标计算 ====================
+function calcMA(kline, p) {
+  if (!kline || kline.length < p) return null
+  const seg = kline.slice(-p)
+  return seg.reduce((s, k) => s + (k.close || 0), 0) / p
+}
+
+function calcATR(kline, p = 14) {
+  if (!kline || kline.length < p + 1) return null
+  const n = kline.length
+  let sum = 0
+  for (let i = n - p; i < n; i++) {
+    const k = kline[i]
+    const prev = kline[i - 1]
+    const tr = Math.max(k.high - k.low, Math.abs(k.high - prev.close), Math.abs(k.low - prev.close))
+    sum += tr
+  }
+  return sum / p
+}
+
+function calcBoll(kline, p = 20, mult = 2) {
+  if (!kline || kline.length < p) return null
+  const seg = kline.slice(-p)
+  const mid = seg.reduce((s, k) => s + (k.close || 0), 0) / p
+  const variance = seg.reduce((s, k) => s + (k.close - mid) ** 2, 0) / p
+  const sd = Math.sqrt(variance)
+  return { upper: mid + mult * sd, mid, lower: mid - mult * sd }
+}
+
+function calcRSI(closes, p = 14) {
+  if (!closes || closes.length < p + 1) return null
+  let gain = 0
+  let loss = 0
+  for (let i = closes.length - p; i < closes.length; i++) {
+    const chg = closes[i] - closes[i - 1]
+    if (chg >= 0) gain += chg
+    else loss -= chg
+  }
+  if (gain + loss === 0) return 50
+  return 100 * gain / (gain + loss)
+}
+
+function buildIndics(kline, price, atr, boll) {
+  const closes = kline.map(k => k.close)
+  const rsi = calcRSI(closes, 14)
+  const vol5 = kline.slice(-5).reduce((s, k) => s + (k.volume || 0), 0) / 5
+  const vol20 = kline.slice(-20).reduce((s, k) => s + (k.volume || 0), 0) / 20
+  const volRatio = vol20 > 0 ? vol5 / vol20 : null
+  let rsiState = { cls: '', text: '中性' }
+  if (rsi != null) {
+    if (rsi >= 70) rsiState = { cls: 'up', text: '超买' }
+    else if (rsi <= 30) rsiState = { cls: 'down', text: '超卖' }
+    else if (rsi >= 55) rsiState = { cls: 'up', text: '偏强' }
+    else if (rsi <= 45) rsiState = { cls: 'down', text: '偏弱' }
+  }
+  const bollPos = boll && boll.upper > boll.lower
+    ? Math.min(100, Math.max(0, ((price - boll.lower) / (boll.upper - boll.lower)) * 100))
+    : null
+  return { atr, rsi, rsiState, bollPos, volRatio, volSurge: volRatio != null && volRatio >= 1.5 }
+}
+
+// 分批止盈档位（按持仓周期调整）：涨幅 / 建议卖出动作
+const TP_TIERS = {
+  short: [
+    { pct: 0.03, action: '卖出 1/3 锁利' },
+    { pct: 0.06, action: '再卖 1/3' },
+    { pct: 0.10, action: '清仓剩余' }
+  ],
+  mid: [
+    { pct: 0.05, action: '卖出 1/3 锁利' },
+    { pct: 0.10, action: '再卖 1/3' },
+    { pct: 0.15, action: '清仓剩余' }
+  ],
+  long: [
+    { pct: 0.08, action: '卖出 1/3 锁利' },
+    { pct: 0.16, action: '再卖 1/3' },
+    { pct: 0.25, action: '清仓剩余' }
+  ]
+}
+
+/**
+ * 分批止盈计划：基于持仓成本，按当前周期档位给出止盈价位与分批卖出建议
+ */
+function buildTakeProfit(cost, price) {
+  const cfg = TP_TIERS[horizon.value] || TP_TIERS.mid
+  const tiers = cfg.map(t => {
+    const tp = cost * (1 + t.pct)
+    return {
+      pct: t.pct,
+      price: +tp.toFixed(3),
+      action: t.action,
+      dist: ((tp - price) / price) * 100,
+      reached: price >= tp - 0.005
+    }
+  })
+  const reachedCount = tiers.filter(t => t.reached).length
+  tiers.forEach((t, i) => { t.current = i === reachedCount })
+  let desc
+  if (reachedCount >= tiers.length) {
+    desc = '所有止盈档位均已达到，建议按计划完成剩余分批兑现、锁定利润；若跌破持仓成本则回归止损纪律。'
+  } else if (reachedCount > 0) {
+    const next = tiers[reachedCount]
+    desc = `已达成 ${reachedCount} 档止盈位，下一档 +${Math.round(next.pct * 100)}%（¥${next.price.toFixed(3)}），距现价 ${next.dist >= 0 ? '+' : ''}${next.dist.toFixed(2)}%，可继续按计划分批兑现。`
+  } else {
+    const next = tiers[0]
+    desc = `当前距第一档止盈位（+${Math.round(next.pct * 100)}% · ¥${next.price.toFixed(3)}）${next.dist >= 0 ? '还有 ' + next.dist.toFixed(2) + '%' : '已不足 1%'}，触及后建议卖出 1/3 锁定利润，后续档位依次兑现。`
+  }
+  return { cost, tiers, reachedCount, desc }
+}
+
+/**
+ * 计算关键价位：支撑 / 压力（各最多 3 档）+ 止损止盈参考 + 技术指标快照
+ */
+const keyLevels = computed(() => {
+  const d = detail.value
+  if (!d?.kline?.length || !d.basic?.price) return null
+  const kline = d.kline
+  const price = d.basic.price
+  const last = kline[kline.length - 1]
+
+  // ---- 候选价位收集 ----
+  const cand = []
+  const push = (v, label, type) => {
+    if (v != null && isFinite(v) && v > 0) cand.push({ price: +v.toFixed(3), label, type })
+  }
+
+  ;[5, 10, 20, 60, 120].forEach(p => {
+    const v = calcMA(kline, p)
+    if (v != null) push(v, `MA${p}`, 'ma')
+  })
+
+  const seg20 = kline.slice(-20)
+  const seg60 = kline.slice(-60)
+  if (seg20.length) {
+    push(Math.max(...seg20.map(k => k.high)), '20日高', 'pivot')
+    push(Math.min(...seg20.map(k => k.low)), '20日低', 'pivot')
+  }
+  let h60 = null
+  let l60 = null
+  if (seg60.length) {
+    h60 = Math.max(...seg60.map(k => k.high))
+    l60 = Math.min(...seg60.map(k => k.low))
+    push(h60, '60日高', 'pivot')
+    push(l60, '60日低', 'pivot')
+  }
+
+  // 枢轴点（基于最近一根K线）
+  const H = last.high
+  const L = last.low
+  const C = last.close
+  const P = (H + L + C) / 3
+  ;[
+    { v: 2 * P - L, label: 'R1' },
+    { v: P + (H - L), label: 'R2' },
+    { v: H + 2 * (P - L), label: 'R3' },
+    { v: 2 * P - H, label: 'S1' },
+    { v: P - (H - L), label: 'S2' },
+    { v: L - 2 * (H - P), label: 'S3' }
+  ].forEach(x => push(x.v, x.label, 'pivot'))
+
+  // 斐波那契回撤（近60日波段）
+  if (h60 != null && l60 != null && h60 > l60) {
+    const range = h60 - l60
+    ;[0.236, 0.382, 0.5, 0.618].forEach(r => push(h60 - range * r, `Fib${(r * 100).toFixed(1)}`, 'fib'))
+  }
+
+  // 布林带
+  const boll = calcBoll(kline)
+  if (boll) {
+    push(boll.upper, '布林上轨', 'boll')
+    push(boll.lower, '布林下轨', 'boll')
+  }
+
+  // ---- 去重：价差 < 0.8% 视为同一价位，保留高优先级（ma > pivot > fib/boll） ----
+  const rank = { ma: 3, pivot: 2, fib: 1, boll: 1 }
+  const dedupe = arr => {
+    const sorted = [...arr].sort((a, b) => a.price - b.price)
+    const out = []
+    for (const it of sorted) {
+      const prev = out[out.length - 1]
+      if (prev && (it.price - prev.price) / price < 0.008) {
+        if ((rank[it.type] || 0) > (rank[prev.type] || 0)) out[out.length - 1] = it
+        continue
+      }
+      out.push(it)
+    }
+    return out
+  }
+
+  // 支撑：现价下方从近到远最多 3 档；压力：现价上方从近到远最多 3 档
+  const supports = dedupe(cand.filter(c => c.price < price - 0.005)).reverse().slice(0, 3)
+  const resistances = dedupe(cand.filter(c => c.price > price + 0.005)).slice(0, 3)
+
+  const atr = calcATR(kline)
+  const indics = buildIndics(kline, price, atr, boll)
+  const pos = positionData.value
+  const hasPos = pos?.hasPosition
+  const diffPct = p => (p - price) / price * 100
+  let tradeRef = null
+  let takeProfit = null
+
+  if (hasPos) {
+    const cost = pos.avgCost
+    const atrStop = cost - Math.max((atr || 0) * 2, cost * 0.03)
+    let stop = atrStop
+    const nearSup = supports.length ? supports[supports.length - 1].price : null
+    if (nearSup != null && nearSup < stop) stop = nearSup
+    stop = Math.max(stop, price * 0.82) // 止损不宜离现价过远
+    // 清仓价：在止损基础上再降 1×ATR，作为无条件清仓的最终底线
+    let liquidate = stop - Math.max(atr || price * 0.02, price * 0.02)
+    liquidate = Math.max(liquidate, price * 0.75) // 清仓底线保护，不低于现价 75%
+    const atrW = Math.max(atr || price * 0.02, price * 0.02)
+    const tp1 = resistances.length ? resistances[0].price : price + atrW * 2
+    const tp2 = resistances[1] ? resistances[1].price : tp1 + atrW
+    tradeRef = {
+      title: '止损 / 清仓 / 止盈参考（基于持仓成本 + ATR 波动）',
+      items: [
+        { name: '参考止损', price: +stop.toFixed(3), diff: diffPct(stop), cls: 'down' },
+        { name: '清仓价', price: +liquidate.toFixed(3), diff: diffPct(liquidate), cls: 'danger' },
+        { name: '第一目标', price: +tp1.toFixed(3), diff: diffPct(tp1), cls: 'up' },
+        { name: '第二目标', price: +tp2.toFixed(3), diff: diffPct(tp2), cls: 'up' }
+      ],
+      desc: `止损取「成本-2×ATR」与最近支撑位中的更低者${atr ? `（ATR≈¥${atr.toFixed(3)}，日均波幅 ${(atr / price * 100).toFixed(2)}%）` : ''}；清仓价为最终底线（止损再降 1×ATR）。跌破止损建议减仓离场，跌破清仓价无条件清仓；第一目标=最近压力位，第二目标=次近压力位，      触及可减仓 1/3~1/2 锁利。`
+    }
+    // 分批止盈计划：基于持仓成本，按周期档位给出止盈价位与分批卖出建议
+    takeProfit = buildTakeProfit(cost, price)
+  } else {
+    const atrW = Math.max(atr || price * 0.03, price * 0.03)
+    const buy1 = supports.length ? supports[0].price : price - atrW
+    const buy2 = supports[1] ? supports[1].price : buy1 - atrW * 0.8
+    const target = resistances.length ? resistances[0].price : price + atrW * 2
+    tradeRef = {
+      title: '买卖参考（当前未持仓）',
+      items: [
+        { name: '参考买点①', price: +buy1.toFixed(3), diff: diffPct(buy1), cls: 'down' },
+        { name: '参考买点②', price: +buy2.toFixed(3), diff: diffPct(buy2), cls: 'down' },
+        { name: '参考目标', price: +target.toFixed(3), diff: diffPct(target), cls: 'up' }
+      ],
+      desc: `买点取最近/次近支撑位，回踩企稳后可分批低吸；目标取最近压力位。不建议追高，若放量突破压力位则目标上移至下一档。`
+    }
+  }
+
+  return { price, supports, resistances, atr, indics, tradeRef, takeProfit }
+})
+
+// ==================== 我的持仓 ====================
+const positionData = computed(() => {
+  const price = detail.value?.basic?.price
+  return price ? calcPosition(detail.value.basic.code, price) : null
+})
+
+/**
+ * 生成持仓操作建议（结合持仓盈亏 + 评分模型 + 关键价位/技术指标）
+ * @returns {null | { action, actionText, level, reasons: string[], refs: string[] }}
+ */
+function buildPositionAdvice(pos, d, lv) {
+  const reasons = []
+  const refs = []
+  const pnlPct = Number(pos.floatPnlPct) || 0
+  const aboveMa60 = !!d.aboveMa60
+  const total = Number(d.total) || 0
+  const conclusion = d.conclusion || ''
+  const bearish = total < 55 || conclusion === '谨慎' || conclusion === '回避'
+  const price = Number(d.basic?.price || 0)
+
+  // 最新 MA60 数值（参考点位）
+  const kline = d.kline || []
+  let ma60Val = null
+  if (kline.length >= 60) {
+    const last = kline.slice(-60)
+    ma60Val = +(last.reduce((s, k) => s + (k.close || 0), 0) / 60).toFixed(3)
+  }
+
+  // 止损/清仓/止盈位参考
+  const stopItem = lv?.tradeRef?.items.find(i => i.name === '参考止损')
+  const liquidateItem = lv?.tradeRef?.items.find(i => i.name === '清仓价')
+  const tpItems = (lv?.tradeRef?.items || []).filter(i => i.name && i.name.includes('目标'))
+
+  // 技术指标快照
+  const ind = lv?.indics
+  const indBits = []
+  if (ind?.rsi != null) indBits.push(`RSI ${ind.rsi.toFixed(1)}（${ind.rsiState.text}）`)
+  if (ind?.bollPos != null) indBits.push(`布林带 ${ind.bollPos.toFixed(0)}% 分位`)
+  if (ind?.volRatio != null) indBits.push(ind.volSurge ? `放量 ${ind.volRatio.toFixed(2)}x` : `量能 ${ind.volRatio.toFixed(2)}x`)
+
+  let action = 'hold'
+  let actionText = '继续持有'
+  let level = 'success'
+
+  // 基础理由
+  reasons.push(`模型结论「${conclusion}」，综合评分 ${total} 分${d.vetoed ? '，但已触发风险否决' : ''}`)
+  if (pnlPct >= 0) {
+    reasons.push(`当前浮盈 ${pnlPct.toFixed(2)}%，持仓成本 ¥${Number(pos.avgCost).toFixed(3)}`)
+  } else {
+    reasons.push(`当前浮亏 ${Math.abs(pnlPct).toFixed(2)}%，持仓成本 ¥${Number(pos.avgCost).toFixed(3)}`)
+  }
+  if (ma60Val != null) {
+    refs.push(`MA60 ¥${ma60Val}`)
+    reasons.push(aboveMa60 ? '股价站上 MA60，中期趋势偏强' : '股价跌破 MA60，中期趋势偏弱')
+  }
+  if (stopItem) {
+    refs.push(`止损 ¥${stopItem.price.toFixed(3)}`)
+    const stopDist = price > 0 ? (price - stopItem.price) / price * 100 : 0
+    if (pnlPct < 0 && stopDist < 5) reasons.push(`距参考止损位仅 ${Math.max(stopDist, 0).toFixed(1)}%，跌破建议严格止损`)
+  }
+  if (liquidateItem) {
+    refs.push(`清仓 ¥${liquidateItem.price.toFixed(3)}`)
+    const liqDist = price > 0 ? (price - liquidateItem.price) / price * 100 : 0
+    if (liqDist < 6) reasons.push(`股价距清仓价仅 ${Math.max(liqDist, 0).toFixed(1)}%，跌破请无条件清仓离场`)
+  }
+  tpItems.forEach(tp => refs.push(`目标 ¥${tp.price.toFixed(3)}`))
+  // 分批止盈计划（基于持仓成本）参考点位与进度提示
+  const tpPlan = lv?.takeProfit
+  if (tpPlan?.tiers?.length) {
+    tpPlan.tiers.forEach(t => refs.push(`止盈${Math.round(t.pct * 100)}% ¥${t.price.toFixed(3)}`))
+    if (tpPlan.reachedCount > 0) {
+      reasons.push(`已到达 ${tpPlan.reachedCount} 档分批止盈位，可按计划逐步兑现利润`)
+    }
+    const nextTier = tpPlan.tiers[tpPlan.reachedCount]
+    if (nextTier && !nextTier.reached && nextTier.dist < 3) {
+      reasons.push(`距下一档止盈位（+${Math.round(nextTier.pct * 100)}%）仅 ${Math.max(nextTier.dist, 0).toFixed(1)}%，临近可按计划减仓`)
+    }
+  }
+  if (ind?.atr) refs.push(`ATR ${ind.atr.toFixed(3)}`)
+  if (indBits.length) reasons.push('技术信号：' + indBits.join(' · '))
+
+  // 决策逻辑
+  if (d.vetoed) {
+    action = 'stop'
+    actionText = '建议尽快离场'
+    level = 'danger'
+    reasons.unshift(`触发风险否决（${d.vetoReason}），模型结论强制为「回避」`)
+  } else if (pnlPct <= -5 && bearish) {
+    action = 'stop'
+    actionText = '建议止损离场'
+    level = 'danger'
+    reasons.push('浮亏超 5% 且模型评分偏低，建议优先控制回撤')
+  } else if (pnlPct <= -5 && !aboveMa60) {
+    action = 'reduce'
+    actionText = '建议减仓观望'
+    level = 'warning'
+    reasons.push('浮亏且跌破 MA60，建议先降低仓位，待企稳后再评估')
+  } else if (pnlPct >= 0 && total >= 70) {
+    action = 'hold'
+    actionText = pnlPct > 30 ? '持有并分批止盈' : '继续持有'
+    level = 'success'
+    if (pnlPct > 30) reasons.push('浮盈较大（>30%），可分批止盈锁定部分利润')
+    else reasons.push('评分较高且方向正向，可继续持有')
+  } else if (pnlPct >= 0 && bearish) {
+    action = 'reduce'
+    actionText = '逢高减仓'
+    level = 'warning'
+    reasons.push('虽处浮盈，但模型信号已转弱，可逢高减仓锁定利润')
+  } else {
+    action = 'hold'
+    actionText = '继续持有观察'
+    level = 'success'
+    reasons.push(pnlPct < 0 ? '浮亏幅度有限，可继续持有观察，并提前设置好止损位' : '模型方向尚可，可继续持有')
+  }
+
+  // 目标位互动：股价接近第一目标位 → 提示分批止盈
+  if (tpItems.length && price > 0 && price >= tpItems[0].price * 0.99) {
+    reasons.push('股价已接近第一目标位，可考虑分批止盈、落袋为安')
+  }
+
+  refs.unshift(`成本 ¥${Number(pos.avgCost).toFixed(3)}`)
+  refs.push(`现价 ¥${price.toFixed(3)}`)
+  return { action, actionText, level, reasons, refs }
+}
+
+const positionAdvice = computed(() => {
+  const d = detail.value
+  const pos = positionData.value
+  if (!d || !pos?.hasPosition) return null
+  return buildPositionAdvice(pos, d, keyLevels.value)
+})
+
 // ==================== 跳转 ====================
 function goBack() {
   if (window.history.length > 1) router.back()
@@ -647,6 +1199,12 @@ function fmtYi(v) {
 function fmtWan(v) {
   if (v == null || isNaN(v)) return '--'
   return (Number(v) / 1e4).toFixed(1) + '万'
+}
+function fmtMoneyShort(absV) {
+  if (absV == null || isNaN(absV)) return '--'
+  if (absV >= 1e8) return (absV / 1e8).toFixed(2) + '亿'
+  if (absV >= 1e4) return (absV / 1e4).toFixed(2) + '万'
+  return absV.toFixed(2)
 }
 function formatTime(iso) {
   if (!iso) return '--'

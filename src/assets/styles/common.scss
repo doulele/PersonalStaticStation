@@ -2232,6 +2232,9 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background 0.4s ease, color 0.4s ease;
+  // 全局兜底：杜绝任意页面在移动端被内容撑出横向滚动
+  // （不影响元素内部的横向滚动容器，仅阻止 body 层面的横向滚动条）
+  overflow-x: hidden;
 }
 
 // 深色模式全局过渡

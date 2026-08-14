@@ -188,6 +188,13 @@
   font-size: 0.78rem;
 }
 
+.pm-tx-time {
+  display: block;
+  font-size: 0.66rem;
+  color: var(--el-text-color-placeholder, #c0c4cc);
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+}
+
 .pm-tx-type {
   width: 52px;
   flex-shrink: 0;
@@ -293,6 +300,28 @@
   display: block;
 }
 
+// ===== 识别结果：重复行标灰 =====
+.pm-import-time {
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  color: var(--el-text-color-secondary, #94a3b8);
+}
+
+.pm-dup-tag {
+  margin-left: 4px;
+  transform: scale(.85);
+  transform-origin: left center;
+}
+
+:deep(.pm-dup-row) {
+  color: var(--el-text-color-placeholder, #c0c4cc);
+
+  td.el-table__cell {
+    background: var(--el-fill-color-light, #f5f7fa) !important;
+  }
+
+  .el-tag { opacity: .5; }
+}
+
 // ===== 暗黑模式 =====
 html.dark-mode {
   .position-manager {
@@ -319,6 +348,14 @@ html.dark-mode {
   }
   .pm-tx-bonus {
     background: rgba(167, 139, 250, 0.08);
+  }
+
+  :deep(.pm-dup-row) {
+    color: #64748b;
+
+    td.el-table__cell {
+      background: rgba(51,65,85,.55) !important;
+    }
   }
 }
 
