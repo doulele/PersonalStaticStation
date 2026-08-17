@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import store from '@/store'
 
 const routes = [
   // ==================== 认证页面（独立布局，不带 Header/Footer） ====================
@@ -265,6 +266,50 @@ router.beforeEach((to, from, next) => {
   }
 
   next()
+})
+
+// 路由跳转 loading：懒加载 chunk 下载慢（网络波动/掉接口）时给用户反馈
+// 延迟 200ms 再显示，避免本地秒开的页面闪一下 loading
+let routeLoadingTimer = null
+router.beforeEach((to, from) => {
+  // 同一路径重复跳转（如点击当前页对应卡片）不触发 loading
+  if (to.path === from.path) return
+
+  clearTimeout(routeLoadingTimer)
+  routeLoadingTimer = setTimeout(() => {
+    store.dispatch('setLoading', true)
+  }, 200)
+})
+
+router.afterEach(() => {
+  clearTimeout(routeLoadingTimer)
+  routeLoadingTimer = null
+  store.dispatch('setLoading', false)
+  // 导航成功，清除上一次失败的重试标记（下次失败可再次重试）
+  sessionStorage.removeItem('__route_chunk_retry')
+})
+
+// 导航失败（如懒加载 chunk 下载失败）时兜底：关闭 loading，避免一直转圈
+router.onError((error) => {
+  clearTimeout(routeLoadingTimer)
+  routeLoadingTimer = null
+  store.dispatch('setLoading', false)
+
+  // 动态 import 失败（chunk 加载失败）→ 自动刷新重试一次
+  const msg = String(error?.message || error || '')
+  if (/Failed to fetch dynamically imported module|dynamically imported module|Loading chunk|error loading dynamically imported module/i.test(msg)) {
+    const key = '__route_chunk_retry'
+    const retried = sessionStorage.getItem(key)
+    if (!retried) {
+      sessionStorage.setItem(key, '1')
+      console.warn('[router] 页面模块加载失败，自动刷新重试...', msg)
+      window.location.reload()
+      return
+    }
+    // 已重试过仍失败，清标记并提示用户
+    sessionStorage.removeItem(key)
+    console.error('[router] 页面模块加载失败，重试后仍失败:', msg)
+  }
 })
 
 export default router
