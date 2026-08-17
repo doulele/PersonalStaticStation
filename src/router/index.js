@@ -268,23 +268,30 @@ router.beforeEach((to, from, next) => {
   next()
 })
 
-// 路由跳转 loading：懒加载 chunk 下载慢（网络波动/掉接口）时给用户反馈
-// 延迟 200ms 再显示，避免本地秒开的页面闪一下 loading
+// 路由跳转 loading：点击卡片立即显示，给用户明确的「正在跳转」反馈
+// 最小显示 300ms，避免快速跳转时 loading 一闪而过
+const MIN_LOADING_DURATION = 300
 let routeLoadingTimer = null
+let loadingStartTime = 0
+
 router.beforeEach((to, from) => {
   // 同一路径重复跳转（如点击当前页对应卡片）不触发 loading
   if (to.path === from.path) return
 
   clearTimeout(routeLoadingTimer)
-  routeLoadingTimer = setTimeout(() => {
-    store.dispatch('setLoading', true)
-  }, 200)
+  loadingStartTime = Date.now()
+  store.dispatch('setLoading', true)
 })
 
 router.afterEach(() => {
   clearTimeout(routeLoadingTimer)
   routeLoadingTimer = null
-  store.dispatch('setLoading', false)
+  // 保证 loading 至少显示 MIN_LOADING_DURATION，避免快速跳转闪烁
+  const elapsed = Date.now() - loadingStartTime
+  const remain = Math.max(0, MIN_LOADING_DURATION - elapsed)
+  routeLoadingTimer = setTimeout(() => {
+    store.dispatch('setLoading', false)
+  }, remain)
   // 导航成功，清除上一次失败的重试标记（下次失败可再次重试）
   sessionStorage.removeItem('__route_chunk_retry')
 })
