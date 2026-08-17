@@ -667,7 +667,7 @@ function stopLoadStage() {
   if (loadStageTimer) { clearInterval(loadStageTimer); loadStageTimer = null }
 }
 
-async function loadList({ silent = false, attempt = 0 } = {}) {
+async function loadList({ silent = false, attempt = 0, refresh = false } = {}) {
   if (!silent) { loading.value = true; errorMsg.value = '' }
   // 仅当无数据时显示全屏 loading（首次加载），翻页/筛选时保留旧数据
   if (!rows.value.length && !silent) startLoadStage()
@@ -675,14 +675,17 @@ async function loadList({ silent = false, attempt = 0 } = {}) {
   if (abortCtrl) { abortCtrl.abort(); abortCtrl = null }
   abortCtrl = new AbortController()
   try {
-    const res = await getStockList({
+    const params = {
       horizon: horizon.value,
       page: page.value,
       pageSize: pageSize.value,
       sortBy: sortBy.value,
       sortOrder: sortOrder.value,
       ...collectFilters()
-    }, abortCtrl.signal)
+    }
+    // 强制刷新：绕过服务端评分池缓存，触发重新构建
+    if (refresh) params.refresh = 1
+    const res = await getStockList(params, abortCtrl.signal)
     if (res.code === 0) {
       rows.value = res.data.list || []
       total.value = res.data.total || 0
@@ -764,7 +767,7 @@ async function loadIndustries() {
 
 function refresh() {
   stopPoll()
-  loadList()
+  loadList({ refresh: true })
   loadRank()
 }
 

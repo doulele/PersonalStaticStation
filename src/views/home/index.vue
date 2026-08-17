@@ -9,10 +9,10 @@
       <div class="hero-content">
         <h1 class="hero-title">
           <span class="title-line">一个网站，搞定日常所需</span>
-          <span class="title-line accent">理财 · 出行 · 娱乐 · 创作</span>
+          <span class="title-line accent">理财 · 出行 · 娱乐 · 生活</span>
         </h1>
         <p class="hero-subtitle">
-          精选实用工具，覆盖基金理财、影音娱乐、生活出行，打开即用
+          精选实用工具，覆盖基金理财、影音娱乐、生活出行、家庭教育，打开即用
         </p>
         <div class="hero-stats">
           <div class="stat-item">

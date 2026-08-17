@@ -145,9 +145,9 @@
 // ==================== 盲盒提示 ====================
 .blind-box-toast {
   position: fixed;
-  bottom: 100px;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   background: rgba(30, 30, 46, 0.95);
   backdrop-filter: blur(10px);
   color: #e2dee9;
@@ -186,8 +186,8 @@
 }
 .blind-fade-enter-active { transition: all 0.4s ease-out; }
 .blind-fade-leave-active { transition: all 0.3s ease-in; }
-.blind-fade-enter-from { opacity: 0; transform: translateX(-50%) translateY(20px); }
-.blind-fade-leave-to { opacity: 0; transform: translateX(-50%) translateY(10px); }
+.blind-fade-enter-from { opacity: 0; transform: translate(-50%, -50%) translateY(20px); }
+.blind-fade-leave-to { opacity: 0; transform: translate(-50%, -50%) translateY(10px); }
 
 // ==================== 响应式 ====================
 @media (max-width: 768px) {
@@ -222,10 +222,10 @@
   }
   .partner-avatar { font-size: 24px; }
   .blind-box-toast {
-    bottom: 88px;
-    right: 12px;
-    left: 12px;
-    max-width: none;
+    top: 50%;
+    left: 50%;
+    width: calc(100% - 24px);
+    max-width: 420px;
     border-radius: 12px;
     padding: 12px 14px;
   }
