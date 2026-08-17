@@ -128,10 +128,12 @@
             @click="useAIAssist = false"
           >基础</span>
           <span
-            class="parse-pill"
-            :class="{ active: useAIAssist }"
-            @click="useAIAssist = true"
-          >AI</span>
+            class="parse-pill ai-pill"
+            :class="{ active: useAIAssist, locked: !isLoggedIn }"
+            @click="switchAIAssist"
+          >AI
+            <el-icon v-if="!isLoggedIn" :size="11" class="parse-lock"><Lock /></el-icon>
+          </span>
         </span>
       </div>
       <div class="camera-actions">
@@ -562,9 +564,13 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { Edit, Camera, FolderOpened, Loading, Search, WarningFilled, InfoFilled, Check, Close, RefreshLeft } from '@element-plus/icons-vue'
+import { useStore } from 'vuex'
+import { Edit, Camera, FolderOpened, Loading, Search, WarningFilled, InfoFilled, Check, Close, RefreshLeft, Lock } from '@element-plus/icons-vue'
 import { fetchLatestDraw, fetchHistoryDraws, fetchDrawByIssue } from '@/api/lottery'
 import { checkSSQ, checkDLT, getPrizeStyle } from '@/utils/lottery/prizeRules'
+
+const store = useStore()
+const isLoggedIn = computed(() => store.getters['auth/isLoggedIn'])
 
 // ===== 输入模式 =====
 const inputMode = ref('manual') // 'manual' | 'camera'
@@ -976,6 +982,12 @@ const ocrNeedFix = ref(false)
 const ocrFixApplied = ref(false)
 const ocrSource = ref('')  // 'deepseek' | 'ocr_only' | ''
 const useAIAssist = ref(false)  // 是否启用 AI 辅助解析
+
+/** 切换 AI 辅助解析（未登录时禁止开启） */
+function switchAIAssist() {
+  if (!isLoggedIn.value) return
+  useAIAssist.value = true
+}
 
 // 逐组编辑状态
 const editingGroupIndex = ref(null)       // null = 没有在编辑, 0/1/2... = 正在编辑第几组

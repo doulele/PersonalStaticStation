@@ -417,12 +417,22 @@ $radius-lg: 20px;
   user-select: none;
   transition: all 0.2s;
   line-height: 1.5;
-  &:hover:not(.active) { color: #64748b; }
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  &:hover:not(.active):not(.locked) { color: #64748b; }
   &.active {
     background: #fff;
     color: #334155;
     font-weight: 600;
     box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  &.locked {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+  .parse-lock {
+    color: #c0c4cc;
   }
 }
 

@@ -167,8 +167,15 @@
       </div>
 
       <div class="rec-tabs">
-        <button v-for="tab in recTabs" :key="tab.key" class="rec-tab" :class="{ active: activeRecTab === tab.key }" @click="switchRecTab(tab.key)">
+        <button
+          v-for="tab in recTabs"
+          :key="tab.key"
+          class="rec-tab"
+          :class="{ active: activeRecTab === tab.key, locked: tab.key === 'deepseek' && !isLoggedIn }"
+          @click="switchRecTab(tab.key)"
+        >
           <span class="rec-tab-icon">{{ tab.icon }}</span><span>{{ tab.label }}</span>
+          <el-icon v-if="tab.key === 'deepseek' && !isLoggedIn" :size="12" class="rec-tab-lock"><Lock /></el-icon>
         </button>
       </div>
 
@@ -186,8 +193,10 @@
               <span v-for="r in combo.reds" :key="r" class="ball" style="background:radial-gradient(circle at 35% 35%,#fca5a5,#ef4444 50%,#b91c1c)">{{ r }}</span>
               <span class="ball" style="background:radial-gradient(circle at 35% 35%,#93c5fd,#3b82f6 50%,#1d4ed8)">{{ combo.blue }}</span>
             </div>
+            <div v-if="activeRecTab === 'deepseek' && combo.reason" class="rec-reason">{{ combo.reason }}</div>
           </div>
         </div>
+        <div v-if="activeRecTab === 'deepseek' && aiSummary" class="ai-summary">🧠 {{ aiSummary }}</div>
         <div v-if="!recData[activeRecTab] || recData[activeRecTab].length === 0" class="empty-state"><span class="empty-icon">📭</span>点击右上方"换一批"生成方案</div>
       </div>
     </div>
@@ -207,7 +216,8 @@
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
-import { RefreshRight, Upload } from '@element-plus/icons-vue'
+import { useStore } from 'vuex'
+import { RefreshRight, Upload, Lock } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 import {
   weightedSampleWithoutReplace, weightedSampleOne, computeStatistics,
@@ -218,7 +228,11 @@ import {
 } from './utils.js'
 import TicketDialog from '@/components/lottery/TicketDialog.vue'
 import { useLotteryData } from '@/composables/useLotteryData'
+import { aiRecommend } from '@/api/lottery'
 import { ElMessage } from 'element-plus'
+
+const store = useStore()
+const isLoggedIn = computed(() => store.getters['auth/isLoggedIn'])
 
 const RED_MAX = 33; const BLUE_MAX = 16; const RED_PICK = 6
 
@@ -245,10 +259,12 @@ const recTabs = [
   { key: 'headTail',  icon: '🐉', label: '龙头凤尾' },
   { key: 'spanSum',   icon: '📏', label: '跨度+和值' },
   { key: 'chaseCold', icon: '❄️', label: '追冷' },
+  { key: 'deepseek',  icon: '✨', label: 'AI 智能' },
 ]
 const activeRecTab = ref('global')
 const recLoading = ref(false)
 const recData = reactive({})
+const aiSummary = ref('')
 const headTailCache = ref(null)
 const spanSumCache = ref(null)
 
@@ -259,6 +275,7 @@ const tabMeta = {
   headTail:   { bg: 'linear-gradient(135deg,#fdf2f8,#fce7f3)', iconBg: 'rgba(240,171,252,0.3)', icon: '🐉', label: '龙头凤尾方案', desc: '先锁定头尾数字 · 中间加权填充',       color: '#831843', descColor: '#ec4899', border: 'rgba(236,72,153,0.15)' },
   spanSum:    { bg: 'linear-gradient(135deg,#f0f9ff,#e0f2fe)', iconBg: 'rgba(125,211,252,0.3)', icon: '📏', label: '跨度+和值方案', desc: '约束在历史80%跨度/和值区间内生成',   color: '#0c4a6e', descColor: '#0ea5e9', border: 'rgba(14,165,233,0.15)' },
   chaseCold:  { bg: 'linear-gradient(135deg,#f5f5f4,#e7e5e4)', iconBg: 'rgba(168,162,158,0.3)', icon: '❄️', label: '遗漏追冷方案', desc: '权重偏向长期未出的冷号 · 博冷门反弹',   color: '#44403c', descColor: '#78716c', border: 'rgba(120,113,108,0.15)' },
+  deepseek:   { bg: 'linear-gradient(135deg,#fdf4ff,#faf5ff)', iconBg: 'rgba(216,180,254,0.3)', icon: '✨', label: 'DeepSeek 智能选号', desc: '大模型结合历史走势深度分析 · 生成推荐号码', color: '#701a75', descColor: '#a855f7', border: 'rgba(168,85,247,0.2)' },
 }
 const curRecInfo = computed(() => tabMeta[activeRecTab.value] || tabMeta.global)
 
@@ -407,17 +424,25 @@ function filteredSample(weights, maxNum, k, maxAttempts = 50) {
 
 /** 切换 Tab */
 function switchRecTab(key) {
+  // 未登录禁止使用 DeepSeek AI
+  if (key === 'deepseek' && !isLoggedIn.value) return
   activeRecTab.value = key
   if (!recData[key] || recData[key].length === 0) doGenerate(key)
 }
 
 /** 刷新当前 Tab */
 function refreshActiveTab() {
+  if (activeRecTab.value === 'deepseek' && !isLoggedIn.value) return
   doGenerate(activeRecTab.value)
 }
 
 /** 按 Tab key 分发生成 */
 function doGenerate(key) {
+  // DeepSeek AI 走异步接口
+  if (key === 'deepseek') {
+    doGenerateDeepseek()
+    return
+  }
   recLoading.value = true
   const num = recCount.value
   const rw = redProb.value.slice(1, RED_MAX + 1)
@@ -503,6 +528,31 @@ function doGenerate(key) {
   }
   recData[key] = result
   recLoading.value = false
+}
+
+/** DeepSeek 智能选号（异步接口） */
+async function doGenerateDeepseek() {
+  if (!isLoggedIn.value) return
+  recLoading.value = true
+  try {
+    const res = await aiRecommend('ssq', recCount.value)
+    if (res.code !== 1 || !res.data) {
+      ElMessage.warning(res.msg || 'AI 推荐失败，请稍后重试')
+      return
+    }
+    // 转换为前端展示格式：{ reds, blue, reason }
+    const plans = (res.data.plans || []).map(p => ({
+      reds: p.reds,
+      blue: p.blues[0],
+      reason: p.reason || ''
+    }))
+    recData.deepseek = plans
+    aiSummary.value = res.data.summary || ''
+  } catch (e) {
+    ElMessage.error('AI 推荐失败: ' + e.message)
+  } finally {
+    recLoading.value = false
+  }
 }
 
 /** 统计变化时清空所有缓存方案并刷新当前 tab */
@@ -696,6 +746,41 @@ onUnmounted(() => {
 .rec-card.rec-selected {
   border-left-color: #6366f1 !important;
   background: rgba(99, 102, 241, 0.08) !important;
+}
+
+// DeepSeek AI Tab 锁定态
+.rec-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+
+  &.locked {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  .rec-tab-lock {
+    color: #c0c4cc;
+  }
+}
+
+// DeepSeek 推荐理由
+.rec-reason {
+  margin-top: 6px;
+  font-size: 11px;
+  color: #7c3aed;
+  line-height: 1.4;
+}
+
+.ai-summary {
+  margin-top: 12px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #581c87;
+  background: rgba(168, 85, 247, 0.08);
+  border-left: 3px solid #a855f7;
+  border-radius: 6px;
+  line-height: 1.6;
 }
 
 // ========== 深色模式 ==========

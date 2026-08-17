@@ -128,12 +128,21 @@ const timerColor = computed(() => {
   return '#16a34a'
 })
 
-// ============ 白噪音 ============
+// ============ 白噪音（真实音频，复用后端白噪音文件） ============
 const selectedAudio = ref('none')
-let audioContext = null
-let noiseNode = null
-let noiseGain = null
+let bgAudio = null  // 背景音 <audio> 元素
 let completionSoundCtx = null  // 提示音专用 AudioContext
+
+// 后端白噪音音频基础路径
+const WHITENOISE_FILE_BASE = '/staticTool/api/family/whitenoise/file'
+
+// 专注页背景音 → 服务器白噪音文件名映射
+const NOISE_FILE_MAP = {
+  rain: '雷暴.mp3',       // 暴雨声
+  library: '树叶沙沙.mp3', // 图书馆（安静环境音）
+  cafe: '咖啡馆.mp3',      // 咖啡馆
+  forest: '森林鸟鸣.mp3'   // 森林鸟鸣
+}
 
 const audioOptions = computed(() => {
   return [
@@ -150,247 +159,38 @@ const audioLabel = computed(() => {
   return found ? found.name : '无'
 })
 
+// 播放令牌：防止快速切换时旧的 play() 请求与新的 pause() 竞争
+let noiseToken = 0
+
 function startNoise(type) {
   stopNoise()
-  if (type === 'none') return
-  try {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)()
-    const sr = audioContext.sampleRate
-    const dur = 4 // 4秒循环
-    const len = dur * sr
+  if (type === "none") return
+  const filename = NOISE_FILE_MAP[type]
+  if (!filename) return
 
-    // 使用两个声道增强立体感
-    const buffer = audioContext.createBuffer(2, len, sr)
-    const L = buffer.getChannelData(0)
-    const R = buffer.getChannelData(1)
+  const token = ++noiseToken
+  const audio = new Audio(WHITENOISE_FILE_BASE + "/" + encodeURIComponent(filename))
+  audio.loop = true
+  audio.volume = 0.5
+  bgAudio = audio
 
-    // 辅助函数：粉红噪音（比白噪音更自然）
-    function pinkNoise(length, seed = 1) {
-      const out = new Float32Array(length)
-      let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0
-      for (let i = 0; i < length; i++) {
-        const white = (Math.random() * 2 - 1) * seed
-        b0 = 0.99886 * b0 + white * 0.0555179
-        b1 = 0.99332 * b1 + white * 0.0750759
-        b2 = 0.96900 * b2 + white * 0.1538520
-        b3 = 0.86650 * b3 + white * 0.3104856
-        b4 = 0.55000 * b4 + white * 0.5329522
-        b5 = -0.7616 * b5 - white * 0.0168980
-        out[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362
-        out[i] *= 0.11
-        b6 = white * 0.115926
-      }
-      return out
+  audio.play().then(() => {
+    // 播放成功后，若期间已切换到其他音频则立即停掉当前这个
+    if (token !== noiseToken) {
+      try { audio.pause(); audio.src = "" } catch { }
     }
-
-    // 辅助函数：棕色噪音（低频丰富，模拟远雷/低沉环境）
-    function brownNoise(length, strength = 1) {
-      const out = new Float32Array(length)
-      let last = 0
-      for (let i = 0; i < length; i++) {
-        const white = (Math.random() * 2 - 1) * strength
-        last = (last + 0.02 * white) / 1.02
-        out[i] = last * 2.5
-      }
-      return out
-    }
-
-    // 辅助函数：生成水滴/鸟叫包络
-    function envelope(length, attack, decay, sr) {
-      const env = new Float32Array(length)
-      const attackLen = Math.floor(attack * sr)
-      for (let i = 0; i < length; i++) {
-        if (i < attackLen) {
-          env[i] = i / attackLen
-        } else {
-          env[i] = Math.exp(-(i - attackLen) / (decay * sr))
-        }
-      }
-      return env
-    }
-
-    switch (type) {
-      case 'rain': {
-        // ===== 暴雨声：棕色噪音底层 + 高频水滴声 =====
-        const brownL = brownNoise(len, 0.7)
-        const brownR = brownNoise(len, 0.65)
-
-        // 添加随机水滴撞击声（高频短脉冲）
-        const dropInterval = Math.floor(sr * 0.08) // 每0.08秒一个水滴
-        for (let i = 0; i < len; i += dropInterval) {
-          const jitter = Math.floor(Math.random() * dropInterval * 0.6)
-          const pos = i + jitter
-          if (pos >= len) continue
-          const dropLen = Math.floor(sr * 0.04) // 水滴持续40ms
-          const dropEnv = envelope(Math.min(dropLen, len - pos), 0.002, 0.015, sr)
-          const freq = 6000 + Math.random() * 8000 // 高频水滴
-          for (let d = 0; d < dropEnv.length && pos + d < len; d++) {
-            const sample = Math.sin(2 * Math.PI * freq * d / sr) * dropEnv[d] * 0.3 * (Math.random() * 0.5 + 0.5)
-            L[pos + d] += sample
-            R[pos + d] += sample * (0.7 + Math.random() * 0.6)
-          }
-        }
-
-        // 低频雷鸣（偶尔出现）
-        const thunderInterval = Math.floor(sr * 3)
-        for (let i = thunderInterval; i < len; i += thunderInterval + Math.floor(Math.random() * sr * 2)) {
-          const tLen = Math.floor(sr * 0.8)
-          const tEnv = envelope(Math.min(tLen, len - i), 0.05, 0.6, sr)
-          for (let t = 0; t < tEnv.length && i + t < len; t++) {
-            const rumble = Math.sin(2 * Math.PI * (40 + Math.sin(t / sr * 3) * 20) * t / sr) * tEnv[t] * 0.15
-            L[i + t] += rumble
-            R[i + t] += rumble * 0.9
-          }
-        }
-
-        for (let i = 0; i < len; i++) {
-          L[i] = brownL[i] * 0.7 + L[i]
-          R[i] = brownR[i] * 0.7 + R[i]
-        }
-        break
-      }
-
-      case 'forest': {
-        // ===== 森林：粉红噪音底层 + 多层次鸟叫 =====
-        const pinkL = pinkNoise(len, 0.4)
-        const pinkR = pinkNoise(len, 0.35)
-
-        // 多层次鸟叫（不同频率、不同节奏）
-        const birdCount = 12
-        for (let b = 0; b < birdCount; b++) {
-          const startPos = Math.floor(Math.random() * len * 0.9)
-          const chirpLen = Math.floor(sr * (0.08 + Math.random() * 0.25))
-          const baseFreq = 1800 + Math.random() * 3500
-          const chirpEnv = envelope(Math.min(chirpLen, len - startPos), 0.005, 0.04 + Math.random() * 0.08, sr)
-
-          for (let c = 0; c < chirpEnv.length && startPos + c < len; c++) {
-            // 频率滑音（鸟叫特征）
-            const freqMod = baseFreq + Math.sin(c / sr * 15 + b) * 400
-            const chirp = Math.sin(2 * Math.PI * freqMod * c / sr) * chirpEnv[c] * (0.08 + Math.random() * 0.12)
-            const pan = 0.3 + Math.random() * 0.7
-            L[startPos + c] += chirp * pan
-            R[startPos + c] += chirp * (1 - pan)
-          }
-        }
-
-        // 远处的风声（低频调制）
-        for (let i = 0; i < len; i++) {
-          const windMod = 0.3 + Math.sin(i / sr * 0.5) * 0.2 + Math.sin(i / sr * 1.3) * 0.1
-          L[i] = pinkL[i] * windMod + L[i]
-          R[i] = pinkR[i] * windMod + R[i]
-        }
-        break
-      }
-
-      case 'cafe': {
-        // ===== 咖啡馆：多层人声 murmur + 杯碟声 =====
-        const pinkL = pinkNoise(len, 0.25)
-        const pinkR = pinkNoise(len, 0.22)
-
-        // 模拟远处人声（低频调制噪音，听起来像人群交谈）
-        for (let i = 0; i < len; i++) {
-          // 人声频段集中在 200-800Hz，用低频调制模拟
-          const voiceMod = Math.sin(i / sr * 2.7) * 0.5 + Math.sin(i / sr * 3.8) * 0.3 + Math.sin(i / sr * 5.1) * 0.2
-          L[i] += voiceMod * 0.06
-          R[i] += voiceMod * 0.055
-        }
-
-        // 随机杯碟碰撞声
-        const clinkInterval = Math.floor(sr * 2)
-        for (let i = clinkInterval; i < len; i += clinkInterval + Math.floor(Math.random() * sr * 4)) {
-          const clinkLen = Math.floor(sr * 0.15)
-          const clinkEnv = envelope(Math.min(clinkLen, len - i), 0.001, 0.06, sr)
-          const clinkFreq = 2500 + Math.random() * 4000
-          for (let c = 0; c < clinkEnv.length && i + c < len; c++) {
-            const clink = Math.sin(2 * Math.PI * clinkFreq * c / sr) * clinkEnv[c] * 0.15
-            // 杯碟声偏高频，快速衰减
-            const clink2 = Math.sin(2 * Math.PI * (clinkFreq * 1.6) * c / sr) * clinkEnv[c] * 0.08
-            L[i + c] += clink + clink2
-            R[i + c] += clink * 0.7 + clink2 * 0.9
-          }
-        }
-
-        // 偶尔的笑声/较大声交谈
-        for (let i = 0; i < len; i += Math.floor(sr * 6 + Math.random() * sr * 5)) {
-          const burstLen = Math.floor(sr * 0.4)
-          const burstEnv = envelope(Math.min(burstLen, len - i), 0.02, 0.2, sr)
-          for (let b = 0; b < burstEnv.length && i + b < len; b++) {
-            const burst = (Math.random() * 2 - 1) * burstEnv[b] * 0.08
-            L[i + b] += burst
-            R[i + b] += burst * (0.7 + Math.random() * 0.3)
-          }
-        }
-
-        for (let i = 0; i < len; i++) {
-          L[i] = pinkL[i] * 0.5 + L[i]
-          R[i] = pinkR[i] * 0.5 + R[i]
-        }
-        break
-      }
-
-      case 'library': {
-        // ===== 图书馆：极轻柔粉红噪音 + 翻书声 + 键盘打字 =====
-        const pinkL = pinkNoise(len, 0.15)
-        const pinkR = pinkNoise(len, 0.13)
-
-        // 翻书声（轻柔的沙沙声）
-        const pageInterval = Math.floor(sr * 8)
-        for (let i = pageInterval; i < len; i += pageInterval + Math.floor(Math.random() * sr * 10)) {
-          const pageLen = Math.floor(sr * 0.3)
-          const pageEnv = envelope(Math.min(pageLen, len - i), 0.01, 0.15, sr)
-          for (let p = 0; p < pageEnv.length && i + p < len; p++) {
-            // 翻书声是低频+中频混合
-            const rustle = (Math.random() * 2 - 1) * pageEnv[p] * 0.04
-            L[i + p] += rustle
-            R[i + p] += rustle * (0.6 + Math.random() * 0.4)
-          }
-        }
-
-        // 键盘打字声
-        const typeInterval = Math.floor(sr * 0.6)
-        for (let i = typeInterval; i < len; i += typeInterval + Math.floor(Math.random() * sr * 0.4)) {
-          const typeLen = Math.floor(sr * 0.03)
-          const typeEnv = envelope(Math.min(typeLen, len - i), 0.001, 0.01, sr)
-          const freq = 800 + Math.random() * 1200
-          for (let t = 0; t < typeEnv.length && i + t < len; t++) {
-            const tap = Math.sin(2 * Math.PI * freq * t / sr) * typeEnv[t] * 0.06
-            L[i + t] += tap
-            R[i + t] += tap * 0.8
-          }
-        }
-
-        for (let i = 0; i < len; i++) {
-          L[i] = pinkL[i] * 0.35 + L[i]
-          R[i] = pinkR[i] * 0.35 + R[i]
-        }
-        break
-      }
-
-      default:
-        for (let i = 0; i < len; i++) {
-          L[i] = (Math.random() * 2 - 1) * 0.05
-          R[i] = (Math.random() * 2 - 1) * 0.05
-        }
-    }
-
-    noiseNode = audioContext.createBufferSource()
-    noiseNode.buffer = buffer
-    noiseNode.loop = true
-    noiseGain = audioContext.createGain()
-    noiseGain.gain.value = 0.4
-    noiseNode.connect(noiseGain)
-    noiseGain.connect(audioContext.destination)
-    noiseNode.start()
-  } catch (e) {
-    console.warn('白噪音初始化失败:', e.message)
-  }
+  }).catch(e => {
+    // AbortError：因快速切换被 pause 打断，属正常现象，忽略
+    if (e.name === 'AbortError') return
+    console.warn("背景音播放失败:", filename, e.message)
+    if (token === noiseToken) bgAudio = null
+  })
 }
 
 function stopNoise() {
+  noiseToken++
   try {
-    if (noiseNode) { noiseNode.stop(); noiseNode.disconnect(); noiseNode = null }
-    if (noiseGain) { noiseGain.disconnect(); noiseGain = null }
-    if (audioContext) { audioContext.close(); audioContext = null }
+    if (bgAudio) { bgAudio.pause(); bgAudio.src = ""; bgAudio = null }
   } catch { }
 }
 

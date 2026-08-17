@@ -49,11 +49,12 @@
           <button
             class="toggle-option ai"
             :class="{ active: recommendMode === 'ai' }"
-            :disabled="aiLoading || !hasData"
+            :disabled="aiLoading || !hasData || !isLoggedIn"
             @click="handleAiRecommend"
           >
             <el-icon :size="16"><MagicStick /></el-icon>
             <span class="toggle-label">AI</span>
+            <el-icon v-if="!isLoggedIn" :size="14" class="ai-lock"><Lock /></el-icon>
           </button>
         </div>
       </div>
@@ -149,7 +150,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { ElMessage } from 'element-plus'
-import { Select, MagicStick, ArrowLeft, MapLocation, Document } from '@element-plus/icons-vue'
+import { Select, MagicStick, ArrowLeft, MapLocation, Document, Lock } from '@element-plus/icons-vue'
 import MapView from './components/MapView.vue'
 import RoutePanel from './components/RoutePanel.vue'
 import FoodPanel from './components/FoodPanel.vue'
@@ -175,6 +176,7 @@ const hasData = computed(() => {
   const s = store.state.plan
   return s.allSpots.length > 0 || s.allFoods.length > 0 || s.allHotels.length > 0
 })
+const isLoggedIn = computed(() => store.getters['auth/isLoggedIn'])
 const aiLoading = computed(() => {
   const s = store.state.plan
   return s.recommendMode === 'ai' && !s.recommendActive && loading.value

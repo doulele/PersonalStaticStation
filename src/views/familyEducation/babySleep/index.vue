@@ -45,7 +45,29 @@
           <span>{{ sortMode === 'playCount' ? '按热度' : '按默认' }}</span>
         </button>
       </div>
-      <div class="sound-grid">
+      <!-- 分组展示：同类声音归在一个标题下 -->
+      <template v-if="sortMode !== 'playCount'">
+        <div v-for="group in whiteNoiseGroups" :key="group.category" class="noise-group">
+          <div class="noise-group-title">{{ group.category }}</div>
+          <div class="sound-grid">
+            <div
+              v-for="item in group.items" :key="item.id"
+              class="sound-card"
+              :class="{ active: selectedItem?.id === item.id, playing: isPlaying && selectedItem?.id === item.id }"
+              @click="selectItem('noise', item)"
+            >
+              <div class="sound-icon" :class="item.color">
+                <el-icon :size="24"><component :is="item.icon" /></el-icon>
+              </div>
+              <div class="sound-label">{{ item.label }}</div>
+              <div class="audio-source-badge" v-if="item.audioUrl">真实音效</div>
+              <div class="sound-playing-dot" v-if="isPlaying && selectedItem?.id === item.id"></div>
+            </div>
+          </div>
+        </div>
+      </template>
+      <!-- 按热度排序：平铺展示 -->
+      <div v-else class="sound-grid">
         <div
           v-for="item in whiteNoiseItemsSorted" :key="item.id"
           class="sound-card"
@@ -56,8 +78,8 @@
             <el-icon :size="24"><component :is="item.icon" /></el-icon>
           </div>
           <div class="sound-label">{{ item.label }}</div>
-          <div class="audio-source-badge" v-if="item.audioUrl && OSS_BASE_URL">真实音效</div>
-          <div class="play-count-badge" v-if="playCountMap[item.id] && sortMode === 'playCount'" :title="'播放 ' + playCountMap[item.id] + ' 次'">
+          <div class="audio-source-badge" v-if="item.audioUrl">真实音效</div>
+          <div class="play-count-badge" v-if="playCountMap[item.id]" :title="'播放 ' + playCountMap[item.id] + ' 次'">
             {{ playCountMap[item.id] >= 100 ? '99+' : playCountMap[item.id] }}次
           </div>
           <div class="sound-playing-dot" v-if="isPlaying && selectedItem?.id === item.id"></div>
@@ -487,9 +509,6 @@ import {
 
 // ==================== 常量 ====================
 const API_BASE = '/staticTool/api/family'
-// OSS 音频基础路径（阿里云 OSS Bucket 公共读 + CDN 加速域名）
-// 请替换为你的 OSS Bucket 地址，例如：https://your-bucket.oss-cn-hangzhou.aliyuncs.com/audio
-const OSS_BASE_URL = ''
 
 const noiseIconMap = {
   white: Headset, pink: Headset, brown: Headset,
@@ -593,6 +612,21 @@ const whiteNoiseItemsSorted = computed(() => {
     return list.sort((a, b) => (playCountMap.value[b.id] || 0) - (playCountMap.value[a.id] || 0))
   }
   return list
+})
+
+/** 白噪音按类别分组（同类相邻，保持后端返回的顺序） */
+const whiteNoiseGroups = computed(() => {
+  const groups = []
+  const indexMap = new Map()
+  for (const item of whiteNoiseItems.value) {
+    const category = item.category || '其他'
+    if (!indexMap.has(category)) {
+      indexMap.set(category, groups.length)
+      groups.push({ category, items: [] })
+    }
+    groups[indexMap.get(category)].items.push(item)
+  }
+  return groups
 })
 
 function buildTtsText(item) {
@@ -2161,7 +2195,7 @@ async function fetchMyVoices() {
   }
 }
 
-/** 播放真实白噪音音频文件（OSS CDN） — 循环播放，支持后台/锁屏 */
+/** 播放真实白噪音音频文件 — 循环播放，支持后台/锁屏 */
 function playNoiseAudio(url, label) {
   stopAllSounds()
   if (!url) return
@@ -2174,422 +2208,29 @@ function playNoiseAudio(url, label) {
       isPlaying.value = true
       setupMediaSession(label || '白噪音')
     }).catch(err => {
-      console.warn('[babySleep] OSS 音频播放失败，回退到 Web Audio 合成:', err)
+      console.warn('[babySleep] 白噪音音频播放失败:', err)
       noiseAudio = null
-      // 用 type 字符串调用 → 跳过 audioUrl 检查，直接走合成
-      if (selectedItem.value) createNoise(selectedItem.value.type)
+      isPlaying.value = false
     })
   } catch (e) {
     console.error('[babySleep] 白噪音音频播放异常:', e)
     noiseAudio = null
-    if (selectedItem.value) createNoise(selectedItem.value.type)
+    isPlaying.value = false
   }
 }
 
-// ---- 白噪音生成（高音质版） ----
-const NOISE_BUF_SEC = 30  // 30 秒长缓冲，循环感大幅降低
 
-/** Voss-McCartney 粉红噪音算法（每八度 +1 个白噪音源，产生真正的 1/f 频谱） */
-function vossPinkNoise(ctx, len) {
-  const buf = ctx.createBuffer(1, len, ctx.sampleRate); const d = buf.getChannelData(0)
-  const octaves = 7; const rolls = new Float64Array(octaves)
-  for (let i = 0; i < len; i++) {
-    let sum = 0; let mask = 1
-    for (let o = 0; o < octaves; o++) {
-      if ((i & mask) === 0) rolls[o] = Math.random() * 2 - 1
-      sum += rolls[o]; mask <<= 1
-    }
-    d[i] = sum / octaves * 0.5
-  }
-  return buf
-}
-
-/** 布朗/棕色噪音（随机游走 + 低频约束） */
-function brownNoiseBuf(ctx, len) {
-  const buf = ctx.createBuffer(1, len, ctx.sampleRate); const d = buf.getChannelData(0)
-  let lo = 0
-  for (let i = 0; i < len; i++) {
-    lo += (Math.random() * 2 - 1) * 0.08
-    if (lo > 1.2) lo = 1.2; if (lo < -1.2) lo = -1.2
-    d[i] = lo * 0.7
-  }
-  return buf
-}
-
-/** 高质量雨声 —— 多层雨滴（大/中/小），自然随机的密度和强度变化 */
-function rainBuffer(ctx, heavy) {
-  const sr = ctx.sampleRate; const len = sr * NOISE_BUF_SEC
-  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
-  // 大滴/中滴/细滴 三层
-  const baseProb = heavy ? 0.02 : 0.008
-  const baseAmp = heavy ? 0.7 : 0.4
-  for (let i = 0; i < len; i++) {
-    let s = (Math.random() * 2 - 1) * 0.02
-    // 细密背景雨声（持续白噪声 + 低通）
-    s += (Math.random() * 2 - 1) * 0.06
-    // 中雨滴（随机间隔）
-    if (Math.random() < baseProb) {
-      s += (Math.random() * 2 - 1) * baseAmp * 0.7
-    }
-    // 大雨滴（稀疏但有冲击感）
-    if (Math.random() < baseProb * 0.25) {
-      const burst = Math.sin(Math.random() * Math.PI * 2) * 0.8 + (Math.random() * 2 - 1) * 0.5
-      s += burst * baseAmp * 1.2
-    }
-    d[i] = Math.max(-1, Math.min(1, s * 0.7))
-  }
-  return buf
-}
-
-/** 高质量海浪 —— 多层正弦调制 + 背景噪声，自然潮汐感 */
-function oceanBuffer(ctx) {
-  const sr = ctx.sampleRate; const len = sr * NOISE_BUF_SEC
-  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
-  for (let i = 0; i < len; i++) {
-    const t = i / sr
-    // 主波浪包络（低频 0.08-0.15Hz 变化）
-    const env1 = Math.sin(t * 0.12 * Math.PI * 2) * 0.5 + 0.5
-    const env2 = Math.sin(t * 0.17 * Math.PI * 2 + 1.5) * 0.3 + 0.7
-    const env = env1 * 0.6 + env2 * 0.4
-    // 泡沫高频 + 低频涌动
-    const foam = (Math.random() * 2 - 1) * 0.35
-    const swell = Math.sin(t * 1.8 * Math.PI * 2) * 0.1
-    d[i] = ((Math.random() * 2 - 1) * 0.45 * env + swell + foam * env * 0.6) * 0.65
-  }
-  return buf
-}
-
-/** 溪流 —— 湍流 + 飞溅 + 低频水流声 */
-function streamBuffer(ctx) {
-  const sr = ctx.sampleRate; const len = sr * NOISE_BUF_SEC
-  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
-  for (let i = 0; i < len; i++) {
-    const t = i / sr
-    let s = (Math.random() * 2 - 1) * 0.1
-    // 水滴飞溅
-    if (Math.random() < 0.06) s += (Math.random() * 2 - 1) * 0.35
-    // 湍流低频调制
-    s += Math.sin(t * 2.5 * Math.PI * 2 + Math.sin(t * 0.4) * 3) * 0.06
-    // 流水持续声
-    s += Math.sin(t * 6.3 * Math.PI * 2) * 0.03
-    d[i] = s * 0.8
-  }
-  return buf
-}
-
-/** 瀑布 —— 持续强大的水流轰鸣 + 水雾飞溅 */
-function waterfallBuffer(ctx) {
-  const sr = ctx.sampleRate; const len = sr * NOISE_BUF_SEC
-  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
-  for (let i = 0; i < len; i++) {
-    const t = i / sr
-    let s = (Math.random() * 2 - 1) * 0.35  // 强大持续轰鸣
-    s += Math.sin(t * 40 * Math.PI * 2 + Math.random() * 2) * 0.05
-    if (Math.random() < 0.15) s += (Math.random() * 2 - 1) * 0.3  // 水雾飞溅
-    s += Math.sin(t * 0.6 * Math.PI * 2) * 0.08  // 低频起伏
-    d[i] = s * 0.5
-  }
-  return buf
-}
-
-/** 风扇 —— 电机低频嗡鸣 + 叶片切风声 */
-function fanBuffer(ctx) {
-  const sr = ctx.sampleRate; const len = sr * NOISE_BUF_SEC
-  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
-  for (let i = 0; i < len; i++) {
-    const t = i / sr
-    // 电机基频 + 谐波
-    let s = Math.sin(120 * Math.PI * t) * 0.22
-    s += Math.sin(180 * Math.PI * t) * 0.08
-    s += Math.sin(240 * Math.PI * t) * 0.04
-    // 宽频气流声
-    s += (Math.random() * 2 - 1) * 0.12
-    // 微小速度波动
-    const wobble = 1 + Math.sin(t * 0.3) * 0.05
-    d[i] = s * wobble * 0.8
-  }
-  return buf
-}
-
-/** 吸尘器 —— 强低频轰鸣 + 高频电机声 */
-function vacuumBuffer(ctx) {
-  const sr = ctx.sampleRate; const len = sr * NOISE_BUF_SEC
-  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
-  for (let i = 0; i < len; i++) {
-    const t = i / sr
-    let s = Math.sin(150 * Math.PI * t) * 0.25
-    s += Math.sin(300 * Math.PI * t) * 0.12
-    s += Math.sin(450 * Math.PI * t) * 0.06
-    s += (Math.random() * 2 - 1) * 0.2
-    d[i] = s * 0.65
-  }
-  return buf
-}
-
-/** 洗衣机 —— 低频旋转嗡鸣 + 水声 + 周期节奏 */
-function washingBuffer(ctx) {
-  const sr = ctx.sampleRate; const len = sr * NOISE_BUF_SEC
-  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
-  for (let i = 0; i < len; i++) {
-    const t = i / sr
-    const cycle = (t % 3) / 3  // 3秒循环周期
-    let s = Math.sin(80 * Math.PI * t) * 0.15
-    s += Math.sin(160 * Math.PI * t) * 0.06
-    s += (Math.random() * 2 - 1) * 0.15
-    // 旋转节奏
-    s += Math.sin(cycle * 8 * Math.PI * 2) * 0.08 * Math.sin(t * 0.5 * Math.PI)
-    // 间歇水声
-    if (cycle < 0.3) s += (Math.random() * 2 - 1) * 0.25
-    d[i] = s * 0.7
-  }
-  return buf
-}
-
-/** 高质量篝火 —— 多层爆裂 + 持续背景燃烧 */
-function campfireBuffer(ctx) {
-  const sr = ctx.sampleRate; const len = sr * NOISE_BUF_SEC
-  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
-  for (let i = 0; i < len; i++) {
-    const t = i / sr
-    let s = (Math.random() * 2 - 1) * 0.06  // 背景燃烧
-    // 随机爆裂声（多种强度）
-    const r = Math.random()
-    if (r < 0.005) {
-      const burst = Math.exp(-((i % 200) / 80)) * (Math.random() * 2 - 1) * 0.8
-      s += burst
-    } else if (r < 0.02) {
-      const burst = Math.exp(-((i % 150) / 60)) * (Math.random() * 2 - 1) * 0.4
-      s += burst
-    }
-    // 微风摇曳火焰
-    s += Math.sin(t * 2.5 * Math.PI * 2 + Math.sin(t * 0.3) * 2) * 0.03
-    d[i] = Math.max(-1, Math.min(1, s * 0.7))
-  }
-  return buf
-}
-
-/** 心跳 —— 更真实的双脉冲（lub-dub） */
-function heartbeatBuffer(ctx) {
-  const sr = ctx.sampleRate; const len = sr * NOISE_BUF_SEC
-  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
-  const bpm = 65; const beatLen = Math.floor(sr * 60 / bpm)
-  const gap = Math.floor(beatLen * 0.18)  // lub-dub 间距
-  for (let b = 0; b * beatLen < len; b++) {
-    const start1 = b * beatLen
-    const start2 = start1 + gap
-    ;[start1, start2].forEach((s0, idx) => {
-      const amp = idx === 0 ? 0.7 : 0.55
-      for (let j = 0; j < Math.floor(gap * 0.6) && s0 + j < len; j++) {
-        d[s0 + j] += Math.sin(30 * Math.PI * (j / sr)) * Math.exp(-j / (sr * 0.06)) * amp
-        d[s0 + j] += Math.sin(55 * Math.PI * (j / sr)) * Math.exp(-j / (sr * 0.03)) * amp * 0.3
-      }
-    })
-  }
-  for (let i = 0; i < len; i++) d[i] = Math.max(-1, Math.min(1, d[i] * 0.8))
-  return buf
-}
-
-/** 高质量风铃 —— 随机音符 + 自然衰减 + 微风背景 */
-function windchimeBuffer(ctx) {
-  const sr = ctx.sampleRate; const len = sr * NOISE_BUF_SEC
-  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
-  const notes = [523, 587, 659, 698, 784, 880, 988, 1047, 1175, 1319]
-  const chimeGap = sr * 1.2  // 平均 1.2 秒一次
-  for (let i = 0; i < len; i++) {
-    let s = (Math.random() * 2 - 1) * 0.01
-    const chimeIdx = Math.floor(i / chimeGap)
-    if (chimeIdx < 50) {
-      const noteFreq = notes[Math.floor(Math.random() * notes.length)]
-      const tInNote = (i % Math.floor(chimeGap * (0.5 + Math.random() * 0.5))) / sr
-      s += Math.sin(2 * Math.PI * noteFreq * tInNote) * Math.exp(-tInNote * 2.5) * 0.25
-      // 泛音
-      s += Math.sin(2 * Math.PI * noteFreq * 2 * tInNote) * Math.exp(-tInNote * 4) * 0.08
-    }
-    d[i] = s
-  }
-  return buf
-}
-
-/** 八音盒 —— 轻柔旋律碎片 + 机械齿轮质感 */
-function musicboxBuffer(ctx) {
-  const sr = ctx.sampleRate; const len = sr * NOISE_BUF_SEC
-  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
-  // 摇篮曲风格音阶
-  const melody = [523, 587, 659, 784, 880, 784, 659, 587,
-                 523, 659, 784, 880, 1047, 880, 784, 659]
-  const noteDur = sr * 0.7
-  for (let n = 0; n < melody.length && n * noteDur < len; n++) {
-    const freq = melody[n]
-    const start = n * noteDur
-    for (let j = 0; j < noteDur && start + j < len; j++) {
-      const tIn = j / sr
-      const env = Math.exp(-tIn * 2.0)
-      let s = Math.sin(2 * Math.PI * freq * tIn) * env * 0.18
-      s += Math.sin(2 * Math.PI * freq * 2 * tIn) * env * 0.05
-      s += Math.sin(2 * Math.PI * freq * 3 * tIn) * env * 0.02
-      // 齿轮质感
-      s += (Math.random() * 2 - 1) * 0.008 * env
-      d[start + j] += s
-    }
-  }
-  return buf
-}
-
-/** 蟋蟀声 —— 高频颤音 + 夜间环境 */
-function cricketsBuffer(ctx) {
-  const sr = ctx.sampleRate; const len = sr * NOISE_BUF_SEC
-  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
-  const chirpFreq = 4500
-  let chirpPhase = 0; let chirping = false; let chirpRemain = 0
-  let chirpCount = 0
-  for (let i = 0; i < len; i++) {
-    let s = (Math.random() * 2 - 1) * 0.008  // 夜间静默背景
-    if (chirpRemain > 0) {
-      chirping = true; chirpRemain--; chirpPhase += chirpFreq * (1 + 0.05 * Math.sin(i * 0.003)) / sr
-      s += Math.sin(chirpPhase * Math.PI * 2) * 0.18 * Math.sin((chirpCount % 15) * Math.PI / 15)
-    } else {
-      chirping = false
-      // 随机开始下一串
-      chirpCount++
-      if (Math.random() < (chirpCount > 3 ? 0.015 : 0.3)) {
-        chirpRemain = Math.floor(sr * (0.08 + Math.random() * 0.12))
-        chirpPhase = Math.random() * 2 * Math.PI
-      }
-    }
-    d[i] = s * 0.7
-  }
-  return buf
-}
-
-/** 猫咪呼噜 —— 低频震颤（约25Hz基频 + 谐波） */
-function catPurrBuffer(ctx) {
-  const sr = ctx.sampleRate; const len = sr * NOISE_BUF_SEC
-  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
-  for (let i = 0; i < len; i++) {
-    const t = i / sr
-    // 呼噜基频 25Hz + 震颤波动
-    const wobble = 1 + 0.15 * Math.sin(t * 3 * Math.PI * 2) + 0.1 * Math.sin(t * 0.7 * Math.PI * 2)
-    let s = Math.sin(25 * Math.PI * 2 * t) * 0.3 * wobble
-    s += Math.sin(50 * Math.PI * 2 * t) * 0.12 * wobble
-    s += Math.sin(75 * Math.PI * 2 * t) * 0.06 * wobble
-    // 轻微呼吸感
-    s += Math.sin(t * 1.2 * Math.PI * 2) * 0.04
-    d[i] = s * 0.8
-  }
-  return buf
-}
-
-/** 火车声 —— 轮轨节奏 + 低频轰鸣 + 汽笛 */
-function trainBuffer(ctx) {
-  const sr = ctx.sampleRate; const len = sr * NOISE_BUF_SEC
-  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
-  const clickFreq = 2.8  // 每秒 2.8 次铁轨撞击
-  for (let i = 0; i < len; i++) {
-    const t = i / sr
-    let s = (Math.random() * 2 - 1) * 0.05  // 背景轰隆
-    s += Math.sin(60 * Math.PI * t) * 0.1  // 低频引擎
-    // 铁轨节奏
-    const phase = (t * clickFreq) % 1
-    if (phase < 0.12) {
-      const clickEnv = Math.sin(phase / 0.12 * Math.PI)
-      s += (Math.random() * 2 - 1) * 0.3 * clickEnv
-      s += Math.sin(200 * Math.PI * t) * 0.08 * clickEnv
-    }
-    // 偶尔汽笛
-    if ((Math.floor(t / 12) % 3) === 0 && (t % 12) < 2) {
-      s += Math.sin(800 * Math.PI * t) * 0.06 * Math.sin((t % 2) * Math.PI / 2)
-    }
-    d[i] = s * 0.65
-  }
-  return buf
-}
-
-/** 雨声增强版（大雨） */
-function rainHeavyBuffer(ctx) {
-  const sr = ctx.sampleRate; const len = sr * NOISE_BUF_SEC
-  const buf = ctx.createBuffer(1, len, sr); const d = buf.getChannelData(0)
-  for (let i = 0; i < len; i++) {
-    let s = (Math.random() * 2 - 1) * 0.15
-    if (Math.random() < 0.04) s += (Math.random() * 2 - 1) * 0.7
-    if (Math.random() < 0.012) s += (Math.random() * 2 - 1) * 0.9
-    d[i] = Math.max(-1, Math.min(1, s * 0.6))
-  }
-  return buf
-}
-
-/** 创建噪音音频 */
+/** 创建噪音音频：播放后端返回的真实音频文件 */
 function createNoise(noiseItem) {
   const type = noiseItem?.type || noiseItem
-  // 优先使用 OSS 真实音频文件；没有 audioUrl 则回退到 Web Audio 合成
   const audioUrl = noiseItem?.audioUrl
-  if (audioUrl && OSS_BASE_URL) {
-    const fullUrl = audioUrl.startsWith('http') ? audioUrl : `${OSS_BASE_URL}/${audioUrl.replace(/^\//, '')}`
-    playNoiseAudio(fullUrl, noiseItem?.label || type)
+  if (audioUrl) {
+    playNoiseAudio(audioUrl, noiseItem?.label || type)
     return
   }
-
+  // 无音频文件时直接停止
   stopAllSounds()
-  const ctx = getAudioContext(); const sr = ctx.sampleRate; let buf
-  const bufLen = sr * NOISE_BUF_SEC
-  // 启用后台音频桥梁：将 AudioContext 输出路由到支持后台播放的 HTMLAudioElement
-  const { dest } = ensureBgAudioOutput()
-
-  switch (type) {
-    case 'white': { buf = ctx.createBuffer(1, bufLen, sr); const d = buf.getChannelData(0); for (let i = 0; i < bufLen; i++) d[i] = (Math.random() * 2 - 1) * 0.5; break }
-    case 'pink': buf = vossPinkNoise(ctx, bufLen); break
-    case 'brown': buf = brownNoiseBuf(ctx, bufLen); break
-    case 'rain': buf = rainBuffer(ctx, false); break
-    case 'rain_heavy': buf = rainHeavyBuffer(ctx); break
-    case 'thunder': buf = rainBuffer(ctx, true); break  // 雷雨 → 大雨算法 + 低频滤波
-    case 'ocean': buf = oceanBuffer(ctx); break
-    case 'stream': buf = streamBuffer(ctx); break
-    case 'waterfall': buf = waterfallBuffer(ctx); break
-    case 'fan': buf = fanBuffer(ctx); break
-    case 'vacuum': buf = vacuumBuffer(ctx); break
-    case 'washing': buf = washingBuffer(ctx); break
-    case 'campfire': buf = campfireBuffer(ctx); break
-    case 'heartbeat': buf = heartbeatBuffer(ctx); break
-    case 'windchime': buf = windchimeBuffer(ctx); break
-    case 'musicbox': buf = musicboxBuffer(ctx); break
-    case 'crickets': buf = cricketsBuffer(ctx); break
-    case 'cat_purr': buf = catPurrBuffer(ctx); break
-    case 'train': buf = trainBuffer(ctx); break
-    case 'tvstatic': { buf = ctx.createBuffer(1, bufLen, sr); const d = buf.getChannelData(0); for (let i = 0; i < bufLen; i++) d[i] = (Math.random() * 2 - 1) * 0.6; break }
-    default: { buf = ctx.createBuffer(1, bufLen, sr); const d = buf.getChannelData(0); for (let i = 0; i < bufLen; i++) d[i] = (Math.random() * 2 - 1) * 0.5; break }
-  }
-
-  const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true
-
-  // 高质量滤波链路
-  const gain = ctx.createGain(); gain.gain.value = volume.value / 100 * 0.5
-  let prev = src
-  const addFilter = (type, freq, Q) => {
-    const f = ctx.createBiquadFilter(); f.type = type; f.frequency.value = freq
-    if (Q) f.Q.value = Q
-    prev.connect(f); prev = f
-  }
-  switch (type) {
-    case 'rain': addFilter('highpass', 1500); break
-    case 'rain_heavy': addFilter('highpass', 800); break
-    case 'thunder': addFilter('lowpass', 1200); addFilter('highpass', 60); break
-    case 'ocean': addFilter('lowpass', 700); break
-    case 'stream': addFilter('highpass', 600); addFilter('lowpass', 8000); break
-    case 'waterfall': addFilter('lowpass', 5000); addFilter('highpass', 100); break
-    case 'fan': addFilter('lowpass', 800); break
-    case 'vacuum': addFilter('lowpass', 2000); addFilter('highpass', 60); break
-    case 'washing': addFilter('lowpass', 1500); break
-    case 'tvstatic': addFilter('bandpass', 3000, 0.5); break
-    case 'cat_purr': addFilter('lowpass', 300); break
-    case 'train': addFilter('lowpass', 1200); break
-    case 'crickets': addFilter('highpass', 2000); break
-    case 'campfire': addFilter('highpass', 200); break
-    default: break
-  }
-  prev.connect(gain); gain.connect(dest); src.start()
-  activeNodes.push(src, gain)
-  // 注册 Media Session 以支持锁屏控制中心
-  const playingItem = selectedItem.value
-  setupMediaSession(playingItem?.label || playingItem?.text?.slice(0, 30) || '白噪音')
+  isPlaying.value = false
 }
 
 

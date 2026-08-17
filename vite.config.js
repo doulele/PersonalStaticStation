@@ -111,6 +111,19 @@ export default defineConfig({
         changeOrigin: true,
         secure: false
       },
+      // 白噪音音频文件（服务器独立目录托管）→ 转发到线上后端
+      // 不带 rewrite，保留 /staticTool/api/ 前缀，由线上 Nginx 转发到后端
+      '/staticTool/api/family/whitenoise': {
+        target: 'https://wellwin.top',
+        changeOrigin: true,
+        secure: false
+      },
+      // 睡眠内容列表（含白噪音 audioUrl）→ 转发到线上后端（本地无音频目录，用线上数据测试）
+      '/staticTool/api/family/sleep-content': {
+        target: 'https://wellwin.top',
+        changeOrigin: true,
+        secure: false
+      },
       // 其他 API 转发到本地后端
       '/staticTool/api': {
         target: 'http://localhost:3001',

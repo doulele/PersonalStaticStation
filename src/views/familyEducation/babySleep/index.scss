@@ -107,6 +107,14 @@
 }
 
 .sound-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; min-width: 0; max-width: 100%; }
+
+// 白噪音分组（同类声音相邻）
+.noise-group { margin-bottom: 16px; &:last-child { margin-bottom: 0; } }
+.noise-group-title {
+  display: flex; align-items: center; gap: 8px;
+  margin: 0 0 8px; font-size: 13px; font-weight: 600; color: #6d28d9;
+  &::before { content: ''; width: 4px; height: 14px; border-radius: 2px; background: linear-gradient(180deg, #8b5cf6, #6366f1); }
+}
 .content-grid { display: flex; flex-direction: column; gap: 8px; min-width: 0; max-width: 100%; }
 
 // 白噪音卡片

@@ -25,16 +25,14 @@
         </div>
         <div
           v-if="aiEnabled"
-          :class="['ir-mode-card', { 'ir-mode-card--active': mode === 'ai' }]"
+          :class="['ir-mode-card', { 'ir-mode-card--active': mode === 'ai', 'ir-mode-card--locked': aiRequireLogin && !isLoggedIn }]"
           @click="switchMode('ai')"
         >
           <el-icon :size="20"><MagicStick /></el-icon>
           <div class="ir-mode-card-body">
             <span class="ir-mode-card-label">
               AI 识别
-              <el-tooltip v-if="aiRequireLogin && !isLoggedIn" content="需登录" placement="top">
-                <el-icon :size="12" class="ir-lock-inline"><Lock /></el-icon>
-              </el-tooltip>
+              <el-icon v-if="aiRequireLogin && !isLoggedIn" :size="12" class="ir-lock-inline"><Lock /></el-icon>
             </span>
             <span class="ir-mode-card-desc">DeepSeek 视觉，更精准</span>
           </div>
@@ -350,6 +348,16 @@ function checkStockMismatch(expected, detected) {
     border-color: var(--el-color-primary, #409eff);
     background: var(--el-color-primary-light-9, rgba(64,158,255,.06));
     box-shadow: 0 0 0 1px var(--el-color-primary, #409eff);
+  }
+
+  &--locked {
+    cursor: not-allowed;
+    opacity: .45;
+
+    &:hover {
+      border-color: var(--el-border-color, #e4e7ed);
+      background: var(--el-bg-color, #fff);
+    }
   }
 }
 

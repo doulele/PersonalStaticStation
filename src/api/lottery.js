@@ -2,6 +2,8 @@
 // 通过后端代理请求 RollToolsApi (mxnzp.com)
 // 敏感密钥 (app_id/app_secret) 仅在后端 .env 中，前端不可见
 
+import { apiRequest } from './request'
+
 const API_BASE = '/staticTool/api/lottery'
 
 /**
@@ -218,5 +220,25 @@ export async function verifyPassword(password) {
     return await res.json()
   } catch (e) {
     return { code: -1, msg: e.message, data: { valid: false } }
+  }
+}
+
+// ==================== AI 智能选号 API ====================
+
+/**
+ * DeepSeek 智能选号推荐（需登录）
+ * @param {'ssq' | 'dlt'} type
+ * @param {number} groupCount - 生成方案组数
+ * @returns {Promise<{code: number, msg: string, data: {summary: string, plans: Array<{reds: number[], blues: number[], reason: string}>}|null}>}
+ */
+export async function aiRecommend(type, groupCount = 5) {
+  try {
+    const res = await apiRequest('/lottery/ai-recommend', {
+      method: 'POST',
+      body: JSON.stringify({ type, groupCount })
+    })
+    return res
+  } catch (e) {
+    return { code: -1, msg: e.message, data: null }
   }
 }
