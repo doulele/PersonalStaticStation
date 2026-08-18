@@ -5,7 +5,18 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import App from './App.vue'
 import router from './router'
 import store from './store'
+import { installFetchInterceptor } from './api/request'
 import './assets/styles/common.scss'
+
+// 安装全局 fetch 拦截：站内 API 请求自动绑定路由生命周期，路由离开时统一中止
+installFetchInterceptor()
+
+// 路由切换主动 abort 请求时，忽略 AbortError 的 unhandled rejection（属正常行为）
+window.addEventListener('unhandledrejection', (e) => {
+  if (e.reason && e.reason.name === 'AbortError') {
+    e.preventDefault()
+  }
+})
 
 // ==================== 动态模块加载失败自动重试 ====================
 // 现象：页面长时间加载（如评分池构建 30~90s）期间切换路由，

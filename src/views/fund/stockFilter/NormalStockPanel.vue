@@ -222,6 +222,7 @@
               <td class="td-code">
                 <div class="stock-name">{{ row.name }}</div>
                 <div class="stock-code">{{ row.code }}</div>
+                <span v-if="row.board" class="board-tag" :class="'bd-' + row.board">{{ boardLabel(row.board) }}</span>
               </td>
               <td class="td-industry" :title="row.industry">{{ row.industry }}</td>
               <td><span class="score-badge" :class="scoreClass(row.score)">{{ row.score }}</span></td>
@@ -276,6 +277,7 @@
             <div class="msc-name-box">
               <span class="msc-name">{{ row.name }}</span>
               <span class="msc-code">{{ row.code }}</span>
+              <span v-if="row.board" class="board-tag" :class="'bd-' + row.board">{{ boardLabel(row.board) }}</span>
             </div>
             <span class="score-badge" :class="scoreClass(row.score)">{{ row.score }}</span>
           </div>
@@ -402,11 +404,13 @@ const loadStage = ref(0) // 首次加载阶段进度
 let searchSeq = 0
 let loadStageTimer = null
 let abortCtrl = null
-// 完整评分池轮询（meta.stage==='base' 时每 10s 静默刷新，最多 6 次）
+// 完整评分池轮询（meta.stage==='base' 时静默刷新，直到完整池就绪）
+// 完整池构建需数分钟（300 只补 F10+K线），轮询上限放宽到 4 分钟，避免过早放弃导致
+// 列表永远停留在「基础分」，与详情页六维分对不上。
 let pollTimer = null
 let pollCount = 0
-const POLL_INTERVAL = 10000
-const POLL_MAX = 6
+const POLL_INTERVAL = 8000
+const POLL_MAX = 30
 // 周期/行业切换防抖计时器
 let loadTimer = null
 
@@ -422,6 +426,7 @@ const activeFilterCount = computed(() => {
   const f = filters.value
   let n = 0
   Object.entries(f).forEach(([k, v]) => {
+    if (k.startsWith('board')) return // 板块是默认状态，不计入"生效项"
     if (v === '' || v === null || v === undefined) return
     // 忽略行业为空字符串，其它有值即算生效
     n++
@@ -431,6 +436,11 @@ const activeFilterCount = computed(() => {
 
 // ==================== 筛选条件 ====================
 const filters = ref({
+  // 市场板块多选（默认：沪市主板 + 深市主板，创业板/科创板需权限默认不选）
+  boardShMain: true,
+  boardSzMain: true,
+  boardChinext: null,
+  boardStar: null,
   industry: '',
   minPe: null, maxPe: null,
   minPb: null, maxPb: null,
@@ -565,7 +575,7 @@ const GROUP_EXPLAIN = {
   industry: {
     summary: '行业筛选用于聚焦特定板块，从行业维度缩小选股范围。',
     items: [
-      ['所属行业', '按东财行业分类，选择后仅保留该行业股票进入评分池（Top 300）。']
+      ['所属行业', '按东财行业分类，选择后仅保留该行业股票进入评分池（Top 200）。']
     ],
     tips: '建议：可结合行业评分排名（列表页上方），优先关注平均分较高的行业。'
   }
@@ -576,6 +586,15 @@ function getGroupExplain(g) {
 }
 
 const filterGroups = computed(() => [
+  {
+    key: 'boards', icon: '🏛️', title: '市场板块', grid2: true,
+    items: [
+      { key: 'boardShMain', label: '沪市主板', type: 'switch' },
+      { key: 'boardSzMain', label: '深市主板', type: 'switch' },
+      { key: 'boardChinext', label: '创业板', type: 'switch' },
+      { key: 'boardStar', label: '科创板', type: 'switch' }
+    ]
+  },
   {
     key: 'valuation', icon: '💰', title: '估值',
     items: [
@@ -646,10 +665,21 @@ const filterGroups = computed(() => [
 ])
 
 // ==================== 数据加载 ====================
+/** 收集当前选中的市场板块（数组形式） */
+function collectBoards() {
+  const f = filters.value
+  const map = { boardShMain: 'sh_main', boardSzMain: 'sz_main', boardChinext: 'chinext', boardStar: 'star' }
+  return Object.entries(map).filter(([k]) => f[k]).map(([, v]) => v)
+}
+
 function collectFilters() {
   const p = {}
   const f = filters.value
+  // 市场板块多选 → boards 参数（4 个全选或全不选 = 不限，不传）
+  const boards = collectBoards()
+  if (boards.length && boards.length < 4) p.boards = boards.join(',')
   Object.entries(f).forEach(([k, v]) => {
+    if (k.startsWith('board')) return
     if (v === '' || v === null || v === undefined) return
     p[k] = v
   })
@@ -746,7 +776,9 @@ function scheduleLoad(delay = 300) {
 
 async function loadRank() {
   try {
-    const res = await getIndustryRanking(horizon.value)
+    const boards = collectBoards()
+    const params = boards.length && boards.length < 4 ? { boards: boards.join(',') } : {}
+    const res = await getIndustryRanking(horizon.value, params)
     if (res.code === 0) industryRank.value = res.data || []
   } catch { /* 排名失败不阻塞页面 */ }
 }
@@ -797,6 +829,10 @@ function applyFilters() {
 
 function resetFilters() {
   filters.value = {
+    boardShMain: true,
+    boardSzMain: true,
+    boardChinext: null,
+    boardStar: null,
     industry: '',
     minPe: null, maxPe: null, minPb: null, maxPb: null, minDividend: null, maxDividend: null,
     minRevenueGrowth: null, maxRevenueGrowth: null, minProfitGrowth: null, maxProfitGrowth: null,
@@ -894,6 +930,10 @@ function conclusionClass(c) {
     '重点关注': 'cc-hot', '可关注': 'cc-buy', '中性': 'cc-mid', '谨慎': 'cc-warn', '回避': 'cc-avoid'
   }
   return map[c] || 'cc-mid'
+}
+function boardLabel(b) {
+  const map = { sh_main: '沪主板', sz_main: '深主板', chinext: '创业板', star: '科创板' }
+  return map[b] || b || ''
 }
 function changeClass(v) {
   if (v == null) return ''

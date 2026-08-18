@@ -536,6 +536,9 @@ const statusText = ref('')
 const drawdownDate = ref('2024-01-01')
 const inputCodes = ref('')
 
+// 组件卸载标志：用于停止批量加载循环，避免路由离开后继续发起请求
+let isUnmounted = false
+
 // ==================== 分页查询 ====================
 const allQueryCodes = ref([])           // 本次查询的全部基金代码
 const fundDataCache = ref({})           // { code: fundData } 已加载数据缓存
@@ -917,7 +920,9 @@ const loadFundFull = async (code) => {
   if (historyResult.status === 'fulfilled') {
     Object.assign(data, historyResult.value)
   } else {
-    throw new Error(historyResult.reason.message)
+    // 保留 AbortError 类型：路由离开时中止请求，上层据此停止后续批量加载
+    if (historyResult.reason?.name === 'AbortError') throw historyResult.reason
+    throw new Error(historyResult.reason?.message || '未知错误')
   }
   if (realtimeResult.status === 'fulfilled') {
     const r = realtimeResult.value
@@ -949,17 +954,25 @@ const loadFundFull = async (code) => {
 const loadBatch = async (codes) => {
   const CONCURRENCY = 6
   const errs = []
-  for (let i = 0; i < codes.length; i += CONCURRENCY) {
+  for (let i = 0; i < codes.length && !isUnmounted; i += CONCURRENCY) {
     const batch = codes.slice(i, i + CONCURRENCY)
     const results = await Promise.allSettled(batch.map((c) => loadFundFull(c)))
+    let aborted = false
     results.forEach((r, idx) => {
       const code = batch[idx]
       if (r.status === 'fulfilled') {
         fundDataCache.value = { ...fundDataCache.value, [code]: r.value }
       } else {
+        // 请求被主动中止（路由离开）→ 停止后续批次，避免继续发起新请求
+        if (r.reason?.name === 'AbortError') {
+          aborted = true
+          return
+        }
         errs.push({ code, message: r.reason?.message || '未知错误' })
       }
     })
+    // 组件已卸载或请求被中止 → 立即停止，不再发起后续批次
+    if (aborted || isUnmounted) break
     const loaded = Object.keys(fundDataCache.value).length
     statusText.value = `加载中 ${loaded}/${allQueryCodes.value.length} ...`
   }
@@ -1191,6 +1204,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  isUnmounted = true
   teardownMobileObserver()
 })
 </script>

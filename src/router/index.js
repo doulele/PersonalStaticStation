@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import store from '@/store'
+import { setCurrentRoute, abortRouteRequests } from '@/api/request'
 
 const routes = [
   // ==================== 认证页面（独立布局，不带 Header/Footer） ====================
@@ -277,6 +278,11 @@ let loadingStartTime = 0
 router.beforeEach((to, from) => {
   // 同一路径重复跳转（如点击当前页对应卡片）不触发 loading
   if (to.path === from.path) return
+
+  // 中止上一个页面未完成的请求，避免请求堆积阻塞路由切换
+  abortRouteRequests(from.path)
+  // 更新当前路由，使新页面的请求绑定到 to.path（离开时统一清理）
+  setCurrentRoute(to.path)
 
   clearTimeout(routeLoadingTimer)
   loadingStartTime = Date.now()

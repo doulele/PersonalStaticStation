@@ -26,8 +26,8 @@ export function getIndustries() {
 }
 
 /** 行业评分排名 */
-export function getIndustryRanking(horizon = 'short') {
-  return request.get(`${BASE}/industry-ranking`, { horizon })
+export function getIndustryRanking(horizon = 'short', params = {}) {
+  return request.get(`${BASE}/industry-ranking`, { horizon, ...params })
 }
 
 /** 周期权重配置 */
