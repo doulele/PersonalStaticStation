@@ -113,16 +113,26 @@
       <!-- 个股股诊入口 -->
       <div class="diagnosis-bar">
         <span class="diagnosis-label">🩺 个股股诊</span>
-        <el-input
+        <el-autocomplete
           v-model="diagnosisCode"
-          placeholder="输入股票代码，如 000001"
+          :fetch-suggestions="querySearchDiagnosis"
+          placeholder="输入代码或名称，如 000001 / 贵州茅台"
           clearable
           size="small"
-          style="max-width:200px;"
+          style="width:240px;"
+          :trigger-on-focus="false"
+          @select="handleDiagnosisSelect"
           @keyup.enter="goDiagnosis"
         >
           <template #prefix><el-icon><Search /></el-icon></template>
-        </el-input>
+          <template #default="{ item }">
+            <div style="display:flex;gap:8px;align-items:center;padding:2px 0;">
+              <span style="font-family:Consolas,monospace;color:#3b82f6;font-size:12px;">{{ item.code }}</span>
+              <span style="font-weight:600;font-size:13px;color:#1f2937;">{{ item.name }}</span>
+              <span style="color:#94a3b8;font-size:12px;">{{ item.industry }}</span>
+            </div>
+          </template>
+        </el-autocomplete>
         <el-button type="success" size="small" @click="goDiagnosis" :disabled="!diagnosisCode.trim()">开始诊断</el-button>
       </div>
 
@@ -324,6 +334,7 @@ import {
   scoreLevelClass, scoreLevelText,
   METRIC_EXPLANATIONS
 } from '@/utils/stockAnalysis'
+import { searchStocks } from '@/api/stockRecommend'
 
 const router = useRouter()
 
@@ -335,10 +346,50 @@ window.addEventListener('resize', updateMobile)
 
 // ==================== 个股股诊 ====================
 const diagnosisCode = ref('')
-function goDiagnosis() {
-  const code = diagnosisCode.value.trim()
-  if (!code) return
-  router.push({ path: '/fund/dadao-detail', query: { code } })
+
+// 输入联想：代码/名称模糊搜索
+async function querySearchDiagnosis(queryString, cb) {
+  const kw = (queryString || '').trim()
+  if (!kw) { cb([]); return }
+  try {
+    const res = await searchStocks(kw)
+    const list = (res.code === 0 ? res.data : []) || []
+    cb(list.map(s => ({ value: `${s.code} ${s.name}`, code: s.code, name: s.name, industry: s.industry })))
+  } catch {
+    cb([])
+  }
+}
+
+// 选中联想项 → 跳转
+function handleDiagnosisSelect(item) {
+  if (item && item.code) {
+    diagnosisCode.value = item.code
+    router.push({ path: '/fund/dadao-detail', query: { code: item.code } })
+  }
+}
+
+// 跳转：6位代码直接跳转；名称/模糊输入走搜索接口取首个匹配
+async function goDiagnosis() {
+  const kw = diagnosisCode.value.trim()
+  if (!kw) {
+    ElMessage.warning('请输入股票代码或名称')
+    return
+  }
+  if (/^\d{6}$/.test(kw)) {
+    router.push({ path: '/fund/dadao-detail', query: { code: kw } })
+    return
+  }
+  try {
+    const res = await searchStocks(kw)
+    const list = (res.code === 0 ? res.data : []) || []
+    if (list.length) {
+      router.push({ path: '/fund/dadao-detail', query: { code: list[0].code } })
+    } else {
+      ElMessage.warning('未找到匹配的股票，请输入完整代码或准确名称')
+    }
+  } catch {
+    ElMessage.error('搜索失败，请稍后重试')
+  }
 }
 
 // ==================== 板块配置 ====================

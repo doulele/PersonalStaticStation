@@ -9,14 +9,24 @@
           <span class="quick-eval-desc">输入代码，一键评估</span>
         </div>
         <div class="quick-eval-right">
-          <el-input
+          <el-autocomplete
             v-model="evalCode"
-            placeholder="输入股票代码，如 000001"
-            size="default"
+            :fetch-suggestions="querySearchEval"
+            placeholder="输入代码或名称，如 000001 / 贵州茅台"
             clearable
+            :trigger-on-focus="false"
+            @select="handleEvalSelect"
             @keyup.enter="goEval"
             class="eval-input"
-          />
+          >
+            <template #default="{ item }">
+              <div style="display:flex;gap:8px;align-items:center;padding:2px 0;">
+                <span style="font-family:Consolas,monospace;color:#3b82f6;font-size:12px;">{{ item.code }}</span>
+                <span style="font-weight:600;font-size:13px;color:#1f2937;">{{ item.name }}</span>
+                <span style="color:#94a3b8;font-size:12px;">{{ item.industry }}</span>
+              </div>
+            </template>
+          </el-autocomplete>
           <el-button type="primary" @click="goEval" :disabled="!evalCode.trim()">
             <el-icon><TrendCharts /></el-icon> 测评
           </el-button>
@@ -266,6 +276,7 @@ import { ElMessage } from 'element-plus'
 import {
   Search, DataLine, TrendCharts, WarningFilled, InfoFilled, DataAnalysis
 } from '@element-plus/icons-vue'
+import { searchStocks } from '@/api/stockRecommend'
 
 const router = useRouter()
 
@@ -297,16 +308,50 @@ let abortController = null
 
 // ==================== 个股妖性测评快捷入口 ====================
 const evalCode = ref('')
-function goEval() {
-  const code = evalCode.value.trim()
-  if (!code) {
-    ElMessage.warning('请输入股票代码')
+
+// 输入联想：代码/名称模糊搜索
+async function querySearchEval(queryString, cb) {
+  const kw = (queryString || '').trim()
+  if (!kw) { cb([]); return }
+  try {
+    const res = await searchStocks(kw)
+    const list = (res.code === 0 ? res.data : []) || []
+    cb(list.map(s => ({ value: `${s.code} ${s.name}`, code: s.code, name: s.name, industry: s.industry })))
+  } catch {
+    cb([])
+  }
+}
+
+// 选中联想项 → 跳转
+function handleEvalSelect(item) {
+  if (item && item.code) {
+    evalCode.value = item.code
+    router.push({ path: '/fund/stock-detail', query: { code: item.code } })
+  }
+}
+
+// 跳转：6位代码直接跳转；名称/模糊输入走搜索接口取首个匹配
+async function goEval() {
+  const kw = evalCode.value.trim()
+  if (!kw) {
+    ElMessage.warning('请输入股票代码或名称')
     return
   }
-  router.push({
-    path: '/fund/stock-detail',
-    query: { code }
-  })
+  if (/^\d{6}$/.test(kw)) {
+    router.push({ path: '/fund/stock-detail', query: { code: kw } })
+    return
+  }
+  try {
+    const res = await searchStocks(kw)
+    const list = (res.code === 0 ? res.data : []) || []
+    if (list.length) {
+      router.push({ path: '/fund/stock-detail', query: { code: list[0].code } })
+    } else {
+      ElMessage.warning('未找到匹配的股票，请输入完整代码或准确名称')
+    }
+  } catch {
+    ElMessage.error('搜索失败，请稍后重试')
+  }
 }
 
 // ==================== 数据获取 ====================

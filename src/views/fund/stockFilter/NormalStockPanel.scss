@@ -567,6 +567,7 @@
 
 /* ==================== 评分表格 ==================== */
 .table-panel {
+  position: relative;
   background: #fff;
   border-radius: 14px;
   padding: 14px;
@@ -585,6 +586,33 @@
 .loading-text { color: #b45309; }
 .error-text { color: #dc2626; }
 .base-stage-text { color: #2563eb; font-weight: 600; }
+.score-tip { color: #94a3b8; font-size: 0.66rem; cursor: help; }
+/* 切换分页/排序/筛选时的加载遮罩 */
+.list-updating-mask {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(2px);
+  border-radius: 14px;
+}
+.lum-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 32px;
+  background: #fff;
+  border: 1px solid #f0f4f8;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+.lum-title { font-size: 0.85rem; color: #64748b; font-weight: 600; }
+.page-btn:disabled, .msort-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.page-size:disabled { opacity: 0.6; cursor: not-allowed; }
 .table-wrap {
   overflow-x: auto;
   border-radius: 10px;
@@ -611,6 +639,7 @@
 }
 .th-sort { cursor: pointer; user-select: none; }
 .th-sort:hover { color: #f59e0b; }
+.th-sort.disabled { opacity: 0.45; pointer-events: none; }
 .score-table td {
   padding: 10px 10px;
   border-bottom: 1px solid #f0f4f8;
@@ -956,6 +985,9 @@ html.dark-mode .normal-panel {
   .bd-sz_main { background: #0c1f1a; color: #34d399; border-color: #064e3b; }
   .bd-chinext { background: #2a1f0a; color: #fbbf24; border-color: #4a3410; }
   .bd-star    { background: #1e1b2e; color: #a78bfa; border-color: #3b2d5c; }
+  .list-updating-mask { background: rgba(15, 23, 42, 0.72); }
+  .lum-inner { background: #1e293b; border-color: #2d3748; }
+  .lum-title { color: #94a3b8; }
   .msc-metrics { border-color: #252733; }
   .msc-ml { color: #4a5166; }
   .msc-mv { color: #e2e8f0; }

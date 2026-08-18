@@ -176,6 +176,7 @@
     <div class="table-panel">
       <div class="table-head-info">
         <span>共 <b>{{ total }}</b> 只 · 评分池 {{ meta?.poolSize ?? '--' }} 只 · 更新 {{ meta?.updateTime ? formatTime(meta.updateTime) : '--' }}</span>
+        <span class="score-tip" title="综合评分为评分池内相对排名分（35~93 区间），分数仅反映在本池内的相对强弱，低分不代表股票基本面差">ⓘ 分数为池内相对排名</span>
         <span v-if="loading" class="loading-text">⏳ 正在加载，请稍候…</span>
         <span v-else-if="errorMsg" class="error-text">⚠️ {{ errorMsg }}</span>
         <span v-else-if="meta?.stage === 'base'" class="base-stage-text">⏳ 基础行情已就绪，完整评分构建中，将自动刷新…</span>
@@ -206,12 +207,12 @@
             <tr>
               <th class="th-code">代码 / 名称</th>
               <th>行业</th>
-              <th class="th-sort" @click="toggleSort('score')">综合评分 {{ sortIcon('score') }}</th>
-              <th class="th-sort" @click="toggleSort('star')">星级 {{ sortIcon('star') }}</th>
-              <th class="th-sort" @click="toggleSort('conclusion')">推荐结论 {{ sortIcon('conclusion') }}</th>
+              <th :class="['th-sort', { disabled: loading }]" @click="toggleSort('score')">综合评分 {{ sortIcon('score') }}</th>
+              <th :class="['th-sort', { disabled: loading }]" @click="toggleSort('star')">星级 {{ sortIcon('star') }}</th>
+              <th :class="['th-sort', { disabled: loading }]" @click="toggleSort('conclusion')">推荐结论 {{ sortIcon('conclusion') }}</th>
               <th>风险</th>
-              <th class="th-sort" @click="toggleSort('price')">最新价 {{ sortIcon('price') }}</th>
-              <th class="th-sort" @click="toggleSort('changePct')">涨跌幅 {{ sortIcon('changePct') }}</th>
+              <th :class="['th-sort', { disabled: loading }]" @click="toggleSort('price')">最新价 {{ sortIcon('price') }}</th>
+              <th :class="['th-sort', { disabled: loading }]" @click="toggleSort('changePct')">涨跌幅 {{ sortIcon('changePct') }}</th>
               <th>PE / PB / ROE</th>
               <th class="th-reason">核心推荐理由</th>
               <th class="th-op">操作</th>
@@ -259,6 +260,7 @@
           :key="s.key"
           class="msort-btn"
           :class="{ active: sortBy === s.key }"
+          :disabled="loading"
           @click="toggleSort(s.key)"
         >
           {{ s.label }} {{ sortIcon(s.key) }}
@@ -321,14 +323,22 @@
 
       <!-- 分页 -->
       <div class="pagination">
-        <button class="page-btn" :disabled="page <= 1" @click="goPage(page - 1)">‹ 上一页</button>
+        <button class="page-btn" :disabled="loading || page <= 1" @click="goPage(page - 1)">‹ 上一页</button>
         <span class="page-info">第 {{ page }} / {{ totalPages }} 页</span>
-        <button class="page-btn" :disabled="page >= totalPages" @click="goPage(page + 1)">下一页 ›</button>
-        <select v-model="pageSize" class="page-size" @change="onPageSizeChange">
+        <button class="page-btn" :disabled="loading || page >= totalPages" @click="goPage(page + 1)">下一页 ›</button>
+        <select v-model="pageSize" class="page-size" :disabled="loading" @change="onPageSizeChange">
           <option :value="20">20 / 页</option>
           <option :value="50">50 / 页</option>
           <option :value="100">100 / 页</option>
         </select>
+      </div>
+
+      <!-- 切换分页/排序/筛选时的加载遮罩（已有数据时显示，阻断所有交互） -->
+      <div v-if="loading && rows.length" class="list-updating-mask">
+        <div class="lum-inner">
+          <div class="llm-spinner"></div>
+          <div class="lum-title">加载中，请稍候…</div>
+        </div>
       </div>
     </div>
 
@@ -575,7 +585,7 @@ const GROUP_EXPLAIN = {
   industry: {
     summary: '行业筛选用于聚焦特定板块，从行业维度缩小选股范围。',
     items: [
-      ['所属行业', '按东财行业分类，选择后仅保留该行业股票进入评分池（Top 200）。']
+      ['所属行业', '按东财行业分类，选择后仅保留该行业股票进入评分池（Top 250）。']
     ],
     tips: '建议：可结合行业评分排名（列表页上方），优先关注平均分较高的行业。'
   }
@@ -859,6 +869,7 @@ function toggleIndustry(ind) {
 
 // ==================== 排序 / 分页 ====================
 function toggleSort(key) {
+  if (loading.value) return
   if (sortBy.value === key) {
     sortOrder.value = sortOrder.value === 'desc' ? 'asc' : 'desc'
   } else {
@@ -872,12 +883,14 @@ function sortIcon(key) {
   return sortOrder.value === 'desc' ? '↓' : '↑'
 }
 function goPage(p) {
+  if (loading.value) return
   if (p < 1 || p > totalPages.value) return
   page.value = p
   stopPoll()
   loadList()
 }
 function onPageSizeChange() {
+  if (loading.value) return
   page.value = 1
   stopPoll()
   loadList()
@@ -909,6 +922,7 @@ function submitSearch() {
 
 // ==================== 跳转 ====================
 function goDetail(code) {
+  if (loading.value) return
   router.push({ name: 'stockRecommendDetail', params: { code }, query: { horizon: horizon.value } })
 }
 function goGuide() {
