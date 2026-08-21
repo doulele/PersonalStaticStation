@@ -141,7 +141,7 @@ import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import {
-  HomeFilled, DataLine, VideoCamera, Service, School,
+  HomeFilled, DataLine, VideoCamera, Service, School, Reading,
   User, ArrowDown, SwitchButton, Sunny, Moon, Setting
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -194,17 +194,20 @@ watch(mobileMenuOpen, (open) => {
   }
 })
 
-const iconMap = { DataLine, VideoCamera, Service, School }
+const iconMap = { DataLine, VideoCamera, Service, School, Reading }
 
-const navList = [
+// 技能学习分类仅登录用户可见
+const navList = computed(() => [
   { path: '/home', title: '首页', icon: HomeFilled, match: 'home' },
-  ...TOOL_CATEGORIES.map(cat => ({
-    path: cat.path,
-    title: cat.name,
-    icon: iconMap[cat.icon] || Service,
-    match: cat.id
-  }))
-]
+  ...TOOL_CATEGORIES
+    .filter(cat => cat.id !== 'study' || isLoggedIn.value)
+    .map(cat => ({
+      path: cat.path,
+      title: cat.name,
+      icon: iconMap[cat.icon] || Service,
+      match: cat.id
+    }))
+])
 
 const isActive = (item) => {
   if (item.match === 'home') {

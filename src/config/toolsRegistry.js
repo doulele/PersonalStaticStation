@@ -39,6 +39,13 @@ export const TOOL_CATEGORIES = [
     icon: 'School',
     path: '/familyEducation',
     desc: '宝宝哄睡、育儿工具与教育资源'
+  },
+  {
+    id: 'study',
+    name: '技能学习',
+    icon: 'Reading',
+    path: '/study',
+    desc: '前端开发等技能学习与练习'
   }
 ]
 
@@ -213,6 +220,17 @@ export const ALL_TOOLS = [
     category: 'family',
     path: '/familyEducation/members',
     icon: 'UserFilled',
+    color: 'blue'
+  },
+
+  // ========== 技能学习 ==========
+  {
+    id: 'frontend-dev',
+    name: '前端开发',
+    desc: '前端开发技能学习、知识沉淀与练习（内容建设中）',
+    category: 'study',
+    path: '/study/frontend-dev',
+    icon: 'Monitor',
     color: 'blue'
   }
 ]

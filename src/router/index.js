@@ -207,6 +207,52 @@ const routes = [
         component: () => import('@/views/familyEducation/wishTreeHole/index.vue'),
         meta: { title: '愿望清单 & 家庭树洞', icon: 'MagicStick', requiresAuth: true }
       },
+      // ==================== 技能学习 ====================
+      {
+        path: 'study',
+        component: () => import('@/views/study/index.vue'),
+        meta: { title: '技能学习', icon: 'Reading', requiresAuth: true }
+      },
+      {
+        path: 'study/frontend-dev',
+        component: () => import('@/views/study/frontendDev/index.vue'),
+        meta: { title: '前端开发', icon: 'Monitor', requiresAuth: true }
+      },
+      {
+        path: 'study/frontend-dev/map/:cat',
+        component: () => import('@/views/study/frontendDev/map/index.vue'),
+        meta: { title: '知识地图', icon: 'Monitor', requiresAuth: true }
+      },
+      {
+        path: 'study/frontend-dev/quiz',
+        component: () => import('@/views/study/frontendDev/quiz/index.vue'),
+        meta: { title: '专项刷题', icon: 'EditPen', requiresAuth: true }
+      },
+      {
+        path: 'study/frontend-dev/interview',
+        component: () => import('@/views/study/frontendDev/interview/index.vue'),
+        meta: { title: '面试模拟', icon: 'Aim', requiresAuth: true }
+      },
+      {
+        path: 'study/frontend-dev/wrong',
+        component: () => import('@/views/study/frontendDev/wrong/index.vue'),
+        meta: { title: '错题本', icon: 'Warning', requiresAuth: true }
+      },
+      {
+        path: 'study/frontend-dev/favorites',
+        component: () => import('@/views/study/frontendDev/favorites/index.vue'),
+        meta: { title: '收藏夹', icon: 'Star', requiresAuth: true }
+      },
+      {
+        path: 'study/frontend-dev/skills',
+        component: () => import('@/views/study/frontendDev/skills/index.vue'),
+        meta: { title: '技能雷达', icon: 'TrendCharts', requiresAuth: true }
+      },
+      {
+        path: 'study/frontend-dev/profile',
+        component: () => import('@/views/study/frontendDev/profile/index.vue'),
+        meta: { title: '学习中心', icon: 'User', requiresAuth: true }
+      },
     ]
   },
   // ==================== 其他 ====================

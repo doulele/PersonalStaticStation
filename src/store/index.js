@@ -3,6 +3,7 @@ import plan from './modules/plan'
 import auth from './modules/auth'
 import familyMeeting from './modules/familyMeeting'
 import wishTreeHole from './modules/wishTreeHole'
+import frontendDev from './modules/frontendDev'
 
 const THEME_MODE_KEY = 'theme_mode'
 
@@ -99,6 +100,7 @@ export default createStore({
     plan,
     auth,
     familyMeeting,
-    wishTreeHole
+    wishTreeHole,
+    frontendDev
   }
 })

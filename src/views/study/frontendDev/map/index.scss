@@ -1,0 +1,193 @@
+.map-page {
+  padding: 32px 24px 60px;
+  max-width: 1200px;
+  margin: 0 auto;
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+// ===== 顶部 =====
+.map-header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 24px 28px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  margin-bottom: 28px;
+}
+
+.back-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 14px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  border-radius: 8px;
+  font-size: 14px;
+  &:hover { background: #f1f5f9; color: #0f172a; }
+}
+
+.map-header-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
+}
+
+.map-icon {
+  font-size: 40px;
+}
+
+.map-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px;
+}
+
+.map-desc {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+.map-progress-wrap {
+  width: 220px;
+  flex-shrink: 0;
+}
+
+.map-progress-num {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+
+  b { font-size: 28px; }
+  span { font-size: 12px; color: #64748b; }
+}
+
+.map-progress-bar {
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.map-progress-inner {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.map-progress-meta {
+  font-size: 12px;
+  color: #64748b;
+}
+
+// ===== 节点格点 =====
+.node-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  min-height: 200px;
+}
+
+.node-cell {
+  position: relative;
+  padding: 22px 18px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.3s ease;
+  overflow: hidden;
+
+  &:hover {
+    transform: translateY(-3px);
+    border-color: var(--cat-color);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.12);
+  }
+
+  // 点亮状态
+  &.lit {
+    border-color: var(--cat-color);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--cat-color) 8%, #fff), #fff);
+    box-shadow: 0 0 16px color-mix(in srgb, var(--cat-color) 25%, transparent);
+  }
+
+  &.locked {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+// 点亮流光动画
+.node-light {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  pointer-events: none;
+}
+
+.node-cell.lit .node-light {
+  animation: shine 0.7s ease-out;
+}
+
+@keyframes shine {
+  from { left: -100%; }
+  to { left: 130%; }
+}
+
+.node-level {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 11px;
+  margin-bottom: 10px;
+}
+
+.node-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 12px;
+}
+
+.node-state {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #94a3b8;
+
+  &.lit { color: var(--cat-color); }
+}
+
+// ===== 响应式 =====
+@media (max-width: 1024px) {
+  .node-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .map-page { padding: 20px 16px 40px; }
+  .map-header { flex-wrap: wrap; padding: 18px; }
+  .map-progress-wrap { width: 100%; }
+  .node-grid { grid-template-columns: repeat(2, 1fr); }
+}

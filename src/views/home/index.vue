@@ -79,7 +79,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { ElMessageBox } from 'element-plus'
-import { ArrowRight, ArrowDown, DataLine, Present, Document, Service, Lock, Connection, Timer, Filter, TrendCharts, Headset, Picture, VideoPlay, MapLocation, Coin, Memo, Sunny, VideoCamera, Moon, School, MagicStick, FolderOpened, Dish, Flag } from '@element-plus/icons-vue'
+import { ArrowRight, ArrowDown, DataLine, Present, Document, Service, Lock, Connection, Timer, Filter, TrendCharts, Headset, Picture, VideoPlay, MapLocation, Coin, Memo, Sunny, VideoCamera, Moon, School, MagicStick, FolderOpened, Dish, Flag, Monitor, Reading } from '@element-plus/icons-vue'
 import { ALL_TOOLS } from '@/config/toolsRegistry'
 import { fetchToolRanking, recordToolClick } from '@/api/stats'
 
@@ -94,7 +94,8 @@ const loading = ref(true)
 const iconMap = {
   DataLine, Present, Document, Service, Lock, Connection, Timer,
   Filter, TrendCharts, Headset, Picture, VideoPlay, MapLocation,
-  Coin, Memo, Sunny, VideoCamera, Moon, School, MagicStick, FolderOpened, Dish, Flag
+  Coin, Memo, Sunny, VideoCamera, Moon, School, MagicStick, FolderOpened, Dish, Flag,
+  Monitor, Reading
 }
 
 function getIcon(name) {
@@ -108,15 +109,23 @@ const tools = computed(() => {
     clickMap[item.path] = item.clicks
   })
 
-  return ALL_TOOLS.map(tool => ({
-    ...tool,
-    clicks: clickMap[tool.path] || 0
-  })).sort((a, b) => {
-    // 按点击量降序排列
-    if (b.clicks !== a.clicks) return b.clicks - a.clicks
-    // 点击量相同时保持注册表顺序
-    return 0
-  })
+  const isLoggedIn = store.getters['auth/isLoggedIn']
+  return ALL_TOOLS
+    .filter(tool => {
+      // 技能学习分类仅登录用户可见
+      if (tool.category === 'study' && !isLoggedIn) return false
+      return true
+    })
+    .map(tool => ({
+      ...tool,
+      clicks: clickMap[tool.path] || 0
+    }))
+    .sort((a, b) => {
+      // 按点击量降序排列
+      if (b.clicks !== a.clicks) return b.clicks - a.clicks
+      // 点击量相同时保持注册表顺序
+      return 0
+    })
 })
 
 // 移动端：折叠时显示前6个，PC/平板全部显示
@@ -139,7 +148,7 @@ function formatClicks(num) {
 }
 
 // 需要登录的工具路径列表
-const AUTH_REQUIRED_PATHS = ['/familyEducation/familyMeeting']
+const AUTH_REQUIRED_PATHS = ['/familyEducation/familyMeeting', '/study/frontend-dev']
 
 async function handleToolClick(tool) {
   recordToolClick(tool.path)

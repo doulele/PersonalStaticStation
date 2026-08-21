@@ -1,0 +1,272 @@
+.fdev-page {
+  padding: 32px 24px 60px;
+  max-width: 1200px;
+  margin: 0 auto;
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+// ===== 顶部概览 =====
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 32px 36px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+  color: #ffffff;
+  box-shadow: 0 12px 40px rgba(99, 102, 241, 0.25);
+  margin-bottom: 24px;
+}
+
+.hero-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.hero-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+
+.hero-desc {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.hero-stats {
+  display: flex;
+  gap: 32px;
+}
+
+.hero-stat {
+  text-align: center;
+  min-width: 80px;
+}
+
+.hero-stat .stat-value {
+  display: block;
+  font-size: 26px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.hero-stat .stat-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+// ===== 统计条 =====
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 20px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  margin-bottom: 32px;
+}
+
+.stat-cell {
+  text-align: center;
+}
+
+.stat-num {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.stat-txt {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+// ===== 区块 =====
+.section {
+  margin-bottom: 32px;
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 16px;
+}
+
+.section-sub {
+  font-size: 13px;
+  font-weight: 400;
+  color: #94a3b8;
+  margin-left: 8px;
+}
+
+// ===== 快捷入口 =====
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.quick-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 22px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.25s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.12);
+    border-color: #6366f1;
+  }
+
+  &.baguwen:hover { border-color: #a855f7; box-shadow: 0 8px 24px rgba(168, 85, 247, 0.15); }
+  &.framework:hover { border-color: #ec4899; box-shadow: 0 8px 24px rgba(236, 72, 153, 0.15); }
+  &.wrong:hover { border-color: #ef4444; box-shadow: 0 8px 24px rgba(239, 68, 68, 0.15); }
+  &.fav:hover { border-color: #f59e0b; box-shadow: 0 8px 24px rgba(245, 158, 11, 0.15); }
+  &.interview:hover { border-color: #6366f1; box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15); }
+  &.skills:hover { border-color: #10b981; box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15); }
+  &.profile:hover { border-color: #3b82f6; box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15); }
+}
+
+.quick-icon {
+  font-size: 26px;
+}
+
+.quick-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.quick-desc {
+  font-size: 12px;
+  color: #64748b;
+}
+
+// ===== 知识地图分类卡片 =====
+.cat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.cat-card {
+  display: block;
+  padding: 20px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--cat-color);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.12);
+    border-color: var(--cat-color);
+
+    &::before {
+      opacity: 0.04;
+    }
+  }
+}
+
+.cat-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.cat-icon {
+  font-size: 30px;
+}
+
+.cat-percent {
+  font-size: 14px;
+  font-weight: 700;
+  color: #64748b;
+
+  &.full {
+    color: #f59e0b;
+  }
+}
+
+.cat-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 12px;
+}
+
+.cat-progress {
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.cat-progress-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.cat-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.cat-tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #ede9fe;
+  color: #7c3aed;
+  font-size: 11px;
+}
+
+// ===== 响应式 =====
+@media (max-width: 1024px) {
+  .cat-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .fdev-page { padding: 20px 16px 40px; }
+  .hero { flex-direction: column; align-items: flex-start; padding: 24px; }
+  .hero-stats { width: 100%; justify-content: space-around; }
+  .stats-bar { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .quick-grid { grid-template-columns: repeat(2, 1fr); }
+  .cat-grid { grid-template-columns: repeat(2, 1fr); }
+}
