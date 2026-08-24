@@ -17,12 +17,24 @@
           <div class="kc-tags">
             <span class="kc-level" :style="{ background: levelColor }">{{ levelName }}</span>
             <span class="kc-cat">{{ catName }}</span>
+            <span v-if="node.source" class="kc-source" title="内容来源">📖 {{ node.source }}</span>
           </div>
           <h2 class="kc-title">{{ node.name }}</h2>
         </div>
 
         <!-- 内容 -->
         <div class="kc-content markdown-body" v-html="rendered"></div>
+
+        <!-- 参考链接 -->
+        <div v-if="node.refs && node.refs.length" class="kc-refs">
+          <div class="rel-title">参考来源</div>
+          <div class="kc-ref-list">
+            <a v-for="(r, ri) in node.refs" :key="ri" :href="r.url" target="_blank" rel="noopener" class="kc-ref-link">
+              <el-icon><Link /></el-icon>
+              <span>{{ r.title }}</span>
+            </a>
+          </div>
+        </div>
 
         <!-- 前置/进阶 -->
         <div v-if="prereqs.length || advanced.length" class="kc-relations">
@@ -79,7 +91,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { useStore } from 'vuex'
-import { Close, EditPen } from '@element-plus/icons-vue'
+import { Close, EditPen, Link } from '@element-plus/icons-vue'
 import { getNodeDetail } from '@/api/knowledgeGraph'
 import { CATEGORIES, getLevel } from '../data/categories'
 import { renderMarkdown } from '../utils/markdown'
@@ -201,6 +213,14 @@ watch(() => props.nodeId, (id) => {
   font-size: 12px;
 }
 
+.kc-source {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: #ecfdf5;
+  color: #059669;
+  font-size: 12px;
+}
+
 .kc-title {
   font-size: 22px;
   font-weight: 700;
@@ -212,6 +232,32 @@ watch(() => props.nodeId, (id) => {
   font-size: 14px;
   color: #334155;
   line-height: 1.7;
+}
+
+.kc-refs {
+  margin-top: 24px;
+}
+
+.kc-ref-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.kc-ref-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 13px;
+  text-decoration: none;
+  transition: all 0.2s;
+  &:hover { border-color: #6366f1; color: #6366f1; }
+  .el-icon { font-size: 14px; }
 }
 
 .kc-relations {
@@ -259,5 +305,8 @@ html.dark-mode .knowledge-card {
   .kc-close { color: #94a3b8; &:hover { background: #2d2d4a; color: #e2dee9; } }
   .rel-chip { background: #232338; border-color: #2d2d4a; color: #cbd5e1; }
   .kc-cat { background: #2d2d4a; }
+  .kc-source { background: rgba(5, 150, 105, 0.15); color: #34d399; }
+  .kc-ref-link { background: #232338; border-color: #2d2d4a; color: #94a3b8;
+    &:hover { border-color: #6366f1; color: #a5b4fc; } }
 }
 </style>

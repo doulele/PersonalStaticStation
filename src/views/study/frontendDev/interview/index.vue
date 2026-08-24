@@ -96,7 +96,7 @@
                   done: answers[q.id] !== undefined && qi !== currentIndex,
                   wrong: step === 'report' && reportDetail[q.id] && !reportDetail[q.id].correct
                 }"
-                @click="currentIndex = qi"
+                @click="goTo(qi)"
               >
                 {{ qi + 1 }}
               </button>
@@ -113,7 +113,7 @@
               <span class="q-level" :style="{ background: levelColor(current.level) }">{{ levelName(current.level) }}</span>
               <span class="q-hot" v-if="current.hot">🔥 高频</span>
             </div>
-            <h2 class="q-text">{{ current.q }}</h2>
+            <h2 class="q-text markdown-body" v-html="renderedQ"></h2>
 
             <div class="q-options">
               <template v-if="current.type !== 'multi'">
@@ -184,7 +184,7 @@
                 <div class="gain-item"><span class="gain-icon">🏅</span>当前等级 <b>{{ levelNameByKey(report.levelKey) }}</b></div>
                 <div class="gain-item" v-if="report.newAchievements && report.newAchievements.length">
                   <span class="gain-icon">🎉</span>新成就
-                  <b>{{ report.newAchievements.map(a => a.name).join('、') }}</b>
+                  <b>{{ newAchievementNames }}</b>
                 </div>
               </div>
             </div>
@@ -199,12 +199,16 @@
               <div class="rw-q">
                 <span class="rw-idx">{{ di + 1 }}</span>
                 <div>
-                  <p class="rw-text">{{ d.q }}</p>
+                  <p class="rw-text markdown-body" v-html="renderMarkdown(d.q)"></p>
                   <p class="rw-yours">你的答案：<b class="yours-bad">{{ answerText(d) }}</b></p>
                   <p class="rw-right">正确答案：<b>{{ answerText(d, true) }}</b></p>
+                  <a v-if="d.ref" :href="d.ref" target="_blank" rel="noopener" class="iv-ref">
+                    <el-icon><Link /></el-icon>
+                    <span>参考文档</span>
+                  </a>
                 </div>
               </div>
-              <div class="rw-explain">{{ d.explain }}</div>
+              <div class="rw-explain markdown-body" v-html="renderMarkdown(d.explain)"></div>
             </div>
             <el-empty v-if="!wrongList.length" description="全部答对，太棒了" :image-size="80" />
           </div>
@@ -241,7 +245,7 @@
               <el-icon><StarFilled v-if="isFav(q.id)" /><Star v-else /></el-icon>
             </button>
           </div>
-          <p class="hi-q">{{ q.q }}</p>
+          <p class="hi-q markdown-body" v-html="renderMarkdown(q.q)"></p>
           <button class="hi-toggle" @click="toggleHotDetail(q.id)">
             {{ openedHot[q.id] ? '收起解析' : '查看解析' }}
             <el-icon><ArrowUp v-if="openedHot[q.id]" /><ArrowDown v-else /></el-icon>
@@ -253,7 +257,11 @@
             </div>
             <div class="hi-explain">
               <span class="hi-label">解析</span>
-              <span>{{ q.explain }}</span>
+              <span class="markdown-body" v-html="renderMarkdown(q.explain)"></span>
+              <a v-if="q.ref" :href="q.ref" target="_blank" rel="noopener" class="iv-ref">
+                <el-icon><Link /></el-icon>
+                <span>参考文档</span>
+              </a>
             </div>
           </div>
         </div>
@@ -290,12 +298,16 @@
             <div class="hd-q">
               <span class="hd-idx">{{ di + 1 }}</span>
               <span class="hd-mark">{{ d.correct ? '✓' : '✗' }}</span>
-              <p class="hd-text">{{ d.q }}</p>
+              <p class="hd-text markdown-body" v-html="renderMarkdown(d.q)"></p>
             </div>
             <div v-if="!d.correct" class="hd-answer">
               <p class="rw-yours">你的答案：<b class="yours-bad">{{ answerText(d) }}</b></p>
               <p class="rw-right">正确答案：<b>{{ answerText(d, true) }}</b></p>
-              <p class="rw-explain">{{ d.explain }}</p>
+              <p class="rw-explain markdown-body" v-html="renderMarkdown(d.explain)"></p>
+              <a v-if="d.ref" :href="d.ref" target="_blank" rel="noopener" class="iv-ref">
+                <el-icon><Link /></el-icon>
+                <span>参考文档</span>
+              </a>
             </div>
           </div>
         </div>
@@ -309,11 +321,13 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import {
-  ArrowLeft, ArrowUp, ArrowDown, ArrowRight, Star, StarFilled, Loading, Search
+  ArrowLeft, ArrowUp, ArrowDown, ArrowRight, Star, StarFilled, Loading, Search, Link
 } from '@element-plus/icons-vue'
 import { getInterviewQuestions, getInterviewOverview, submitInterview, getInterviewHistory, getInterviewHistoryDetail } from '@/api/knowledgeGraph'
 import { CATEGORIES, getLevel } from '../data/categories'
+import { ACHIEVEMENTS } from '../data/meta'
 import { questionTypeName } from '../utils/quiz'
+import { renderMarkdown } from '../utils/markdown'
 
 const router = useRouter()
 const store = useStore()
@@ -326,6 +340,7 @@ const scope = ref('all')
 const cat = ref('')
 const count = ref(10)
 const starting = ref(false)
+const submitting = ref(false)
 
 const questions = ref([])
 const currentIndex = ref(0)
@@ -349,6 +364,7 @@ const historyDrawer = ref(false)
 const currentHistory = ref(null)
 
 const current = computed(() => questions.value[currentIndex.value] || null)
+const renderedQ = computed(() => renderMarkdown(current.value?.q || ''))
 const answeredCount = computed(() => Object.keys(answers).filter(k => answers[k] !== undefined).length)
 
 const availableCount = computed(() => {
@@ -367,6 +383,10 @@ function levelNameByKey(key) {
   return map[key] || key
 }
 function catName(cid) { return CATEGORIES.find(c => c.id === cid)?.name || cid }
+const newAchievementNames = computed(() => {
+  const ids = report.value.newAchievements || []
+  return ids.map(id => ACHIEVEMENTS.find(a => a.id === id)?.name || id).join('、')
+})
 
 function switchTab(t) {
   tab.value = t
@@ -384,6 +404,10 @@ function toggleMulti(oi) {
 }
 function confirmMulti() {
   answers[current.value.id] = [...multiPick.value]
+}
+function goTo(qi) {
+  currentIndex.value = qi
+  syncMulti()
 }
 function prev() {
   if (currentIndex.value > 0) {
@@ -430,18 +454,24 @@ async function startExam() {
 }
 
 async function submitExam() {
-  const list = questions.value.map(q => ({
-    qid: q.id,
-    userAnswer: answers[q.id] !== undefined ? answers[q.id] : null
-  }))
-  const res = await submitInterview({ answers: list })
-  if (!res.success) return
-  report.value = res.data
-  // 报告详情按 qid 索引
-  Object.keys(reportDetail).forEach(k => delete reportDetail[k])
-  ;(res.data.detail || []).forEach(d => { reportDetail[d.qid] = d })
-  store.dispatch('frontendDev/loadProgress')
-  step.value = 'report'
+  if (submitting.value) return
+  submitting.value = true
+  try {
+    const list = questions.value.map(q => ({
+      qid: q.id,
+      userAnswer: answers[q.id] !== undefined ? answers[q.id] : null
+    }))
+    const res = await submitInterview({ answers: list })
+    if (!res.success) return
+    report.value = res.data
+    // 报告详情按 qid 索引
+    Object.keys(reportDetail).forEach(k => delete reportDetail[k])
+    ;(res.data.detail || []).forEach(d => { reportDetail[d.qid] = d })
+    store.dispatch('frontendDev/loadProgress')
+    step.value = 'report'
+  } finally {
+    submitting.value = false
+  }
 }
 
 function resetExam() {
@@ -459,7 +489,8 @@ function answerText(d, showRight = false) {
   }
   if (q.type === 'judge') {
     const val = showRight ? q.answer : q.userAnswer
-    const bool = typeof val === 'boolean' ? val : val === 0 ? false : true
+    if (val === undefined || val === null) return '未作答'
+    const bool = typeof val === 'boolean' ? val : val === 0
     return bool ? '正确' : '错误'
   }
   const val = showRight ? q.answer : q.userAnswer

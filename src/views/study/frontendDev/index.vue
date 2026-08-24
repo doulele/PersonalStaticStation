@@ -110,12 +110,30 @@
         </router-link>
       </div>
     </div>
+
+    <!-- 数据来源说明 -->
+    <div class="source-note">
+      <div class="source-note-head" @click="showSource = !showSource">
+        <el-icon><InfoFilled /></el-icon>
+        <span>内容来源与质量标准</span>
+        <el-icon class="toggle"><ArrowDown v-if="!showSource" /><ArrowUp v-else /></el-icon>
+      </div>
+      <div v-if="showSource" class="source-note-body">
+        <ul>
+          <li><b>原创命题</b>：全部知识点与题目围绕高频考点原创编写，不搬运第三方题库原文</li>
+          <li><b>官方为准</b>：内容以 MDN、Vue / React / TypeScript 官方文档为准绳校对，知识点卡片标注来源徽章并附参考链接</li>
+          <li><b>质量分层</b>：题目覆盖记忆、理解、场景、手写多种类型，解析含原理与易错点</li>
+          <li><b>持续优化</b>：题库定期修订，答题正确率数据用于标注易错考点</li>
+        </ul>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useStore } from 'vuex'
+import { ArrowDown, ArrowUp, InfoFilled } from '@element-plus/icons-vue'
 import { CATEGORIES } from './data/categories'
 import { LEVELS_XP } from './data/meta'
 import { getOverview } from '@/api/knowledgeGraph'
@@ -126,6 +144,7 @@ const xp = computed(() => store.getters['frontendDev/xp'])
 const checkinStreak = computed(() => store.getters['frontendDev/checkinStreak'])
 
 const overview = ref({})
+const showSource = ref(false)
 
 const totalNodes = computed(() =>
   Object.values(progress.value?.categoryPercent || {}).reduce((sum, c) => sum + c.total, 0)

@@ -10,6 +10,7 @@
  */
 export function checkAnswer(question, userAnswer) {
   if (!question) return false
+  if (userAnswer === null || userAnswer === undefined) return false
   const type = question.type
   const answer = question.answer
 

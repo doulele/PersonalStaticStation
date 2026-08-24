@@ -7,7 +7,7 @@
       <span v-for="t in question.tags" :key="t" class="qc-label">{{ t }}</span>
     </div>
 
-    <h3 class="qc-text">{{ question.q }}</h3>
+    <h3 class="qc-text markdown-body" v-html="renderedQ"></h3>
 
     <div class="qc-options">
       <div
@@ -24,7 +24,11 @@
 
     <div class="qc-explain">
       <div class="qc-explain-title">解析</div>
-      <div class="qc-explain-text">{{ question.explain }}</div>
+      <div class="qc-explain-text markdown-body" v-html="renderedExplain"></div>
+      <a v-if="question.ref" :href="question.ref" target="_blank" rel="noopener" class="qc-ref">
+        <el-icon><Link /></el-icon>
+        <span>参考文档</span>
+      </a>
     </div>
 
     <div class="qc-actions">
@@ -35,15 +39,18 @@
 
 <script setup>
 import { computed } from 'vue'
-import { CircleCheckFilled } from '@element-plus/icons-vue'
+import { CircleCheckFilled, Link } from '@element-plus/icons-vue'
 import { CATEGORIES, getLevel } from '../data/categories'
 import { questionTypeName } from '../utils/quiz'
+import { renderMarkdown } from '../utils/markdown'
 
 const props = defineProps({
   question: { type: Object, required: true }
 })
 
 const catName = computed(() => CATEGORIES.find(c => c.id === props.question.cat)?.name || '')
+const renderedQ = computed(() => renderMarkdown(props.question.q || ''))
+const renderedExplain = computed(() => renderMarkdown(props.question.explain || ''))
 function levelName(l) { return getLevel(l)?.name || '' }
 function levelColor(l) { return getLevel(l)?.color || '#94a3b8' }
 
@@ -176,6 +183,17 @@ function isCorrectOption(oi) {
   font-size: 13px;
   color: #475569;
   line-height: 1.7;
+}
+
+.qc-ref {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+  font-size: 12px;
+  color: #6366f1;
+  text-decoration: none;
+  &:hover { text-decoration: underline; }
 }
 
 .qc-actions {

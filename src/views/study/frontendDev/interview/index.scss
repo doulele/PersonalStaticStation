@@ -565,6 +565,18 @@
   }
 }
 
+.iv-ref {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #6366f1;
+  text-decoration: none;
+  &:hover { text-decoration: underline; }
+  .el-icon { font-size: 13px; }
+}
+
 /* ============ 考试记录 ============ */
 .iv-history {
   .history-head {

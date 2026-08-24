@@ -190,4 +190,238 @@
   .map-header { flex-wrap: wrap; padding: 18px; }
   .map-progress-wrap { width: 100%; }
   .node-grid { grid-template-columns: repeat(2, 1fr); }
+  .map-toolbar { flex-direction: column; align-items: stretch; gap: 10px; }
+  .level-legend { justify-content: flex-start; }
+}
+
+// ===== 分类切换 =====
+.cat-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 2px 12px;
+  margin-bottom: 6px;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+.cat-tab {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #fff;
+  color: #475569;
+  font-size: 13px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover { border-color: var(--tab-color); color: var(--tab-color); }
+
+  &.active {
+    background: color-mix(in srgb, var(--tab-color) 12%, #fff);
+    border-color: var(--tab-color);
+    color: var(--tab-color);
+    font-weight: 600;
+  }
+}
+
+.cat-tab-icon { font-size: 15px; line-height: 1; }
+
+.cat-tab-special {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #fef2f2;
+  color: #ef4444;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+// ===== 工具栏 =====
+.map-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  margin-bottom: 16px;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.map-search {
+  width: 240px;
+}
+
+.map-level-filter {
+  width: 130px;
+}
+
+.level-legend {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+
+  i {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    display: inline-block;
+  }
+}
+
+// ===== 难度分布统计 =====
+.map-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  padding: 14px 18px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  margin-bottom: 16px;
+}
+
+.stat-pill {
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #eef2f7;
+
+  &.done {
+    background: color-mix(in srgb, var(--lvl-color) 8%, #fff);
+    border-color: color-mix(in srgb, var(--lvl-color) 30%, #fff);
+  }
+}
+
+.stat-pill-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.stat-pill-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.stat-pill-num {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.stat-pill-bar {
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.stat-pill-inner {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--lvl-color);
+  transition: width 0.5s ease;
+}
+
+// ===== 推荐学习 =====
+.map-recommend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  background: color-mix(in srgb, var(--cat-color) 8%, #fff);
+  border: 1px dashed color-mix(in srgb, var(--cat-color) 45%, #e2e8f0);
+  border-radius: 14px;
+  margin-bottom: 16px;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.rec-icon {
+  font-size: 20px;
+  color: var(--cat-color);
+  flex-shrink: 0;
+}
+
+.rec-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.rec-label {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.rec-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.2s;
+
+  &:hover { color: var(--cat-color); }
+}
+
+.rec-level {
+  padding: 1px 8px;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.rec-tip {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+// ===== 空状态 =====
+.map-empty {
+  grid-column: 1 / -1;
+  padding: 40px 0;
+}
+
+// ===== 推荐节点高亮 =====
+.node-cell.recommended {
+  border-color: var(--cat-color);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--cat-color) 35%, transparent);
+
+  .node-name { color: var(--cat-color); }
+}
+
+.node-cell.lit.recommended {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--cat-color) 35%, transparent), 0 0 16px color-mix(in srgb, var(--cat-color) 25%, transparent);
 }

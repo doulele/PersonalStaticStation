@@ -36,7 +36,7 @@
 
     <!-- 答题区 -->
     <div v-loading="loading" class="quiz-main">
-      <template v-if="!loading && questions.length && current">
+      <template v-if="!loading && !finished && questions.length && current">
         <!-- 进度 -->
         <div class="quiz-progress">
           <span>第 {{ currentIndex + 1 }} / {{ questions.length }} 题</span>
@@ -56,7 +56,7 @@
             </button>
           </div>
 
-          <h2 class="q-text">{{ current.q }}</h2>
+          <h2 class="q-text markdown-body" v-html="renderedQ"></h2>
 
           <div class="q-options">
             <!-- 单选/判断 -->
@@ -100,7 +100,11 @@
               <el-icon><CircleCheckFilled v-if="isCorrect" /><CircleCloseFilled v-else /></el-icon>
               <span>{{ isCorrect ? '回答正确' : '回答错误' }}</span>
             </div>
-            <div class="explain-text">{{ current.explain }}</div>
+            <div class="explain-text markdown-body" v-html="renderedExplain"></div>
+            <a v-if="current.ref" :href="current.ref" target="_blank" rel="noopener" class="q-ref">
+              <el-icon><Link /></el-icon>
+              <span>参考文档</span>
+            </a>
           </div>
 
           <!-- 下一题 -->
@@ -132,10 +136,11 @@
 import { ref, computed, onMounted, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useStore } from 'vuex'
-import { ArrowLeft, Star, StarFilled, CircleCheckFilled, CircleCloseFilled } from '@element-plus/icons-vue'
+import { ArrowLeft, Star, StarFilled, CircleCheckFilled, CircleCloseFilled, Link } from '@element-plus/icons-vue'
 import { getQuestions } from '@/api/knowledgeGraph'
 import { CATEGORIES, LEVELS, QUESTION_TAGS, getLevel } from '../data/categories'
 import { checkAnswer, questionTypeName } from '../utils/quiz'
+import { renderMarkdown } from '../utils/markdown'
 
 const route = useRoute()
 const router = useRouter()
@@ -159,6 +164,8 @@ const correctCount = ref(0)
 const finished = ref(false)
 
 const current = computed(() => questions.value[currentIndex.value] || null)
+const renderedQ = computed(() => renderMarkdown(current.value?.q || ''))
+const renderedExplain = computed(() => renderMarkdown(current.value?.explain || ''))
 const pageTitle = computed(() => {
   if (filters.tag) return filters.tag + '刷题'
   if (filters.cat) return CATEGORIES.find(c => c.id === filters.cat)?.name + '刷题'
