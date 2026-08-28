@@ -200,7 +200,19 @@ function isCorrectOption(oi) {
   margin-top: 16px;
   display: flex;
   justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 10px;
+}
+
+@media (max-width: 768px) {
+  .question-card { padding: 16px; }
+  .qc-text { font-size: 15px; }
+  .qc-option { padding: 10px 12px; }
+}
+
+@media (max-width: 480px) {
+  .question-card { padding: 14px; }
+  .qc-actions .el-button { flex: 1; }
 }
 </style>
 

@@ -194,6 +194,7 @@ watch(() => props.nodeId, (id) => {
 
 .kc-tags {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 10px;
 }
@@ -293,8 +294,22 @@ watch(() => props.nodeId, (id) => {
 
 .kc-footer {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+  .kc-title { font-size: 20px; }
+  .kc-content { font-size: 13px; }
+  .kc-header { margin-bottom: 16px; }
+  .kc-footer .el-button { flex: 1; margin-left: 0 !important; }
+}
+
+@media (max-width: 480px) {
+  .kc-title { font-size: 18px; }
+  .kc-footer { flex-direction: column; }
+  .kc-footer .el-button { width: 100%; }
 }
 </style>
 
@@ -308,5 +323,12 @@ html.dark-mode .knowledge-card {
   .kc-source { background: rgba(5, 150, 105, 0.15); color: #34d399; }
   .kc-ref-link { background: #232338; border-color: #2d2d4a; color: #94a3b8;
     &:hover { border-color: #6366f1; color: #a5b4fc; } }
+}
+
+/* 知识卡片抽屉：移动端占满屏宽 */
+@media (max-width: 768px) {
+  html .knowledge-card {
+    width: 100% !important;
+  }
 }
 </style>

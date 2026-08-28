@@ -188,10 +188,34 @@
 @media (max-width: 768px) {
   .map-page { padding: 20px 16px 40px; }
   .map-header { flex-wrap: wrap; padding: 18px; }
+  .map-header-info { gap: 12px; }
+  .map-icon { font-size: 32px; }
+  .map-title { font-size: 20px; }
   .map-progress-wrap { width: 100%; }
-  .node-grid { grid-template-columns: repeat(2, 1fr); }
+  .map-progress-num b { font-size: 24px; }
+  .node-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .node-cell { padding: 16px 14px; }
+  .node-name { font-size: 14px; margin-bottom: 10px; }
+  .node-level { margin-bottom: 8px; }
   .map-toolbar { flex-direction: column; align-items: stretch; gap: 10px; }
-  .level-legend { justify-content: flex-start; }
+  .toolbar-left { flex-direction: column; align-items: stretch; gap: 10px; }
+  .map-search { width: 100%; }
+  .map-level-filter { width: 100%; }
+  .level-legend { justify-content: flex-start; flex-wrap: wrap; gap: 10px; }
+  .map-recommend { flex-wrap: wrap; }
+  .rec-tip { width: 100%; flex-shrink: 0; }
+}
+
+@media (max-width: 480px) {
+  .map-page { padding: 16px 12px 36px; }
+  .map-header { padding: 14px; margin-bottom: 20px; }
+  .map-title { font-size: 18px; }
+  .map-desc { font-size: 12px; }
+  .node-grid { gap: 10px; }
+  .node-cell { padding: 14px 12px; }
+  .map-stats { grid-template-columns: 1fr; padding: 12px; }
+  .cat-tab { padding: 6px 12px; font-size: 12px; }
+  .map-recommend { padding: 10px 14px; }
 }
 
 // ===== 分类切换 =====

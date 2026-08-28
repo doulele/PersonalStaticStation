@@ -3,23 +3,23 @@
  * 与后端 data/knowledge-graph 中 15 个分类 cat 保持一致
  */
 
-/** 15 个知识分类（special: true 表示专项分类） */
+/** 15 个知识分类（special: true 表示专项分类，order 越小越常用/越靠前） */
 export const CATEGORIES = [
-  { id: 'html', name: 'HTML', icon: '🌐', color: '#e44d26', desc: '标签语义化、表单、多媒体与 SEO 基础' },
-  { id: 'css', name: 'CSS', icon: '🎨', color: '#2965f1', desc: '布局体系、动画过渡、预处理与工程化' },
-  { id: 'javascript', name: 'JavaScript', icon: '⚡', color: '#f7df1e', desc: 'ES 核心、异步编程、原型链与手写实现' },
-  { id: 'typescript', name: 'TypeScript', icon: '📘', color: '#3178c6', desc: '类型系统、泛型约束与工程化应用' },
-  { id: 'vue2', name: 'Vue2', icon: '🍃', color: '#42b883', desc: 'Vue2 响应式、组件通信与全家桶生态' },
-  { id: 'vue3', name: 'Vue3', icon: '🟢', color: '#42b883', desc: 'Composition API、Proxy 响应式与核心原理' },
-  { id: 'react', name: 'React', icon: '⚛️', color: '#61dafb', desc: 'JSX、Hooks、Fiber 调度与生态实践' },
-  { id: 'mini-program', name: '小程序', icon: '📱', color: '#07c160', desc: '小程序架构、生命周期与原生能力' },
-  { id: 'engineering', name: '工程化', icon: '🛠️', color: '#8b5cf6', desc: '构建打包、模块规范、CI/CD 与质量保障' },
-  { id: 'micro-frontend', name: '微前端', icon: '🧩', color: '#f43f5e', desc: '微前端方案选型、沙箱隔离与通信机制' },
-  { id: 'graphics', name: '图形可视化', icon: '📊', color: '#06b6d4', desc: 'Canvas、SVG、WebGL 与可视化方案' },
-  { id: 'fullstack', name: '大前端全栈', icon: '🌍', color: '#10b981', desc: 'Node 后端、SSR、同构与全栈实践' },
-  { id: 'network', name: '浏览器网络', icon: '🌐', color: '#f59e0b', desc: '浏览器渲染、网络协议与前端安全' },
-  { id: 'baguwen', name: '八股文专项', icon: '📚', color: '#6366f1', desc: '高频八股文系统梳理，覆盖核心考点', special: true },
-  { id: 'framework', name: '框架原理', icon: '🔬', color: '#ec4899', desc: 'Vue / React 底层原理深入剖析', special: true }
+  { id: 'javascript', name: 'JavaScript', icon: '⚡', color: '#f7df1e', desc: 'ES 核心、异步编程、原型链与手写实现', order: 1 },
+  { id: 'html', name: 'HTML', icon: '🌐', color: '#e44d26', desc: '标签语义化、表单、多媒体与 SEO 基础', order: 2 },
+  { id: 'css', name: 'CSS', icon: '🎨', color: '#2965f1', desc: '布局体系、动画过渡、预处理与工程化', order: 3 },
+  { id: 'vue3', name: 'Vue3', icon: '🟢', color: '#42b883', desc: 'Composition API、Proxy 响应式与核心原理', order: 4 },
+  { id: 'react', name: 'React', icon: '⚛️', color: '#61dafb', desc: 'JSX、Hooks、Fiber 调度与生态实践', order: 5 },
+  { id: 'typescript', name: 'TypeScript', icon: '📘', color: '#3178c6', desc: '类型系统、泛型约束与工程化应用', order: 6 },
+  { id: 'network', name: '浏览器网络', icon: '🌐', color: '#f59e0b', desc: '浏览器渲染、网络协议与前端安全', order: 7 },
+  { id: 'engineering', name: '工程化', icon: '🛠️', color: '#8b5cf6', desc: '构建打包、模块规范、CI/CD 与质量保障', order: 8 },
+  { id: 'baguwen', name: '八股文专项', icon: '📚', color: '#6366f1', desc: '高频八股文系统梳理，覆盖核心考点', special: true, order: 9 },
+  { id: 'framework', name: '框架原理', icon: '🔬', color: '#ec4899', desc: 'Vue / React 底层原理深入剖析', special: true, order: 10 },
+  { id: 'vue2', name: 'Vue2', icon: '🍃', color: '#42b883', desc: 'Vue2 响应式、组件通信与全家桶生态', order: 11 },
+  { id: 'mini-program', name: '小程序', icon: '📱', color: '#07c160', desc: '小程序架构、生命周期与原生能力', order: 12 },
+  { id: 'fullstack', name: '大前端全栈', icon: '🌍', color: '#10b981', desc: 'Node 后端、SSR、同构与全栈实践', order: 13 },
+  { id: 'micro-frontend', name: '微前端', icon: '🧩', color: '#f43f5e', desc: '微前端方案选型、沙箱隔离与通信机制', order: 14 },
+  { id: 'graphics', name: '图形可视化', icon: '📊', color: '#06b6d4', desc: 'Canvas、SVG、WebGL 与可视化方案', order: 15 }
 ]
 
 /** 难度等级（level 1-4） */

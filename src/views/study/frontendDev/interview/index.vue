@@ -288,7 +288,7 @@
       </div>
 
       <!-- 历史详情抽屉 -->
-      <el-drawer v-model="historyDrawer" size="72%" :title="'考试详情 ' + (currentHistory ? formatTime(currentHistory.time) : '')">
+      <el-drawer v-model="historyDrawer" size="72%" class="history-drawer" :title="'考试详情 ' + (currentHistory ? formatTime(currentHistory.time) : '')">
         <div v-if="currentHistory" class="history-detail">
           <div class="hd-summary">
             <span>得分 <b :class="{ pass: currentHistory.rate >= 60 }">{{ currentHistory.rate }}%</b></span>
@@ -596,5 +596,12 @@ html.dark-mode .iv-page {
   .hd-item { background: #1e1e2e; border-color: #2d2d4a; }
   .hd-text { color: #e2dee9; }
   .rw-yours, .rw-right { color: #94a3b8; }
+}
+
+/* 历史详情抽屉：移动端占满屏宽 */
+@media (max-width: 768px) {
+  html .history-drawer {
+    width: 100% !important;
+  }
 }
 </style>

@@ -38,8 +38,10 @@ import AppFooter from './AppFooter.vue'
 .main-content {
   flex: 1;
   min-height: 0;
+  width: 100%;
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   animation: fadeIn 0.4s ease-out;
 }
 

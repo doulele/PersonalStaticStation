@@ -1,6 +1,7 @@
 .fdev-page {
   padding: 32px 24px 60px;
   max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
   animation: fadeIn 0.4s ease-out;
 }
@@ -263,15 +264,39 @@
 }
 
 @media (max-width: 768px) {
-  .fdev-page { padding: 20px 16px 40px; }
-  .hero { flex-direction: column; align-items: flex-start; padding: 24px; }
-  .hero-stats { width: 100%; justify-content: space-around; }
-  .stats-bar { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-  .quick-grid { grid-template-columns: repeat(2, 1fr); }
-  .cat-grid { grid-template-columns: repeat(2, 1fr); }
+  .fdev-page { padding: 18px 18px 36px !important; }
+  .hero { flex-direction: column; align-items: flex-start; padding: 22px !important; }
+  .hero-title { font-size: 24px; }
+  .hero-stats { width: 100%; justify-content: space-between; gap: 8px; }
+  .hero-stat { min-width: 0; flex: 1; }
+  .hero-stat .stat-value { font-size: 22px; }
+  .stats-bar { grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 18px !important; }
+  .quick-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .quick-card { padding: 16px !important; }
+  .cat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .cat-card { padding: 16px !important; }
+  .cat-icon { font-size: 26px; }
+  .section { margin-bottom: 24px; }
+  .source-note .source-note-head { padding: 10px 12px; font-size: 13px; }
+  .source-note .source-note-body { padding: 0 12px 12px; }
 }
 
-/* ============ 鏁版嵁鏉ユ簮璇存槑 ============ */
+@media (max-width: 480px) {
+  .fdev-page { padding: 14px 14px 32px !important; }
+  .hero { padding: 18px 16px !important; }
+  .hero-title { font-size: 22px; }
+  .hero-desc { font-size: 13px; }
+  .stats-bar { padding: 14px !important; gap: 8px; }
+  .stat-num { font-size: 20px; }
+  .quick-grid { gap: 8px; }
+  .quick-card { padding: 13px 12px !important; gap: 4px; }
+  .quick-icon { font-size: 22px; }
+  .quick-name { font-size: 14px; }
+  .section-title { font-size: 18px; }
+  .cat-card { padding: 13px 12px !important; }
+}
+
+/* ============ 数据来源说明 ============ */
 .source-note {
   margin-top: 24px;
   border: 1px solid #e2e8f0;

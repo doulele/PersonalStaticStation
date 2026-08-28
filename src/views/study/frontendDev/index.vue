@@ -73,8 +73,8 @@
         </router-link>
         <router-link to="/study/frontend-dev/skills" class="quick-card skills">
           <span class="quick-icon">📊</span>
-          <span class="quick-name">技能雷达</span>
-          <span class="quick-desc">能力分布</span>
+          <span class="quick-name">技能全景</span>
+          <span class="quick-desc">指纹图谱 · 能力分析</span>
         </router-link>
         <router-link to="/study/frontend-dev/profile" class="quick-card profile">
           <span class="quick-icon">🏅</span>
@@ -168,7 +168,7 @@ const sortedCategories = computed(() => {
       const info = pct[cat.id] || { learned: 0, total: 0, percent: 0 }
       return { ...cat, ...info }
     })
-    .sort((a, b) => b.percent - a.percent)
+    .sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
 })
 
 onMounted(async () => {
@@ -179,6 +179,25 @@ onMounted(async () => {
 </script>
 
 <style lang="scss" scoped src="./index.scss"></style>
+
+<style lang="scss" scoped>
+// 移动端 padding 兜底（直接 inline，确保不被外链 scss 缓存影响）
+@media (max-width: 768px) {
+  .fdev-page { padding: 18px 18px 36px !important; }
+  .hero { padding: 22px !important; }
+  .stats-bar { padding: 18px !important; }
+  .quick-card { padding: 16px !important; }
+  .cat-card { padding: 16px !important; }
+}
+
+@media (max-width: 480px) {
+  .fdev-page { padding: 14px 14px 32px !important; }
+  .hero { padding: 18px 16px !important; }
+  .stats-bar { padding: 14px !important; }
+  .quick-card { padding: 13px 12px !important; }
+  .cat-card { padding: 13px 12px !important; }
+}
+</style>
 
 <style lang="scss">
 html.dark-mode {

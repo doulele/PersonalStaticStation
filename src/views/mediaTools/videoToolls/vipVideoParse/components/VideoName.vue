@@ -756,7 +756,28 @@ async function initHlsPlayer(video, url) {
 
   console.log(`[播放器] 使用 ${sourceType} 模式`)
 
-  hlsInstance = new Hls()
+  hlsInstance = new Hls({
+    // 分片经后端代理转发存在额外延迟，调大缓冲避免缓冲耗尽导致的规律性卡顿
+    maxBufferLength: 60,
+    maxMaxBufferLength: 120,
+    maxBufferSize: 120 * 1024 * 1024,
+    backBufferLength: 30,
+    // 分片/播放列表加载超时与重试
+    fragLoadingTimeOut: 30000,
+    fragLoadingMaxRetry: 6,
+    fragLoadingRetryDelay: 1000,
+    levelLoadingTimeOut: 15000,
+    levelLoadingMaxRetry: 6,
+    levelLoadingRetryDelay: 1000,
+    manifestLoadingTimeOut: 15000,
+    manifestLoadingMaxRetry: 4,
+    // 提高默认带宽估算并降低 ABR 灵敏度，避免开局选低码率后又频繁升降级（升降级切换会造成卡顿）
+    abrEwmaDefaultEstimate: 5_000_000,
+    abrBandWidthFactor: 0.85,
+    abrBandWidthUpFactor: 0.9,
+    abrEwmaFastLive: 4,
+    abrEwmaSlowLive: 12
+  })
   hlsInstance.loadSource(finalUrl)
   hlsInstance.attachMedia(video)
   hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
@@ -843,7 +864,7 @@ function tryLoad(url,onFail){
     document.getElementById('v').onerror=function(){cleanup();if(onFail)onFail()};
     return;
   }
-  h=new Hls({debug:false});
+  h=new Hls({debug:false,maxBufferLength:60,maxMaxBufferLength:120,maxBufferSize:125829120,backBufferLength:30,fragLoadingTimeOut:30000,fragLoadingMaxRetry:6,fragLoadingRetryDelay:1000,levelLoadingTimeOut:15000,levelLoadingMaxRetry:6,manifestLoadingTimeOut:15000,abrEwmaDefaultEstimate:5000000,abrBandWidthFactor:0.85,abrBandWidthUpFactor:0.9});
   h.loadSource(url);
   h.attachMedia(document.getElementById('v'));
   h.on(Hls.Events.MANIFEST_PARSED,function(){

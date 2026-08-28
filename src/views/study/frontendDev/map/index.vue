@@ -28,7 +28,7 @@
     <!-- 分类切换 -->
     <nav v-if="!notFound" class="cat-tabs">
       <router-link
-        v-for="c in CATEGORIES"
+        v-for="c in sortedCategories"
         :key="c.id"
         :to="`/study/frontend-dev/map/${c.id}`"
         class="cat-tab"
@@ -157,6 +157,11 @@ const store = useStore()
 const catId = computed(() => route.params.cat)
 const cat = computed(() => CATEGORIES.find(c => c.id === catId.value))
 const notFound = computed(() => !cat.value)
+
+// 分类切换按常用度排序（order 越小越靠前）
+const sortedCategories = computed(() =>
+  [...CATEGORIES].sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
+)
 
 const nodes = ref([])
 const loading = ref(false)

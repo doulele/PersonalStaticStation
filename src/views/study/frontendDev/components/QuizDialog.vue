@@ -280,6 +280,8 @@ watch(() => props.visible, (v) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
   width: 100%;
 
   &.result { align-items: center; }
@@ -292,6 +294,18 @@ watch(() => props.visible, (v) => {
   .passed-tip { color: #16a34a; }
   .fail-tip { color: #dc2626; }
 }
+
+@media (max-width: 768px) {
+  .quiz-body { max-height: 72vh; }
+  .quiz-item { padding: 12px; }
+  .quiz-footer { flex-direction: column; align-items: stretch; }
+  .quiz-footer .el-button { margin-left: 0 !important; }
+  .result-text { font-size: 13px; }
+}
+
+@media (max-width: 480px) {
+  .quiz-footer .el-button { width: 100%; }
+}
 </style>
 
 <style lang="scss">
@@ -301,5 +315,12 @@ html.dark-mode .quiz-dialog {
   .opt-item { background: #232338; }
   .explain-text { color: #94a3b8; }
   .result-text { color: #e2dee9; }
+}
+
+/* 随堂测验弹窗：移动端自适应宽度 */
+@media (max-width: 768px) {
+  html .quiz-dialog {
+    width: 94% !important;
+  }
 }
 </style>

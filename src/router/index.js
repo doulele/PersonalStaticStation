@@ -246,7 +246,7 @@ const routes = [
       {
         path: 'study/frontend-dev/skills',
         component: () => import('@/views/study/frontendDev/skills/index.vue'),
-        meta: { title: '技能雷达', icon: 'TrendCharts', requiresAuth: true }
+        meta: { title: '技能全景', icon: 'TrendCharts', requiresAuth: true }
       },
       {
         path: 'study/frontend-dev/profile',

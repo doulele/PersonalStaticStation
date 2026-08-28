@@ -718,6 +718,15 @@
 }
 
 @media (max-width: 768px) {
+  .iv-page { padding: 16px 12px 48px; }
+
+  .iv-tabs {
+    .iv-tab { flex: 1; text-align: center; padding: 8px 10px; font-size: 13px; }
+  }
+
+  .config-block { padding: 14px 16px; }
+  .cat-chips .cat-chip { padding: 4px 10px; font-size: 12px; }
+
   .iv-exam-body {
     grid-template-columns: 1fr;
 
@@ -727,8 +736,23 @@
 
       .nav-grid { grid-template-columns: repeat(8, 1fr); }
     }
+
+    .exam-question { padding: 16px; }
   }
 
   .report-grid { grid-template-columns: 1fr; }
   .scope-grid { grid-template-columns: 1fr; }
+  .report-actions { flex-wrap: wrap; }
+  .history-item { padding: 12px 14px; gap: 12px; }
+  .hd-answer { padding-left: 0; }
+}
+
+@media (max-width: 480px) {
+  .iv-tabs .iv-tab { padding: 8px 4px; font-size: 12px; }
+  .scope-card { padding: 14px 10px; }
+  .report-hero { padding: 20px 14px; }
+  .report-score { font-size: 42px; }
+  .nav-grid { grid-template-columns: repeat(6, 1fr) !important; }
+  .report-card { padding: 14px; }
+  .rw-item { padding: 12px; }
 }

@@ -68,7 +68,8 @@ onMounted(load)
 <style lang="scss" scoped>
 .fav-page {
   padding: 32px 24px 60px;
-  max-width: 860px;
+  max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
 }
 
@@ -108,6 +109,16 @@ onMounted(load)
 
 .fav-list {
   min-height: 300px;
+}
+
+@media (max-width: 768px) {
+  .fav-page { padding: 16px 12px 40px; }
+  .page-top { gap: 10px; margin-bottom: 16px; }
+  .page-title { font-size: 20px; }
+}
+
+@media (max-width: 480px) {
+  .fav-page { padding: 12px 8px 32px; }
 }
 </style>
 
