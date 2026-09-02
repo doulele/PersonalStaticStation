@@ -400,6 +400,20 @@ $radius-lg: 20px;
   font-weight: 600;
   color: #334155;
 }
+// AI 模式消耗 Token 提示
+.ai-cost-tip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: -2px 0 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #a855f7;
+  background: #faf5ff;
+  border: 1px dashed #d8b4fe;
+  border-radius: 6px;
+  padding: 5px 10px;
+}
 .parse-mode-pills {
   display: inline-flex;
   background: #f1f5f9;
@@ -1314,6 +1328,11 @@ html.dark-mode .win-query-panel {
   // 解析模式 pills
   .parse-mode-pills { background: var(--surface-bg); }
   .parse-pill.active { background: var(--bg-white); color: var(--heading-color); }
+  .ai-cost-tip {
+    background: rgba(168, 85, 247, 0.1);
+    border-color: rgba(168, 85, 247, 0.3);
+    color: #c4b5fd;
+  }
 
   // OCR 结果卡片
   .ocr-result-card {

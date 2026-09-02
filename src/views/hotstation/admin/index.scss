@@ -1,0 +1,360 @@
+/* ==================== 信息策展后台管理 ==================== */
+
+.hs-admin {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 20px 60px;
+  color: var(--heading-color);
+  font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  min-height: calc(100vh - 120px);
+}
+
+/* ---------- Hero ---------- */
+.adm-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  padding: 30px 32px;
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, var(--surface-bg) 0%, var(--el-bg-color-page) 100%);
+  border: 1px solid var(--surface-border);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -60px;
+    right: -40px;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: var(--gradient-accent);
+    opacity: 0.12;
+    filter: blur(40px);
+    pointer-events: none;
+  }
+}
+
+.adm-hero-text {
+  position: relative;
+  z-index: 1;
+}
+
+.adm-title {
+  margin: 0 0 8px;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  background: var(--gradient-accent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.adm-sub {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted-color);
+}
+
+.adm-back-btn {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-bg);
+  color: var(--muted-color);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+  &:hover {
+    border-color: var(--nav-active-color);
+    color: var(--nav-active-color);
+    background: var(--toggle-hover-bg);
+    transform: translateY(-1px);
+  }
+}
+
+/* ---------- 自定义标签页 ---------- */
+.adm-tabs {
+  margin-bottom: 20px;
+}
+
+.adm-tab-list {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  background: var(--toggle-bg);
+  border: 1px solid var(--toggle-border);
+  border-radius: 999px;
+}
+
+.adm-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: var(--muted-color);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    color: var(--heading-color);
+  }
+
+  &.active {
+    background: var(--gradient-accent);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.25);
+  }
+}
+
+/* ---------- 面板 ---------- */
+.adm-panel {
+  background: var(--surface-bg);
+  border: 1px solid var(--surface-border);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: var(--shadow-card);
+}
+
+.adm-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.adm-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border: none;
+  border-radius: 10px;
+  background: var(--gradient-accent);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s;
+
+  &:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+}
+
+.adm-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border: 1px solid var(--surface-border);
+  border-radius: 10px;
+  background: var(--el-bg-color-page);
+  color: var(--muted-color);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: var(--nav-active-color);
+    color: var(--nav-active-color);
+    background: var(--toggle-hover-bg);
+  }
+}
+
+.adm-summary {
+  font-size: 13px;
+  color: var(--muted-color);
+}
+
+/* ---------- 表格美化 ---------- */
+.adm-table {
+  --el-table-border-color: var(--surface-border);
+  --el-table-row-hover-bg-color: var(--toggle-hover-bg);
+  --el-table-header-bg-color: var(--el-bg-color-page);
+  --el-table-header-text-color: var(--heading-color);
+  --el-table-text-color: var(--muted-color);
+  --el-table-bg-color: transparent;
+
+  border-radius: 12px;
+  overflow: hidden;
+
+  :deep(.el-table__header th.el-table__cell) {
+    font-weight: 600;
+    font-size: 13px;
+    background: var(--el-bg-color-page);
+    border-bottom: 1px solid var(--surface-border);
+  }
+
+  :deep(.el-table__row td.el-table__cell) {
+    font-size: 13px;
+    border-bottom: 1px solid var(--surface-border);
+  }
+
+  :deep(.el-table__inner-wrapper::before) {
+    display: none;
+  }
+
+  :deep(.el-tag) {
+    border-radius: 6px;
+  }
+}
+
+/* ---------- 操作按钮 ---------- */
+.adm-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-bg);
+  color: var(--muted-color);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: var(--nav-active-color);
+    color: var(--nav-active-color);
+    background: var(--toggle-hover-bg);
+  }
+}
+
+.adm-action-danger {
+  border-color: rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.06);
+
+  &:hover {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+  }
+}
+
+/* ---------- 空状态 ---------- */
+.adm-empty {
+  padding: 40px 0;
+  text-align: center;
+  color: var(--muted-color-light);
+  font-size: 14px;
+
+  .adm-empty-icon {
+    font-size: 40px;
+    margin-bottom: 10px;
+    opacity: 0.5;
+  }
+}
+
+/* ---------- 弹窗内容 ---------- */
+.wp-detail {
+  max-height: 70vh;
+  overflow: auto;
+
+  h3 {
+    margin: 0 0 16px;
+    font-size: 18px;
+    color: var(--heading-color);
+  }
+}
+
+.wp-section {
+  margin-bottom: 20px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.wp-sec-title {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: var(--heading-color);
+}
+
+.wp-node {
+  font-size: 13px;
+  line-height: 1.7;
+  padding: 6px 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.wp-node-time {
+  color: var(--muted-color-light);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.wp-node-src {
+  color: var(--nav-active-color);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.wp-detail ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--muted-color);
+}
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 768px) {
+  .hs-admin {
+    padding: 16px 12px 40px;
+  }
+
+  .adm-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 22px;
+  }
+
+  .adm-tab-list {
+    flex-wrap: wrap;
+    border-radius: 14px;
+  }
+
+  .adm-tab {
+    padding: 6px 14px;
+    font-size: 13px;
+  }
+
+  .adm-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .adm-toolbar button {
+    justify-content: center;
+  }
+}

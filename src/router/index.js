@@ -181,6 +181,27 @@ const routes = [
         component: () => import('@/views/lifeServices/recipeLab/index.vue'),
         meta: { title: '食验室 · 灵感灶', icon: 'Dish' }
       },
+      // ==================== 信息工作台 ====================
+      {
+        path: 'hotstation',
+        component: () => import('@/views/hotstation/index.vue'),
+        meta: { title: '信息工作台', icon: 'News' }
+      },
+      {
+        path: 'hotstation/curation',
+        component: () => import('@/views/hotstation/curation/index.vue'),
+        meta: { title: '信息策展与二创工作台', icon: 'News' }
+      },
+      {
+        path: 'hotstation/curation/event/:id',
+        component: () => import('@/views/hotstation/event/index.vue'),
+        meta: { title: '事件详情', icon: 'News' }
+      },
+      {
+        path: 'hotstation/curation/admin',
+        component: () => import('@/views/hotstation/admin/index.vue'),
+        meta: { title: '信息策展与二创工作台 · 管理', icon: 'News', requiresAuth: true }
+      },
       // ==================== 家庭/教育 ====================
       {
         path: 'familyEducation',

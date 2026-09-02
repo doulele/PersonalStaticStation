@@ -194,7 +194,9 @@ watch(mobileMenuOpen, (open) => {
   }
 })
 
-const iconMap = { DataLine, VideoCamera, Service, School, Reading }
+// News 图标在 @element-plus/icons-vue 中不存在，用 Reading 别名保持注册表中的 'News' 名称可用
+const News = Reading
+const iconMap = { DataLine, VideoCamera, Service, School, Reading, News }
 
 // 技能学习分类仅登录用户可见
 const navList = computed(() => [

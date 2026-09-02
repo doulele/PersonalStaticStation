@@ -236,7 +236,7 @@ import {
 import TicketDialog from '@/components/lottery/TicketDialog.vue'
 import { useLotteryData } from '@/composables/useLotteryData'
 import { aiRecommend } from '@/api/lottery'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const store = useStore()
 const isLoggedIn = computed(() => store.getters['auth/isLoggedIn'])
@@ -269,6 +269,7 @@ const recTabs = [
   { key: 'deepseek',  icon: '✨', label: 'AI 智能' },
 ]
 const activeRecTab = ref('global')
+const deepseekNotified = ref(false)
 const recLoading = ref(false)
 const recData = reactive({})
 const aiSummary = ref('')
@@ -282,7 +283,7 @@ const tabMeta = {
   headTail:   { bg: 'linear-gradient(135deg,#fdf2f8,#fce7f3)', iconBg: 'rgba(240,171,252,0.3)', icon: '🐉', label: '龙头凤尾方案', desc: '先锁定头尾数字 · 中间加权填充',       color: '#831843', descColor: '#ec4899', border: 'rgba(236,72,153,0.15)' },
   spanSum:    { bg: 'linear-gradient(135deg,#f0f9ff,#e0f2fe)', iconBg: 'rgba(125,211,252,0.3)', icon: '📏', label: '跨度+和值方案', desc: '约束在历史80%跨度/和值区间内生成',   color: '#0c4a6e', descColor: '#0ea5e9', border: 'rgba(14,165,233,0.15)' },
   chaseCold:  { bg: 'linear-gradient(135deg,#f5f5f4,#e7e5e4)', iconBg: 'rgba(168,162,158,0.3)', icon: '❄️', label: '遗漏追冷方案', desc: '权重偏向长期未出的冷号 · 博冷门反弹',   color: '#44403c', descColor: '#78716c', border: 'rgba(120,113,108,0.15)' },
-  deepseek:   { bg: 'linear-gradient(135deg,#fdf4ff,#faf5ff)', iconBg: 'rgba(216,180,254,0.3)', icon: '✨', label: 'DeepSeek 智能选号', desc: '大模型结合历史走势深度分析 · 生成推荐号码', color: '#701a75', descColor: '#a855f7', border: 'rgba(168,85,247,0.2)' },
+  deepseek:   { bg: 'linear-gradient(135deg,#fdf4ff,#faf5ff)', iconBg: 'rgba(216,180,254,0.3)', icon: '✨', label: 'DeepSeek 智能选号', desc: '大模型结合历史走势深度分析 · 生成推荐号码（消耗 Token）', color: '#701a75', descColor: '#a855f7', border: 'rgba(168,85,247,0.2)' },
 }
 const curRecInfo = computed(() => tabMeta[activeRecTab.value] || tabMeta.global)
 
@@ -451,8 +452,20 @@ function genBacks(bw) {
   return fb
 }
 
-function switchRecTab(key) {
+async function switchRecTab(key) {
   if (key === 'deepseek' && !isLoggedIn.value) return
+  if (key === 'deepseek' && !deepseekNotified.value) {
+    try {
+      await ElMessageBox.confirm(
+        'DeepSeek AI 选号将调用大模型综合分析历史走势并生成多组方案，消耗 Token 配额，是否继续？',
+        'AI 选号 · 消耗 Token',
+        { type: 'warning', confirmButtonText: '继续', cancelButtonText: '取消' }
+      )
+      deepseekNotified.value = true
+    } catch {
+      return
+    }
+  }
   activeRecTab.value = key
   if (!recData[key] || recData[key].length === 0) doGenerate(key)
 }

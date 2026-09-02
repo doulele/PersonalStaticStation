@@ -34,7 +34,7 @@
               AI 识别
               <el-icon v-if="aiRequireLogin && !isLoggedIn" :size="12" class="ir-lock-inline"><Lock /></el-icon>
             </span>
-            <span class="ir-mode-card-desc">DeepSeek 视觉，更精准</span>
+            <span class="ir-mode-card-desc">DeepSeek 视觉 · 消耗 Token</span>
           </div>
           <el-icon v-if="mode === 'ai'" color="var(--el-color-primary)" :size="18"><CircleCheckFilled /></el-icon>
         </div>
@@ -119,6 +119,8 @@ import { Camera, Lock, Loading, CircleCheckFilled, UploadFilled, Refresh, Docume
 import { ElMessage } from 'element-plus'
 import { createDupChecker } from '@/composables/usePosition.js'
 
+let aiCostTipShown = false
+
 const props = defineProps({
   apiEndpoint: { type: String, default: '/staticTool/api/ocr/parse-trade-records' },
   ocrEnabled: { type: Boolean, default: true },
@@ -191,6 +193,10 @@ function switchMode(m) {
   if (loading.value) return
   if (m === 'ai' && props.aiRequireLogin && !isLoggedIn.value) return
   mode.value = m
+  if (m === 'ai' && !aiCostTipShown) {
+    aiCostTipShown = true
+    ElMessage.info('AI 识别将调用 DeepSeek 视觉模型识别记录，消耗 Token', { duration: 3500 })
+  }
   // 如果已上传过图片，切换模式后重新识别
   if (previewUrl.value && attempted.value) {
     triggerUpload()

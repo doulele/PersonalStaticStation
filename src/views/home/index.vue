@@ -98,6 +98,9 @@ const iconMap = {
   Monitor, Reading
 }
 
+// News 图标在 @element-plus/icons-vue 中不存在，用 Reading 别名保持注册表中的 'News' 名称可用
+const News = Reading
+
 function getIcon(name) {
   return iconMap[name] || DataLine
 }

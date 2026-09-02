@@ -109,8 +109,10 @@ export async function apiRequest(endpoint, options = {}) {
   const url = `${API_PREFIX}${endpoint}`
   const token = getAuthToken()
 
+  // FormData 由浏览器自动生成 Content-Type（含 boundary），不能手动覆盖
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData
   const headers = {
-    'Content-Type': 'application/json',
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...options.headers
   }
 
@@ -207,12 +209,13 @@ export function get(endpoint, params = {}, options = {}) {
 }
 
 /**
- * POST 请求
+ * POST 请求（body 为 FormData 时原样传递，不 JSON 序列化）
  */
 export function post(endpoint, body = {}, options = {}) {
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData
   return apiRequest(endpoint, {
     method: 'POST',
-    body: JSON.stringify(body),
+    body: isFormData ? body : JSON.stringify(body),
     ...options
   })
 }

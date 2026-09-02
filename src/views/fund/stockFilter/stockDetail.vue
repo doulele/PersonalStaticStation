@@ -674,6 +674,26 @@
         </el-card>
       </div>
 
+      <!-- 技术指标加载失败/数据不足兜底（K线接口慢或超时时展示，可手动重试） -->
+      <div class="section-order-tech" v-else-if="klineFailReason">
+        <el-card class="tech-panel" shadow="hover">
+          <template #header>
+            <span>技术指标分析</span>
+            <span class="tech-subtitle">基于近100日K线数据计算</span>
+          </template>
+          <div class="tech-fallback">
+            <el-icon class="tech-fallback-icon"><WarningFilled /></el-icon>
+            <div class="tech-fallback-text">
+              <template v-if="klineFailReason === 'insufficient'">K线数据不足（需至少20根K线），技术指标暂无法计算</template>
+              <template v-else>K线数据加载失败（上游接口响应慢或超时），技术指标暂无法计算</template>
+            </div>
+            <el-button type="warning" plain size="small" :loading="klineRetrying" @click="retryKline">
+              重新加载K线
+            </el-button>
+          </div>
+        </el-card>
+      </div>
+
       <!-- 第四行：操盘策略 -->
       <el-card class="strategy-panel section-order-4" shadow="hover">
         <template #header>
@@ -775,6 +795,8 @@ const loading = ref(false)
 const errorMsg = ref('')
 const result = ref(null)
 const positionData = ref(null) // 当前持仓数据
+const klineFailReason = ref('') // K线失败原因: '' | 'failed' | 'insufficient'，控制技术指标兜底展示
+const klineRetrying = ref(false) // 技术指标重试中
 let abortController = null
 
 // ==================== 数据获取（复用主页面逻辑） ====================
@@ -1507,7 +1529,15 @@ async function loadDetail() {
   try {
     const realtime = await fetchRealTime(stockCode.value)
     let klines = []
-    try { klines = await fetchKline(stockCode.value, 100) } catch (e) { /* 容错 */ }
+    try {
+      klines = await fetchKline(stockCode.value, 100)
+      // K线成功且足够则清除失败标记，否则标记"数据不足"（技术指标需至少20根）
+      klineFailReason.value = klines && klines.length >= 20 ? '' : 'insufficient'
+    } catch (e) {
+      // 上游K线接口偶发慢响应/超时：记录失败原因，页面主体正常展示，技术指标面板显示兜底提示
+      klineFailReason.value = 'failed'
+      console.warn('[stockDetail] K线获取失败，技术指标暂不展示:', e?.message || e)
+    }
     const factors = extractFactors(realtime, klines)
     const { total: score, marketScore, turnoverScore, volScore, gainScore, ampScore, volaBonus, consecutiveBonus, moneyBonus } = computeScores(factors)
     // 5日/10日涨幅使用接口值（与东财一致），K线值作为兜底
@@ -1785,6 +1815,21 @@ async function loadDetail() {
     errorMsg.value = err.message || '获取数据失败'
   } finally {
     loading.value = false
+  }
+}
+
+// 技术指标兜底：重新拉取K线（后端已加缓存+Referer+放宽超时，重试通常可恢复）
+async function retryKline() {
+  if (!stockCode.value || klineRetrying.value) return
+  klineRetrying.value = true
+  klineFailReason.value = ''
+  try {
+    await loadDetail()
+  } catch (e) {
+    klineFailReason.value = 'failed'
+    console.warn('[stockDetail] 技术指标重试失败:', e?.message || e)
+  } finally {
+    klineRetrying.value = false
   }
 }
 

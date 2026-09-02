@@ -136,6 +136,11 @@
           </span>
         </span>
       </div>
+      <!-- AI 模式消耗提示 -->
+      <div v-if="useAIAssist" class="ai-cost-tip">
+        <el-icon :size="13"><InfoFilled /></el-icon>
+        <span>AI 解析将调用 DeepSeek 大模型识别号码，消耗 Token</span>
+      </div>
       <div class="camera-actions">
         <button class="camera-btn" @click="triggerCamera">
           <el-icon><Camera /></el-icon>

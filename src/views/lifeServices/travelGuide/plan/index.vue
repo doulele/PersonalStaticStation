@@ -149,7 +149,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useStore } from 'vuex'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { Select, MagicStick, ArrowLeft, MapLocation, Document, Lock } from '@element-plus/icons-vue'
 import MapView from './components/MapView.vue'
 import RoutePanel from './components/RoutePanel.vue'
@@ -285,6 +285,15 @@ async function handleBasicRecommend() {
 
 // AI 推荐
 async function handleAiRecommend() {
+  try {
+    await ElMessageBox.confirm(
+      'AI 智能推荐将调用 DeepSeek 大模型综合分析景点、美食与酒店，消耗 Token 配额，是否继续？',
+      'AI 推荐 · 消耗 Token',
+      { type: 'warning', confirmButtonText: '继续生成', cancelButtonText: '取消' }
+    )
+  } catch {
+    return
+  }
   try {
     store.commit('plan/SET_RECOMMEND_MODE', 'ai')
     await store.dispatch('plan/aiRecommend')

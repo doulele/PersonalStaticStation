@@ -41,6 +41,13 @@ export const TOOL_CATEGORIES = [
     desc: '宝宝哄睡、育儿工具与教育资源'
   },
   {
+    id: 'news',
+    name: '信息工作台',
+    icon: 'News',
+    path: '/hotstation',
+    desc: 'AI 驱动的信息策展与二次创作辅助'
+  },
+  {
     id: 'study',
     name: '技能学习',
     icon: 'Reading',
@@ -90,6 +97,20 @@ export const ALL_TOOLS = [
   // 注意：以下两个是详情页，不在首页热门工具展示，不参与点击统计
   // stock-detail: 妖股详情 (/fund/stock-detail)
   // dadao-detail: 大道七线股诊 (/fund/dadao-detail)
+
+  // ========== 信息策展与二创工作台 ==========
+  {
+    id: 'hotstation',
+    name: '信息策展与二创工作台',
+    desc: 'AI 信息策展与二创：热点追踪、事实核实、一键生成文章/脚本',
+    category: 'news',
+    path: '/hotstation/curation',
+    icon: 'News',
+    color: 'yellow'
+  },
+  // 注意：以下两个是子页面，不在首页热门工具展示
+  // hotstation-event: 事件详情 (/hotstation/curation/event/:id)
+  // hotstation-admin: 管理后台 (/hotstation/curation/admin)
 
   // ========== 影音图像 ==========
   {
