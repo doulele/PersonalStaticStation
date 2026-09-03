@@ -72,6 +72,7 @@
   :deep(.el-dialog__body) {
     padding: 0;
     overflow-y: auto;
+    overflow-x: hidden;
     max-height: calc(90vh - 70px);
   }
   :deep(.el-dialog__close) {
@@ -387,6 +388,7 @@
   .weather-hero {
     flex-wrap: wrap; padding: 14px 16px; gap: 12px;
   }
+  .weather-hero-info { min-width: 0; }
   .weather-hero-icon { font-size: 40px; }
   .weather-hero-temp { font-size: 36px; }
   .weather-hero-desc { font-size: 14px; }

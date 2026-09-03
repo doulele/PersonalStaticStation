@@ -39,6 +39,14 @@
         >
           {{ weatherLoading ? '查询中...' : '查询天气' }}
         </el-button>
+        <el-button
+          :loading="locating"
+          title="定位当前位置并查询当地天气"
+          @click="tryLocateUser"
+        >
+          <el-icon v-if="!locating" class="locate-btn-icon"><Location /></el-icon>
+          {{ locating ? '定位中...' : '定位' }}
+        </el-button>
       </div>
 
       <!-- 快捷城市 -->
@@ -53,6 +61,17 @@
         >
           {{ city }}
         </el-tag>
+      </div>
+
+      <!-- 定位状态提示 -->
+      <div v-if="locateBarText || detailAddress" class="locate-bar">
+        <div class="locate-bar-left">
+          <span v-if="detailAddress" class="locate-bar-addr">📍 {{ detailAddress }}</span>
+          <span v-if="locateBarText" class="locate-bar-text">{{ locateBarText }}</span>
+        </div>
+        <el-button link type="primary" size="small" @click="tryLocateUser">
+          重新定位
+        </el-button>
       </div>
     </div>
 
@@ -105,7 +124,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowLeft, Sunny } from '@element-plus/icons-vue'
+import { ArrowLeft, Location, Sunny } from '@element-plus/icons-vue'
 import WeatherPanel from '@/views/lifeServices/travelGuide/components/WeatherPanel.vue'
 import { cities } from './cities'
 
@@ -116,6 +135,8 @@ const weatherData = ref(null)
 const weatherLoading = ref(false)
 const weatherError = ref('')
 const locating = ref(false) // 定位中状态
+const locateBarText = ref('') // 定位状态提示文案
+const detailAddress = ref('') // 定位对应的详细地址（区县/街道级）
 
 // 热门城市快捷选择
 const hotCities = ['北京', '上海', '广州', '深圳', '杭州', '成都', '武汉', '西安', '重庆', '南京']
@@ -137,18 +158,13 @@ function onCityChange(val) {
   } else {
     weatherData.value = null
     weatherError.value = ''
+    locateBarText.value = ''
+    detailAddress.value = ''
   }
 }
 
-async function fetchCurrentWeather() {
-  if (!selectedCity.value) return
-
-  const city = cities.find(c => c.name === selectedCity.value)
-  if (!city) {
-    weatherError.value = '未找到该城市数据，请选择其他城市'
-    return
-  }
-
+// 按坐标查询天气（后端支持任意经纬度：和风源为网格级，高德源为区县级）
+async function doQuery(lat, lng, source = 'manual') {
   weatherLoading.value = true
   weatherError.value = ''
   weatherData.value = null
@@ -157,11 +173,17 @@ async function fetchCurrentWeather() {
     const res = await fetch(`${API_BASE}/plan-weather`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lat: city.lat, lng: city.lng })
+      body: JSON.stringify({ lat, lng })
     })
     const json = await res.json()
     if (json.success && json.data) {
       weatherData.value = json.data
+      // 定位模式下展示逆地理编码的详细地址（区县/街道级）
+      if (source === 'locate') {
+        detailAddress.value = json.data.locationText || json.data.district || ''
+      } else {
+        detailAddress.value = ''
+      }
     } else {
       weatherError.value = json.message || '天气数据获取失败，请稍后重试'
     }
@@ -171,6 +193,21 @@ async function fetchCurrentWeather() {
   } finally {
     weatherLoading.value = false
   }
+}
+
+// 手动选择城市查询（按城市中心坐标，退出定位模式）
+function fetchCurrentWeather() {
+  if (!selectedCity.value) return
+
+  const city = cities.find(c => c.name === selectedCity.value)
+  if (!city) {
+    weatherError.value = '未找到该城市数据，请选择其他城市'
+    return
+  }
+
+  locateBarText.value = ''
+  detailAddress.value = ''
+  doQuery(city.lat, city.lng, 'manual')
 }
 
 // Haversine 公式计算两点间距离（km）
@@ -275,7 +312,9 @@ function tryLocateUser() {
       const nearestCity = findNearestCity(latitude, longitude)
       locating.value = false
       selectedCity.value = nearestCity.name
-      fetchCurrentWeather()
+      locateBarText.value = `已定位到「${nearestCity.name}」附近，按精确坐标查询当地天气`
+      // 直接使用精确坐标查询（比城市中心点更准）
+      doQuery(latitude, longitude, 'locate')
     },
     (err) => {
       // 定位失败/被拒绝，打印错误并回退到 IP 定位
@@ -303,12 +342,18 @@ async function fallbackToIPOrDefault() {
   if (ipResult) {
     console.log('IP定位成功:', ipResult.lat, ipResult.lng, ipResult.city)
     const nearestCity = findNearestCity(ipResult.lat, ipResult.lng)
+    locating.value = false
     selectedCity.value = nearestCity.name
+    locateBarText.value = '浏览器定位不可用，已通过 IP 粗略定位（误差较大，可手动选择城市或重新定位）'
+    doQuery(ipResult.lat, ipResult.lng, 'locate')
   } else {
     console.warn('IP定位也失败了，使用默认城市北京')
+    locating.value = false
     selectedCity.value = '北京'
+    locateBarText.value = '无法获取您的位置，已显示默认城市天气，可手动选择城市或重试定位'
+    const beijing = cities.find(c => c.name === '北京')
+    doQuery(beijing.lat, beijing.lng, 'manual')
   }
-  fetchCurrentWeather()
 }
 
 onMounted(() => {
@@ -342,6 +387,13 @@ html.dark-mode .weather-page {
   .city-province { color: #64748b !important; }
   .hot-cities { border-top-color: #2d2d4a !important; }
   .hot-label { color: #94a3b8 !important; }
+
+  .locate-bar {
+    background: #1e1e3c !important;
+    border-color: #2d2d4a !important;
+  }
+  .locate-bar-addr { color: #e2dee9 !important; }
+  .locate-bar-text { color: #a5b4fc !important; }
 
   .loading-icon, .error-icon, .empty-icon { filter: brightness(0.8) !important; }
   .loading-text { color: #94a3b8 !important; }

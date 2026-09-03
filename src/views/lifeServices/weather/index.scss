@@ -1,7 +1,9 @@
 ﻿.weather-page {
+  width: 100%;
   padding: 28px 24px 40px;
   max-width: 900px;
   margin: 0 auto;
+  box-sizing: border-box;
   animation: fadeIn 0.4s ease-out;
 }
 
@@ -95,6 +97,41 @@
   &:hover { transform: scale(1.05); }
 }
 
+// 定位状态提示
+.locate-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 10px 14px;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 10px;
+}
+
+.locate-bar-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.locate-bar-addr {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.locate-bar-text {
+  font-size: 13px;
+  color: #4f46e5;
+}
+
+.locate-btn-icon {
+  margin-right: 4px;
+}
+
 // 天气内容
 .weather-content {
   min-height: 200px;
@@ -173,6 +210,8 @@
 @media (max-width: 768px) {
   .weather-page {
     padding: 20px 14px 32px;
+    // 移动端兜底：裁剪任何子元素横向溢出（与全局 body 收口配合）
+    overflow-x: hidden;
   }
 
   .page-title {
@@ -196,5 +235,14 @@
 
   .city-select {
     width: 100%;
+  }
+
+  // 定位提示条：长地址时按钮换行，避免挤压溢出
+  .locate-bar {
+    flex-wrap: wrap;
+  }
+
+  .locate-bar-left {
+    flex: 1 1 100%;
   }
 }

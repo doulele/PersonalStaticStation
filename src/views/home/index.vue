@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="home-page">
     <!-- Hero Section -->
     <section class="hero">
@@ -30,6 +30,37 @@
             <span class="stat-label">更新迭代</span>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- 今日新闻（加载中显示 News 呼吸灯，无数据时不展示） -->
+    <section
+      v-if="newsLoading || newsItems.length"
+      class="news-section"
+      @mouseenter="stopNewsTimer"
+      @mouseleave="startNewsTimer"
+    >
+      <div class="news-inner">
+        <div v-if="newsLoading" class="news-loading">
+          <span class="news-loading-text">News</span>
+        </div>
+        <template v-else>
+          <span class="news-tag" title="查看全部新闻" @click="goNewsList">最近新闻</span>
+          <div class="news-window">
+            <transition name="news-slide">
+              <div
+                :key="newsItems[newsIndex].id"
+                class="news-item"
+                :title="newsItems[newsIndex].verified_fact || newsItems[newsIndex].summary || ''"
+                @click="goNewsDetail(newsItems[newsIndex].id)"
+              >
+                <span class="news-title-line">{{ newsItems[newsIndex].title }}</span>
+                <span class="news-sep">·</span>
+                <span class="news-brief">{{ newsItems[newsIndex].verified_fact || newsItems[newsIndex].summary || '暂无摘要' }}</span>
+              </div>
+            </transition>
+          </div>
+        </template>
       </div>
     </section>
 
@@ -75,13 +106,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { ElMessageBox } from 'element-plus'
 import { ArrowRight, ArrowDown, DataLine, Present, Document, Service, Lock, Connection, Timer, Filter, TrendCharts, Headset, Picture, VideoPlay, MapLocation, Coin, Memo, Sunny, VideoCamera, Moon, School, MagicStick, FolderOpened, Dish, Flag, Monitor, Reading } from '@element-plus/icons-vue'
 import { ALL_TOOLS } from '@/config/toolsRegistry'
 import { fetchToolRanking, recordToolClick } from '@/api/stats'
+import { getEvents } from '@/api/hotstation'
 
 const router = useRouter()
 const store = useStore()
@@ -89,6 +121,51 @@ const store = useStore()
 const showCollapsed = ref(true)
 const ranking = ref([])
 const loading = ref(true)
+
+// ===== 今日新闻（逐条上滑 + 淡入淡出） =====
+const newsItems = ref([])
+const newsLoading = ref(true)
+const newsIndex = ref(0)
+let newsTimer = null
+
+function startNewsTimer() {
+  stopNewsTimer()
+  if (newsItems.value.length <= 1) return
+  newsTimer = setInterval(() => {
+    newsIndex.value = (newsIndex.value + 1) % newsItems.value.length
+  }, 4000)
+}
+
+function stopNewsTimer() {
+  if (newsTimer) {
+    clearInterval(newsTimer)
+    newsTimer = null
+  }
+}
+
+function goNewsDetail(id) {
+  router.push(`/hotstation/curation/event/${id}`)
+}
+
+function goNewsList() {
+  router.push('/hotstation/curation')
+}
+
+async function loadNews() {
+  // 只取前 8 条，减小响应体与前端处理开销；后端已按 last_updated DESC 排序
+  try {
+    const res = await getEvents({ page: 1, pageSize: 8 })
+    newsItems.value = ((res.data && res.data.list) || [])
+      .filter(e => e.status !== 'archived')
+      .slice(0, 8)
+  } catch (e) {
+    console.warn('首页加载今日新闻失败:', e)
+  } finally {
+    newsLoading.value = false
+    newsIndex.value = 0
+    startNewsTimer()
+  }
+}
 
 // 图标名称到组件的映射
 const iconMap = {
@@ -190,6 +267,8 @@ onMounted(async () => {
   checkMobile()
   window.addEventListener('resize', checkMobile)
 
+  loadNews()
+
   try {
     ranking.value = await fetchToolRanking()
   } catch (e) {
@@ -197,6 +276,10 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
+})
+
+onBeforeUnmount(() => {
+  stopNewsTimer()
 })
 </script>
 
