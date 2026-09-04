@@ -52,6 +52,13 @@
   box-shadow: var(--hsd-shadow);
 }
 .d-card-title { font-size: 15px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; }
+.d-card-title.collapsible { cursor: pointer; user-select: none; }
+.collapse-arrow {
+  margin-left: auto;
+  color: var(--hsd-text-3);
+  transition: transform 0.25s;
+  &.rotated { transform: rotate(180deg); }
+}
 .d-card-tip { font-size: 12px; color: var(--hsd-text-3); font-weight: 400; margin-left: 8px; }
 .radar-chart { height: 320px; }
 .timeline-chart { height: 300px; }

@@ -30,37 +30,66 @@
       <!-- 雷达图 + 摘要 -->
       <div class="d-grid-2">
         <div class="d-card radar-card">
-          <div class="d-card-title">事件雷达图</div>
-          <div ref="radarRef" class="radar-chart"></div>
+          <div class="d-card-title collapsible" @click="toggleRadar">
+            事件雷达图
+            <el-icon class="collapse-arrow" :class="{ rotated: showRadar }"><ArrowDown /></el-icon>
+          </div>
+          <div v-if="showRadar" ref="radarRef" class="radar-chart"></div>
         </div>
         <div class="d-card summary-card">
-          <div class="d-card-title">核心事实</div>
-          <p class="d-summary">{{ event.verified_fact || event.summary || '暂无摘要' }}</p>
-          <div class="d-nutrition">
-            <div class="nut-row">
-              <span class="nut-label"><el-icon><DataAnalysis /></el-icon>事实密度</span>
-              <el-progress :percentage="event.nutrition.factDensity" :show-text="false" :stroke-width="8" />
-              <span class="nut-val">{{ event.nutrition.factDensity }}%</span>
-            </div>
-            <div class="nut-row">
-              <span class="nut-label"><el-icon><ChatDotRound /></el-icon>观点占比</span>
-              <el-progress :percentage="event.nutrition.opinionRatio" :show-text="false" :stroke-width="8" type="line" />
-              <span class="nut-val">{{ event.nutrition.opinionRatio }}%</span>
-            </div>
-            <div class="nut-inline">
-              <span class="nut-chip"><el-icon><RefreshRight /></el-icon>重复度 {{ event.nutrition.repeat }}</span>
-              <span class="nut-chip"><el-icon><ScaleToOriginal /></el-icon>立场 {{ event.nutrition.lean }}</span>
-              <span class="nut-chip"><el-icon><TrendCharts /></el-icon>热度 {{ event.heat_score }}</span>
-            </div>
+          <div class="d-card-title collapsible" @click="showSummary = !showSummary">
+            核心事实
+            <el-icon class="collapse-arrow" :class="{ rotated: showSummary }"><ArrowDown /></el-icon>
           </div>
+          <template v-if="showSummary">
+            <p class="d-summary">{{ event.verified_fact || event.summary || '暂无摘要' }}</p>
+            <div class="d-nutrition">
+              <div class="nut-row">
+                <span class="nut-label"><el-icon><DataAnalysis /></el-icon>事实密度</span>
+                <el-progress :percentage="event.nutrition.factDensity" :show-text="false" :stroke-width="8" />
+                <span class="nut-val">{{ event.nutrition.factDensity }}%</span>
+              </div>
+              <div class="nut-row">
+                <span class="nut-label"><el-icon><ChatDotRound /></el-icon>观点占比</span>
+                <el-progress :percentage="event.nutrition.opinionRatio" :show-text="false" :stroke-width="8" type="line" />
+                <span class="nut-val">{{ event.nutrition.opinionRatio }}%</span>
+              </div>
+              <div class="nut-inline">
+                <span class="nut-chip"><el-icon><RefreshRight /></el-icon>重复度 {{ event.nutrition.repeat }}</span>
+                <span class="nut-chip"><el-icon><ScaleToOriginal /></el-icon>立场 {{ event.nutrition.lean }}</span>
+                <span class="nut-chip"><el-icon><TrendCharts /></el-icon>热度 {{ event.heat_score }}</span>
+              </div>
+            </div>
+          </template>
         </div>
       </div>
-
-      <!-- 时间线河流图 -->
+      
+      <!-- 观点 -->
       <div class="d-card">
-        <div class="d-card-title">时间线河流图 <span class="d-card-tip">主航道为官方/主流事实节点，支流为讨论与辟谣</span></div>
-        <div ref="timelineRef" class="timeline-chart"></div>
-        <div v-if="!event.timeline.length" class="no-timeline">暂无时间线节点，等待新报道入库</div>
+        <div class="d-card-title collapsible" @click="showOpinions = !showOpinions">
+          <el-icon style="margin-right: 4px"><Promotion /></el-icon>各方声音（{{ event.opinions.length }}）
+          <el-icon class="collapse-arrow" :class="{ rotated: showOpinions }"><ArrowDown /></el-icon>
+        </div>
+        <template v-if="showOpinions">
+          <el-radio-group v-model="stanceFilter" size="small" class="stance-filter">
+            <el-radio-button value="all">全部</el-radio-button>
+            <el-radio-button value="support">支持派</el-radio-button>
+            <el-radio-button value="oppose">反对派</el-radio-button>
+            <el-radio-button value="neutral">中立派</el-radio-button>
+          </el-radio-group>
+          <div v-for="(g, gi) in groupedOpinions" :key="gi" class="stance-group">
+            <div class="stance-head">{{ STANCE_NAMES[g.stance] }}</div>
+            <div v-for="(op, oi) in g.items" :key="oi" class="opinion-item">
+              <span class="op-source">[{{ op.source || '未知来源' }}]</span>
+              <span class="op-content">{{ op.content }}</span>
+            </div>
+          </div>
+          <div v-if="!groupedOpinions.length" class="no-opinion">暂无观点</div>
+          <div v-if="event.emotions.length" class="emotions-block">
+            <div class="stance-head"><el-icon style="margin-right: 4px"><ChatLineSquare /></el-icon>网民情绪</div>
+            <div v-for="(e, i) in event.emotions" :key="i" class="emotion-item">{{ e }}</div>
+          </div>
+        </template>
       </div>
 
       <!-- 报道全文 -->
@@ -78,35 +107,24 @@
         </div>
       </div>
 
-      <!-- 观点 -->
+      <!-- 时间线河流图 -->
       <div class="d-card">
-        <div class="d-card-title"><el-icon style="margin-right: 4px"><Promotion /></el-icon>各方声音（{{ event.opinions.length }}）</div>
-        <el-radio-group v-model="stanceFilter" size="small" class="stance-filter">
-          <el-radio-button value="all">全部</el-radio-button>
-          <el-radio-button value="support">支持派</el-radio-button>
-          <el-radio-button value="oppose">反对派</el-radio-button>
-          <el-radio-button value="neutral">中立派</el-radio-button>
-        </el-radio-group>
-        <div v-for="(g, gi) in groupedOpinions" :key="gi" class="stance-group">
-          <div class="stance-head">{{ STANCE_NAMES[g.stance] }}</div>
-          <div v-for="(op, oi) in g.items" :key="oi" class="opinion-item">
-            <span class="op-source">[{{ op.source || '未知来源' }}]</span>
-            <span class="op-content">{{ op.content }}</span>
-          </div>
+        <div class="d-card-title collapsible" @click="toggleTimeline">
+          时间线河流图 <span class="d-card-tip">主航道为官方/主流事实节点，支流为讨论与辟谣</span>
+          <el-icon class="collapse-arrow" :class="{ rotated: showTimeline }"><ArrowDown /></el-icon>
         </div>
-        <div v-if="!groupedOpinions.length" class="no-opinion">暂无观点</div>
-        <div v-if="event.emotions.length" class="emotions-block">
-          <div class="stance-head"><el-icon style="margin-right: 4px"><ChatLineSquare /></el-icon>网民情绪</div>
-          <div v-for="(e, i) in event.emotions" :key="i" class="emotion-item">{{ e }}</div>
-        </div>
+        <div v-if="showTimeline" ref="timelineRef" class="timeline-chart"></div>
+        <div v-if="showTimeline && !event.timeline.length" class="no-timeline">暂无时间线节点，等待新报道入库</div>
       </div>
 
       <!-- 白皮书 -->
       <div v-if="event.whitepaper" class="d-card wp-card">
-        <div class="d-card-title"><el-icon style="margin-right: 4px"><DocumentChecked /></el-icon>尘埃落定 · 白皮书
+        <div class="d-card-title collapsible" @click="showWp = !showWp">
+          <el-icon style="margin-right: 4px"><DocumentChecked /></el-icon>尘埃落定 · 白皮书
           <el-tag size="small" :type="wpStatusType" style="margin-left: 8px">{{ wpStatusName }}</el-tag>
+          <el-icon class="collapse-arrow" :class="{ rotated: showWp }"><ArrowDown /></el-icon>
         </div>
-        <div class="wp-stats">
+        <div v-if="showWp" class="wp-stats">
           <span>共 {{ wp.timeline?.length || 0 }} 个时间节点</span>
           <span>核实事实 {{ wp.verifiedFacts?.length || 0 }} 条</span>
           <span>立场汇总 {{ wp.finalStances?.length || 0 }} 条</span>
@@ -159,6 +177,11 @@ const timelineRef = ref(null)
 const radarChart = ref(null)
 const timelineChart = ref(null)
 const stanceFilter = ref('all')
+const showSummary = ref(false)
+const showRadar = ref(false)
+const showTimeline = ref(false)
+const showOpinions = ref(false)
+const showWp = ref(false)
 const showGens = ref(false)
 const generations = ref([])
 const drawerVisible = ref(false)
@@ -221,6 +244,16 @@ function initRadar() {
       areaStyle: { color: isDark ? 'rgba(167, 139, 250, 0.12)' : 'rgba(99, 102, 241, 0.08)' }
     }]
   })
+}
+
+function toggleRadar() {
+  showRadar.value = !showRadar.value
+  if (showRadar.value) nextTick(() => initRadar())
+}
+
+function toggleTimeline() {
+  showTimeline.value = !showTimeline.value
+  if (showTimeline.value) nextTick(() => initTimeline())
 }
 
 function initTimeline() {

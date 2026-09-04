@@ -280,11 +280,53 @@ onMounted(() => {
 html.dark-mode .quiz-page {
   .quiz-title { color: #e2dee9; }
   .back-btn { color: #94a3b8; &:hover { background: #2d2d4a; color: #e2dee9; } }
+  // 筛选栏
+  .filter-bar { background: #1e1e2e; border-color: #2d2d4a; }
+  .filter-item.el-select { --el-select-bg-color: #232338; }
+  .filter-item .el-select__wrapper { background: #232338; box-shadow: 0 0 0 1px #2d2d4a inset; }
+  .filter-item .el-select__placeholder { color: #6b7280; }
+  .filter-item .el-select__wrapper.is-focused { box-shadow: 0 0 0 1px #6366f1 inset !important; }
+  .filter-switch { color: #94a3b8; }
+  .filter-switch .el-switch__core { border-color: #3f3f5a; }
+  // 进度条
+  .quiz-progress span { color: #94a3b8; }
+  .progress-track { background: #2d2d4a; }
+  // 题目卡
   .question-card { background: #1e1e2e; border-color: #2d2d4a; }
   .q-text { color: #e2dee9; }
   .q-option { background: #232338; border-color: #2d2d4a; color: #cbd5e1; }
   .q-option .opt-letter { background: #2d2d4a; color: #94a3b8; }
+  .q-option.selected { background: #312e81; border-color: #6366f1; }
+  .q-option.correct { background: #14532d; border-color: #22c55e; color: #e2dee9; }
+  .q-option.incorrect { background: #4c1d24; border-color: #ef4444; color: #e2dee9; }
+  .q-explain.right { background: rgba(34, 197, 94, 0.12); border-left-color: #22c55e; }
+  .q-explain.wrong { background: rgba(239, 68, 68, 0.12); border-left-color: #ef4444; }
+  .explain-head { color: #e2dee9; }
   .explain-text { color: #94a3b8; }
-  .quiz-done { color: #e2dee9; }
+  .q-ref { color: #a5b4fc; }
+  .quiz-done { background: #1e1e2e; border-color: #2d2d4a; color: #e2dee9; }
+  .quiz-done h2 { color: #e2dee9; }
+  .quiz-done p { color: #94a3b8; }
+}
+
+/* Element Plus 弹层（下拉菜单）深色适配 */
+html.dark-mode {
+  .el-select__popper.el-popper,
+  .el-select-dropdown {
+    background: #1e1e2e !important;
+    border-color: #2d2d4a !important;
+  }
+  .el-select-dropdown__item {
+    color: #cbd5e1 !important;
+    &:hover { background: #2d2d4a !important; }
+    &.is-hovering { background: #2d2d4a !important; }
+  }
+  .el-select-dropdown__item.is-selected {
+    color: #a5b4fc !important;
+    font-weight: 600;
+  }
+  .el-empty__description p { color: #94a3b8; }
+  .el-loading-mask { background-color: rgba(30, 30, 46, 0.85) !important; }
+  .el-loading-spinner .circular { stroke: #a5b4fc; }
 }
 </style>

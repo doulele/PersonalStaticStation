@@ -6,47 +6,15 @@
         <h1 class="hs-title">信息策展与二创工作台</h1>
         <p class="hs-subtitle">AI 驱动的信息策展与二次创作 · 减少上网时间，不遗漏重大事件</p>
       </div>
-      <button v-if="isAdmin" class="hs-admin-btn" @click="router.push('/hotstation/curation/admin')">
-        <el-icon :size="16"><Setting /></el-icon>
-        <span>后台管理</span>
-      </button>
-    </div>
-
-    <!-- 输入区 -->
-    <div class="hs-input-panel">
-      <div class="hs-input-row">
-        <div class="hs-search-box">
-          <el-icon class="hs-link-icon"><Link /></el-icon>
-          <input
-            v-model="linkUrl"
-            class="hs-link-input"
-            placeholder="粘贴公开链接（B站 / YouTube / 知乎 / 公众号 / 微博 / 抖音 / 小红书）"
-            @keyup.enter="doParseLink"
-          />
-          <button class="hs-parse-btn" :disabled="parsing" @click="doParseLink">
-            <el-icon v-if="parsing" class="is-loading"><Loading /></el-icon>
-            <span>解析</span>
-          </button>
-        </div>
-        <el-upload
-          class="hs-upload"
-          :show-file-list="false"
-          :auto-upload="false"
-          accept="image/*,audio/*"
-          :on-change="handleFileChange"
-        >
-          <div class="hs-upload-btn">
-            <el-icon><Paperclip /></el-icon>
-            <span>图片/语音投喂</span>
-          </div>
-        </el-upload>
-      </div>
-      <div class="hs-input-hint">
-        <span v-if="linkUrl && linkCapability" :class="`cap-badge cap-${linkCapability.level}`">
-          {{ linkCapability.icon }} {{ linkCapability.name }} · {{ linkCapability.desc }}
-        </span>
-        <span v-else>视频深度解析仅支持 B站/YouTube；抖音/小红书仅标题/简介</span>
-        <span v-if="!isAdmin" class="guest-tip">未登录：仅可查看已缓存解析结果</span>
+      <div class="hs-hero-actions">
+        <button class="hs-admin-btn" :disabled="parsing" @click="openDeepAnalyze">
+          <el-icon :size="16"><DataAnalysis /></el-icon>
+          <span>深度解析</span>
+        </button>
+        <button v-if="isAdmin" class="hs-admin-btn" @click="router.push('/hotstation/curation/admin')">
+          <el-icon :size="16"><Setting /></el-icon>
+          <span>后台管理</span>
+        </button>
       </div>
     </div>
 
@@ -151,6 +119,47 @@
       </aside>
     </div>
 
+    <!-- 链接深度解析弹窗 -->
+    <el-dialog v-model="analyzeDialogVisible" title="深度解析" width="min(560px, 92vw)" destroy-on-close class="hs-parse-dialog">
+      <div class="hs-input-panel hs-input-panel--plain">
+        <div class="hs-input-row">
+          <div class="hs-search-box">
+            <el-icon class="hs-link-icon"><Link /></el-icon>
+            <input
+              ref="linkInputRef"
+              v-model="linkUrl"
+              class="hs-link-input"
+              placeholder="粘贴公开链接（B站 / YouTube / 知乎 / 公众号 / 微博 / 抖音 / 小红书）"
+              @keyup.enter="doParseLink"
+            />
+            <button class="hs-parse-btn" :disabled="parsing" @click="doParseLink">
+              <el-icon v-if="parsing" class="is-loading"><Loading /></el-icon>
+              <span>解析</span>
+            </button>
+          </div>
+          <el-upload
+            class="hs-upload"
+            :show-file-list="false"
+            :auto-upload="false"
+            accept="image/*,audio/*"
+            :on-change="handleFileChange"
+          >
+            <div class="hs-upload-btn">
+              <el-icon><Paperclip /></el-icon>
+              <span>图片/语音投喂</span>
+            </div>
+          </el-upload>
+        </div>
+        <div class="hs-input-hint">
+          <span v-if="linkUrl && linkCapability" :class="`cap-badge cap-${linkCapability.level}`">
+            {{ linkCapability.icon }} {{ linkCapability.name }} · {{ linkCapability.desc }}
+          </span>
+          <span v-else>视频深度解析仅支持 B站/YouTube；抖音/小红书仅标题/简介</span>
+          <span v-if="!isAdmin" class="guest-tip">未登录：仅可查看已缓存解析结果</span>
+        </div>
+      </div>
+    </el-dialog>
+
     <!-- 解析结果弹窗 -->
     <el-dialog v-model="resultVisible" title="解析结果" width="min(680px, 92vw)" destroy-on-close>
       <div v-if="parseResult" class="parse-result">
@@ -202,7 +211,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { ElMessage, ElMessageBox, ElNotification } from 'element-plus'
@@ -220,6 +229,7 @@ const store = useStore()
 const isAdmin = computed(() => store.getters['auth/isLoggedIn'])
 
 const linkUrl = ref('')
+const linkInputRef = ref(null)
 const parsing = ref(false)
 const aiCostTipShown = ref(false)
 const events = ref([])
@@ -241,6 +251,7 @@ const historyLoading = ref(false)
 const showTimeMachine = ref(false)
 const drawerVisible = ref(false)
 const activeEvent = ref(null)
+const analyzeDialogVisible = ref(false)
 const resultVisible = ref(false)
 const parseResult = ref(null)
 const associating = ref(false)
@@ -276,6 +287,13 @@ async function loadEvents(p = 1) {
 
 function loadMore() { loadEvents(page.value + 1) }
 
+function openDeepAnalyze() {
+  analyzeDialogVisible.value = true
+  nextTick(() => {
+    setTimeout(() => linkInputRef.value?.focus(), 50)
+  })
+}
+
 async function doParseLink() {
   const url = linkUrl.value.trim()
   if (!url) return ElMessage.warning('请先粘贴链接')
@@ -288,6 +306,7 @@ async function doParseLink() {
     const res = await parseLink(url)
     parseResult.value = res.data
     resultVisible.value = true
+    analyzeDialogVisible.value = false
   } catch (e) {
     ElMessage.error(e.message || '解析失败')
   } finally {

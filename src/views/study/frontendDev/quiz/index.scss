@@ -1,7 +1,10 @@
 .quiz-page {
   padding: 32px 24px 60px;
   max-width: 860px;
-  margin: 0 auto;
+  width: 100%;
+  // flex 父级中用 align-self 居中（margin: auto 会覆盖 stretch 导致收缩）
+  align-self: center;
+  box-sizing: border-box;
   animation: fadeIn 0.4s ease-out;
 }
 
@@ -49,14 +52,17 @@
   border: 1px solid #e2e8f0;
   border-radius: 14px;
   margin-bottom: 24px;
+  box-sizing: border-box;
 }
 
 .filter-item {
   width: 140px;
+  flex: 0 0 auto;
 }
 
 .filter-switch {
   margin-left: auto;
+  flex: 0 0 auto;
 }
 
 // ===== 答题区 =====
@@ -261,7 +267,7 @@
   .quiz-top { gap: 10px; }
   .quiz-title { font-size: 20px; }
   .filter-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px; }
-  .filter-item { width: 100%; }
+  .filter-item { width: 100%; min-width: 0; }
   .filter-switch { margin-left: 0; grid-column: 1 / -1; justify-self: end; }
   .question-card { padding: 16px; }
   .q-text { font-size: 17px; }
@@ -273,8 +279,9 @@
 
 @media (max-width: 480px) {
   .quiz-page { padding: 16px 12px 36px; }
-  .filter-bar { grid-template-columns: 1fr; }
-  .filter-switch { grid-column: auto; }
+  // 保持 2 列布局，减少高度占用
+  .filter-bar { grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px; }
+  .filter-switch { grid-column: 1 / -1; justify-self: end; }
   .question-card { padding: 14px; }
   .q-text { font-size: 16px; margin-bottom: 16px; }
   .q-option { gap: 10px; padding: 10px 12px; }

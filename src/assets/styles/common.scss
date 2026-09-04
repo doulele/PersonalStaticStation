@@ -2927,3 +2927,56 @@ html.dark-mode {
     &:hover { text-decoration: underline; }
   }
 }
+
+// ============================================================
+// 理解力训练（comprehension）主题变量
+// 供 study/comprehension 模块各页面 scoped 样式统一使用
+// ============================================================
+:root {
+  --cp-accent: #6d5dfc;
+  --cp-accent-strong: #5443f2;
+  --cp-accent-soft: rgba(109, 93, 252, 0.10);
+  --cp-accent-softer: rgba(109, 93, 252, 0.06);
+  --cp-grad: linear-gradient(135deg, #6d5dfc 0%, #9b7bff 100%);
+  --cp-grad-soft: linear-gradient(135deg, rgba(109, 93, 252, 0.12), rgba(155, 123, 255, 0.07));
+  --cp-card: #ffffff;
+  --cp-card-2: #f8f7ff;
+  --cp-ink: #26243a;
+  --cp-sub: #7d7a96;
+  --cp-line: rgba(93, 82, 240, 0.14);
+  --cp-bg-page: #f5f4fc;
+  --cp-d1: #4f7df9;
+  --cp-d2: #14b8a6;
+  --cp-d3: #f59e0b;
+  --cp-d4: #ec4899;
+  --cp-ok: #10b981;
+  --cp-bad: #ef4444;
+  --cp-warn: #f59e0b;
+  --cp-badge: #ede9ff;
+  --cp-badge-ink: #5b4ae0;
+  --cp-shadow: 0 4px 18px rgba(74, 55, 200, 0.08);
+}
+html.dark-mode {
+  --cp-accent: #a48bff;
+  --cp-accent-strong: #8b6ffa;
+  --cp-accent-soft: rgba(164, 139, 255, 0.14);
+  --cp-accent-softer: rgba(164, 139, 255, 0.08);
+  --cp-grad: linear-gradient(135deg, #7a63f5 0%, #a48bff 100%);
+  --cp-grad-soft: linear-gradient(135deg, rgba(122, 99, 245, 0.16), rgba(164, 139, 255, 0.08));
+  --cp-card: #232235;
+  --cp-card-2: #1b1a2c;
+  --cp-ink: #ecebfb;
+  --cp-sub: #a29fb9;
+  --cp-line: rgba(164, 139, 255, 0.18);
+  --cp-bg-page: #131220;
+  --cp-d1: #7ea0ff;
+  --cp-d2: #2dd4bf;
+  --cp-d3: #fbbf24;
+  --cp-d4: #f472b6;
+  --cp-ok: #34d399;
+  --cp-bad: #f87171;
+  --cp-warn: #fbbf24;
+  --cp-badge: rgba(164, 139, 255, 0.16);
+  --cp-badge-ink: #cfc2ff;
+  --cp-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+}

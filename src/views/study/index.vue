@@ -20,12 +20,25 @@
         </div>
       </router-link>
 
+      <router-link to="/study/comprehension" class="tool-card" @click="recordToolClick('/study/comprehension')">
+        <div class="tool-card-inner">
+          <div class="tool-icon purple">
+            <el-icon :size="32"><Reading /></el-icon>
+          </div>
+          <div class="tool-info">
+            <h3 class="tool-name">理解力训练</h3>
+            <p class="tool-desc">抓主干·拆逻辑·译人话·追问批判，四阶能力测评与每日训练</p>
+          </div>
+          <el-icon class="tool-arrow"><ArrowRight /></el-icon>
+        </div>
+      </router-link>
+
     </div>
   </div>
 </template>
 
 <script setup>
-import { ArrowRight, Monitor } from '@element-plus/icons-vue'
+import { ArrowRight, Monitor, Reading } from '@element-plus/icons-vue'
 import { recordToolClick } from '@/api/stats'
 </script>
 

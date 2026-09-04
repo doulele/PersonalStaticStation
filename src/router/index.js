@@ -274,6 +274,51 @@ const routes = [
         component: () => import('@/views/study/frontendDev/profile/index.vue'),
         meta: { title: '学习中心', icon: 'User', requiresAuth: true }
       },
+      {
+        path: 'study/comprehension',
+        component: () => import('@/views/study/comprehension/index.vue'),
+        meta: { title: '理解力训练', icon: 'Reading', requiresAuth: true }
+      },
+      {
+        path: 'study/comprehension/assessment',
+        component: () => import('@/views/study/comprehension/assessment.vue'),
+        meta: { title: '理解力测评', icon: 'EditPen', requiresAuth: true }
+      },
+      {
+        path: 'study/comprehension/report/:id',
+        component: () => import('@/views/study/comprehension/report.vue'),
+        meta: { title: '测评报告', icon: 'DataLine', requiresAuth: true }
+      },
+      {
+        path: 'study/comprehension/training',
+        component: () => import('@/views/study/comprehension/training.vue'),
+        meta: { title: '每日训练', icon: 'Aim', requiresAuth: true }
+      },
+      {
+        path: 'study/comprehension/growth',
+        component: () => import('@/views/study/comprehension/growth.vue'),
+        meta: { title: '成长看板', icon: 'TrendCharts', requiresAuth: true }
+      },
+      {
+        path: 'study/comprehension/mistakes',
+        component: () => import('@/views/study/comprehension/mistakes.vue'),
+        meta: { title: '错题本', icon: 'Warning', requiresAuth: true }
+      },
+      {
+        path: 'study/comprehension/profile',
+        component: () => import('@/views/study/comprehension/profile.vue'),
+        meta: { title: '训练设置', icon: 'Setting', requiresAuth: true }
+      },
+      {
+        path: 'study/comprehension/pro',
+        component: () => import('@/views/study/comprehension/pro.vue'),
+        meta: { title: '专业模块', icon: 'Briefcase', requiresAuth: true }
+      },
+      {
+        path: 'study/comprehension/migrate',
+        component: () => import('@/views/study/comprehension/migrate.vue'),
+        meta: { title: '迁移测试', icon: 'Refresh', requiresAuth: true }
+      },
     ]
   },
   // ==================== 其他 ====================
