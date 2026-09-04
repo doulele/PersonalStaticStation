@@ -76,7 +76,10 @@
               <span>身份：{{ ov.profile.identityType }}</span>
               <span>领域：{{ (ov.profile.domains || []).join(' / ') || '未设置' }}</span>
             </div>
-            <el-button type="primary" size="large" class="cp-btn-primary" :loading="busy" @click="goAssess">开始测评 →</el-button>
+            <div class="cp-welcome-actions">
+              <el-button type="primary" size="large" class="cp-btn-primary" :loading="busy" @click="goAssess">开始测评 →</el-button>
+              <el-button size="large" @click="$router.push('/study/comprehension/profile')">⚙️ 画像与设置</el-button>
+            </div>
           </section>
 
           <!-- 已测评：总览数据 -->
@@ -415,6 +418,7 @@ html.dark-mode .cp-lv-bar { background: rgba(0, 0, 0, 0.42); }
   .cp-welcome-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px;
     span { font-size: 13px; background: var(--cp-card-2); border: 1px solid var(--cp-line); padding: 5px 12px; border-radius: 8px; color: var(--cp-sub); }
   }
+  .cp-welcome-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 }
 
 .cp-remind {

@@ -46,14 +46,14 @@
         </div>
 
         <div class="cp-field">
-          <label>核心痛点（可选）</label>
+          <label>核心痛点（可多选）</label>
           <div class="cp-chips">
             <button v-for="p in PAIN_CHIPS" :key="p" type="button" class="cp-chip"
-              :class="{ on: form.painPoint === p }" @click="form.painPoint = form.painPoint === p ? '' : p">
+              :class="{ on: form.painPoint.includes(p) }" @click="togglePain(p)">
               {{ p }}
             </button>
           </div>
-          <el-input v-model="form.painPoint" type="textarea" :rows="2" placeholder="描述你阅读时最想解决的问题" />
+          <el-input v-model="form.painCustom" type="textarea" :rows="2" placeholder="其他想解决的痛点，可补充（可选）" />
         </div>
 
         <div class="cp-card-actions">
@@ -111,7 +111,7 @@
       </section>
 
       <!-- 危险操作 -->
-      <section class="cp-card cp-danger" v-if="profile.configured">
+      <section class="cp-card cp-danger" v-if="profile.configured || form.identityType || form.domains.length">
         <h3 class="cp-card-title">⚠️ 危险操作</h3>
         <p>将清空你的画像、测评记录、能力等级、训练日志、错题本、打卡与里程碑，且<em>无法恢复</em>。适合想完全重新开始的情况。</p>
         <div class="cp-card-actions">
@@ -136,7 +136,7 @@ const PAIN_CHIPS = ['读得慢', '读了就忘', '抓不住重点', '逻辑绕�
 
 const loading = ref(true)
 const profile = ref({ configured: false })
-const form = reactive({ identityType: '', domains: [], painPoint: '', intensity: 'standard', frequency: 'daily', trainingDays: [1, 2, 3, 4, 5] })
+const form = reactive({ identityType: '', domains: [], painPoint: [], painCustom: '', intensity: 'standard', frequency: 'daily', trainingDays: [1, 2, 3, 4, 5] })
 const checkedToday = ref(false)
 const streak = ref(0)
 const saveBusy = ref(false)
@@ -145,14 +145,22 @@ const checkBusy = ref(false)
 const resetBusy = ref(false)
 const savedAt = ref('')
 
+function togglePain(p) {
+  const i = form.painPoint.indexOf(p)
+  if (i >= 0) form.painPoint.splice(i, 1)
+  else form.painPoint.push(p)
+}
+
 async function saveIdentity() {
   if (!form.identityType.trim()) return
   saveBusy.value = true
   try {
+    const painList = [...form.painPoint]
+    if (form.painCustom.trim()) painList.push(form.painCustom.trim())
     const res = await saveProfile({
       identityType: form.identityType.trim(),
       domains: form.domains,
-      painPoint: form.painPoint.trim()
+      painPoint: painList
     })
     if (!res.success) throw new Error(res.error || '保存失败')
     profile.value.configured = true
@@ -216,7 +224,7 @@ async function resetAll() {
     if (!res.success) throw new Error(res.error || '重置失败')
     ElMessage.success('已重置，欢迎重新开始')
     // 同步本地状态，避免页面残留旧数据
-    Object.assign(form, { identityType: '', domains: [], painPoint: '', intensity: 'standard', frequency: 'daily', trainingDays: [1, 2, 3, 4, 5] })
+    Object.assign(form, { identityType: '', domains: [], painPoint: [], painCustom: '', intensity: 'standard', frequency: 'daily', trainingDays: [1, 2, 3, 4, 5] })
     profile.value = { configured: false }
     checkedToday.value = false
     streak.value = 0
@@ -236,7 +244,9 @@ onMounted(async () => {
       profile.value = p
       form.identityType = p.identityType || ''
       form.domains = Array.isArray(p.domains) ? p.domains : []
-      form.painPoint = p.painPoint || ''
+      const rawPain = Array.isArray(p.painPoint) ? p.painPoint : (p.painPoint ? [p.painPoint] : [])
+      form.painPoint = rawPain.filter(x => PAIN_CHIPS.includes(x))
+      form.painCustom = rawPain.filter(x => !PAIN_CHIPS.includes(x)).join('、')
       form.intensity = p.intensity || 'standard'
       form.frequency = p.frequency || 'daily'
       form.trainingDays = Array.isArray(p.trainingDays) && p.trainingDays.length ? p.trainingDays : [1, 2, 3, 4, 5]
