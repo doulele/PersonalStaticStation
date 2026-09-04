@@ -5,7 +5,7 @@
  *   id       - 唯一标识
  *   name     - 工具名称
  *   desc     - 简短描述
- *   category - 所属分类 id: fund | media | life | family
+ *   category - 所属分类 id: fund | media | life | family | news | study
  *   path     - 路由路径
  *   icon     - Element Plus 图标名称（字符串，需在使用处映射为组件）
  *   color    - 图标卡片颜色主题: default | blue | green | orange | purple | red | yellow
@@ -52,7 +52,7 @@ export const TOOL_CATEGORIES = [
     name: '技能学习',
     icon: 'Reading',
     path: '/study',
-    desc: '前端开发等技能学习与练习'
+    desc: '前端开发、理解力训练等技能学习与练习'
   }
 ]
 
@@ -244,7 +244,7 @@ export const ALL_TOOLS = [
     color: 'blue'
   },
 
-  // ========== 技能学习 ==========
+  // ========== 技能学习（仅登录用户可见） ==========
   {
     id: 'frontend-dev',
     name: '前端开发',
@@ -253,5 +253,14 @@ export const ALL_TOOLS = [
     path: '/study/frontend-dev',
     icon: 'Monitor',
     color: 'blue'
+  },
+  {
+    id: 'comprehension',
+    name: '理解力训练',
+    desc: '抓主干·拆逻辑·译人话·追问批判，四阶能力测评与每日训练',
+    category: 'study',
+    path: '/study/comprehension',
+    icon: 'Reading',
+    color: 'purple'
   }
 ]
